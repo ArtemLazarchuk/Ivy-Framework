@@ -126,3 +126,7 @@ For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 ### Apple Silicon Mac: "Bad CPU type in executable" due to Google Protobuf & ARM
 
 Install Rosetta 2: `/usr/sbin/softwareupdate --install-rosetta --agree-to-license`
+
+### Debug Widget Tree Updates
+
+Set the environment variable `IVY_DUMP_WIDGET_TREES` to `1` to log widget tree updates to dump.ljson in the working directory.
