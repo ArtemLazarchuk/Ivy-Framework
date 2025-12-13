@@ -354,7 +354,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
     {
         treePath.Push(view, index);
 
-        view.Id = GenerateId(treePath);
+        view.Id = treePath.GenerateId();
 
         int? memoizedHashCode = null;
         bool memoized = false;
@@ -497,7 +497,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
     {
         treePath.Push(widget, index);
 
-        widget.Id = GenerateId(treePath);
+        widget.Id = treePath.GenerateId();
 
         var children = new List<TreeNode>();
         if (widget.Children == null!) widget.Children = [];
@@ -517,20 +517,6 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         _parents[widget.Id] = parentId;
 
         return node;
-    }
-
-    private static string GenerateId(TreePath treePath)
-    {
-        var input = treePath.ToString();
-        using SHA256 sha256 = SHA256.Create();
-        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-        string hash = Convert.ToBase64String(hashBytes)
-            .Replace("+", "")
-            .Replace("/", "")
-            .Replace("=", "")
-            .ToLower();
-        string alphanumericHash = new string(hash.Where(char.IsLetterOrDigit).ToArray());
-        return alphanumericHash[..10]; //With 1 million widgets, the collision probability is extremely low (0.0000596%)
     }
 
     public async Task<bool> TriggerEventAsync(string widgetId, string eventName, JsonArray args)
