@@ -1,8 +1,6 @@
-using System.Buffers;
 using System.Diagnostics;
 using System.IO.Hashing;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Ivy.Core;
@@ -30,19 +28,21 @@ public class TreePath : Stack<PathSegment>
 
     public TreePath Clone()
     {
-        TreePath clone = new();
-        var segments = this.ToList();
-        for (int i = segments.Count - 1; i >= 0; i--)
+        var clone = new TreePath();
+        var segments = ToArray();
+        for (int i = segments.Length - 1; i >= 0; i--)
         {
-            var segment = segments[i];
-            clone.Push(new PathSegment(segment.Type, segment.Key, segment.Index, segment.IsWidget));
+            clone.Push(segments[i]); // PathSegment is a struct, no need to copy fields
         }
         return clone;
     }
 
     public override string ToString()
     {
-        var sb = new System.Text.StringBuilder();
+        if (Count == 0) return string.Empty;
+
+        // Estimate capacity: avg segment ~15 chars (Type:Key/Index) + separator
+        var sb = new StringBuilder(Count * 16);
         bool first = true;
         foreach (var e in this)
         {
@@ -56,26 +56,10 @@ public class TreePath : Stack<PathSegment>
         return sb.ToString();
     }
 
-    // public string GenerateId()
-    // {
-    //     var input = this.ToString();
-    //     using SHA256 sha256 = SHA256.Create();
-    //     byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-    //     string hash = Convert.ToBase64String(hashBytes)
-    //         .Replace("+", "")
-    //         .Replace("/", "")
-    //         .Replace("=", "")
-    //         .ToLower();
-    //     string alphanumericHash = new string(hash.Where(char.IsLetterOrDigit).ToArray());
-    //     return alphanumericHash[..10]; //With 1 million widgets, the collision probability is extremely low (0.0000596%)
-    // }
-
     private static readonly char[] Base32Chars = "abcdefghijklmnopqrstuvwxyz234567".ToCharArray();
 
     public string GenerateId()
     {
-        Console.WriteLine(this.ToString());
-
         // Use XxHash64 - extremely fast with excellent distribution
         // 64-bit hash gives collision probability of ~1 in 10^19 for random inputs
         // Even with birthday paradox, 1M items = ~0.000003% collision chance
