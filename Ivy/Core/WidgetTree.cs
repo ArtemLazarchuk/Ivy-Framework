@@ -11,24 +11,24 @@ using Ivy.Core.Hooks;
 
 namespace Ivy.Core;
 
-public class TreeNode(string id, int index, Path parentPath, TreeNode[] children, int? memoizedHashCode, IWidget? widget, IView? view, IViewContext? context, IViewContext? ancestorContext) : IDisposable
+public class TreeNode(string id, int index, TreePath parentTreePath, TreeNode[] children, int? memoizedHashCode, IWidget? widget, IView? view, IViewContext? context, IViewContext? ancestorContext) : IDisposable
 {
-    public static TreeNode FromWidget(IWidget widget, int index, Path path, TreeNode[] children, IViewContext? ancestorContext)
+    public static TreeNode FromWidget(IWidget widget, int index, TreePath treePath, TreeNode[] children, IViewContext? ancestorContext)
     {
-        return new TreeNode(widget.Id!, index, path, children, null, widget, null, null, ancestorContext);
+        return new TreeNode(widget.Id!, index, treePath, children, null, widget, null, null, ancestorContext);
     }
 
-    public static TreeNode FromView(IView view, int index, Path path, TreeNode? child, IViewContext? context, int? memoizedHashCode, IViewContext? ancestorContext)
+    public static TreeNode FromView(IView view, int index, TreePath treePath, TreeNode? child, IViewContext? context, int? memoizedHashCode, IViewContext? ancestorContext)
     {
         var children = child == null ? Array.Empty<TreeNode>() : [child];
-        return new TreeNode(view.Id!, index, path, children, memoizedHashCode, null, view, context, ancestorContext);
+        return new TreeNode(view.Id!, index, treePath, children, memoizedHashCode, null, view, context, ancestorContext);
     }
 
     // public bool ShouldRebuild { get; set; }
 
     public string Id { get; } = id;
     public int Index { get; } = index;
-    public Path ParentPath { get; } = parentPath;
+    public TreePath ParentTreePath { get; } = parentTreePath;
     public TreeNode[] Children { get; } = children;
     public int? MemoizedHashCode { get; } = memoizedHashCode;
     public IWidget? Widget { get; } = widget;
@@ -79,7 +79,7 @@ public class TreeNode(string id, int index, Path parentPath, TreeNode[] children
         //We want get the indices as if the views has been removed and only the widgets remain
 
         var indices = new List<int>() { };
-        var path = this.ParentPath.Clone();
+        var path = this.ParentTreePath.Clone();
 
         var previousSegment = new PathSegment("", null, this.Index, this.IsWidget);
 
@@ -152,8 +152,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         await _buildRequestedSemaphore.WaitAsync();
         try
         {
-            Path path = new();
-            var tree = BuildView(RootView, path, 0, null, null, false, false);
+            TreePath treePath = new();
+            var tree = BuildView(RootView, treePath, 0, null, null, false, false);
             NodeTree = tree ?? throw new NotSupportedException("Build must return an TreeNode.");
             PrintDebug();
         }
@@ -194,9 +194,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         _buildRequestedSubject.OnNext(viewId);
     }
 
-    private async Task RefreshRequested(string[] requestedViewIds)
+    private async Task RefreshRequested(string[] requestedViewIds) //are ensure to be unique
     {
-        await _buildRequestedSemaphore.WaitAsync();
+        await _buildRequestedSemaphore.WaitAsync(); //ensure only one refresh operation at a time
         try
         {
             //todo: if the node A is a child of node B, both are request but there's a memoized node 
@@ -231,7 +231,14 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             var nodesToRebuild = requestedViewIds;
 
             List<WidgetTreeChanged> changes = new();
-            //todo: we should be able to be done in parallel?
+
+            if (nodesToRebuild.Length > 1)
+            {
+                //building more than one node
+                //what happens if A is parent of B? what about the order they are built in? If A is built first, B might be invalidated
+                //Is this related to the issue with indexes below
+            }
+
             foreach (var nodeId in nodesToRebuild)
             {
                 if (_nodes.TryGetValue(nodeId, out var node))
@@ -280,8 +287,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         var indices = node.GetWidgetTreeIndices();
 
         var previous = node.GetWidgetTree()?.Serialize();
+        //todo: we are serializing quite a lot here - is it worth caching the previous serialized tree in the node?
 
-        var partial = BuildView(node.View!, node.ParentPath.Clone(), node.Index, parentId, node.AncestorContext, isRefreshingView: true, isHotReload);
+        var partial = BuildView(node.View!, node.ParentTreePath.Clone(), node.Index, parentId, node.AncestorContext, isRefreshingView: true, isHotReload);
 
         if (partial == null) throw new NotSupportedException("View must return an IWidget.");
 
@@ -295,14 +303,20 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             {
                 if (parent.Children.Length <= node.Index)
                 {
-                    //Console.WriteLine("Parent children length is less than node index that we are trying to update.");    
+                    //todo: we're getting this in some cases - need to investigate more
+                    Console.WriteLine($"WARN:Parent children length {parent.Children.Length} of {parentId} is less than node index {node.Index} that we are trying to update.");
                 }
                 else
                 {
                     parent.Children[node.Index] = partial;
                 }
             }
+            else
+            {
+                Console.WriteLine($"WARN:Parent {parentId} not found. Shoudn't happen.");
+            }
         }
+
         try
         {
             var update = partial.GetWidgetTree()?.Serialize();
@@ -330,7 +344,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
     }
 
     private TreeNode? BuildView(IView view,
-        Path path,
+        TreePath treePath,
         int index,
         string? parentId,
         IViewContext? ancestorContext,
@@ -338,9 +352,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         bool isHotReload
     )
     {
-        path.Push(view, index);
+        treePath.Push(view, index);
 
-        view.Id = GenerateId(path);
+        view.Id = GenerateId(treePath);
 
         int? memoizedHashCode = null;
         bool memoized = false;
@@ -368,7 +382,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             if (view is IStateless)
             {
                 //small optimization for stateless views to skip context creation - not sure this really matters
-                node = BuildObject(view.Build(), path.Clone(), index, view.Id, ancestorContext, isHotReload);
+                node = BuildObject(view.Build(), treePath.Clone(), index, view.Id, ancestorContext, isHotReload);
             }
             else
             {
@@ -399,7 +413,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                     buildResult = e;
                 }
 
-                node = BuildObject(buildResult, path.Clone(), index, view.Id, context, isHotReload);
+                node = BuildObject(buildResult, treePath.Clone(), index, view.Id, context, isHotReload);
                 view.AfterBuild();
                 context.Reset();
             }
@@ -410,9 +424,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             node = previousNode.Children.SingleOrDefault();
         }
 
-        path.Pop();
+        treePath.Pop();
 
-        _nodes[view.Id] = TreeNode.FromView(view, index, path.Clone(), node, context, memoizedHashCode, ancestorContext);
+        _nodes[view.Id] = TreeNode.FromView(view, index, treePath.Clone(), node, context, memoizedHashCode, ancestorContext);
 
         if (parentId != null)
             _parents[view.Id] = parentId;
@@ -457,7 +471,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         return hash.ToHashCode();
     }
 
-    private TreeNode? BuildObject(object? anything, Path path, int index, string parentId, IViewContext? ancestorContext, bool isHotReload)
+    private TreeNode? BuildObject(object? anything, TreePath treePath, int index, string parentId, IViewContext? ancestorContext, bool isHotReload)
     {
         var formatted = _builder.Format(anything);
         if (formatted == null) return null;
@@ -468,36 +482,36 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         TreeNode? node = null;
         if (formatted is IView newView)
         {
-            node = BuildView(newView, path.Clone(), index, parentId, ancestorContext, false, isHotReload);
+            node = BuildView(newView, treePath.Clone(), index, parentId, ancestorContext, false, isHotReload);
         }
 
         if (formatted is IWidget newWidget)
         {
-            node = BuildWidget(newWidget, path.Clone(), index, parentId, ancestorContext, isHotReload);
+            node = BuildWidget(newWidget, treePath.Clone(), index, parentId, ancestorContext, isHotReload);
         }
 
         return node;
     }
 
-    private TreeNode BuildWidget(IWidget widget, Path path, int index, string parentId, IViewContext? ancestorContext, bool isHotReload)
+    private TreeNode BuildWidget(IWidget widget, TreePath treePath, int index, string parentId, IViewContext? ancestorContext, bool isHotReload)
     {
-        path.Push(widget, index);
+        treePath.Push(widget, index);
 
-        widget.Id = GenerateId(path);
+        widget.Id = GenerateId(treePath);
 
         var children = new List<TreeNode>();
         if (widget.Children == null!) widget.Children = [];
         for (var i = 0; i < widget.Children.Length; i++)
         {
             var child = widget.Children[i];
-            var newWidget = BuildObject(child, path.Clone(), i, widget.Id, ancestorContext, isHotReload);
+            var newWidget = BuildObject(child, treePath.Clone(), i, widget.Id, ancestorContext, isHotReload);
             if (newWidget == null) continue;
             children.Add(newWidget);
         }
 
-        path.Pop();
+        treePath.Pop();
 
-        var node = TreeNode.FromWidget(widget, index, path.Clone(), children.ToArray(), ancestorContext);
+        var node = TreeNode.FromWidget(widget, index, treePath.Clone(), children.ToArray(), ancestorContext);
 
         _nodes[widget.Id] = node;
         _parents[widget.Id] = parentId;
@@ -505,9 +519,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         return node;
     }
 
-    private static string GenerateId(Path path)
+    private static string GenerateId(TreePath treePath)
     {
-        var input = path.ToString();
+        var input = treePath.ToString();
         using SHA256 sha256 = SHA256.Create();
         byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
         string hash = Convert.ToBase64String(hashBytes)

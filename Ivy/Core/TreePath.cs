@@ -11,7 +11,7 @@ public readonly record struct PathSegment(string Type, string? Key, int Index, b
 }
 
 [DebuggerDisplay("{ToString()}")]
-public class Path : Stack<PathSegment>
+public class TreePath : Stack<PathSegment>
 {
     public void Push(IView view, int index)
     {
@@ -23,9 +23,9 @@ public class Path : Stack<PathSegment>
         Push(new PathSegment(widget.GetType().Name!, widget.Key, index, true));
     }
 
-    public Path Clone()
+    public TreePath Clone()
     {
-        Path clone = new();
+        TreePath clone = new();
         var segments = this.ToList();
         for (int i = segments.Count - 1; i >= 0; i--)
         {
@@ -34,9 +34,20 @@ public class Path : Stack<PathSegment>
         }
         return clone;
     }
-
+    
     public override string ToString()
     {
-        return string.Join(">", this.Select(e => e.ToString()).ToArray());
+        var sb = new System.Text.StringBuilder();
+        bool first = true;
+        foreach (var e in this)
+        {
+            if (!first) sb.Append('>');
+            first = false;
+            sb.Append(e.Type);
+            sb.Append(':');
+            if (e.Key is not null) sb.Append(e.Key);
+            else sb.Append(e.Index);
+        }
+        return sb.ToString();
     }
 }
