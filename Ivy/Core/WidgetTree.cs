@@ -469,7 +469,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             }
             else
             {
-                var json = JsonSerializer.Serialize(prop);
+                var json = JsonSerializer.Serialize(prop, JsonHelper.DefaultOptions);
                 hash.Add(Utils.StableHash(json));
             }
 

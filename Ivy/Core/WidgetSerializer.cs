@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using Ivy.Core.Helpers;
 using Ivy.Widgets.Inputs;
 
@@ -13,6 +14,7 @@ public static class WidgetSerializer
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         Converters =
         {
             new JsonEnumConverter(),

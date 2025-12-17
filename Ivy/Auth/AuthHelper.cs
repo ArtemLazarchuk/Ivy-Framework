@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Grpc.Core;
 using Ivy.Auth;
+using Ivy.Core.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
@@ -182,7 +183,7 @@ public static class AuthHelper
 
         try
         {
-            var token = JsonSerializer.Deserialize<AuthToken>(authTokenValue);
+            var token = JsonSerializer.Deserialize<AuthToken>(authTokenValue, JsonHelper.DefaultOptions);
             if (token == null)
             {
                 return new(authSessionData: authSessionDataValue);

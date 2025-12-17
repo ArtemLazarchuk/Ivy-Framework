@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Ivy.Core.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -59,7 +60,7 @@ public static class CookieRegistryExtensions
                 Path = "/",
             };
 
-            var tokenJson = JsonSerializer.Serialize(authToken);
+            var tokenJson = JsonSerializer.Serialize(authToken, JsonHelper.DefaultOptions);
 
             // Calculate url-encoded token length
             var tokenJsonLength = WebUtility.UrlEncode(tokenJson).Length;
@@ -75,7 +76,7 @@ public static class CookieRegistryExtensions
             {
                 var refreshToken = authToken.RefreshToken!; // non-nullness implied by condition above
                 var modifiedToken = authToken with { RefreshToken = null };
-                tokenJson = JsonSerializer.Serialize(modifiedToken);
+                tokenJson = JsonSerializer.Serialize(modifiedToken, JsonHelper.DefaultOptions);
                 cookies.Append("auth_ext_refresh_token", refreshToken, cookieOptions);
             }
             else
