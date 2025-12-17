@@ -41,7 +41,7 @@ The whole framework is built around strict enterprise security constraints. As t
 
 > ⚠️ **Note:** Ivy.Console is still in beta, and the agentic features require an account. [Register](https://ivy.app/auth/sign-up) for a free account to be among the first to try these features.
 
-Make sure you have the [.NET 9 SDK installed](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
+Make sure you have the [.NET 10 SDK installed](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
 1. **Install Ivy CLI**:
 
