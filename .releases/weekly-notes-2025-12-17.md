@@ -231,32 +231,7 @@ The design system now includes a comprehensive set of neutral and chromatic colo
 
 Ivy now preloads all essential Geist and Geist Mono font weights (Regular, Medium, SemiBold, Bold) in the initial HTML document. This eliminates the font flicker that could occur during page load when the browser discovers fonts late in the rendering process.
 
-## Security Improvements
-
-### Enhanced URL Validation for Embed and VideoPlayer Widgets
-
-Fixed a security vulnerability in the Embed and VideoPlayer widgets where malicious URLs could potentially bypass hostname validation through substring matching or subdomain attacks. The new validation properly validates hostnames to prevent attacks like:
-
-- `https://evil.com/youtube.com` (substring matching - platform name in path)
-- `https://youtube.com.evil.com` (subdomain attack - parent domain)
-
-**What changed:**
-
-- Introduced `validateEmbedUrl()` function with explicit hostname mapping for supported platforms
-- Validation now uses exact hostname matching or proper subdomain checking
-- Only allows HTTP and HTTPS protocols (blocks `javascript:`, `data:`, `file:`, etc.)
-- Hostname comparison is case-insensitive
-
-**Supported platforms validated:**
-
-- YouTube (`youtube.com`, `youtu.be`)
-- Twitter/X (`twitter.com`, `x.com`)
-- Facebook, Instagram, TikTok
-- LinkedIn, Pinterest (`pinterest.com`, `pin.it`)
-- GitHub (`github.com`, `gist.github.com`)
-- Reddit
-
-This security fix is automatic and requires no code changes in your applications. Your embed and video player widgets are now protected against URL-based injection attacks.
+The `Embed` and `VideoPlayer` widgets now feature enhanced URL validation to automatically protect against hostname-based injection attacks.
 
 ## Developer Tools
 
