@@ -182,23 +182,7 @@ new Code("""
     """, Languages.Xml)
 ```
 
-### Number Input Width Control
-
-The `NumberInput` widget now supports width customization through the `Width()` extension method, giving you better control over form layouts:
-
-```csharp
-// Set a specific width for number inputs
-new NumberInput(value).Min(0).Max(100)
-    .Width(Size.Px(200))
-
-// Use with forms for precise layout control
-new Form(model)
-    | new NumberInput(model, m => m.Quantity)
-        .Width(Size.Px(150))
-        .Label("Quantity")
-```
-
-<img width="1276" height="312" alt="image" src="https://github.com/user-attachments/assets/efbcf1ab-a5e8-4e6a-9ca2-fd31326d16c5" />
+The `NumberInput` widget now supports explicit width customization through the `.Width()` extension method, allowing for better control over form layouts.
 
 The `Details` widget now supports cascading size variants (`.Small()`, `.Medium()`, `.Large()`) for improved density control. Furthermore, Card headers now support full layout widgets for rich content, accompanied by a streamlined `.Header()` API for setting titles and descriptions simultaneously.
 
