@@ -137,18 +137,6 @@ var json = JsonSerializer.Serialize(myObject, JsonHelper.DefaultOptions);
 
 This ensures that all parts of the framework use the same serialization settings, reducing subtle bugs related to naming policies or type resolution.
 
-## Error Handling Improvements
-
-### Better Exception Details in Development
-
-When exceptions occur during the initial connection to your Ivy app, you'll now see detailed error information instead of a generic "Not Found" page:
-
-- **Error title**: "Internal Server Error" heading
-- **Error message**: The actual exception message explaining what went wrong
-- **Stack trace**: Full stack trace for debugging
-
-This makes it much easier to diagnose startup issues and connection errors during development. Previously, exceptions thrown in the AppHub connection handler would display a `NotFoundApp` view, which masked the actual error and made debugging difficult.
-
 ## Layout Improvements
 
 ### Customizable Sidebar Width
@@ -212,91 +200,11 @@ new Form(model)
 
 <img width="1276" height="312" alt="image" src="https://github.com/user-attachments/assets/efbcf1ab-a5e8-4e6a-9ca2-fd31326d16c5" />
 
-### Details Widget Size Control
-
-The `Details` widget now supports three size variants through the scale API, giving you better control over detail view density and typography:
-
-```csharp
-// Small size - compact for dense information displays
-record.ToDetails().Small()
-
-// Medium size - the default, balanced appearance
-record.ToDetails()  // or .Medium()
-
-// Large size - spacious for important information
-record.ToDetails().Large()
-```
-
-<img width="2284" height="775" alt="image" src="https://github.com/user-attachments/assets/ff78f8a8-bf08-4403-a63a-0e610eecc4ee" />
-
-**What changed:**
-
-- Added `.Small()`, `.Medium()`, and `.Large()` extension methods to `DetailsBuilder`
-- The scale setting cascades to nested details through context
-
-```csharp
-var record = new
-{
-    FirstName = "John",
-    LastName = "Doe",
-    Age = 30,
-    Address = new
-    {
-        Street = "123 Elm St",
-        City = "Springfield",
-        State = "IL",
-        Zip = "62701"
-    }.ToDetails().Small()  // Nested details shown smaller
-};
-
-new Card(record.ToDetails().Large())  // Parent details shown larger
-```
-
-**What changed:**
-
-- Card headers can now contain any widget, not just simple text
-- Icons and titles automatically align horizontally with proper spacing
-- The `Description()` extension method now accepts any object (not just strings), giving you more flexibility with formatting
-- The `.Title()` extension method now accepts any object (not just strings), allowing rich widgets as titles
-
-**For metric cards and dashboards**, this makes it much easier to create professional-looking cards with properly aligned icons:
-
-```csharp
-new Card(
-    content: Layout.Horizontal().Align(Align.Left).Gap(2)
-             | Text.Large("$84,250")
-             | Icons.TrendingUp.ToIcon().Color(Colors.Emerald)
-             | Text.Small("21%").Color(Colors.Emerald),
-    footer: new Progress(21).Goal("800000"),
-    header: Layout.Horizontal().Align(Align.Center)
-            | Text.H4("Total Sales").WithLayout().Grow()
-            | Icons.DollarSign.ToIcon().Color(Colors.Black)
-)
-```
-
-<img width="598" height="235" alt="image" src="https://github.com/user-attachments/assets/3cb4f82a-4a89-4abe-8ebf-4f95c7df9396" />
-
-**Simplified Header API**: The `.Header()` method now provides a more streamlined way to set both title and description:
-
-```csharp
-// Combined title and description
-new Card("Content here")
-    .Header("Card Title", "This is the description")
-```
-
-<img width="580" height="192" alt="image" src="https://github.com/user-attachments/assets/b852351d-b6ad-4430-a1f0-9a17fe9c7303" />
-
-### Simplified `Box` Widget Defaults
-
-The `Box` widget now has cleaner, more neutral defaults that work better as a general-purpose container.
+The `Details` widget now supports cascading size variants (`.Small()`, `.Medium()`, `.Large()`) for improved density control. Furthermore, Card headers now support full layout widgets for rich content, accompanied by a streamlined `.Header()` API for setting titles and descriptions simultaneously.
 
 ### SelectInput Nullable Value Handling
 
 The `SelectInput` widget now properly handles nullable values when cleared. Both the Toggle and Radio variants correctly set empty values to an empty string instead of `undefined`, ensuring consistent behavior and better compatibility with form validation.
-
-### TableBuilder Reset Method
-
-`TableBuilder` now includes a `Reset()` method that restores all columns to their initial smart defaults, undoing any customizations you've made.
 
 ## New Hooks
 
@@ -394,44 +302,45 @@ This security fix is automatic and requires no code changes in your applications
 - **Badge Icons**: Improved placement and scaling across all size variants.
 
 ## What's Changed
-* (card): align titles with horizontal content by @dcrjodle in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1722
-* (fix): Fixed inconsistencies in the Forms app (Ivy.Samples) by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1758
-* (security): fix Incomplete string escaping or encoding by @ArtemKhvorostianyi in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1724
-* (forms): update validation section and clean up form test apps by @ArtemKhvorostianyi in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1728
-* (security): fix url sanitization warning in the embed widget by @ArtemKhvorostianyi in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1723
-* [Docs]: Add interactive chat with streaming output example by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1716
-* (chore): Added Form apps into one menu folder. Removed FromSizeApp by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1692
-* docs: remove several Json widget examples from documentation by @joshuauaua in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1801
-* Update README to remove sign-up links by @nielsbosma in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1806
-* [Docs]: adjust Setters column width in Properties table by @defymecobra in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1805
-* (fix): Added width inline style for number input by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1807
-* [FileInput]: enable tooltip for invalid icon by @defymecobra in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1804
-* (chore): Readded Form app with scaffolding after compile errors by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1803
-* (chore): Ability to set new sidebar width by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1721
-* (theme): Added neutral and chromatic colors to design system and themeing by @dcrjodle in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1720
-* [Details]: implement scale api  by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1680
-* (docs): a lot of bug fixes by @rorychatt in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1817
-* [badge]: improved icon placement and styles by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1821
-* [blades]: Set minimum height for blade demo containers in documentation by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1824
-* (kanban): remove margin top by @rorychatt in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1826
-* [dropdown]: stop click propagation in DropdownMenuContent by @defymecobra in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1828
-* Changed hardcoded color to Ivy Design color by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1836
-* (fix): Fixed text cutoff in charts by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1835
-* (fix): Fixed bug for AsyncSelect Icon placement by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1832
-* [forms]: fix multiple boolean input validation error by @defymecobra in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1823
-* (button): create AI animated button by @dcrjodle in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1811
-* [blades]: fixed spacing issue in blades header by @joshuauaua in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1830
-* (callout): use text-foreground on callouts by @dcrjodle in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1837
-* fix(docs): spaces in title "C L I Overview" by @zachwolfe in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1839
-* [code]: Add XML syntax highlighting support for code blocks by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1841
-* (docs): rewrite frontend architecture documentation by @dcrjodle in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1838
-* [fonts]: prevent font flicker by changing font-display to fallback by @defymecobra in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1829
-* (codex): implement hook rules by @rorychatt in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1550
-* (codex): upgrade to .NET 10 by @rorychatt in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1825
-* [details]: Update samples with better Details demonstration by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1850
-* (fix): Email validation checks for dots after @ symbol now by @KaiserReich95 in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1854
-* feat: add Clerk auth provider by @zachwolfe in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1452
-* [SelectInput]: nullable when cleared should have no selected value by @ArtemLazarchuk in https://github.com/Ivy-Interactive/Ivy-Framework/pull/1853
 
+- (card): align titles with horizontal content by @dcrjodle in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1722>
 
-**Full Changelog**: https://github.com/Ivy-Interactive/Ivy-Framework/compare/v1.1.4...v1.2.5
+- (fix): Fixed inconsistencies in the Forms app (Ivy.Samples) by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1758>
+- (security): fix Incomplete string escaping or encoding by @ArtemKhvorostianyi in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1724>
+- (forms): update validation section and clean up form test apps by @ArtemKhvorostianyi in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1728>
+- (security): fix url sanitization warning in the embed widget by @ArtemKhvorostianyi in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1723>
+- [Docs]: Add interactive chat with streaming output example by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1716>
+- (chore): Added Form apps into one menu folder. Removed FromSizeApp by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1692>
+- docs: remove several Json widget examples from documentation by @joshuauaua in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1801>
+- Update README to remove sign-up links by @nielsbosma in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1806>
+- [Docs]: adjust Setters column width in Properties table by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1805>
+- (fix): Added width inline style for number input by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1807>
+- [FileInput]: enable tooltip for invalid icon by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1804>
+- (chore): Readded Form app with scaffolding after compile errors by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1803>
+- (chore): Ability to set new sidebar width by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1721>
+- (theme): Added neutral and chromatic colors to design system and themeing by @dcrjodle in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1720>
+- [Details]: implement scale api  by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1680>
+- (docs): a lot of bug fixes by @rorychatt in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1817>
+- [badge]: improved icon placement and styles by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1821>
+- [blades]: Set minimum height for blade demo containers in documentation by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1824>
+- (kanban): remove margin top by @rorychatt in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1826>
+- [dropdown]: stop click propagation in DropdownMenuContent by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1828>
+- Changed hardcoded color to Ivy Design color by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1836>
+- (fix): Fixed text cutoff in charts by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1835>
+- (fix): Fixed bug for AsyncSelect Icon placement by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1832>
+- [forms]: fix multiple boolean input validation error by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1823>
+- (button): create AI animated button by @dcrjodle in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1811>
+- [blades]: fixed spacing issue in blades header by @joshuauaua in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1830>
+- (callout): use text-foreground on callouts by @dcrjodle in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1837>
+- fix(docs): spaces in title "C L I Overview" by @zachwolfe in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1839>
+- [code]: Add XML syntax highlighting support for code blocks by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1841>
+- (docs): rewrite frontend architecture documentation by @dcrjodle in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1838>
+- [fonts]: prevent font flicker by changing font-display to fallback by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1829>
+- (codex): implement hook rules by @rorychatt in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1550>
+- (codex): upgrade to .NET 10 by @rorychatt in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1825>
+- [details]: Update samples with better Details demonstration by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1850>
+- (fix): Email validation checks for dots after @ symbol now by @KaiserReich95 in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1854>
+- feat: add Clerk auth provider by @zachwolfe in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1452>
+- [SelectInput]: nullable when cleared should have no selected value by @ArtemLazarchuk in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1853>
+
+**Full Changelog**: <https://github.com/Ivy-Interactive/Ivy-Framework/compare/v1.1.4...v1.2.5>
