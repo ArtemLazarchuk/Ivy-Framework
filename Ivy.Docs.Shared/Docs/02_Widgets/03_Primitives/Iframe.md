@@ -11,10 +11,10 @@ searchHints:
 # Iframe
 
 <Ingress>
-Embed external web pages securely within your application using contained browsing contexts with proper security boundaries.
+Embed external web pages securely within your [application](../../../01_Onboarding/01_GettingStarted/01_Introduction.md) using contained browsing contexts with proper security boundaries.
 </Ingress>
 
-The `Iframe` widget embeds external web pages into your app. It creates a contained browsing context that can display content from other websites while maintaining security boundaries.
+The `Iframe` [widget](../../../01_Onboarding/02_Concepts/Widgets.md) embeds external web pages into your [app](../../../01_Onboarding/02_Concepts/Apps.md). It creates a contained browsing context that can display content from other websites while maintaining security boundaries.
 
 ## Use Cases
 
