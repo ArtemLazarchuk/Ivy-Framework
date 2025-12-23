@@ -21,6 +21,8 @@ public record Pagination : WidgetBase<Pagination>
         Disabled = disabled;
     }
 
+    internal Pagination() { }
+
     [Prop] public int? Page { get; set; }
 
     [Prop] public int? NumPages { get; set; }

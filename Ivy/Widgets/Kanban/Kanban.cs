@@ -10,6 +10,8 @@ public record Kanban : WidgetBase<Kanban>
     {
     }
 
+    internal Kanban() { }
+
     [Prop] public bool ShowCounts { get; set; } = true;
 
     [Prop] public Size? ColumnWidth { get; set; }

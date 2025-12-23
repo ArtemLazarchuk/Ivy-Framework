@@ -95,6 +95,8 @@ public record BoolInput<TBool> : BoolInputBase, IInput<TBool>
         Variant = variant;
     }
 
+    internal BoolInput() { }
+
     [Prop] public TBool Value { get; } = default!;
 
     [Prop] public bool Nullable { get; set; } = typeof(TBool) == typeof(bool?);

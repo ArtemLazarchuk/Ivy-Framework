@@ -6,12 +6,16 @@ namespace Ivy;
 
 public record Iframe : WidgetBase<Iframe>
 {
-    public Iframe(string src, long? refreshToken = null)
+    public Iframe(string src, long? refreshToken = null) : this()
     {
         Src = src;
+        RefreshToken = refreshToken;
+    }
+
+    internal Iframe()
+    {
         Width = Size.Full();
         Height = Size.Full();
-        RefreshToken = refreshToken;
     }
 
     [Prop] public string Src { get; set; }

@@ -27,15 +27,41 @@ public record TabsLayout : WidgetBase<TabsLayout>
         RemoveParentPadding = true;
     }
 
-    public TabsLayout(Action<Event<TabsLayout, int>>? onSelect, Action<Event<TabsLayout, int>>? onClose, Action<Event<TabsLayout, int>>? onRefresh, Action<Event<TabsLayout, int[]>>? onReorder, int? selectedIndex, params Tab[] tabs)
+    internal TabsLayout()
+    {
+    }
+
+    public TabsLayout(Action<Event<TabsLayout, int>>? onSelect, Action<Event<TabsLayout, int>>? onClose,
+        Action<Event<TabsLayout, int>>? onRefresh, Action<Event<TabsLayout, int[]>>? onReorder, int? selectedIndex,
+        params Tab[] tabs)
         : this(
-            onSelect != null ? e => { onSelect(e); return ValueTask.CompletedTask; }
+            onSelect != null
+                ? e =>
+                {
+                    onSelect(e);
+                    return ValueTask.CompletedTask;
+                }
     : null,
-            onClose != null ? e => { onClose(e); return ValueTask.CompletedTask; }
+            onClose != null
+                ? e =>
+                {
+                    onClose(e);
+                    return ValueTask.CompletedTask;
+                }
     : null,
-            onRefresh != null ? e => { onRefresh(e); return ValueTask.CompletedTask; }
+            onRefresh != null
+                ? e =>
+                {
+                    onRefresh(e);
+                    return ValueTask.CompletedTask;
+                }
     : null,
-            onReorder != null ? e => { onReorder(e); return ValueTask.CompletedTask; }
+            onReorder != null
+                ? e =>
+                {
+                    onReorder(e);
+                    return ValueTask.CompletedTask;
+                }
     : null,
             selectedIndex, tabs)
     {

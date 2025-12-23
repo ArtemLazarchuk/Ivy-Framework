@@ -58,9 +58,9 @@ public abstract record NumberInputBase : WidgetBase<NumberInputBase>, IAnyNumber
 
     [Prop] public int? Precision { get; set; }
 
-    [Prop] public NumberInputs Variant { get; set; }
+    [Prop] public NumberInputs Variant { get; set; } = NumberInputs.Number;
 
-    [Prop] public NumberFormatStyle FormatStyle { get; set; }
+    [Prop] public NumberFormatStyle FormatStyle { get; set; } = NumberFormatStyle.Decimal;
 
     [Prop] public string? Currency { get; set; }
 
@@ -112,6 +112,8 @@ public record NumberInput<TNumber> : NumberInputBase, IInput<TNumber>, IAnyNumbe
         Variant = variant;
         FormatStyle = formatStyle;
     }
+
+    internal NumberInput() { }
 
     [Prop] public TNumber Value { get; } = default!;
 

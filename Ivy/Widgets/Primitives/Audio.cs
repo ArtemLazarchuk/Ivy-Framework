@@ -13,14 +13,18 @@ public enum AudioPreload
 
 public record Audio : WidgetBase<Audio>
 {
-    public Audio(string src)
+    public Audio(string src) : this()
     {
         Src = src;
+    }
+
+    internal Audio()
+    {
         Width = Size.Full();
         Height = Size.Units(10);
     }
 
-    [Prop] public string Src { get; set; }
+    [Prop] public string Src { get; set; } = string.Empty;
 
     [Prop] public bool Autoplay { get; set; } = false;
 

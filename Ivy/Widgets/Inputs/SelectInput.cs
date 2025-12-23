@@ -76,11 +76,13 @@ public record SelectInput<TValue> : SelectInputBase, IInput<TValue>, IAnySelectI
         SelectMany = selectMany;
     }
 
+    internal SelectInput() { }
+
     [Prop] public TValue Value { get; } = default!;
 
     [Prop] public bool Nullable { get; set; } = typeof(TValue).IsNullableType();
 
-    [Prop] public IAnyOption[] Options { get; set; }
+    [Prop] public IAnyOption[] Options { get; set; } = [];
 
     [Event] public Func<Event<IInput<TValue>, TValue>, ValueTask>? OnChange { get; }
 }

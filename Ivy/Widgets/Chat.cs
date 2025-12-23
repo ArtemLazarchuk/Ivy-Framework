@@ -17,12 +17,18 @@ public record Chat : WidgetBase<Chat>
     [OverloadResolutionPriority(1)]
     public Chat(ChatMessage[] messages, Func<Event<Chat, string>, ValueTask> onSendMessage) : base(messages.Cast<object>().ToArray())
     {
+        Width = Size.Full();
+        Height = Size.Full();
         OnSendMessage = onSendMessage;
+    }
+
+    internal Chat()
+    {
         Width = Size.Full();
         Height = Size.Full();
     }
 
-    [Event] public Func<Event<Chat, string>, ValueTask> OnSendMessage { get; set; }
+    [Event] public Func<Event<Chat, string>, ValueTask>? OnSendMessage { get; set; }
 
     [Prop] public string Placeholder { get; set; } = "Type a message...";
 

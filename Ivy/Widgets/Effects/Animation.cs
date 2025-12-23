@@ -66,6 +66,8 @@ public record Animation : WidgetBase<Animation>
         Type = animation;
     }
 
+    public Animation() { }
+
     [Prop] public AnimationType Type { get; set; }
 
     [Prop] public double Duration { get; set; } = 0.5;
