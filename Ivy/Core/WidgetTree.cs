@@ -36,6 +36,7 @@ public class TreeNode(string id, int index, TreePath parentTreePath, TreeNode[] 
     public IView? View { get; } = view;
     public IViewContext? Context { get; } = context;
     public IViewContext? AncestorContext { get; } = ancestorContext;
+    public Type NodeType => IsWidget ? Widget!.GetType() : View!.GetType();
 
     public IWidget? GetWidgetTree()
     {
@@ -108,17 +109,20 @@ public class TreeNode(string id, int index, TreePath parentTreePath, TreeNode[] 
     // }
 }
 
-public class WidgetTreeChanged(string viewId, int[] indices, JsonNode patch)
+public class WidgetTreeChanged(string viewId, int[] indices, JsonNode patch, int iteration, string? treeHash)
 {
     public string ViewId { get; } = viewId;
     public int[] Indices { get; } = indices;
     public JsonNode Patch { get; } = patch;
+    public int Iteration { get; set; } = iteration;
+    public string? TreeHash { get; } = treeHash;
 }
 
 public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 {
     private readonly Dictionary<string, TreeNode> _nodes = new();
     private readonly Dictionary<string, string> _parents = new();
+    private int _iteration = 0;
 
     public IView RootView { get; }
     public TreeNode? NodeTree { get; private set; }
@@ -127,12 +131,12 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
     private readonly Subject<string> _buildRequestedSubject = new();
     private readonly SemaphoreSlim _buildRequestedSemaphore = new(1, 1);
     private readonly Disposables _disposables = new();
-    private readonly IContentBuilder _builder;
+    private readonly IContentBuilder _contentBuilder;
     private readonly IServiceProvider _appServices;
 
-    public WidgetTree(IView rootView, IContentBuilder builder, IServiceProvider appServices)
+    public WidgetTree(IView rootView, IContentBuilder contentBuilder, IServiceProvider appServices)
     {
-        _builder = builder;
+        _contentBuilder = contentBuilder;
         _appServices = appServices;
         RootView = rootView;
 
@@ -235,9 +239,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
             if (nodesToRebuild.Length > 1)
             {
-                //building more than one node
-                //what happens if A is parent of B? what about the order they are built in? If A is built first, B might be invalidated
-                //Is this related to the issue with indexes below
+                //Building more than one node
+                //What happens if A is parent of B? What about the order they are built in? If A is built first, B might be invalidated
             }
 
             foreach (var nodeId in nodesToRebuild)
@@ -292,7 +295,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         var indices = node.GetWidgetTreeIndices();
 
         var previous = node.GetWidgetTree()?.Serialize();
-        //todo: we are serializing quite a lot here - is it worth caching the previous serialized tree in the node?
+
+        //todo: we are serializing quite a lot here. Is it worth caching the previous serialized tree in the node?
 
         var partial = BuildView(node.View!, node.ParentTreePath.Clone(), node.Index, parentId, node.AncestorContext, isRefreshingView: true, isHotReload);
 
@@ -308,8 +312,10 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             {
                 if (parent.Children.Length <= node.Index)
                 {
-                    //todo: we're getting this in some cases - need to investigate more
-                    Console.WriteLine($"WARN:Parent children length {parent.Children.Length} of {parentId} is less than node index {node.Index} that we are trying to update.");
+                    //todo: We're getting this in some cases - need to investigate more
+                    //todo: Maybe OK but then we can optimize to not build that widget at all?
+                    //Console.WriteLine($"WARN:Parent children length {parent.Children.Length} of {parentId} is less than node index {node.Index} that we are trying to update.");
+                    //Console.WriteLine(node.ParentTreePath.ToString());
                 }
                 else
                 {
@@ -324,6 +330,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
         try
         {
+            //todo: if previous node and new node are different types we can just send a full replace patch
+
             var update = partial.GetWidgetTree()?.Serialize();
             var patch = previous.Diff(update, new JsonPatchDeltaFormatter());
 
@@ -332,15 +340,20 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                 return null!;
             }
 
+            _iteration += 1;
+            string? hash = null;
+
 #if DEBUG
+            //DebugHelpers.CheckIfIdUsedMultipleTimes(NodeTree);
+            hash = DebugHelpers.CalculateTreeHash(NodeTree?.GetWidgetTree()?.Serialize());
             if (Environment.GetEnvironmentVariable("IVY_DUMP_WIDGET_TREES") == "1")
             {
                 stopWatch.Start();
-                DebugHelpers.LogUpdatedTree(previous, update, patch, stopWatch.ElapsedMilliseconds);
+                DebugHelpers.LogUpdatedTree(previous, update, patch, stopWatch.ElapsedMilliseconds, _iteration, hash);
             }
 #endif
 
-            return new WidgetTreeChanged(viewId, indices, patch);
+            return new WidgetTreeChanged(viewId, indices, patch, _iteration, hash);
         }
         catch (ObjectDisposedException)
         {
@@ -387,8 +400,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
             if (view is IStateless)
             {
-                //small optimization for stateless views to skip context creation - not sure this really matters
-                node = BuildObject(view.Build(), treePath.Clone(), index, view.Id, ancestorContext, isHotReload);
+                //Small optimization for stateless views to skip context creation - not sure this really matters
+                node = BuildObject(view.Build(), treePath.Clone(), 0, view.Id, ancestorContext, isHotReload);
             }
             else
             {
@@ -419,7 +432,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                     buildResult = e;
                 }
 
-                node = BuildObject(buildResult, treePath.Clone(), index, view.Id, context, isHotReload);
+                node = BuildObject(buildResult, treePath.Clone(), 0, view.Id, context, isHotReload);
                 view.AfterBuild();
                 context.Reset();
             }
@@ -479,7 +492,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
     private TreeNode? BuildObject(object? anything, TreePath treePath, int index, string parentId, IViewContext? ancestorContext, bool isHotReload)
     {
-        var formatted = _builder.Format(anything);
+        var formatted = _contentBuilder.Format(anything);
         if (formatted == null) return null;
 
         if (formatted is not IView && formatted is not IWidget)

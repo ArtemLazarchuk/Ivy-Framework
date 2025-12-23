@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -52,10 +51,15 @@ public static class WidgetSerializer
                 .Select(p => new EventInfo(p))
                 .ToArray();
 
-            var typeName = t.Namespace + "." + Utils.CleanGenericNotation(t.Name);
+            var typeName = CleanTypeName(t);
 
             return new SerializationTypeMetadata(typeName, propProperties, eventProperties);
         });
+    }
+
+    public static string CleanTypeName(Type t)
+    {
+        return t.Namespace + "." + Utils.CleanGenericNotation(t.Name);
     }
 
     public static JsonNode Serialize(IWidget widget)
