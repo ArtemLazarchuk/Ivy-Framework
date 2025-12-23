@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Ivy.Core;
@@ -55,6 +56,8 @@ public abstract record TextInputBase : WidgetBase<TextInputBase>, IAnyTextInput
 
     [Prop] public int? MaxLength { get; set; }
 
+    [Prop] public bool Nullable { get; set; }
+
     [Event] public Func<Event<IAnyInput>, ValueTask>? OnBlur { get; set; }
 
     public Type[] SupportedStateTypes() => [];
@@ -94,6 +97,8 @@ public record TextInput<TString> : TextInputBase, IInput<TString>
 
     [Prop] public TString Value { get; } = default!;
 
+    [Prop] public new bool Nullable { get; set; } = typeof(TString).IsNullableType();
+
     [Event] public Func<Event<IInput<TString>, TString>, ValueTask>? OnChange { get; }
 }
 
@@ -128,6 +133,7 @@ public static class TextInputExtensions
         var type = state.GetStateType();
         Type genericType = typeof(TextInput<>).MakeGenericType(type);
         TextInputBase input = (TextInputBase)Activator.CreateInstance(genericType, state, placeholder, disabled, variant)!;
+        input.Nullable = type.IsNullableType();
         return input;
     }
 
@@ -150,6 +156,17 @@ public static class TextInputExtensions
     public static TextInputBase Variant(this TextInputBase widget, TextInputs variant) => widget with { Variant = variant };
 
     public static TextInputBase Invalid(this TextInputBase widget, string invalid) => widget with { Invalid = invalid };
+
+    public static TextInputBase Nullable(this TextInputBase widget, bool? nullable = true)
+    {
+        var property = widget.GetType().GetProperty("Nullable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(widget, nullable ?? true);
+            return widget;
+        }
+        return widget with { Nullable = nullable ?? true };
+    }
 
     public static TextInputBase ShortcutKey(this TextInputBase widget, string shortcutKey) => widget with { ShortcutKey = shortcutKey };
 
