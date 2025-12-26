@@ -44,9 +44,9 @@ interface BarChartWidgetProps {
   tooltip?: ToolTipProps;
   legend?: LegendProps;
   toolbox?: ToolboxProps;
-  referenceLines?: MarkLine;
-  referenceAreas?: MarkArea;
-  referenceDots?: ReferenceDot;
+  referenceLines?: MarkLine[];
+  referenceAreas?: MarkArea[];
+  referenceDots?: ReferenceDot[];
   colorScheme: ColorScheme;
   barGap?: number;
   barCategoryGap?: number | string;
@@ -116,6 +116,45 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
     [colorScheme, colors]
   );
 
+  // Convert ReferenceDot[] to ECharts markPoint format
+  const markPoint = useMemo(
+    () =>
+      referenceDots.length > 0
+        ? {
+            label: { show: true },
+            data: referenceDots.map(d => ({
+              coord: [d.x, d.y],
+              name: d.label,
+            })),
+          }
+        : { label: { show: false } },
+    [referenceDots]
+  );
+
+  // Merge MarkLine[] into single markLine config
+  const markLine = useMemo(
+    () =>
+      referenceLines.length > 0
+        ? {
+            ...referenceLines[0],
+            data: referenceLines.flatMap(ml => ml.data),
+          }
+        : {},
+    [referenceLines]
+  );
+
+  // Merge MarkArea[] into single markArea config
+  const markAreaConfig = useMemo(
+    () =>
+      referenceAreas.length > 0
+        ? {
+            ...referenceAreas[0],
+            data: referenceAreas.flatMap(ma => ma.data),
+          }
+        : {},
+    [referenceAreas]
+  );
+
   // Memoize series configuration
   const series = useMemo(
     () =>
@@ -133,13 +172,9 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
         barCategoryGap: barCategoryGap ? `${barCategoryGap}%` : '10%',
         barMaxWidth: maxBarSize,
         stackOrder: reverseStackOrder ? 'seriesDesc' : 'seriesAsc',
-        markPoint: {
-          label: {
-            show: referenceDots ? true : false,
-          },
-        },
-        markLine: referenceLines ?? {},
-        markArea: referenceAreas ?? {},
+        markPoint,
+        markLine,
+        markArea: markAreaConfig,
       })),
     [
       valueKeys,
@@ -149,9 +184,9 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
       barCategoryGap,
       maxBarSize,
       reverseStackOrder,
-      referenceDots,
-      referenceLines,
-      referenceAreas,
+      markPoint,
+      markLine,
+      markAreaConfig,
     ]
   );
 

@@ -138,10 +138,39 @@ export const generateSeries = (
   valueKeys: string[],
   lines?: LinesProps[],
   transform?: (v: number) => number,
-  referenceDots?: ReferenceDot,
-  referenceLines?: MarkLine,
-  referenceAreas?: MarkArea
+  referenceDots?: ReferenceDot[],
+  referenceLines?: MarkLine[],
+  referenceAreas?: MarkArea[]
 ) => {
+  // Convert ReferenceDot[] to ECharts markPoint format
+  const markPoint =
+    referenceDots && referenceDots.length > 0
+      ? {
+          data: referenceDots.map(d => ({
+            coord: [d.x, d.y],
+            name: d.label,
+          })),
+        }
+      : {};
+
+  // Merge MarkLine[] into single markLine config
+  const markLine =
+    referenceLines && referenceLines.length > 0
+      ? {
+          ...referenceLines[0],
+          data: referenceLines.flatMap(ml => ml.data),
+        }
+      : {};
+
+  // Merge MarkArea[] into single markArea config
+  const markArea =
+    referenceAreas && referenceAreas.length > 0
+      ? {
+          ...referenceAreas[0],
+          data: referenceAreas.flatMap(ma => ma.data),
+        }
+      : {};
+
   return valueKeys.map((key, i) => {
     const lineConfig = lines?.[i];
 
@@ -165,9 +194,9 @@ export const generateSeries = (
       blur: { lineStyle: { opacity: 0.6 } },
       animation: true,
       animationDuration: 800,
-      markPoint: referenceDots ?? {},
-      markLine: referenceLines ?? {},
-      markArea: referenceAreas ?? {},
+      markPoint,
+      markLine,
+      markArea,
     };
   });
 };

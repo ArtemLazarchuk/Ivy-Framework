@@ -14,13 +14,13 @@ import { getChartThemeColors } from './styles';
 
 const PieChartWidget: React.FC<PieChartWidgetProps> = ({
   data,
-  width,
-  height,
-  pies,
+  width = 'Full',
+  height = 'Full',
+  pies = [],
   tooltip,
   toolbox,
   legend,
-  colorScheme,
+  colorScheme = 'Default',
   total,
 }) => {
   // Use enhanced theme hook with automatic monitoring
