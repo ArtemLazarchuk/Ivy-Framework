@@ -52,7 +52,7 @@ interface BarChartWidgetProps {
   barCategoryGap?: number | string;
   maxBarSize?: number;
   reverseStackOrder?: boolean;
-  layout?: 'horizontal' | 'vertical';
+  layout?: 'Horizontal' | 'Vertical';
 }
 
 const BarChartWidget: React.FC<BarChartWidgetProps> = ({
@@ -61,21 +61,21 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
   height,
   bars,
   cartesianGrid,
-  xAxis,
-  yAxis,
+  xAxis = [],
+  yAxis = [],
   tooltip,
   legend,
   toolbox,
-  referenceLines,
-  referenceAreas,
-  referenceDots,
-  colorScheme,
+  referenceLines = [],
+  referenceAreas = [],
+  referenceDots = [],
+  colorScheme = 'Default',
   //stackOffset,
-  barGap,
-  barCategoryGap,
+  barGap = 4,
+  barCategoryGap = '10%',
   maxBarSize,
   reverseStackOrder,
-  layout,
+  layout = 'Horizontal',
 }) => {
   // Use enhanced theme hook with automatic monitoring
   const { colors, isDark } = useThemeWithMonitoring({

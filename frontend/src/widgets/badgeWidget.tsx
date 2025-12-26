@@ -9,7 +9,14 @@ interface BadgeWidgetProps {
   title: string;
   icon?: string;
   iconPosition?: 'Left' | 'Right';
-  variant?: 'Primary' | 'Destructive' | 'Outline' | 'Secondary' | 'Success' | 'Warning' | 'Info';
+  variant?:
+    | 'Primary'
+    | 'Destructive'
+    | 'Outline'
+    | 'Secondary'
+    | 'Success'
+    | 'Warning'
+    | 'Info';
   scale?: Scales;
 }
 

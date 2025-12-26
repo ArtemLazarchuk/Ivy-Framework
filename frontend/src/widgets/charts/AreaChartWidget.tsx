@@ -50,19 +50,19 @@ interface AreaChartWidgetProps {
 
 const AreaChartWidget: React.FC<AreaChartWidgetProps> = ({
   data,
-  width,
-  height,
-  areas,
+  width = 'Full',
+  height = 'Full',
+  areas = [],
   cartesianGrid,
-  xAxis,
-  yAxis,
+  xAxis = [],
+  yAxis = [],
   tooltip,
   toolbox,
   legend,
   referenceLines,
   referenceAreas,
   referenceDots,
-  colorScheme,
+  colorScheme = 'Default',
 }) => {
   // Use enhanced theme hook with automatic monitoring
   const { colors, isDark } = useThemeWithMonitoring({

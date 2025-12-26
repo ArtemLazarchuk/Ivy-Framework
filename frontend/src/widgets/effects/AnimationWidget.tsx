@@ -313,8 +313,7 @@ const getAnimationVariants = (props: AnimationWidgetProps): Variants => {
 };
 
 const AnimationWidget: React.FC<AnimationWidgetProps> = props => {
-
-  const defaults : AnimationWidgetProps = {
+  const defaults: AnimationWidgetProps = {
     trigger: 'Auto',
     visible: true,
     duration: 0.5,
@@ -322,16 +321,12 @@ const AnimationWidget: React.FC<AnimationWidgetProps> = props => {
     distance: 100,
     intensity: 1,
     easing: 'Linear',
-    type: 'Rotate'
+    type: 'Rotate',
   };
 
   const merged = { ...defaults, ...props };
 
-  const { 
-    children, 
-    visible, 
-    trigger,
-  } = merged;
+  const { children, visible, trigger } = merged;
 
   const [isAnimating, setIsAnimating] = React.useState(trigger === 'Auto');
   const variants = getAnimationVariants(merged);

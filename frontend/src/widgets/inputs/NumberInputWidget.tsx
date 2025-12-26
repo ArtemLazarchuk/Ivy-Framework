@@ -330,6 +330,7 @@ export const NumberInputWidget = memo(
           <NumberVariant
             id={id}
             {...props}
+            formatStyle={formatStyle}
             value={normalizedValue}
             nullable={nullable}
             onValueChange={handleChange}

@@ -55,9 +55,9 @@ interface ChatWidgetProps {
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
   id,
   children,
-  placeholder = "Type a message...",
-  width = "Full",
-  height = "Full",
+  placeholder = 'Type a message...',
+  width = 'Full',
+  height = 'Full',
 }) => {
   const eventHandler = useEventHandler();
 

@@ -45,7 +45,7 @@ export const ProgressWidget: React.FC<ProgressWidgetProps> = ({
   value,
   goal,
   colorVariant = 'Primary',
-  width = "Full",
+  width = 'Full',
 }) => {
   const isCompleted = value && value >= 100;
   const styles = getWidth(width);
