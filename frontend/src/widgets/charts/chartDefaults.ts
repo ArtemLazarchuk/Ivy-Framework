@@ -134,30 +134,5 @@ export const REFERENCE_LINE_DEFAULTS = {
   strokeWidth: 1,
 };
 
-/**
- * Apply defaults to an object, only setting values that are undefined.
- */
-export function applyDefaults<T extends object>(
-  obj: Partial<T> | undefined,
-  defaults: Partial<T>
-): Partial<T> {
-  if (!obj) return { ...defaults };
-  const result = { ...defaults };
-  for (const key in obj) {
-    if (obj[key] !== undefined) {
-      (result as Record<string, unknown>)[key] = obj[key];
-    }
-  }
-  return result;
-}
-
-/**
- * Apply defaults to an array of objects.
- */
-export function applyDefaultsToArray<T extends object>(
-  arr: Partial<T>[] | undefined,
-  defaults: Partial<T>
-): Partial<T>[] {
-  if (!arr || arr.length === 0) return [];
-  return arr.map(item => applyDefaults(item, defaults));
-}
+// Re-export applyDefaults from shared utils
+export { applyDefaults } from '@/lib/utils';
