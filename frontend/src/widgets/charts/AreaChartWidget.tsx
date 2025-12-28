@@ -87,6 +87,7 @@ const AreaChartWidget: React.FC<AreaChartWidgetProps> = ({
 
   const styles: React.CSSProperties = {
     ...getWidth(width),
+    position: 'relative',
     ...(isFull
       ? { display: 'flex', flexDirection: 'column', height: '100%' }
       : {}),
@@ -210,6 +211,7 @@ const AreaChartWidget: React.FC<AreaChartWidgetProps> = ({
         foreground: themeColors.foreground,
         fontSans: themeColors.fontSans,
         background: themeColors.background,
+        mutedForeground: themeColors.mutedForeground,
       }),
       legend: generateEChartLegend(legend, {
         foreground: themeColors.foreground,

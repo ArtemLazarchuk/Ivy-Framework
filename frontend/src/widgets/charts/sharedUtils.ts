@@ -349,7 +349,12 @@ export const generateYAxis = (
 export const generateTooltip = (
   tooltip?: ToolTipProps,
   type?: string,
-  themeColors?: { foreground: string; fontSans: string; background: string }
+  themeColors?: {
+    foreground: string;
+    fontSans: string;
+    background: string;
+    mutedForeground?: string;
+  }
 ) => {
   // Apply defaults for tooltip
   const tip = tooltip
@@ -363,6 +368,16 @@ export const generateTooltip = (
       type: type ?? 'cross',
       animated: tip.animated ?? TOOLTIP_DEFAULTS.animated,
       shadowStyle: { opacity: 0.5 },
+      lineStyle: {
+        color: themeColors?.mutedForeground,
+      },
+      crossStyle: {
+        color: themeColors?.mutedForeground,
+      },
+      label: {
+        backgroundColor: themeColors?.mutedForeground,
+        color: 'rgba(255, 255, 255, 0.9)',
+      },
     },
     textStyle: generateTextStyle(
       themeColors?.foreground,
@@ -384,9 +399,24 @@ export const generateEChartToolbox = (toolbox?: ToolboxProps) => {
   const features: ToolboxFeatures = {};
 
   if (box.dataView !== false) {
+    const cardBg = getComputedStyle(document.documentElement)
+      .getPropertyValue('--card')
+      .trim();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground')
+      .trim();
+    const mutedForeground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--muted-foreground')
+      .trim();
+
     features.dataView = {
       show: true,
       readOnly: false,
+      backgroundColor: cardBg,
+      textareaColor: cardBg,
+      textColor: foreground,
+      buttonColor: mutedForeground,
+      buttonTextColor: 'rgba(255, 255, 255, 0.9)',
     };
   }
 
@@ -420,6 +450,11 @@ export const generateEChartToolbox = (toolbox?: ToolboxProps) => {
           ? 'middle'
           : 'bottom',
     feature: features,
+    iconStyle: {
+      borderColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--muted-foreground')
+        .trim(),
+    },
     emphasis: {
       iconStyle: {
         color: null,
