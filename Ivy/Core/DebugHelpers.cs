@@ -63,7 +63,9 @@ internal static class DebugHelpers
         var sb = new System.Text.StringBuilder();
         BuildTreeSignature(widgetTree, sb);
 
-        return Djb2Hash(sb.ToString());
+        var signature = sb.ToString();
+
+        return Djb2Hash(signature);
     }
 
     private static string Djb2Hash(string str)

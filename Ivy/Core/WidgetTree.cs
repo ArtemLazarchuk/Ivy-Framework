@@ -127,6 +127,19 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
     public IView RootView { get; }
     public TreeNode? NodeTree { get; private set; }
 
+    public static JsonPatchDeltaFormatter JsonPatchDeltaFormatter = new();
+    public static JsonDiffOptions JsonDiffOptions = new()
+    {
+        ArrayObjectItemKeyFinder = (node, _) =>
+        {
+            if (node is JsonObject obj && obj.TryGetPropertyValue("id", out var id))
+            {
+                return id?.GetValue<string>();
+            }
+            return null;
+        }
+    };
+
     private readonly Subject<WidgetTreeChanged[]> _treeChangedSubject = new();
     private readonly Subject<string> _buildRequestedSubject = new();
     private readonly SemaphoreSlim _buildRequestedSemaphore = new(1, 1);
@@ -294,9 +307,8 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
         var indices = node.GetWidgetTreeIndices();
 
+        //todo: We are serializing twice. Is it worth caching the previous serialized tree in the node?
         var previous = node.GetWidgetTree()?.Serialize();
-
-        //todo: we are serializing quite a lot here. Is it worth caching the previous serialized tree in the node?
 
         var partial = BuildView(node.View!, node.ParentTreePath.Clone(), node.Index, parentId, node.AncestorContext, isRefreshingView: true, isHotReload);
 
@@ -312,10 +324,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             {
                 if (parent.Children.Length <= node.Index)
                 {
-                    //todo: We're getting this in some cases - need to investigate more
-                    //todo: Maybe OK but then we can optimize to not build that widget at all?
-                    //Console.WriteLine($"WARN:Parent children length {parent.Children.Length} of {parentId} is less than node index {node.Index} that we are trying to update.");
-                    //Console.WriteLine(node.ParentTreePath.ToString());
+                    Console.WriteLine($"WARN:Parent children length {parent.Children.Length} of {parentId} is less than node index {node.Index} that we are trying to update.");
                 }
                 else
                 {
@@ -330,10 +339,26 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
 
         try
         {
-            //todo: if previous node and new node are different types we can just send a full replace patch
-
             var update = partial.GetWidgetTree()?.Serialize();
-            var patch = previous.Diff(update, new JsonPatchDeltaFormatter());
+
+            var previousId = previous?["id"]?.GetValue<string>();
+            var updateId = update?["id"]?.GetValue<string>();
+
+            JsonNode? patch;
+
+            if (previousId != null && updateId != null && previousId != updateId)
+            {
+                patch = new JsonArray(new JsonObject
+                {
+                    ["op"] = "replace",
+                    ["path"] = "",
+                    ["value"] = update?.DeepClone()
+                });
+            }
+            else
+            {
+                patch = previous.Diff(update, JsonPatchDeltaFormatter, JsonDiffOptions);
+            }
 
             if (patch == null || patch.IsEmptyArray())
             {
@@ -352,7 +377,6 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                 DebugHelpers.LogUpdatedTree(previous, update, patch, stopWatch.ElapsedMilliseconds, _iteration, hash);
             }
 #endif
-
             return new WidgetTreeChanged(viewId, indices, patch, _iteration, hash);
         }
         catch (ObjectDisposedException)
