@@ -354,6 +354,21 @@ public class DefaultSidebarChrome(ChromeSettings settings) : ViewBase
                 )
         };
 
+        var authSession = auth?.GetAuthSession();
+        var isLoggedIn = authSession != null;
+
+        var onLogout = new Action(async () =>
+        {
+            try
+            {
+                if (auth == null) return;
+                await auth.LogoutAsync();
+            }
+            catch (Exception)
+            {
+            }
+        });
+
         DropDownMenu? footer;
         if (user.Value != null)
         {
@@ -375,20 +390,6 @@ public class DefaultSidebarChrome(ChromeSettings settings) : ViewBase
                     trigger)
                 .Top();
 
-            var onLogout = new Action(async () =>
-            {
-                try
-                {
-                    if (auth == null) return;
-
-                    var authSession = auth.GetAuthSession();
-                    await auth.LogoutAsync();
-                }
-                catch (Exception)
-                {
-                }
-            });
-
             footer = footer.Items(settings.FooterMenuItemsTransformer([
                 ..commonMenuItems, MenuItem.Default("Logout").Tag("$logout").Icon(Icons.LogOut).HandleSelect(onLogout)
             ], navigator));
@@ -403,12 +404,16 @@ public class DefaultSidebarChrome(ChromeSettings settings) : ViewBase
                     )
                     .Variant(ButtonVariant.Ghost).Width(Size.Full());
 
+            var footerMenuItems = isLoggedIn
+                ? [.. commonMenuItems, MenuItem.Default("Logout").Tag("$logout").Icon(Icons.LogOut).HandleSelect(onLogout)]
+                : commonMenuItems;
+
             footer = new DropDownMenu(
                     DropDownMenu.DefaultSelectHandler(),
                     trigger)
                 .Top()
                 .Items(
-                    settings.FooterMenuItemsTransformer(commonMenuItems, navigator)
+                    settings.FooterMenuItemsTransformer(footerMenuItems, navigator)
                 );
         }
 
