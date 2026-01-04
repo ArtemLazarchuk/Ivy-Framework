@@ -178,7 +178,15 @@ Ivy supports the following authentication providers. Click on any provider for d
 >ivy auth add --provider Basic --connection-string YourConnectionString
 ```
 
-### Best Practices
+## Complete Custom Login View
+
+For complete control over the login experience, you can replace the entire login view:
+
+```csharp
+server.UseAuth<BasicAuthProvider>(viewFactory: () => new MyCustomLoginApp());
+```
+
+## Best Practices
 
 **Security** - Always use HTTPS in production, store sensitive configuration in user secrets or environment variables, regularly rotate client secrets, use strong passwords for Basic Auth, and implement proper session management.
 
