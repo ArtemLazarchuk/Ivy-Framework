@@ -174,7 +174,6 @@ yield return new AppDescriptor(
 ## What's Changed
 
 - [PieChart]: disable magicType in toolbox by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1906>
-
 - [frontend]: fix font flickering using ivy-design-system fonts by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1901>
 - [Icons]: update Icons enum to match lucide-react last version by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1912>
 - [frontend]: correct font preload paths to prevent flickering by @defymecobra in <https://github.com/Ivy-Interactive/Ivy-Framework/pull/1914>
