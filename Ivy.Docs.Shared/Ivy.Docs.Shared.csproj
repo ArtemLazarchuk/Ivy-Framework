@@ -33,7 +33,7 @@
     <ProjectReference Include="../Ivy.Docs.Tools/Ivy.Docs.Tools.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <Target Name="TransformMarkdown" BeforeTargets="BeforeBuild">
+  <Target Name="TransformMarkdown" AfterTargets="ResolveProjectReferences" BeforeTargets="CoreCompile">
     <PropertyGroup>
       <DocsToolPath>$([System.IO.Path]::GetFullPath('$([System.IO.Path]::Combine($(MSBuildProjectDirectory), '..', 'Ivy.Docs.Tools', 'bin', $(Configuration), $(TargetFramework), 'Ivy.Docs.Tools.dll'))'))</DocsToolPath>
       <DocsInputPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), 'Docs', '*.md'))</DocsInputPath>
