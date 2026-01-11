@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <Target Name="TransformMarkdown" BeforeTargets="BeforeBuild">
-    <Exec Command="dotnet run --no-build --configuration $(Configuration) --project ../Ivy.Docs.Tools/Ivy.Docs.Tools.csproj -- convert $(MSBuildProjectDirectory)/Docs/*.md $(MSBuildProjectDirectory)/Generated --skip-if-not-changed" />
+    <Exec Command="dotnet &quot;$(MSBuildProjectDirectory)/../Ivy.Docs.Tools/bin/$(Configuration)/$(TargetFramework)/Ivy.Docs.Tools.dll&quot; convert $(MSBuildProjectDirectory)/Docs/*.md $(MSBuildProjectDirectory)/Generated --skip-if-not-changed" />
     <ItemGroup>
       <Compile Include="Generated/**/*.g.cs" />
       <EmbeddedResource Remove="Generated/**/*.md" />
