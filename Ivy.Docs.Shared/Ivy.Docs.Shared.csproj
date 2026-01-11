@@ -29,10 +29,12 @@
     <Compile Include="**/*.cs" Exclude="obj/**/*.cs;bin/**/*.cs;Generated/**/*.cs" />
   </ItemGroup>
 
-  <Target Name="TransformMarkdown" BeforeTargets="CoreCompile">
+  <Target Name="TransformMarkdown" BeforeTargets="BeforeBuild">
     <Exec Command="dotnet run --project ../Ivy.Docs.Tools/Ivy.Docs.Tools.csproj -- convert $(MSBuildProjectDirectory)/Docs/*.md $(MSBuildProjectDirectory)/Generated --skip-if-not-changed" />
     <ItemGroup>
       <Compile Include="Generated/**/*.g.cs" />
+      <EmbeddedResource Remove="Generated/**/*.md" />
+      <EmbeddedResource Include="Generated/**/*.md" />
     </ItemGroup>
   </Target>
 
