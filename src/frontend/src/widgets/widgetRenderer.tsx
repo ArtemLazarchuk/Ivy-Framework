@@ -64,10 +64,6 @@ const isLazyComponent = (
   );
 };
 
-const isChartComponent = (nodeType: string): boolean => {
-  return nodeType.startsWith('Ivy.') && nodeType.includes('Chart');
-};
-
 const flattenChildren = (children: WidgetNode[]): WidgetNode[] => {
   return children.flatMap(child => {
     if (child.type === 'Ivy.Fragment') {
@@ -145,28 +141,13 @@ const MemoizedWidget = memo(
     }
 
     const content = (
-      <Component {...props} slots={slots}>
-        {slots.default}
-      </Component>
+      <ivy-widget id={node.id} type={node.type}>
+        <Component {...props} slots={slots}>
+          {slots.default}
+        </Component>
+      </ivy-widget>
     );
 
-    // For chart components, provide a specific fallback
-    if (isLazyComponent(Component) && isChartComponent(node.type)) {
-      return (
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center p-8 text-muted-foreground">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-2">Loading chart...</span>
-            </div>
-          }
-        >
-          {content}
-        </Suspense>
-      );
-    }
-
-    // For other lazy components, use original behavior
     return isLazyComponent(Component) ? (
       <Suspense>{content}</Suspense>
     ) : (
@@ -237,12 +218,13 @@ const renderExternalWidget = (
   }
 
   const content = (
-    <Component {...props} slots={slots} key={node.id}>
-      {slots.default}
-    </Component>
+    <ivy-widget key={node.id} id={node.id} type={node.type}>
+      <Component {...props} slots={slots}>
+        {slots.default}
+      </Component>
+    </ivy-widget>
   );
 
-  // For lazy components (external widgets are typically lazy), wrap in Suspense
   return isLazyComponent(Component) ? (
     <Suspense key={node.id}>{content}</Suspense>
   ) : (
