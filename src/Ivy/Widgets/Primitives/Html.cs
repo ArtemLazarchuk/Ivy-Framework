@@ -13,4 +13,9 @@ public record Html : WidgetBase<Html>
     internal Html() { }
 
     [Prop] public string Content { get; set; } = string.Empty;
+
+}
+
+public static class HtmlExtensions
+{
 }

@@ -46,4 +46,5 @@ public static class MarkdownExtensions
     {
         return button with { OnLinkClick = @event => { onLinkClick(@event.Value); return ValueTask.CompletedTask; } };
     }
+
 }

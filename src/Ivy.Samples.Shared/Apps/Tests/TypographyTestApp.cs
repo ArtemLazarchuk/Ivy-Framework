@@ -22,12 +22,6 @@ This is a paragraph of text to compare the typography. It should have comfortabl
 
 This is a paragraph of text to compare the typography. It should have comfortable line height and spacing.
 
-* Unordered List Item 1
-* Unordered List Item 2
-
-1. Ordered List Item 1
-2. Ordered List Item 2
-
 > This is a blockquote. It should stand out from the rest of the text.
 
 **Bold Text** and *Italic Text* and `Inline Code`.
@@ -48,16 +42,6 @@ End of the typography test.
 <p>This is a paragraph of text to compare the typography. It should have comfortable line height and spacing.</p>
 <p>This is a paragraph of text to compare the typography. It should have comfortable line height and spacing.</p>
 
-<ul>
-  <li>Unordered List Item 1</li>
-  <li>Unordered List Item 2</li>
-</ul>
-
-<ol>
-  <li>Ordered List Item 1</li>
-  <li>Ordered List Item 2</li>
-</ol>
-
 <blockquote>This is a blockquote. It should stand out from the rest of the text.</blockquote>
 
 <p><strong>Bold Text</strong> and <em>Italic Text</em> and <code>Inline Code</code>.</p>
@@ -68,10 +52,10 @@ End of the typography test.
 """;
 
         return Layout.Grid().Columns(3).Gap(20)
-            | new Card(new Markdown(markdown)).Title("Markdown Rendering")
-            | new Card(new Html(html)).Title("HTML Rendering")
+            | new Card(new Markdown(markdown)).Title("Markdown")
+            | new Card(new Html(html)).Title("HTML")
             | new Card(
-                Layout.Vertical().Gap(0)
+                Layout.Vertical()
                 | Text.H1("Heading 1")
                 | Text.H2("Heading 2")
                 | Text.H3("Heading 3")
