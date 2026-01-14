@@ -329,7 +329,13 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
             if (view is IStateless)
             {
                 //Small optimization for stateless views to skip context creation - not sure this really matters
+#if DEBUG
+                AbstractWidget.CurrentViewCallSite.Value = view.CallSite;
+#endif
                 node = BuildObject(view.Build(), treePath.Clone(), 0, view.Id, ancestorContext, isHotReload);
+#if DEBUG
+                AbstractWidget.CurrentViewCallSite.Value = null;
+#endif
             }
             else
             {
@@ -351,14 +357,26 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                 view.BeforeBuild(context);
 
                 object? buildResult;
+#if DEBUG
+                AbstractWidget.CurrentViewCallSite.Value = view.CallSite;
                 try
                 {
-                    buildResult = view.Build();
+#endif
+                    try
+                    {
+                        buildResult = view.Build();
+                    }
+                    catch (Exception e)
+                    {
+                        buildResult = e;
+                    }
+#if DEBUG
                 }
-                catch (Exception e)
+                finally
                 {
-                    buildResult = e;
+                    AbstractWidget.CurrentViewCallSite.Value = null;
                 }
+#endif
 
                 node = BuildObject(buildResult, treePath.Clone(), 0, view.Id, context, isHotReload);
                 view.AfterBuild();
@@ -425,6 +443,9 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
         treePath.Push(widget, index);
 
         widget.Id = treePath.GenerateId();
+#if DEBUG
+        widget.Path = treePath.ToString();
+#endif
 
         var children = new List<WidgetTreeNode>();
         if (widget.Children == null!) widget.Children = [];
