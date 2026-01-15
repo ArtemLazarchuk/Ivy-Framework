@@ -12,9 +12,6 @@ Terminology:
 - "Hooks" are functions that allow views to manage state and side effects.
 - "Widgets" are the UI elements that make up the views. e.g., Button, TextBlock, StackPanel...
 - "Apps" are the top-level views that represent entire applications.
-- "Fragments" are used to group multiple widgets without adding extra nodes to the UI tree.
-- "Events" are used to handle user interactions and other actions in a widget.
-- "Props" are the parameters passed to widgets to configure their behavior and appearance.
 
 A view is defined as a class that inherits from `ViewBase` and implements a `Build` method. The `Build` method returns either another view or a widget. 
 
