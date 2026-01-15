@@ -6,6 +6,7 @@ Add ".md" to the end of any URL to go directly to the Markdown version of the do
 - Ivy is a declarative full-stack UI framework that allows developers to build user interfaces using a component-based approach very similar to React. 
 - In Ivy you only write one application in pure C# and we don't have a BE and FE distinction.
 - UI rendering is handled by Ivy. 
+- When programming in Ivy you focus on building the logical structure of your application using a large set of pre-built widgets and views - you rarely need to specify any styling - Ivy just makes it look good by default.
 
 Terminology: 
 - "Views" are the main building blocks of the UI, similar to React components.
@@ -33,7 +34,8 @@ The topmost view in an Ivy application is called an [App](https://docs.ivy.app/o
 [App()]
 public class MyApp : ViewBase
 
-An app is built into a tree of widgets. This is what's rendered to the screen.
+- The convention is to put all apps in the `Apps` folder of your Ivy project.
+- An app is built into a tree of widgets. This is what's rendered to the screen.
 
 ## Common Widgets
 
@@ -62,7 +64,7 @@ Use Layout.Vertical() or Layout.Horizontal() to create stack layouts.
 - Add Children: Pipe child elements using the | operator to arrange them top-to-bottom (vertical) or left-to-right (horizontal).
 - Layouts can be customized with methods like .Gap(int number) to set spacing between children and .Align(Align alignment) to control child alignment within the layout. 
 - The number in Gap(int number) works the same as in Tailwind CSS spacing scale (e.g., 1 = 0.25rem, 2 = 0.5rem, etc.).
-Layouts have a default gap of 4 (1rem).
+Layouts have a default gap of 4 (1rem). In general, you very rarely need to set the gap explicitly.
 
 // Basic Vertical Layout
 Layout.Vertical()
@@ -176,6 +178,8 @@ var userNameState = UseState("");
 var input = userNameState.ToTextInput().Placeholder("Enter your name");
 
 ToTextInput()
+ToTextAreaInput()
+ToPasswordInput()
 ToNumberInput()
 ToBoolInput()
 ToSelectInput(IEnumerable<IAnyOption>)
