@@ -46,14 +46,14 @@ public class MyApp : ViewBase
 [Progress](https://docs.ivy.app/widgets/common/progress.md)
 [Expandable](https://docs.ivy.app/widgets/common/expandable.md)
 [Tooltip](https://docs.ivy.app/widgets/common/tooltip.md)
-[DropDownMenu](https://docs.ivy.app/widgets/common/dropdownmenu.md)
+[DropDownMenu](https://docs.ivy.app/widgets/common/drop-down-menu)
 [Table](https://docs.ivy.app/widgets/common/table.md)
 [List](https://docs.ivy.app/widgets/common/list.md)
 [Details](https://docs.ivy.app/widgets/common/details.md)
-[Image](https://docs.ivy.app/widgets/common/image.md)
-[Avatar](https://docs.ivy.app/widgets/common/avatar.md)
+[Image](https://docs.ivy.app/widgets/primitives/image.md)
+[Avatar](https://docs.ivy.app/widgets/primitives/avatar.md)
 [Spacer](https://docs.ivy.app/widgets/primitives/spacer.md)
-[Callout](hhttps://docs.ivy.app/widgets/primitives/callout.md)
+[Callout](https://docs.ivy.app/widgets/primitives/callout.md)
 
 ## Layouts
 
@@ -62,7 +62,7 @@ Use Layout.Vertical() or Layout.Horizontal() to create stack layouts.
 - Call Layout.Vertical() or Layout.Horizontal() from the Layout helper utility class.
 - Layout is used to create stack-based layouts (Vertical() or Horizontal()), Grid(), and Wrap() layouts.
 - Add Children: Pipe child elements using the | operator to arrange them top-to-bottom (vertical) or left-to-right (horizontal).
-- Layouts can be customized with methods like .Gap(int number) to set spacing between children and .Align(Align alignment) to control child alignment within the layout. 
+- Layouts can be customized with methods like .Gap(int number) to set spacing between children. Use .Left(), .Center(), or .Right() methods to control alignment.
 - The number in Gap(int number) works the same as in Tailwind CSS spacing scale (e.g., 1 = 0.25rem, 2 = 0.5rem, etc.).
 Layouts have a default gap of 4 (1rem). In general, you very rarely need to set the gap explicitly.
 
@@ -75,7 +75,7 @@ Layout.Vertical()
 // Nested layouts with alignment
 Layout.Vertical().Align(Align.Center)
     | Text.Label("Header")
-    | (Layout.Horizontal().Align(Align.SpaceBetween)
+    | (Layout.Horizontal()
         | new Button("Previous")
         | new Button("Next")); //NOTE: Parentheses are used to group the horizontal layout - THIS IS REQUIRED 
         
@@ -89,6 +89,8 @@ Layout.Grid()
     | Text.Block("Cell 1")
     | Text.Block("Cell 2")
     ...
+
+Align values: TopLeft, TopCenter, TopRight, Left, Center, Right, BottomLeft, BottomCenter, BottomRight, Stretch
 
 [Layouts](https://docs.ivy.app/onboarding/concepts/layout.md)
 
@@ -218,8 +220,7 @@ userNameState.ToTextInput().Required().MaxLength(50).Placeholder("Enter your nam
 [RefreshTokens](https://docs.ivy.app/onboarding/concepts/refresh-tokens.md)
 [Downloads](https://docs.ivy.app/onboarding/concepts/downloads.md)
 [Uploads](https://docs.ivy.app/widgets/inputs/file.md)
-
-
+[Icons](https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Framework/refs/heads/main/src/Ivy/Shared/Icons.cs)
 
 
 
