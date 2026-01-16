@@ -18,6 +18,7 @@ public enum Languages
     Markdown,
     Text,
     Xml,
+    Yaml,
 }
 
 /// <summary>
