@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Ivy?style=flat)](https://www.nuget.org/packages/Ivy)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Ivy?style=flat)](https://www.nuget.org/packages/Ivy)
-[![Discord](https://img.shields.io/discord/1392844390963089499?style=flat&label=Discord)](https://discord.com/channels/1392844390963089499/1394399501195673723)
+[![Discord](https://img.shields.io/discord/1392844390963089499?style=flat&label=Discord)](https://discord.gg/CffzHm66BW)
 [![License](https://img.shields.io/github/license/Ivy-Interactive/Ivy-Framework?style=flat)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/Ivy-Interactive/Ivy-Framework/backend-checks-linux.yml?style=flat&label=CI)](https://github.com/Ivy-Interactive/Ivy-Framework/actions/workflows/backend-checks-linux.yml)
 [![website](https://img.shields.io/badge/website-ivy.app-green?style=flat)](https://ivy.app)
