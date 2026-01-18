@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
  * Event handler type provided by Ivy to external widgets.
  * Call this function to trigger events back to the C# backend.
  */
-type IvyEventHandler = (
+type EventHandler = (
   eventName: string,
   widgetId: string,
   args: unknown[]
@@ -31,7 +31,7 @@ interface SuperChartProps {
    * Event handler provided by Ivy for triggering backend events.
    * Call this with (eventName, widgetId, args) to trigger an event.
    */
-  onIvyEvent?: IvyEventHandler;
+  eventHandler?: EventHandler;
 }
 
 /**
@@ -40,7 +40,7 @@ interface SuperChartProps {
  * This component demonstrates how to create an external widget that:
  * 1. Receives props from the C# widget definition
  * 2. Uses Tailwind CSS classes from the host app
- * 3. Triggers events back to the C# backend via the onIvyEvent prop
+ * 3. Triggers events back to the C# backend via the eventHandler prop
  */
 export const SuperChart: React.FC<SuperChartProps> = ({
   id,
@@ -49,19 +49,19 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   color = '#3b82f6',
   showLabels = true,
   events = [],
-  onIvyEvent,
+  eventHandler,
 }) => {
   // Check if the OnPointClick event has a handler
   const hasClickHandler = events.includes('OnPointClick');
 
   const handleBarClick = useCallback(
     (index: number) => {
-      if (hasClickHandler && onIvyEvent) {
+      if (hasClickHandler && eventHandler) {
         // Trigger the backend event with the clicked index
-        onIvyEvent('OnPointClick', id, [index]);
+        eventHandler('OnPointClick', id, [index]);
       }
     },
-    [hasClickHandler, onIvyEvent, id]
+    [hasClickHandler, eventHandler, id]
   );
 
   // Calculate the max value for scaling
