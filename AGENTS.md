@@ -1,4 +1,4 @@
-﻿All Ivy documentation pages are listed on: <https://docs.ivy.app/sitemap.xml>.
+All Ivy documentation pages are listed on: <https://docs.ivy.app/sitemap.xml>.
 Add ".md" to the end of any URL to go directly to the Markdown version of the doc.
 
 # Introduction to the Ivy Framework for LLMs
