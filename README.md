@@ -7,7 +7,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Ivy-Interactive/Ivy-Framework/backend-checks-linux.yml?style=flat&label=CI)](https://github.com/Ivy-Interactive/Ivy-Framework/actions/workflows/backend-checks-linux.yml)
 [![website](https://img.shields.io/badge/website-ivy.app-green?style=flat)](https://ivy.app)
 [![codespaces](https://img.shields.io/badge/codespaces-try-blue?style=flat&logo=github)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Ivy-Interactive%2FIvy-Devcontainer&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=EuropeWest)
-[![llms.txt](https://img.shields.io/badge/llms.txt-copy-purple?style=flat)](https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Framework/refs/heads/main/llms.txt)
+[![AGENTS.md](https://img.shields.io/badge/AGENTS.md-copy-purple?style=flat)](https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Framework/refs/heads/main/AGENTS.md)
 
 # Build Full-Stack Applications in Pure C\#
 
@@ -101,5 +101,3 @@ You can also run `ivy samples` to see all the components that Ivy offers and `iv
 
 - [Contribution Guidelines](CONTRIBUTING.md)  
 - [Internal Developer Wiki](https://github.com/Ivy-Interactive/Ivy-Framework/wiki)
-
-

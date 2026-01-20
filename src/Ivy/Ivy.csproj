@@ -33,7 +33,8 @@
 
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="" />
-    <None Include="../../llms.txt" Pack="true" PackagePath="" />
+    <EmbeddedResource Include="../../AGENTS.md" Link="AGENTS.md" />
+    <None Include="../../AGENTS.md" Pack="true" PackagePath="" />
     <None Include="../Ivy.Docs.Shared/Generated/**/*.md" Pack="true" PackagePath="docs/generated" />
   </ItemGroup>
 
