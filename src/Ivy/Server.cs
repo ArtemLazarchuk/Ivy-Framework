@@ -334,7 +334,7 @@ public class Server
         }, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 #endif
 
-                
+
         if (Utils.IsPortInUse(_args.Port))
         {
             if (_args.IKillForThisPort)
