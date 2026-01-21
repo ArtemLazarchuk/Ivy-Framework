@@ -47,5 +47,5 @@ public record ResizeablePanel : WidgetBase<ResizeablePanel>
         DefaultSize = defaultSize;
     }
 
-    [Prop(AlwaysSerialize = true)] public int? DefaultSize { get; init; }
+    [Prop] public int? DefaultSize { get; init; }
 }
