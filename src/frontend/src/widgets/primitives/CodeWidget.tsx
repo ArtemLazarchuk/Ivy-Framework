@@ -8,10 +8,7 @@ import { createPrismTheme } from '@/lib/prismTheme';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Scales } from '@/types/scale';
-import {
-  codeContainerVariants,
-  codeCopyButtonVariants,
-} from '@/components/ui/code-variants';
+import { codeCopyButtonVariants } from '@/components/ui/code-variants';
 
 interface CodeWidgetProps {
   id: string;
@@ -120,14 +117,25 @@ const CodeWidget: React.FC<CodeWidgetProps> = memo(
 
     const dynamicTheme = useMemo(() => createPrismTheme(), []);
 
+    const isFull = height?.toLowerCase().startsWith('full');
+    const containerStyles: React.CSSProperties = isFull
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: 0,
+        }
+      : { ...getWidth(width) };
+
     return (
-      <div className={cn('relative', codeContainerVariants({ scale }))}>
+      <div className="relative" style={containerStyles}>
         {showCopyButton && (
           <MemoizedCopyButton textToCopy={content} scale={scale} />
         )}
         <ScrollArea
           className={cn(
-            'w-full h-full',
+            'w-full',
+            isFull ? 'flex-1 min-h-0' : 'h-full',
             showBorder && 'border border-border rounded-md'
           )}
         >
@@ -135,7 +143,7 @@ const CodeWidget: React.FC<CodeWidgetProps> = memo(
             fallback={
               <pre
                 className={cn('p-4 bg-muted rounded-md font-mono text-sm')}
-                style={styles}
+                style={isFull ? { ...styles, height: 'auto' } : styles}
               >
                 {content}
               </pre>
@@ -143,7 +151,7 @@ const CodeWidget: React.FC<CodeWidgetProps> = memo(
           >
             <SyntaxHighlighter
               language={mapLanguageToPrism(language)}
-              customStyle={styles}
+              customStyle={isFull ? { ...styles, height: 'auto' } : styles}
               style={dynamicTheme}
               showLineNumbers={showLineNumbers}
               wrapLines={true}
