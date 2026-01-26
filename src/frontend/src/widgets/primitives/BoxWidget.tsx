@@ -22,12 +22,14 @@ interface BoxWidgetProps {
   borderRadius: BorderRadius;
   borderThickness: string;
   borderStyle: BorderStyle;
+  borderColor?: string;
   padding?: string;
   margin?: string;
   width?: string;
   height?: string;
   contentAlign: Align;
   opacity?: number;
+  borderOpacity?: number;
   className?: string;
 }
 
@@ -39,12 +41,15 @@ export const BoxWidget: React.FC<BoxWidgetProps> = ({
   borderRadius = 'Rounded',
   borderThickness = '1',
   color,
+  borderColor,
   padding = '2',
   margin = '0',
   contentAlign = 'TopLeft',
   opacity,
+  borderOpacity,
   className,
 }) => {
+
   const styles: React.CSSProperties = {
     // Layout and spacing should always apply
     ...getPadding(padding),
@@ -56,8 +61,8 @@ export const BoxWidget: React.FC<BoxWidgetProps> = ({
     ...getBorderThickness(borderThickness),
     ...getBorderRadius(borderRadius),
     ...getColor(color, 'backgroundColor', 'background', opacity),
-    ...getColor(color, 'borderColor', 'background'),
     ...getColor(color, 'color', 'foreground'),
+    ...getColor(borderColor, 'borderColor', 'background', borderOpacity),
   };
 
   return (
