@@ -185,6 +185,13 @@ public static class Text
     }
 
     public static TextBuilder Latex(IAnyState state) => Latex(state.ToString() ?? "");
+
+    public static TextBuilder Display(string content)
+    {
+        return new TextBuilder(content, TextVariant.Display);
+    }
+
+    public static TextBuilder Display(IAnyState state) => Display(state.ToString() ?? "");
 }
 
 public class TextBuilder(string content, TextVariant variant, Languages codeLanguage = Languages.Csharp) : ViewBase, IStateless
@@ -197,6 +204,7 @@ public class TextBuilder(string content, TextVariant variant, Languages codeLang
     private bool _bold;
     private bool _italic;
     private bool _muted;
+
     private Scale? _scale;
 
     public override object? Build()
@@ -274,6 +282,8 @@ public class TextBuilder(string content, TextVariant variant, Languages codeLang
         _overflow = overflow;
         return this;
     }
+
+
 
     public TextBuilder Bold(bool value = true)
     {

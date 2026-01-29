@@ -11,9 +11,9 @@ searchHints:
 
 # Chat
 
-The `Chat` [widget](../../01_Onboarding/02_Concepts/03_Widgets.md) renders a conversation between a user and an assistant.
+The `Chat` [widget](../../01_Onboarding/02_Concepts/03_Widgets.md) renders a conversation between a user and an assistant. Use it inside [views](../../01_Onboarding/02_Concepts/02_Views.md) and [layouts](../../01_Onboarding/02_Concepts/04_Layout.md).
 
-Messages are supplied as `ChatMessage` objects and new messages are sent through the `OnSend` event.
+Messages are supplied as `ChatMessage` objects and new messages are sent through the `OnSend` [event](../../01_Onboarding/02_Concepts/05_EventHandlers.md).
 
 ## Basic Chat
 
@@ -396,4 +396,4 @@ public class AdvancedChatDemo : ViewBase
 }
 ```
 
-<WidgetDocs Type="Ivy.Chat" ExtensionTypes="Ivy.ChatExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/Ivy/Widgets/Chat.cs"/>
+<WidgetDocs Type="Ivy.Chat" ExtensionTypes="Ivy.ChatExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Chat.cs"/>

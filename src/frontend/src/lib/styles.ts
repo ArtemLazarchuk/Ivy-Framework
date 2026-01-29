@@ -386,7 +386,6 @@ export const gridCellOverflow = {
   ellipsis:
     '[&>*]:min-w-0 [&>*]:truncate hover:[&>*]:overflow-visible hover:[&>*]:whitespace-normal hover:[&>*]:absolute hover:[&>*]:z-10',
 };
-
 export type Orientation = 'Horizontal' | 'Vertical';
 
 export type Align =
@@ -597,6 +596,7 @@ export const typography: Record<string, string> = {
   success: 'text-large-body text-green font-semibold',
 
   // UI variants
+  display: 'text-3xl font-medium',
   label: 'text-large-label font-medium leading-none flex items-center',
   block: 'flex items-center min-w-0',
 

@@ -13,7 +13,7 @@ searchHints:
 # Hooks
 
 <Ingress>
-Discover the powerful functions that let you "hook into" Ivy state and lifecycle features - Hooks enable you to use state and side effects in your [Views](../../01_Onboarding/02_Concepts/02_Views.md) without writing class components.
+Discover the powerful functions that let you "hook into" Ivy state and lifecycle features - Hooks enable you to use state and side effects in your [views](../01_Onboarding/02_Concepts/02_Views.md) without writing class components.
 </Ingress>
 
 ## Basic usage
@@ -40,14 +40,14 @@ Ivy ships with a comprehensive set of hooks organized by purpose:
 
 | Category                     | Hooks                                                                                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Core**                     | [UseState](./Core/03_UseState.md), [UseEffect](./Core/04_UseEffect.md), [UseReducer](./Core/07_UseReducer.md)                            |
-| **Performance**              | [UseMemo](./Core/05_UseMemo.md), [UseCallback](./Core/06_UseCallback.md)                                                                 |
-| **References & Context**     | [UseRef](./Core/08_UseRef.md), [UseContext](./Core/12_UseContext.md), [UseArgs](./Core/13_UseArgs.md)                                     |
-| **Data Fetching**            | [UseQuery](./Core/09_UseQuery.md), [UseMutation](./Core/14_UseMutation.md), [UseSignal](./Core/10_UseSignal.md)                           |
-| **Services & Dependencies**  | [UseService](./Core/11_UseService.md), [UseRefreshToken](./Core/16_UseRefreshToken.md), [UseWebhook](./Core/19_UseWebhook.md)            |
-| **UI & Interaction**         | [UseNavigation](../../01_Onboarding/02_Concepts/09_Navigation.md), [UseAlert](../../01_Onboarding/02_Concepts/17_Alerts.md), [UseBlades](../../02_Widgets/03_Common/12_Blades.md), [UseTrigger](./Core/17_UseTrigger.md)  |
-| **Forms**                    | [UseForm](../../01_Onboarding/02_Concepts/08_Forms.md)                                                                                                             |
-| **Files**                    | [UseUpload](../../02_Widgets/04_Inputs/10_FileInput.md), [UseDownload](./Core/15_UseDownload.md)                                                              |
+| **Core**                     | [UseState](./02_Core/03_UseState.md), [UseEffect](./02_Core/04_UseEffect.md), [UseReducer](./02_Core/07_UseReducer.md)                            |
+| **Performance**              | [UseMemo](./02_Core/05_UseMemo.md), [UseCallback](./02_Core/06_UseCallback.md)                                                                 |
+| **References & Context**     | [UseRef](./02_Core/08_UseRef.md), [UseContext](./02_Core/12_UseContext.md), [UseArgs](./02_Core/13_UseArgs.md)                                     |
+| **Data Fetching**            | [UseQuery](./02_Core/09_UseQuery.md), [UseMutation](./02_Core/14_UseMutation.md), [UseSignal](./02_Core/10_UseSignal.md)                           |
+| **Services & Dependencies**  | [UseService](./02_Core/11_UseService.md), [UseRefreshToken](./02_Core/16_UseRefreshToken.md), [UseWebhook](./02_Core/19_UseWebhook.md)            |
+| **UI & Interaction**         | [UseNavigation](../01_Onboarding/02_Concepts/09_Navigation.md), [UseAlert](../01_Onboarding/02_Concepts/17_Alerts.md), [UseBlades](../02_Widgets/03_Common/12_Blades.md), [UseTrigger](./02_Core/17_UseTrigger.md)  |
+| **Forms**                    | [UseForm](../01_Onboarding/02_Concepts/08_Forms.md)                                                                                                             |
+| **Files**                    | [UseUpload](../02_Widgets/04_Inputs/10_FileInput.md), [UseDownload](./02_Core/15_UseDownload.md)                                                              |
 
 ## Core Hooks
 
@@ -109,7 +109,7 @@ public class StateDemo : ViewBase
 }
 ```
 
-See [UseState](./Core/03_UseState.md) for detailed documentation.
+See [UseState](./02_Core/03_UseState.md) for detailed documentation.
 
 ### UseEffect
 
@@ -138,7 +138,7 @@ public class EffectDemo : ViewBase
 }
 ```
 
-See [UseEffect](./Core/04_UseEffect.md) for detailed documentation.
+See [UseEffect](./02_Core/04_UseEffect.md) for detailed documentation.
 
 ### UseReducer
 
@@ -172,7 +172,7 @@ public class BasicReducerDemo : ViewBase
 }
 ```
 
-See [UseReducer](./Core/07_UseReducer.md) for detailed documentation.
+See [UseReducer](./02_Core/07_UseReducer.md) for detailed documentation.
 
 ## Performance Hooks
 
@@ -223,7 +223,7 @@ public class MemoDemo : ViewBase
 }
 ```
 
-See [UseMemo](./Core/05_UseMemo.md) for detailed documentation.
+See [UseMemo](./02_Core/05_UseMemo.md) for detailed documentation.
 
 ### UseCallback
 
@@ -264,7 +264,7 @@ public class CallbackDemo : ViewBase
 }
 ```
 
-See [UseCallback](./Core/06_UseCallback.md) for detailed documentation.
+See [UseCallback](./02_Core/06_UseCallback.md) for detailed documentation.
 
 ## References & Context
 
@@ -313,7 +313,7 @@ public class RefDemo : ViewBase
 }
 ```
 
-See [UseRef](./Core/08_UseRef.md) for detailed documentation.
+See [UseRef](./02_Core/08_UseRef.md) for detailed documentation.
 
 ### UseContext
 
@@ -351,7 +351,7 @@ public class ChildView : ViewBase
 }
 ```
 
-See [UseContext](./Core/12_UseContext.md) for detailed documentation.
+See [UseContext](./02_Core/12_UseContext.md) for detailed documentation.
 
 ### UseArgs
 
@@ -385,7 +385,7 @@ public class UserProfileView : ViewBase
 }
 ```
 
-See [UseArgs](./Core/13_UseArgs.md) for detailed documentation.
+See [UseArgs](./02_Core/13_UseArgs.md) for detailed documentation.
 
 ## Data Fetching
 
@@ -430,7 +430,7 @@ public class BasicQueryView : ViewBase
 }
 ```
 
-See [UseQuery](./Core/09_UseQuery.md) for detailed documentation.
+See [UseQuery](./02_Core/09_UseQuery.md) for detailed documentation.
 
 ### UseMutation
 
@@ -465,7 +465,7 @@ public class MutationDemo : ViewBase
 }
 ```
 
-See [UseMutation](./Core/14_UseMutation.md) for detailed documentation.
+See [UseMutation](./02_Core/14_UseMutation.md) for detailed documentation.
 
 ### UseSignal
 
@@ -518,7 +518,7 @@ public class OneToManyDemo : ViewBase
 }
 ```
 
-See [UseSignal](./Core/10_UseSignal.md) for detailed documentation.
+See [UseSignal](./02_Core/10_UseSignal.md) for detailed documentation.
 
 ## Services & Dependencies
 
@@ -549,7 +549,7 @@ public class ServiceDemo : ViewBase
 }
 ```
 
-See [UseService](./Core/11_UseService.md) for detailed documentation.
+See [UseService](./02_Core/11_UseService.md) for detailed documentation.
 
 ### UseRefreshToken
 
@@ -574,7 +574,7 @@ public class RefreshTokenDemo : ViewBase
 }
 ```
 
-See [UseRefreshToken](./Core/16_UseRefreshToken.md) for detailed documentation.
+See [UseRefreshToken](./02_Core/16_UseRefreshToken.md) for detailed documentation.
 
 ### UseWebhook
 
@@ -607,7 +607,7 @@ public class WebhookDemo : ViewBase
 }
 ```
 
-See [UseWebhook](./Core/19_UseWebhook.md) for detailed documentation.
+See [UseWebhook](./02_Core/19_UseWebhook.md) for detailed documentation.
 
 ## UI & Interaction
 
@@ -640,7 +640,7 @@ public class NavigationDemo : ViewBase
 }
 ```
 
-See [Navigation](../../01_Onboarding/02_Concepts/09_Navigation.md) for detailed documentation.
+See [Navigation](../01_Onboarding/02_Concepts/09_Navigation.md) for detailed documentation.
 
 ### UseAlert
 
@@ -664,7 +664,7 @@ public class AlertDemo : ViewBase
 }
 ```
 
-See [Alerts](../../01_Onboarding/02_Concepts/17_Alerts.md) for detailed documentation.
+See [Alerts](../01_Onboarding/02_Concepts/17_Alerts.md) for detailed documentation.
 
 ### UseBlades
 
@@ -698,7 +698,7 @@ public class NavigationRootView : ViewBase
 }
 ```
 
-See [Blades](../../02_Widgets/03_Common/12_Blades.md) for detailed documentation.
+See [Blades](../02_Widgets/03_Common/12_Blades.md) for detailed documentation.
 
 ### UseTrigger
 
@@ -729,7 +729,7 @@ public class ModalDialog(IState<bool> isOpen) : ViewBase
 }
 ```
 
-See [UseTrigger](./Core/17_UseTrigger.md) for detailed documentation.
+See [UseTrigger](./02_Core/17_UseTrigger.md) for detailed documentation.
 
 ### UseForm
 
@@ -764,7 +764,7 @@ public class FormDemo : ViewBase
 }
 ```
 
-See [Forms](../../01_Onboarding/02_Concepts/08_Forms.md) for detailed documentation.
+See [Forms](../01_Onboarding/02_Concepts/08_Forms.md) for detailed documentation.
 
 ### UseUpload
 
@@ -785,7 +785,7 @@ public class UploadDemo : ViewBase
 }
 ```
 
-See [FileInput](../../02_Widgets/04_Inputs/10_FileInput.md) for detailed documentation.
+See [FileInput](../02_Widgets/04_Inputs/10_FileInput.md) for detailed documentation.
 
 ### UseDownload
 
@@ -811,7 +811,7 @@ public class DownloadDemo : ViewBase
 }
 ```
 
-See [UseDownload](./Core/15_UseDownload.md) for detailed documentation.
+See [UseDownload](./02_Core/15_UseDownload.md) for detailed documentation.
 
 ## Creating Custom Hooks
 
@@ -837,7 +837,8 @@ public static IState<string> UseLocalStorage(string key, string defaultValue)
 
 ## See Also
 
-- [Rules of Hooks](./02_RulesOfHooks.md) - Essential rules for using hooks correctly
-- [Views](../../01_Onboarding/02_Concepts/02_Views.md) - Understanding Ivy Views
-- [Forms](../../01_Onboarding/02_Concepts/04_Forms.md) - Working with forms in Ivy
-- [UseService](./Core/11_UseService.md) - Dependency injection and services
+- [Rules of Hooks](./01_RulesOfHooks.md) - Essential rules for using hooks correctly
+- [Views](../01_Onboarding/02_Concepts/02_Views.md) - Understanding Ivy views
+- [Forms](../01_Onboarding/02_Concepts/08_Forms.md) - Working with forms in Ivy
+- [Layout](../01_Onboarding/02_Concepts/04_Layout.md) - Structuring UI with layouts
+- [UseService](./02_Core/11_UseService.md) - Dependency injection and services
