@@ -52,12 +52,12 @@ public class ThemeCustomizer : SampleBase
         var editorContent = new ThemeSidebarContent(editingTheme, selectedMode, presets, LoadPreset);
 
         // Sidebar Header
-        var sidebarHeader = Layout.Vertical().Gap(1).Padding(2)
+        var sidebarHeader = Layout.Vertical()
             | Text.H2("Theme Editor")
             | Text.P("Customize your theme").Small().Muted();
 
         // Sidebar Footer
-        var sidebarFooter = Layout.Vertical().Padding(2)
+        var sidebarFooter = Layout.Vertical()
             | new Button("Copy Configuration")
                 .Primary()
                 .Icon(Icons.Copy)
@@ -76,7 +76,7 @@ public class ThemeCustomizer : SampleBase
                     Layout.Tabs(
                         new Tab(
                             "C#",
-                            Layout.Vertical().Gap(3)
+                            Layout.Vertical()
                                 | Text.P("Copy this C# configuration into your server setup.").Small()
                                 | new Code(GenerateCSharpCode(editingTheme.Value), Languages.Csharp)
                                 | new Button("Copy C# Code")
@@ -90,7 +90,7 @@ public class ThemeCustomizer : SampleBase
                         ).Icon(Icons.Code),
                         new Tab(
                             "JSON",
-                            Layout.Vertical().Gap(3)
+                            Layout.Vertical()
                                 | Text.P("Use this JSON to persist or share the theme.").Small()
                                 | new Code(System.Text.Json.JsonSerializer.Serialize(
                                         editingTheme.Value,
@@ -117,7 +117,7 @@ public class ThemeCustomizer : SampleBase
             : null;
 
         return new SidebarLayout(
-                mainContent: Layout.Vertical().Gap(0)
+                mainContent: Layout.Vertical()
                     | previewPanel
                     | exportDialog,
                 sidebarContent: editorContent,
@@ -210,7 +210,7 @@ public class ThemeCustomizer : SampleBase
 
             var presetOptions = presets.Select(kv => new Option<string>(kv.Key, kv.Key)).ToArray();
 
-            return Layout.Vertical().Gap(2).Padding(1)
+            return Layout.Vertical()
                 | Text.H3("Theme Preset").Small()
                 | new SelectInput<string>(
                     value: selectedPreset.Value,
@@ -229,7 +229,7 @@ public class ThemeCustomizer : SampleBase
 
                 // Mode toggle
                 | Text.H3("Theme Mode").Small()
-                | (Layout.Horizontal().Gap(2)
+                | (Layout.Horizontal()
                     | new Button("Light")
                         .Variant(selectedMode.Value == "light" ? ButtonVariant.Primary : ButtonVariant.Outline)
                         .Icon(Icons.Sun)
@@ -254,7 +254,7 @@ public class ThemeCustomizer : SampleBase
                 // Typography & Layout
                 | new Expandable(
                     "Typography & Layout",
-                    Layout.Vertical().Gap(2)
+                    Layout.Vertical()
                         | new TextInput(
                             value: editingTheme.Value.FontFamily ?? "",
                             onChange: e => UpdateThemeProperty(t => t.FontFamily = string.IsNullOrWhiteSpace(e.Value) ? null : e.Value),
@@ -275,7 +275,7 @@ public class ThemeCustomizer : SampleBase
                 // Main Colors
                 | new Expandable(
                     "Main Colors",
-                    Layout.Vertical().Gap(2)
+                    Layout.Vertical()
                         | new ColorEditor("Primary", currentColors.Primary, c => UpdateColor(colors => colors.Primary = c))
                         | new ColorEditor("Primary Foreground", currentColors.PrimaryForeground, c => UpdateColor(colors => colors.PrimaryForeground = c))
                         | new ColorEditor("Secondary", currentColors.Secondary, c => UpdateColor(colors => colors.Secondary = c))
@@ -287,7 +287,7 @@ public class ThemeCustomizer : SampleBase
                 // Semantic Colors
                 | new Expandable(
                     "Semantic Colors",
-                    Layout.Vertical().Gap(2)
+                    Layout.Vertical()
                         | new ColorEditor("Success", currentColors.Success, c => UpdateColor(colors => colors.Success = c))
                         | new ColorEditor("Success Foreground", currentColors.SuccessForeground, c => UpdateColor(colors => colors.SuccessForeground = c))
                         | new ColorEditor("Destructive", currentColors.Destructive, c => UpdateColor(colors => colors.Destructive = c))
@@ -301,7 +301,7 @@ public class ThemeCustomizer : SampleBase
                 // UI Element Colors
                 | new Expandable(
                     "UI Element Colors",
-                    Layout.Vertical().Gap(2)
+                    Layout.Vertical()
                         | new ColorEditor("Muted", currentColors.Muted, c => UpdateColor(colors => colors.Muted = c))
                         | new ColorEditor("Muted Foreground", currentColors.MutedForeground, c => UpdateColor(colors => colors.MutedForeground = c))
                         | new ColorEditor("Accent", currentColors.Accent, c => UpdateColor(colors => colors.Accent = c))
@@ -340,7 +340,7 @@ public class ThemeCustomizer : SampleBase
                 },
                 options: new QueryOptions { RevalidateOnMount = true });
 
-            return Layout.Horizontal().Gap(2).Align(Align.Center)
+            return Layout.Horizontal().Align(Align.Center)
                 | Text.P(label).Small().Width(Size.Px(180))
                 | new ColorInput(
                     value: colorState.Value,
@@ -361,10 +361,10 @@ public class ThemeCustomizer : SampleBase
     {
         public override object Build()
         {
-            return Layout.Vertical().Gap(1).Padding(2)
+            return Layout.Vertical()
                     | Text.H2("Live Preview")
                     | Text.P("See your theme changes in real-time").Small().Muted()
-                    | new Spacer().Height(Size.Units(5))
+                    | new Spacer().Height(Size.Units(4))
                     | Layout.Tabs(
                         new Tab("Components", new InteractiveThemePreview(theme)).Icon(Icons.LayoutPanelLeft),
                         new Tab("Dashboard", new DashboardApp()).Icon(Icons.LayoutDashboard),
@@ -380,9 +380,9 @@ public class ThemeCustomizer : SampleBase
     {
         public override object Build()
         {
-            return Layout.Vertical().Gap(4)
+            return Layout.Vertical()
                 | Text.H3("Light Theme Colors")
-                | (Layout.Grid().Columns(2).Gap(3)
+                | (Layout.Grid().Columns(2)
                     | new ColorPreview("Primary", theme.Colors.Light.Primary, theme.Colors.Light.PrimaryForeground)
                     | new ColorPreview("Secondary", theme.Colors.Light.Secondary, theme.Colors.Light.SecondaryForeground)
                     | new ColorPreview("Success", theme.Colors.Light.Success, theme.Colors.Light.SuccessForeground)
@@ -393,7 +393,7 @@ public class ThemeCustomizer : SampleBase
                     | new ColorPreview("Accent", theme.Colors.Light.Accent, theme.Colors.Light.AccentForeground))
 
                 | Text.H3("Dark Theme Colors")
-                | (Layout.Grid().Columns(2).Gap(3)
+                | (Layout.Grid().Columns(2)
                     | new ColorPreview("Primary", theme.Colors.Dark.Primary, theme.Colors.Dark.PrimaryForeground)
                     | new ColorPreview("Secondary", theme.Colors.Dark.Secondary, theme.Colors.Dark.SecondaryForeground)
                     | new ColorPreview("Success", theme.Colors.Dark.Success, theme.Colors.Dark.SuccessForeground)
@@ -544,7 +544,7 @@ public class ThemeCustomizer : SampleBase
 
             static object GetPaginationContent(int page, int total) =>
                 new Card(
-                    Layout.Vertical().Align(Align.Center).Gap(2)
+                    Layout.Vertical().Align(Align.Center)
                         | Text.Block("Theme insight").Small()
                         | Text.P(page switch
                         {
@@ -580,7 +580,7 @@ public class ThemeCustomizer : SampleBase
                     | (Layout.Vertical().Align(Align.Center) | new Badge($"{_theme.Name} theme active", statusVariant, themeIcon).Primary());
 
             object BuildSecondColumn() =>
-                Layout.Vertical().Gap(5)
+                Layout.Vertical()
                     | new Embed("https://github.com/Ivy-Interactive/Ivy-Framework")
                     | Text.Block("Price range").Bold()
                     | Text.P($"Estimated monthly budget: ${price.Value}").Small()
@@ -597,7 +597,7 @@ public class ThemeCustomizer : SampleBase
                         .Label("DateTime")
                         .Height(Size.Fit())
                     | new Card(
-                        Layout.Vertical().Gap(3)
+                        Layout.Vertical()
                             | Text.Block("Badge Variant Selector").Bold()
                             | Text.P("Select one or multiple badge variants to see them displayed below.").Small()
                             | badgeVariant.ToSelectInput(new[]
@@ -611,7 +611,7 @@ public class ThemeCustomizer : SampleBase
                                 new Option<string>("Info", "Info")
                             }).Variant(SelectInputs.Toggle).Disabled(disableInputs.Value)
                             | Text.Block("Selected badges:").Small()
-                            | (Layout.Horizontal().Gap(2).Align(Align.Center)
+                            | (Layout.Horizontal().Align(Align.Center)
                                 | badgeVariant.Value.Select(variant => variant switch
                                 {
                                     "Primary" => new Badge("Primary").Primary(),
@@ -628,7 +628,7 @@ public class ThemeCustomizer : SampleBase
                         .ShortcutKey("Ctrl+E")
                         .Variant(TextInputs.Email)
                         .Disabled(disableInputs.Value)
-                    | (Layout.Grid().Columns(2).Gap(3).Width(Size.Full())
+                    | (Layout.Grid().Width(Size.Full())
                         | (Layout.Vertical()
                             | themeSatisfaction.ToFeedbackInput().Variant(FeedbackInputs.Stars).Disabled(disableInputs.Value))
                         | (Layout.Vertical().Align(Align.Right)
@@ -638,10 +638,10 @@ public class ThemeCustomizer : SampleBase
                 Layout.Vertical()
                     | new Card((Layout.Vertical() | new Chat(chatMessages.Value.ToArray(), OnChatSend).Height(Size.Px(330))).Height(Size.Fit()))
                     | (Layout.Horizontal().Height(Size.Fit())
-                        | (Layout.Vertical().Gap(2) | new Box((Layout.Horizontal()
+                        | (Layout.Vertical() | new Box((Layout.Horizontal()
                                 | (Layout.Vertical().Align(Align.Left) | Text.Block("Disable all buttons"))
                                 | disableButtons.ToSwitchInput())))
-                        | (Layout.Vertical().Gap(2) | new Box((Layout.Horizontal()
+                        | (Layout.Vertical() | new Box((Layout.Horizontal()
                             | (Layout.Vertical().Align(Align.Left) | Text.Block("Disable all inputs"))
                             | disableInputs.ToSwitchInput()))))
                     | searchText.ToSearchInput().Placeholder("Search in settings").Disabled(disableInputs.Value)
@@ -737,7 +737,6 @@ public class ThemeCustomizer : SampleBase
                         .Height(Size.Px(60))
                         .Color(previewColor)
                         .BorderRadius(BorderRadius.Rounded)
-                        .Padding(3)
                         .ContentAlign(Align.Center),
                     Layout.Vertical()
                         | Text.P("Background:").Small()
