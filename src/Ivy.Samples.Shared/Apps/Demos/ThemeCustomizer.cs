@@ -201,6 +201,7 @@ public class ThemeCustomizer : SampleBase
                 editingTheme.Set(newTheme);
             }
 
+
             void UpdateThemeProperty(Action<Theme> updater)
             {
                 var newTheme = CloneTheme(editingTheme.Value);
@@ -251,6 +252,50 @@ public class ThemeCustomizer : SampleBase
 
                 | new Separator()
 
+                | new Expandable(
+                    header: Text.Block("Colors").Bold(),
+                    content: Layout.Vertical()
+                        | Text.Block("Main Colors").Small()
+                        | (Layout.Grid().Columns(4).Gap(2)
+                            | new ColorInput(currentColors.Primary ?? "#000000", e => UpdateColor(c => c.Primary = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Primary").WithTooltip($"Primary: {currentColors.Primary ?? "#000000"}")
+                            | new ColorInput(currentColors.PrimaryForeground ?? "#000000", e => UpdateColor(c => c.PrimaryForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Primary Foreground: {currentColors.PrimaryForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Secondary ?? "#000000", e => UpdateColor(c => c.Secondary = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Secondary").WithTooltip($"Secondary: {currentColors.Secondary ?? "#000000"}")
+                            | new ColorInput(currentColors.SecondaryForeground ?? "#000000", e => UpdateColor(c => c.SecondaryForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Secondary Foreground: {currentColors.SecondaryForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Background ?? "#000000", e => UpdateColor(c => c.Background = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Background").WithTooltip($"Background: {currentColors.Background ?? "#000000"}")
+                            | new ColorInput(currentColors.Foreground ?? "#000000", e => UpdateColor(c => c.Foreground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Foreground: {currentColors.Foreground ?? "#000000"}"))
+
+                        | new Separator()
+
+                        | Text.Block("Semantic Colors").Small()
+                        | (Layout.Grid().Columns(4).Gap(2)
+                            | new ColorInput(currentColors.Success ?? "#000000", e => UpdateColor(c => c.Success = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Success").WithTooltip($"Success: {currentColors.Success ?? "#000000"}")
+                            | new ColorInput(currentColors.SuccessForeground ?? "#000000", e => UpdateColor(c => c.SuccessForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Success Foreground: {currentColors.SuccessForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Destructive ?? "#000000", e => UpdateColor(c => c.Destructive = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Destructive").WithTooltip($"Destructive: {currentColors.Destructive ?? "#000000"}")
+                            | new ColorInput(currentColors.DestructiveForeground ?? "#000000", e => UpdateColor(c => c.DestructiveForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Destructive Foreground: {currentColors.DestructiveForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Warning ?? "#000000", e => UpdateColor(c => c.Warning = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Warning").WithTooltip($"Warning: {currentColors.Warning ?? "#000000"}")
+                            | new ColorInput(currentColors.WarningForeground ?? "#000000", e => UpdateColor(c => c.WarningForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Warning Foreground: {currentColors.WarningForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Info ?? "#000000", e => UpdateColor(c => c.Info = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Info").WithTooltip($"Info: {currentColors.Info ?? "#000000"}")
+                            | new ColorInput(currentColors.InfoForeground ?? "#000000", e => UpdateColor(c => c.InfoForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Info Foreground: {currentColors.InfoForeground ?? "#000000"}")
+      )
+
+                        | new Separator()
+
+                        | Text.Block("UI Element Colors").Small()
+                        | (Layout.Grid().Columns(4).Gap(2)
+                            | new ColorInput(currentColors.Muted ?? "#000000", e => UpdateColor(c => c.Muted = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Muted").WithTooltip($"Muted: {currentColors.Muted ?? "#000000"}")
+                            | new ColorInput(currentColors.MutedForeground ?? "#000000", e => UpdateColor(c => c.MutedForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Muted Foreground: {currentColors.MutedForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Accent ?? "#000000", e => UpdateColor(c => c.Accent = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Accent").WithTooltip($"Accent: {currentColors.Accent ?? "#000000"}")
+                            | new ColorInput(currentColors.AccentForeground ?? "#000000", e => UpdateColor(c => c.AccentForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Accent Foreground: {currentColors.AccentForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Border ?? "#000000", e => UpdateColor(c => c.Border = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Border").WithTooltip($"Border: {currentColors.Border ?? "#000000"}")
+                            | new ColorInput(currentColors.Input ?? "#000000", e => UpdateColor(c => c.Input = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Input").WithTooltip($"Input: {currentColors.Input ?? "#000000"}")
+                            | new ColorInput(currentColors.Ring ?? "#000000", e => UpdateColor(c => c.Ring = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Ring").WithTooltip($"Ring: {currentColors.Ring ?? "#000000"}")
+                            | new ColorInput(currentColors.Card ?? "#000000", e => UpdateColor(c => c.Card = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Card").WithTooltip($"Card: {currentColors.Card ?? "#000000"}")
+                            | new ColorInput(currentColors.CardForeground ?? "#000000", e => UpdateColor(c => c.CardForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Card Foreground: {currentColors.CardForeground ?? "#000000"}")
+                            | new ColorInput(currentColors.Popover ?? "#000000", e => UpdateColor(c => c.Popover = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("Popover").WithTooltip($"Popover: {currentColors.Popover ?? "#000000"}")
+                            | new ColorInput(currentColors.PopoverForeground ?? "#000000", e => UpdateColor(c => c.PopoverForeground = e.Value), variant: ColorInputs.Picker).WithField().Medium().Description("\u00A0").WithTooltip($"Popover Foreground: {currentColors.PopoverForeground ?? "#000000"}")
+      )
+                ).Height(Size.Fit()).Open()
+
                 // Typography & Layout
                 | new Expandable(
                     "Typography & Layout",
@@ -270,50 +315,8 @@ public class ThemeCustomizer : SampleBase
                             onChange: e => UpdateThemeProperty(t => t.BorderRadius = string.IsNullOrWhiteSpace(e.Value) ? null : e.Value),
                             placeholder: "e.g., 0.5rem, 8px"
                         ).WithField().Label("Border Radius")
-                )
+                );
 
-                // Main Colors
-                | new Expandable(
-                    "Main Colors",
-                    Layout.Vertical()
-                        | new ColorEditor("Primary", currentColors.Primary, c => UpdateColor(colors => colors.Primary = c))
-                        | new ColorEditor("Primary Foreground", currentColors.PrimaryForeground, c => UpdateColor(colors => colors.PrimaryForeground = c))
-                        | new ColorEditor("Secondary", currentColors.Secondary, c => UpdateColor(colors => colors.Secondary = c))
-                        | new ColorEditor("Secondary Foreground", currentColors.SecondaryForeground, c => UpdateColor(colors => colors.SecondaryForeground = c))
-                        | new ColorEditor("Background", currentColors.Background, c => UpdateColor(colors => colors.Background = c))
-                        | new ColorEditor("Foreground", currentColors.Foreground, c => UpdateColor(colors => colors.Foreground = c))
-                ).Open()
-
-                // Semantic Colors
-                | new Expandable(
-                    "Semantic Colors",
-                    Layout.Vertical()
-                        | new ColorEditor("Success", currentColors.Success, c => UpdateColor(colors => colors.Success = c))
-                        | new ColorEditor("Success Foreground", currentColors.SuccessForeground, c => UpdateColor(colors => colors.SuccessForeground = c))
-                        | new ColorEditor("Destructive", currentColors.Destructive, c => UpdateColor(colors => colors.Destructive = c))
-                        | new ColorEditor("Destructive Foreground", currentColors.DestructiveForeground, c => UpdateColor(colors => colors.DestructiveForeground = c))
-                        | new ColorEditor("Warning", currentColors.Warning, c => UpdateColor(colors => colors.Warning = c))
-                        | new ColorEditor("Warning Foreground", currentColors.WarningForeground, c => UpdateColor(colors => colors.WarningForeground = c))
-                        | new ColorEditor("Info", currentColors.Info, c => UpdateColor(colors => colors.Info = c))
-                        | new ColorEditor("Info Foreground", currentColors.InfoForeground, c => UpdateColor(colors => colors.InfoForeground = c))
-                ).Open()
-
-                // UI Element Colors
-                | new Expandable(
-                    "UI Element Colors",
-                    Layout.Vertical()
-                        | new ColorEditor("Muted", currentColors.Muted, c => UpdateColor(colors => colors.Muted = c))
-                        | new ColorEditor("Muted Foreground", currentColors.MutedForeground, c => UpdateColor(colors => colors.MutedForeground = c))
-                        | new ColorEditor("Accent", currentColors.Accent, c => UpdateColor(colors => colors.Accent = c))
-                        | new ColorEditor("Accent Foreground", currentColors.AccentForeground, c => UpdateColor(colors => colors.AccentForeground = c))
-                        | new ColorEditor("Border", currentColors.Border, c => UpdateColor(colors => colors.Border = c))
-                        | new ColorEditor("Input", currentColors.Input, c => UpdateColor(colors => colors.Input = c))
-                        | new ColorEditor("Ring", currentColors.Ring, c => UpdateColor(colors => colors.Ring = c))
-                        | new ColorEditor("Card", currentColors.Card, c => UpdateColor(colors => colors.Card = c))
-                        | new ColorEditor("Card Foreground", currentColors.CardForeground, c => UpdateColor(colors => colors.CardForeground = c))
-                        | new ColorEditor("Popover", currentColors.Popover, c => UpdateColor(colors => colors.Popover = c))
-                        | new ColorEditor("Popover Foreground", currentColors.PopoverForeground, c => UpdateColor(colors => colors.PopoverForeground = c))
-                ).Open();
         }
     }
 
