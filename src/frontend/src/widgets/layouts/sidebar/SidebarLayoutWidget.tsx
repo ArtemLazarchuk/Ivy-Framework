@@ -137,7 +137,7 @@ export const SidebarLayoutWidget: React.FC<SidebarLayoutWidgetProps> = ({
           </div>
         )}
         {slots?.SidebarContent && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
             <ScrollArea className="h-full w-full">
               <div className="p-2 space-y-2">{slots.SidebarContent}</div>
             </ScrollArea>
@@ -186,30 +186,35 @@ interface SidebarMenuWidgetProps {
   searchActive?: boolean;
 }
 
-type FlatMenuItem = MenuItem & { isGroup?: boolean };
+const getFlatItemsInSearchRenderOrder = (items: MenuItem[]): MenuItem[] => {
+  const result: MenuItem[] = [];
+  for (const item of items) {
+    if (item.children && item.children.length > 0) {
+      const groupsMap = item.children.reduce<Record<string, MenuItem[]>>(
+        (acc, child) => {
+          const path = child.path ?? '';
+          (acc[path] ??= []).push(child);
+          return acc;
+        },
+        {}
+      );
+      const groupsOrdered = Object.entries(groupsMap).sort(
+        ([pathA], [pathB]) => {
+          if (!pathA) return 1;
+          if (!pathB) return -1;
+          return 0;
+        }
+      );
+      for (const [, pathItems] of groupsOrdered) {
+        result.push(...pathItems);
+      }
+    }
+  }
+  return result;
+};
 
 // Animation duration for collapsible sections (in milliseconds)
 const COLLAPSIBLE_ANIMATION_DURATION = 300;
-
-const flattenMenuItems = (
-  items: MenuItem[],
-  parentExpanded = true
-): FlatMenuItem[] => {
-  let flat: FlatMenuItem[] = [];
-  for (const item of items) {
-    if (
-      item.children &&
-      item.children.length > 0 &&
-      (parentExpanded || item.expanded)
-    ) {
-      flat.push({ ...(item as MenuItem), isGroup: true });
-      flat = flat.concat(flattenMenuItems(item.children, true));
-    } else {
-      flat.push(item);
-    }
-  }
-  return flat;
-};
 
 const CollapsibleMenuItem: React.FC<{
   item: MenuItem;
@@ -434,6 +439,7 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
   const eventHandler = useEventHandler();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const prevSearchActiveRef = React.useRef(searchActive);
+
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set()
   );
@@ -447,8 +453,8 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
   // Register only the sidebar menu container with useFocusable
   const { ref: focusRef } = useFocusable('sidebar-navigation', 1);
 
-  const flatItems: FlatMenuItem[] = useMemo(() => {
-    return searchActive ? flattenMenuItems(items).filter(i => !i.isGroup) : [];
+  const flatItems: MenuItem[] = useMemo(() => {
+    return searchActive ? getFlatItemsInSearchRenderOrder(items) : [];
   }, [searchActive, items]);
 
   useEffect(() => {
@@ -458,6 +464,46 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
     }
     prevSearchActiveRef.current = searchActive;
   }, [searchActive]);
+
+  useEffect(() => {
+    if (!searchActive || flatItems.length === 0) return;
+    const el = containerRef.current?.querySelector<HTMLElement>(
+      `[data-sidebar-result-index="${selectedIndex}"]`
+    );
+    if (!el) return;
+
+    // Smooth scrolling logic for search results
+    let p: HTMLElement | null = el.parentElement;
+    while (p) {
+      const { overflowY } = getComputedStyle(p);
+      if (
+        (overflowY === 'auto' ||
+          overflowY === 'scroll' ||
+          overflowY === 'overlay') &&
+        p.scrollHeight > p.clientHeight
+      ) {
+        if (selectedIndex === 0) {
+          p.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+        const elRect = el.getBoundingClientRect();
+        const portRect = p.getBoundingClientRect();
+        const isAbove = elRect.top < portRect.top;
+        const isBelow = elRect.bottom > portRect.bottom;
+        if (isAbove || isBelow) {
+          const delta = isAbove
+            ? elRect.top - portRect.top
+            : elRect.bottom - portRect.bottom;
+          p.scrollTo({
+            top: Math.max(0, p.scrollTop + delta),
+            behavior: 'smooth',
+          });
+        }
+        return;
+      }
+      p = p.parentElement;
+    }
+  }, [searchActive, flatItems.length, selectedIndex]);
 
   // Helper function to find the path to an item with a specific tag
   const findPathToTag = useCallback(
@@ -574,6 +620,7 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
       return (
         <li key={item.tag}>
           <button
+            {...(flatIdx >= 0 && { 'data-sidebar-result-index': flatIdx })}
             className={cn(
               'flex w-full rounded-lg p-2 text-sm hover:bg-accent/50 cursor-pointer min-h-8 text-left',
               showPath && item.path
