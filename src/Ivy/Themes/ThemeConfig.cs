@@ -17,13 +17,22 @@ public class Theme
 
     public string? BorderRadius { get; set; }
 
+    public string? BorderRadiusBoxes { get; set; }
+
+    public string? BorderRadiusFields { get; set; }
+
+    public string? BorderRadiusSelectors { get; set; }
+
     public static Theme Default => new()
     {
         Name = "Default",
         Colors = ThemeColorScheme.Default,
         FontFamily = "Geist",
         FontSize = "16px",
-        BorderRadius = "0.5rem"
+        BorderRadius = "0.5rem",
+        BorderRadiusBoxes = IvyFrameworkBorderRadiusTokens.BorderRadius.Lg,
+        BorderRadiusFields = IvyFrameworkBorderRadiusTokens.BorderRadius.Md,
+        BorderRadiusSelectors = IvyFrameworkBorderRadiusTokens.BorderRadius.Md
     };
 }
 
