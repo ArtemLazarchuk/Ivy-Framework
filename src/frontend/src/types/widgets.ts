@@ -27,6 +27,7 @@ export interface MenuItem {
   label: string;
   icon?: string;
   tag?: string;
+  tooltip?: string;
   children?: MenuItem[];
   variant: 'Default' | 'Separator' | 'Checkbox' | 'Radio' | 'Group';
   checked: boolean;
