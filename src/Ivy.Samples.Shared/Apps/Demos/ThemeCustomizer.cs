@@ -16,7 +16,7 @@ public class ThemeCustomizer : SampleBase
         var currentTheme = UseState(Theme.Default);
         var isExportOpen = UseState(false);
         var client = UseService<IClientProvider>();
-        var themeService = UseService<IThemeService>();
+        var themeService = new ThemeService();
         var selectedMode = UseState("light"); // "light" or "dark"
 
         // Individual color states for live editing
