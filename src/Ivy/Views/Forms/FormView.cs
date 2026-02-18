@@ -3,11 +3,9 @@ using System.Reflection;
 using Ivy.Core;
 using Ivy.Core.Helpers;
 using Ivy.Core.Hooks;
-using Ivy.Hooks;
-using Ivy.Shared;
-using Ivy.Widgets.Inputs;
 
-namespace Ivy.Views.Forms;
+// ReSharper disable once CheckNamespace
+namespace Ivy;
 
 internal static class FormFieldViewHelpers
 {

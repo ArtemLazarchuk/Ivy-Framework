@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using Ivy.Core.Hooks;
-using Ivy.Services;
-using Ivy.Shared;
-using Ivy.Widgets.Inputs;
 
-namespace Ivy.Views.Forms;
+// ReSharper disable once CheckNamespace
+namespace Ivy;
 
 internal static class FormScaffolder
 {

@@ -1,9 +1,10 @@
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using Ivy.Services;
+using DataAnnotationsValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
 
-namespace Ivy.Views.Forms;
+// ReSharper disable once CheckNamespace
+namespace Ivy;
 
 public static class FormHelpers
 {
@@ -38,7 +39,7 @@ public static class FormHelpers
                         DisplayName = propertyInfo.Name
                     };
                     var result = capturedAttr.GetValidationResult(value, validationContext);
-                    return result == ValidationResult.Success
+                    return result == DataAnnotationsValidationResult.Success
                         ? (true, "")
                         : (false, result?.ErrorMessage ?? "Validation failed");
                 }
@@ -79,7 +80,7 @@ public static class FormHelpers
                         DisplayName = fieldInfo.Name
                     };
                     var result = capturedAttr.GetValidationResult(value, validationContext);
-                    return result == ValidationResult.Success
+                    return result == DataAnnotationsValidationResult.Success
                         ? (true, "")
                         : (false, result?.ErrorMessage ?? "Validation failed");
                 }

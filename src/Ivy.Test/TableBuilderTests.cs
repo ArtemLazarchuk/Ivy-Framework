@@ -1,5 +1,3 @@
-using Ivy.Views.Tables;
-using Ivy.Shared;
 using Xunit;
 
 namespace Ivy.Test;
