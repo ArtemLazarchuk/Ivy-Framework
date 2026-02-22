@@ -60,7 +60,6 @@ export const useDataLoading = ({
     currentRowCountRef.current = 0;
   }, [connectionKey]);
 
-  // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
       if (!connection.port || !connection.path) {
@@ -68,7 +67,9 @@ export const useDataLoading = ({
         return;
       }
 
-      setIsLoading(true);
+      if (!arrowTableRef.current || arrowTableRef.current.numRows === 0) {
+        setIsLoading(true);
+      }
       setError(null);
 
       try {

@@ -1,3 +1,4 @@
+using System.Reactive.Disposables;
 using Ivy.Core;
 using Ivy.Core.Hooks;
 
@@ -12,22 +13,27 @@ public static class UseDataTableExtensions
 
     public static DataTableConnection? UseDataTable(this IViewContext context, IQueryable queryable, Func<object, object?>? idSelector)
     {
-        // DON'T trigger rebuild when connection changes - we handle it manually
         var connection = context.UseState<DataTableConnection?>(buildOnChange: false);
-        var hasRun = context.UseState(false, buildOnChange: false);
+        var lastQueryable = context.UseState<object?>(buildOnChange: false);
+        var cleanup = context.UseState<IDisposable?>(buildOnChange: false);
+
         var dataTableService = context.UseService<IDataTableService>();
 
-        // Only create connection once - check hasRun flag
-        if (!hasRun.Value && connection.Value == null)
+        if (!ReferenceEquals(lastQueryable.Value, queryable))
         {
-            var (cleanup, _connection) = dataTableService.AddQueryable(queryable, idSelector);
-            connection.Set(_connection);
-            hasRun.Set(true);
+            cleanup.Value?.Dispose();
 
-            // Store cleanup for later
-            context.UseEffect(() => cleanup, []);
+            var (newCleanup, newConnection) = dataTableService.AddQueryable(queryable, idSelector);
+            connection.Set(newConnection);
+            lastQueryable.Set(queryable);
+            cleanup.Set(newCleanup);
         }
 
-        return connection.Value!;
+        context.UseEffect(() =>
+        {
+            return Disposable.Create(() => cleanup.Value?.Dispose());
+        }, []);
+
+        return connection.Value;
     }
 }
