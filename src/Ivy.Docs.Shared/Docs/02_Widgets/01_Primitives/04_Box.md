@@ -54,7 +54,7 @@ public class BorderStyleExamplesView : ViewBase
 
 ### Border Thickness
 
-Control the width of borders using the `BorderThickness` property. You can specify a single value for uniform thickness or use the [Thickness](../../04_ApiReference/IvyShared/Thickness.md) class for more precise control.
+Control the width of borders using the `BorderThickness` property. You can specify a single value for uniform thickness or use the [Thickness](../../04_ApiReference/Ivy/Thickness.md) class for more precise control.
 
 ```csharp demo-tabs
 public class BorderThicknessExamplesView : ViewBase
@@ -124,7 +124,7 @@ public class SpacingExamplesView : ViewBase
 
 ### Advanced Spacing
 
-Use the [Thickness](../../04_ApiReference/IvyShared/Thickness.md) class for more precise control over padding on different sides. This allows you to specify different spacing values for left, top, right, and bottom edges.
+Use the [Thickness](../../04_ApiReference/Ivy/Thickness.md) class for more precise control over padding on different sides. This allows you to specify different spacing values for left, top, right, and bottom edges.
 
 ```csharp demo-tabs
 public class AdvancedSpacingView : ViewBase
@@ -164,7 +164,7 @@ public class ColorExamplesView : ViewBase
 }
 ```
 
-For more colors, see the [Colors](../../04_ApiReference/IvyShared/Colors.md) reference.
+For more colors, see the [Colors](../../04_ApiReference/Ivy/Colors.md) reference.
 
 <WidgetDocs Type="Ivy.Box" ExtensionTypes="Ivy.BoxExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Primitives/Box.cs"/>
 

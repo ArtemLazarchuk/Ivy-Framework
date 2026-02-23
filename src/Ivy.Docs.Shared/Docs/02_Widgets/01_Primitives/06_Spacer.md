@@ -52,7 +52,7 @@ public class FlexibleSpacerView : ViewBase
 ```
 
 <Callout Type="tip">
-The `Spacer().Width(Size.Grow())` pattern is essential for creating responsive layouts. It makes the spacer take up all available horizontal space, effectively pushing elements to opposite sides. See [Size](../../04_ApiReference/IvyShared/Size.md) for `Size.Grow()` and other sizing options.
+The `Spacer().Width(Size.Grow())` pattern is essential for creating responsive layouts. It makes the spacer take up all available horizontal space, effectively pushing elements to opposite sides. See [Size](../../04_ApiReference/Ivy/Size.md) for `Size.Grow()` and other sizing options.
 Without `Size.Grow()`, the spacer would only take up minimal space, and elements wouldn't be pushed to the edges.
 </Callout>
 
