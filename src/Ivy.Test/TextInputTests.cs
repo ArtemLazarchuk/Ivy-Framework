@@ -16,7 +16,7 @@ public class TextInputTests
         var textInput = new TextInput(state);
 
         Assert.Equal("initial", textInput.Value);
-        Assert.Equal(TextInputs.Text, textInput.Variant);
+        Assert.Equal(TextInputVariants.Text, textInput.Variant);
         Assert.NotNull(textInput.OnChange);
     }
 
@@ -53,10 +53,10 @@ public class TextInputTests
     [Fact]
     public void TextInput_WithPlaceholderAndVariant_WorksCorrectly()
     {
-        var textInput = new TextInput(placeholder: "Enter text", variant: TextInputs.Password);
+        var textInput = new TextInput(placeholder: "Enter text", variant: TextInputVariants.Password);
 
         Assert.Equal("Enter text", textInput.Placeholder);
-        Assert.Equal(TextInputs.Password, textInput.Variant);
+        Assert.Equal(TextInputVariants.Password, textInput.Variant);
         Assert.False(textInput.Disabled);
     }
 
@@ -68,18 +68,18 @@ public class TextInputTests
         var textInput = new TextInput<string>(state);
 
         Assert.Equal("test", textInput.Value);
-        Assert.Equal(TextInputs.Text, textInput.Variant);
+        Assert.Equal(TextInputVariants.Text, textInput.Variant);
     }
 
     [Theory]
-    [InlineData(TextInputs.Text)]
-    [InlineData(TextInputs.Textarea)]
-    [InlineData(TextInputs.Email)]
-    [InlineData(TextInputs.Tel)]
-    [InlineData(TextInputs.Url)]
-    [InlineData(TextInputs.Password)]
-    [InlineData(TextInputs.Search)]
-    public void TextInput_AllVariants_WorkCorrectly(TextInputs variant)
+    [InlineData(TextInputVariants.Text)]
+    [InlineData(TextInputVariants.Textarea)]
+    [InlineData(TextInputVariants.Email)]
+    [InlineData(TextInputVariants.Tel)]
+    [InlineData(TextInputVariants.Url)]
+    [InlineData(TextInputVariants.Password)]
+    [InlineData(TextInputVariants.Search)]
+    public void TextInput_AllVariants_WorkCorrectly(TextInputVariants variant)
     {
         var textInput = new TextInput(variant: variant);
 
@@ -119,27 +119,27 @@ public class TextInputTests
 
         // Test ToTextInput extension
         var textInput = state.ToTextInput();
-        Assert.Equal(TextInputs.Text, textInput.Variant);
+        Assert.Equal(TextInputVariants.Text, textInput.Variant);
 
         // Test ToPasswordInput extension
         var passwordInput = state.ToPasswordInput();
-        Assert.Equal(TextInputs.Password, passwordInput.Variant);
+        Assert.Equal(TextInputVariants.Password, passwordInput.Variant);
 
         // Test ToSearchInput extension
         var searchInput = state.ToSearchInput();
-        Assert.Equal(TextInputs.Search, searchInput.Variant);
+        Assert.Equal(TextInputVariants.Search, searchInput.Variant);
 
         // Test ToEmailInput extension
         var emailInput = state.ToEmailInput();
-        Assert.Equal(TextInputs.Email, emailInput.Variant);
+        Assert.Equal(TextInputVariants.Email, emailInput.Variant);
 
         // Test ToUrlInput extension
         var urlInput = state.ToUrlInput();
-        Assert.Equal(TextInputs.Url, urlInput.Variant);
+        Assert.Equal(TextInputVariants.Url, urlInput.Variant);
 
         // Test ToTelInput extension
         var telInput = state.ToTelInput();
-        Assert.Equal(TextInputs.Tel, telInput.Variant);
+        Assert.Equal(TextInputVariants.Tel, telInput.Variant);
     }
 
     [Fact]
@@ -174,13 +174,13 @@ public class TextInputTests
         var textInput = state.ToTextInput()
             .Placeholder("Enter text")
             .Disabled(true)
-            .Variant(TextInputs.Email)
+            .Variant(TextInputVariants.Email)
             .Invalid("Invalid email")
             .ShortcutKey("Ctrl+E");
 
         Assert.Equal("Enter text", textInput.Placeholder);
         Assert.True(textInput.Disabled);
-        Assert.Equal(TextInputs.Email, textInput.Variant);
+        Assert.Equal(TextInputVariants.Email, textInput.Variant);
         Assert.Equal("Invalid email", textInput.Invalid);
         Assert.Equal("Ctrl+E", textInput.ShortcutKey);
     }

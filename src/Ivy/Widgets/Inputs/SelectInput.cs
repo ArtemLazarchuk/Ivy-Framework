@@ -9,7 +9,7 @@ using Ivy.Core.Hooks;
 // ReSharper disable once CheckNamespace
 namespace Ivy;
 
-public enum SelectInputs
+public enum SelectInputVariants
 {
     Select,
     List,
@@ -18,7 +18,7 @@ public enum SelectInputs
 
 public interface IAnySelectInput : IAnyInput
 {
-    public SelectInputs Variant { get; set; }
+    public SelectInputVariants Variant { get; set; }
 }
 
 public abstract record SelectInputBase : WidgetBase<SelectInputBase>, IAnySelectInput
@@ -29,7 +29,7 @@ public abstract record SelectInputBase : WidgetBase<SelectInputBase>, IAnySelect
 
     [Prop] public string? Placeholder { get; set; }
 
-    [Prop] public SelectInputs Variant { get; set; } = SelectInputs.Select;
+    [Prop] public SelectInputVariants Variant { get; set; } = SelectInputVariants.Select;
 
     [Prop] public bool SelectMany { get; set; } = false;
 
@@ -48,7 +48,7 @@ public abstract record SelectInputBase : WidgetBase<SelectInputBase>, IAnySelect
 public record SelectInput<TValue> : SelectInputBase, IInput<TValue>, IAnySelectInput
 {
     [OverloadResolutionPriority(1)]
-    public SelectInput(IAnyState state, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select, bool selectMany = false)
+    public SelectInput(IAnyState state, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select, bool selectMany = false)
         : this(options, placeholder, disabled, variant, selectMany)
     {
         var typedState = state.As<TValue>();
@@ -57,21 +57,21 @@ public record SelectInput<TValue> : SelectInputBase, IInput<TValue>, IAnySelectI
     }
 
     [OverloadResolutionPriority(1)]
-    public SelectInput(TValue value, Func<Event<IInput<TValue>, TValue>, ValueTask>? onChange, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select, bool selectMany = false)
+    public SelectInput(TValue value, Func<Event<IInput<TValue>, TValue>, ValueTask>? onChange, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select, bool selectMany = false)
     : this(options, placeholder, disabled, variant, selectMany)
     {
         OnChange = onChange;
         Value = value;
     }
 
-    public SelectInput(TValue value, Action<Event<IInput<TValue>, TValue>>? onChange, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select, bool selectMany = false)
+    public SelectInput(TValue value, Action<Event<IInput<TValue>, TValue>>? onChange, IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select, bool selectMany = false)
         : this(options, placeholder, disabled, variant, selectMany)
     {
         OnChange = onChange == null ? null : e => { onChange(e); return ValueTask.CompletedTask; };
         Value = value;
     }
 
-    public SelectInput(IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select, bool selectMany = false)
+    public SelectInput(IEnumerable<IAnyOption> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select, bool selectMany = false)
     {
         Placeholder = placeholder;
         Variant = variant;
@@ -93,7 +93,7 @@ public record SelectInput<TValue> : SelectInputBase, IInput<TValue>, IAnySelectI
 
 public static class SelectInputExtensions
 {
-    public static SelectInputBase ToSelectInput(this IAnyState state, IEnumerable<IAnyOption>? options = null, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select)
+    public static SelectInputBase ToSelectInput(this IAnyState state, IEnumerable<IAnyOption>? options = null, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select)
     {
         var type = state.GetStateType();
         bool selectMany = type.IsCollectionType();
@@ -130,7 +130,7 @@ public static class SelectInputExtensions
 
     public static SelectInputBase Disabled(this SelectInputBase widget, bool disabled = true) => widget with { Disabled = disabled };
 
-    public static SelectInputBase Variant(this SelectInputBase widget, SelectInputs variant) => widget with { Variant = variant };
+    public static SelectInputBase Variant(this SelectInputBase widget, SelectInputVariants variant) => widget with { Variant = variant };
 
     public static SelectInputBase Invalid(this SelectInputBase widget, string? invalid) => widget with { Invalid = invalid };
 
@@ -148,7 +148,7 @@ public static class SelectInputExtensions
 
     public static SelectInputBase Separator(this SelectInputBase widget, char separator) => widget with { Separator = separator };
 
-    public static SelectInputBase List(this SelectInputBase widget) => widget with { Variant = SelectInputs.List };
+    public static SelectInputBase List(this SelectInputBase widget) => widget with { Variant = SelectInputVariants.List };
 
     [OverloadResolutionPriority(1)]
     public static SelectInputBase HandleBlur(this SelectInputBase widget, Func<Event<IAnyInput>, ValueTask> onBlur)
@@ -179,11 +179,11 @@ public static class SelectInputExtensions
     [OverloadResolutionPriority(2)]
     public static SelectInput<string> ToSelectInput(this IState<string> state)
     {
-        return new SelectInput<string>(state, [], null, false, SelectInputs.Select, false);
+        return new SelectInput<string>(state, [], null, false, SelectInputVariants.Select, false);
     }
 
     [OverloadResolutionPriority(1)]
-    public static SelectInput<string> ToSelectInput(this IState<string> state, IEnumerable<string> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select)
+    public static SelectInput<string> ToSelectInput(this IState<string> state, IEnumerable<string> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select)
     {
         return new SelectInput<string>(state, options.ToOptions(), placeholder, disabled, variant, false);
     }
@@ -191,11 +191,11 @@ public static class SelectInputExtensions
     [OverloadResolutionPriority(2)]
     public static SelectInput<string[]> ToSelectInput(this IState<string[]> state)
     {
-        return new SelectInput<string[]>(state, [], "Select options...", false, SelectInputs.Select, true);
+        return new SelectInput<string[]>(state, [], "Select options...", false, SelectInputVariants.Select, true);
     }
 
     [OverloadResolutionPriority(1)]
-    public static SelectInput<string[]> ToSelectInput(this IState<string[]> state, IEnumerable<string> options, string? placeholder = null, bool disabled = false, SelectInputs variant = SelectInputs.Select)
+    public static SelectInput<string[]> ToSelectInput(this IState<string[]> state, IEnumerable<string> options, string? placeholder = null, bool disabled = false, SelectInputVariants variant = SelectInputVariants.Select)
     {
         return new SelectInput<string[]>(state, options.ToOptions(), placeholder ?? "Select options...", disabled, variant, true);
     }

@@ -10,7 +10,7 @@ public class FileInputApp : SampleBase
         return Layout.Vertical()
                | Text.H1("File Inputs")
                | Layout.Tabs(
-                   new Tab("Variants", new FileInputVariants()),
+                   new Tab("Variants", new FileInputVariantTests()),
                    new Tab("Size Variants", new FileInputSizeVariants()),
                    new Tab("Data Binding", new FileInputDataBinding()),
                    new Tab("Type Restrictions", new FileInputTypeRestrictions()),
@@ -23,7 +23,7 @@ public class FileInputApp : SampleBase
     }
 }
 
-public class FileInputVariants : ViewBase
+public class FileInputVariantTests : ViewBase
 {
     public override object? Build()
     {

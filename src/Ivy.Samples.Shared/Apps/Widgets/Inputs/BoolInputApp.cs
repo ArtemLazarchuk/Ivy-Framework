@@ -17,7 +17,7 @@ public class BoolInputApp : SampleBase
                        | Text.InlineCode("Disabled")
                        | Text.InlineCode("Invalid")
                        | Text.InlineCode("Nullable")
-                       | Text.InlineCode("BoolInputs.Checkbox")
+                       | Text.InlineCode("BoolInputVariants.Checkbox")
                        | trueState
                            .ToBoolInput()
                            .Label("Label")
@@ -65,7 +65,7 @@ public class BoolInputApp : SampleBase
                            .ToBoolInput()
                            .Label("Label")
                            .TestId("checkbox-null-state-width")
-                       | Text.InlineCode("BoolInputs.Switch")
+                       | Text.InlineCode("BoolInputVariants.Switch")
                        | trueState
                            .ToSwitchInput()
                            .Label("Label")
@@ -109,7 +109,7 @@ public class BoolInputApp : SampleBase
                            .Invalid("Invalid")
                            .TestId("switch-true-state-width-invalid")
                        | new Box("N/A")
-                       | Text.InlineCode("BoolInputs.Toggle")
+                       | Text.InlineCode("BoolInputVariants.Toggle")
                        | trueState
                            .ToToggleInput(Icons.Magnet)
                            .Label("Label")
@@ -189,10 +189,10 @@ public class BoolInputApp : SampleBase
                | anyState.ToBoolInput()
                | anyState
                    .ToBoolInput()
-                   .Variant(BoolInputs.Switch)
+                   .Variant(BoolInputVariants.Switch)
                | anyState
                    .ToBoolInput()
-                   .Variant(BoolInputs.Toggle)
+                   .Variant(BoolInputVariants.Toggle)
                    .Icon(Icons.Star);
     }
 }
@@ -297,10 +297,10 @@ public class BoolInputDataBinding : ViewBase
                | anyState.ToBoolInput()
                | anyState
                    .ToBoolInput()
-                   .Variant(BoolInputs.Switch)
+                   .Variant(BoolInputVariants.Switch)
                | anyState
                    .ToBoolInput()
-                   .Variant(BoolInputs.Toggle)
+                   .Variant(BoolInputVariants.Toggle)
                    .Icon(Icons.Star);
     }
 }
@@ -319,7 +319,7 @@ public class BoolInputSizes : ViewBase
                | Text.InlineCode("Medium")
                | Text.InlineCode("Large")
 
-               | Text.InlineCode("BoolInputs.Checkbox")
+               | Text.InlineCode("BoolInputVariants.Checkbox")
                | trueState
                    .ToBoolInput()
                    .Label("Label")
@@ -332,7 +332,7 @@ public class BoolInputSizes : ViewBase
                    .Label("Label")
                    .Large()
 
-               | Text.InlineCode("BoolInputs.Switch")
+               | Text.InlineCode("BoolInputVariants.Switch")
                | trueState
                    .ToSwitchInput()
                    .Label("Label")
@@ -345,7 +345,7 @@ public class BoolInputSizes : ViewBase
                    .Label("Label")
                    .Large()
 
-               | Text.InlineCode("BoolInputs.Toggle")
+               | Text.InlineCode("BoolInputVariants.Toggle")
                | trueState
                    .ToToggleInput(Icons.Star)
                    .Label("Label")
@@ -374,7 +374,7 @@ public class BoolInputIcons : ViewBase
                | Text.InlineCode("Moon")
                | Text.InlineCode("Star")
 
-               | Text.InlineCode("BoolInputs.Switch")
+               | Text.InlineCode("BoolInputVariants.Switch")
                | trueState
                    .ToSwitchInput(Icons.Sun)
                    .Label("Label")
@@ -385,7 +385,7 @@ public class BoolInputIcons : ViewBase
                    .ToSwitchInput(Icons.Star)
                    .Label("Label")
 
-               | Text.InlineCode("BoolInputs.Toggle")
+               | Text.InlineCode("BoolInputVariants.Toggle")
                | trueState
                    .ToToggleInput(Icons.Sun)
                    .Label("Label")
