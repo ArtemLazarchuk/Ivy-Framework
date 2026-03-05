@@ -34,6 +34,7 @@ interface SidebarLayoutWidgetProps {
   mainAppSidebar?: boolean;
   mainContentPadding?: number; // Padding for main content area (default: 2)
   width?: string; // Width of the sidebar (default: 256px)
+  open?: boolean; // Whether the sidebar starts open (default: true)
 }
 
 // Helper function to check if a slot has meaningful content
@@ -72,12 +73,14 @@ export const SidebarLayoutWidget: React.FC<SidebarLayoutWidgetProps> = ({
   mainAppSidebar = false,
   mainContentPadding,
   width,
+  open: openProp = true,
 }) => {
   // Get sidebar width from the width prop (default set in backend)
   const sidebarWidth = getWidth(width).width as string;
   // Initialize sidebar state based on current window width (only for main app sidebar)
   const getInitialSidebarState = () => {
     if (!mainAppSidebar) return true;
+    if (!openProp) return false;
 
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
