@@ -111,6 +111,26 @@ public static class ReadOnlyInputExtensions
         return widget;
     }
 
+    public static IAnyReadOnlyInput ShowCopyButton(this IAnyReadOnlyInput widget, bool show = true)
+    {
+        var property = widget.GetType().GetProperty("ShowCopyButton");
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(widget, show);
+        }
+        return widget;
+    }
+
+    public static IAnyReadOnlyInput Placeholder(this IAnyReadOnlyInput widget, string? placeholder)
+    {
+        var property = widget.GetType().GetProperty("Placeholder");
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(widget, placeholder);
+        }
+        return widget;
+    }
+
     public static IAnyReadOnlyInput HandleBlur<T>(this IAnyReadOnlyInput widget, Action<Event<IAnyInput>> onBlur) where T : notnull
     {
         return widget.HandleBlur<T>(onBlur.ToValueTask());
