@@ -19,13 +19,13 @@ const SparkleStyles = () => (
     {`
       @keyframes sparkle {
         0% {
-          box-shadow: 
+          box-shadow:
             1px 1px 1px #fff,
             1px 1px 1px #fff;
         }
         50% {
           box-shadow:
-            1px 1px 1px #fff, 
+            1px 1px 1px #fff,
             2px 2px 2px var(--primary);
         }
         100% {
