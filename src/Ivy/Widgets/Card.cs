@@ -12,6 +12,7 @@ public enum CardHoverVariant
     PointerAndTranslate,
 }
 
+
 /// <summary>
 /// A flexible container with a border and shadow for grouping related content.
 /// </summary>
@@ -37,6 +38,8 @@ public record Card : WidgetBase<Card>
 
 
     [Prop] public CardHoverVariant HoverVariant { get; set; } = CardHoverVariant.None;
+
+    [Prop] public bool Disabled { get; set; }
 
     [Event] public EventHandler<Event<Card>>? OnClick { get; set; }
 
@@ -113,6 +116,8 @@ public static class CardExtensions
         card with { Children = WithSlot(card, "Footer", footer) };
 
     public static Card Hover(this Card card, CardHoverVariant variant) => card with { HoverVariant = variant };
+
+    public static Card Disabled(this Card card, bool disabled = true) => card with { Disabled = disabled };
 
     private static CardHoverVariant HoverVariantWithClick(this Card card) => card.HoverVariant == CardHoverVariant.None ? CardHoverVariant.PointerAndTranslate : card.HoverVariant;
 
