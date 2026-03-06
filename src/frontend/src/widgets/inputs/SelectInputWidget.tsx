@@ -95,6 +95,7 @@ interface SelectInputWidgetProps {
   searchMode?: 'CaseInsensitive' | 'CaseSensitive' | 'Fuzzy';
   emptyMessage?: string;
   loading?: boolean;
+  ghost?: boolean;
   'data-testid'?: string;
   scale?: Scales;
   width?: string;
@@ -289,6 +290,7 @@ const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
   searchMode = 'CaseInsensitive',
   emptyMessage,
   loading = false,
+  ghost = false,
   scale = Scales.Medium,
   'data-testid': dataTestId,
   width,
@@ -372,7 +374,9 @@ const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
     <div
       className={cn(
         selectContainerVariants({ scale }),
-        invalid && 'border-destructive focus-within:ring-destructive'
+        invalid && 'border-destructive focus-within:ring-destructive',
+        ghost &&
+          'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
     >
@@ -510,6 +514,7 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
   options = [],
   eventHandler,
   nullable = false,
+  ghost = false,
   scale = Scales.Medium,
   'data-testid': dataTestId,
   width,
@@ -537,7 +542,9 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
     <div
       className={cn(
         selectContainerVariants({ scale }),
-        invalid && 'border-destructive focus-within:ring-destructive'
+        invalid && 'border-destructive focus-within:ring-destructive',
+        ghost &&
+          'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
     >
@@ -628,6 +635,7 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
   searchMode = 'CaseInsensitive',
   emptyMessage,
   loading = false,
+  ghost = false,
   scale = Scales.Medium,
   'data-testid': dataTestId,
   width,
@@ -738,7 +746,9 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
     <div
       className={cn(
         'relative w-full border border-input bg-transparent rounded-box shadow-sm px-3 py-2 focus-within:ring-1 focus-within:ring-ring dark:border-white/10',
-        invalid && 'border-destructive focus-within:ring-destructive'
+        invalid && 'border-destructive focus-within:ring-destructive',
+        ghost &&
+          'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
     >
@@ -902,6 +912,7 @@ const SelectVariant: React.FC<SelectInputWidgetProps> = ({
   searchMode = 'CaseInsensitive',
   emptyMessage,
   loading = false,
+  ghost = false,
   scale = Scales.Medium,
   'data-testid': dataTestId,
   width,
@@ -1099,10 +1110,11 @@ const SelectVariant: React.FC<SelectInputWidgetProps> = ({
             onValueChange={handleMultiSelectChange}
             placeholder={placeholder}
             disabled={disabled || loading}
-            className="w-full"
+            className={cn('w-full', ghost && 'ghost')}
             invalid={!!invalid}
             hidePlaceholderWhenSelected
             scale={scale}
+            ghost={ghost}
             data-testid={dataTestId}
           />
           {(nullable && selectedMultiSelectOptions.length > 0 && !disabled) ||
@@ -1180,7 +1192,9 @@ const SelectVariant: React.FC<SelectInputWidgetProps> = ({
       className={cn(
         'relative',
         invalid && inputStyles.invalidInput,
-        !hasValue && 'text-muted-foreground'
+        !hasValue && 'text-muted-foreground',
+        ghost &&
+          'border-transparent shadow-none bg-transparent hover:bg-accent hover:text-accent-foreground dark:border-transparent dark:bg-transparent dark:hover:bg-accent dark:hover:text-accent-foreground'
       )}
       scale={scale}
     >
@@ -1330,6 +1344,7 @@ export const SelectInputWidget: React.FC<SelectInputWidgetProps> = props => {
     searchMode: props.searchMode ?? 'CaseInsensitive',
     emptyMessage: props.emptyMessage,
     loading: props.loading ?? false,
+    ghost: props.ghost ?? false,
   };
 
   switch (normalizedProps.variant) {
