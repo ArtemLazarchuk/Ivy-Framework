@@ -17,6 +17,7 @@ public class FormBuilder<TModel> : ViewBase
     internal Scale _scale = Ivy.Scale.Medium;
     internal Func<bool, Button> _submitBuilder = DefaultSubmitBuilder("Save");
     internal FormValidationStrategy _validationStrategy;
+    internal FormSubmitStrategy _submitStrategy = FormSubmitStrategy.OnSubmit;
     internal Func<TModel, Task>? _onSubmit;
 
     public FormBuilder(
@@ -47,6 +48,12 @@ public class FormBuilder<TModel> : ViewBase
     public FormBuilder<TModel> ValidationStrategy(FormValidationStrategy strategy)
     {
         _validationStrategy = strategy;
+        return this;
+    }
+
+    public FormBuilder<TModel> SubmitStrategy(FormSubmitStrategy strategy)
+    {
+        _submitStrategy = strategy;
         return this;
     }
 
@@ -344,7 +351,8 @@ public class FormBuilder<TModel> : ViewBase
                     _validationStrategy,
                     _scale,
                     e.Help,
-                    e.Placeholder
+                    e.Placeholder,
+                    _submitStrategy
                 );
                 return binding;
             })
@@ -371,6 +379,19 @@ public class FormBuilder<TModel> : ViewBase
         context.TrackDisposable(bindings.Select(e => e.disposable));
 
         var fieldViews = bindings.Select(e => e.fieldView).ToArray();
+
+        if (_submitStrategy is FormSubmitStrategy.OnBlur or FormSubmitStrategy.OnChange)
+        {
+            var submitReceiver = context.UseSignal<FormSubmitSignal, Unit, Unit>();
+            context.UseEffect(() =>
+            {
+                return submitReceiver.Receive(unit =>
+                {
+                    _ = OnSubmit();
+                    return default;
+                });
+            });
+        }
 
         async ValueTask HandleSubmitEvent(Event<Form> _)
         {
@@ -407,6 +428,13 @@ public class FormBuilder<TModel> : ViewBase
             Ivy.Scale.Large => 8,
             _ => 6
         };
+
+        if (_submitStrategy != FormSubmitStrategy.OnSubmit)
+        {
+            return Layout.Vertical().Gap(buttonGap)
+                   | formView
+                   | validationView;
+        }
 
         return Layout.Vertical().Gap(buttonGap)
                | formView
