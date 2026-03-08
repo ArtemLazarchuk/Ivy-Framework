@@ -88,7 +88,8 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
         {
           mutedForeground: themeColors.mutedForeground,
           fontSans: themeColors.fontSans,
-        }
+        },
+        cartesianGrid
       ),
       yAxis: generateYAxis(
         largeSpread,
@@ -101,7 +102,8 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
         {
           mutedForeground: themeColors.mutedForeground,
           fontSans: themeColors.fontSans,
-        }
+        },
+        cartesianGrid
       ),
       tooltip: generateTooltip(tooltip, 'shadow', {
         foreground: themeColors.foreground,

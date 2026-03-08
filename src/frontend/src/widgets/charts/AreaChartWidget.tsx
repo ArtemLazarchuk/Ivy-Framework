@@ -230,7 +230,8 @@ const AreaChartWidget: React.FC<AreaChartWidgetProps> = ({
         {
           mutedForeground: themeColors.mutedForeground,
           fontSans: themeColors.fontSans,
-        }
+        },
+        cartesianGrid
       ),
       yAxis: generateYAxis(
         largeSpread,
@@ -243,7 +244,8 @@ const AreaChartWidget: React.FC<AreaChartWidgetProps> = ({
         {
           mutedForeground: themeColors.mutedForeground,
           fontSans: themeColors.fontSans,
-        }
+        },
+        cartesianGrid
       ),
       series: series,
     }),
