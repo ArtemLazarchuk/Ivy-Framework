@@ -184,7 +184,7 @@ public class BarChart5 : ViewBase
     }
 }
 
-public class BarChart6 : ViewBase
+public class BarChart9 : ViewBase
 {
     public override object? Build()
     {
