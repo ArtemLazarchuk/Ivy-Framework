@@ -168,6 +168,7 @@ By default, `UseStream<T>()` buffers data until the frontend subscribes. This me
 var stream = Context.UseStream<TextRun>(buffer: false);
 ```
 
+
 ## TextRun Properties
 
 | Property | Type | Default | Description |

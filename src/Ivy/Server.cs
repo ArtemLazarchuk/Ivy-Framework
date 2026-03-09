@@ -364,6 +364,7 @@ public class Server
 
     internal Action<HtmlPipeline>? GetPipelineConfigurator() => _pipelineConfigurator;
 
+
     internal ManifestOptions? GetManifestOptions() => _manifestOptions;
 
     public async Task RunAsync(CancellationTokenSource? cts = null)
@@ -920,6 +921,7 @@ public static class WebApplicationExtensions
                     Services = app.Services,
                     ServerArgs = serverArgs
                 };
+
 
                 html = pipeline.Process(pipelineContext, html);
 
