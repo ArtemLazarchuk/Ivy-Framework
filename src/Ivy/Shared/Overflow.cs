@@ -5,5 +5,7 @@ public enum Overflow
 {
     Auto,
     Clip,
-    Ellipsis
+    Ellipsis,
+    Visible,
+    Scroll
 }

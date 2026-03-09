@@ -1,7 +1,5 @@
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Ivy.Core;
-using Ivy.Core.Docs;
 using Ivy.Core.Helpers;
 using Ivy.Core.Hooks;
 
@@ -10,9 +8,12 @@ namespace Ivy;
 
 public enum DateTimeInputVariants
 {
-    Date,
     DateTime,
-    Time
+    Time,
+    Date,
+    Week,
+    Month,
+    Year
 }
 
 public interface IAnyDateTimeInput : IAnyInput
@@ -90,10 +91,6 @@ public record DateTimeInput<TDate> : DateTimeInputBase, IInput<TDate>
 
 public static class DateTimeInputExtensions
 {
-    public static DateTimeInputBase ToDateInput(this IAnyState state, string? placeholder = null, bool disabled = false,
-    DateTimeInputVariants variant = DateTimeInputVariants.Date)
-    => ToDateTimeInput(state, placeholder, disabled, variant);
-
     public static DateTimeInputBase ToDateTimeInput(this IAnyState state, string? placeholder = null, bool disabled = false, DateTimeInputVariants variant = DateTimeInputVariants.DateTime)
     {
         var stateType = state.GetStateType();
@@ -115,6 +112,22 @@ public static class DateTimeInputExtensions
             return input;
         }
     }
+
+    public static DateTimeInputBase ToDateInput(this IAnyState state, string? placeholder = null, bool disabled = false,
+    DateTimeInputVariants variant = DateTimeInputVariants.Date)
+        => ToDateTimeInput(state, placeholder, disabled, variant);
+
+    public static DateTimeInputBase ToTimeInput(this IAnyState state, string? placeholder = null, bool disabled = false)
+        => state.ToDateTimeInput(placeholder, disabled, DateTimeInputVariants.Time);
+
+    public static DateTimeInputBase ToWeekInput(this IAnyState state, string? placeholder = null, bool disabled = false)
+        => state.ToDateTimeInput(placeholder, disabled, DateTimeInputVariants.Week);
+
+    public static DateTimeInputBase ToMonthInput(this IAnyState state, string? placeholder = null, bool disabled = false)
+        => state.ToDateTimeInput(placeholder, disabled, DateTimeInputVariants.Month);
+
+    public static DateTimeInputBase ToYearInput(this IAnyState state, string? placeholder = null, bool disabled = false)
+        => state.ToDateTimeInput(placeholder, disabled, DateTimeInputVariants.Year);
 
     private static T ConvertToDateValue<T>(IAnyState state)
     {
@@ -208,9 +221,6 @@ public static class DateTimeInputExtensions
 
         return TimeOnly.FromDateTime(DateTime.Now);
     }
-
-    public static DateTimeInputBase ToTimeInput(this IAnyState state, string? placeholder = null, bool disabled = false)
-    => state.ToDateTimeInput(placeholder, disabled, DateTimeInputVariants.Time);
 
     internal static IAnyDateTimeInput ScaffoldDefaults(this IAnyDateTimeInput input, string? name, Type type)
     {
