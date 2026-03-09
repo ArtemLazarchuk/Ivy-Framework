@@ -422,6 +422,31 @@ new Box(Text.P("A"))
 
 `BorderRadius.Full` makes the box fully rounded. When width and height are equal, this produces a perfect circle. Use `BorderRadius.Rounded` for rounded corners instead.
 
+## How do I change the size of an Icon?
+
+Use the `.Small()` or `.Large()` extension methods:
+
+```csharp
+new Icon(Icons.Star).Small()   // small icon
+new Icon(Icons.Star)            // default size
+new Icon(Icons.Star).Large()   // large icon
+```
+
+**Important:** There is no `.WithIconSize()` method or `IconSize` enum. Use the simple `.Small()` and `.Large()` fluent modifiers.
+
+## How do I change the font size of text?
+
+Use the `.Large()`, `.Medium()`, or `.Small()` modifiers on any `TextBuilder`:
+
+```csharp
+Text.P("Large text").Large()
+Text.P("Normal text").Medium()
+Text.P("Small text").Small()
+Text.P("Small muted text").Small().Muted()
+```
+
+These modifiers work with all text factory methods (`Text.P()`, `Text.H1()`, `Text.Block()`, `Text.Label()`, etc.). **Important:** There is no `.WithFontSize()` method or `FontSize` enum.
+
 ## How do I format a NumberInput as currency, percent, or decimal?
 
 Use the `.FormatStyle()` fluent method with the `NumberFormatStyle` enum:
