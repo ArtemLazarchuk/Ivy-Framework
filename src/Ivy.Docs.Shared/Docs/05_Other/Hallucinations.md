@@ -758,6 +758,28 @@ new Box(content).Padding(20)
 ### Found In
 84faf65a-c7df-4b5a-888b-4c49255c50ab (trace 004)
 
+## SelectInput<T>.Width() — generic constraint mismatch
+
+**Hallucinated API:**
+```csharp
+language.ToSelectInput(options).Width(Size.Px(200))
+```
+
+**Error:** `CS0311: The type 'Ivy.SelectInput<string>' cannot be used as type parameter 'T' in the generic type or method 'WidgetBaseExtensions.Width<T>(T, Size?)'`
+
+**Correct API:**
+```csharp
+// Cast to SelectInputBase first:
+(SelectInputBase)language.ToSelectInput(options).Width(Size.Px(200))
+// Or wrap in a Box with width:
+new Box(language.ToSelectInput(options)).Width(Size.Px(200))
+```
+
+`SelectInput<T>` inherits from `SelectInputBase : WidgetBase<SelectInputBase>`, not `WidgetBase<SelectInput<T>>`. The `Width<T>()` extension requires `T : WidgetBase<T>`, which `SelectInput<T>` doesn't satisfy.
+
+### Found In
+852f6bec-756c-48f8-93da-ad426af73fab
+
 ## Server Configuration
 
 | Hallucinated API | Correct API |
