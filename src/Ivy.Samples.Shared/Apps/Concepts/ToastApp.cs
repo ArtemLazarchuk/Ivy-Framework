@@ -33,6 +33,6 @@ public class ToastApp : SampleBase
                     }
                 })
             ).Wrap()
-        ).Gap(16);
+        );
     }
 }
