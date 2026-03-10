@@ -12,7 +12,7 @@ import { getWidth } from '@/lib/styles';
 import { logger } from '@/lib/logger';
 import { Scales } from '@/types/scale';
 import {
-  audioRecorderVariants,
+  audioInputVariants,
   textSizeVariants,
   timerSizeVariants,
   iconSizeVariants,
@@ -227,7 +227,7 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
     <div className="relative" style={{ ...getWidth(width) }}>
       <div
         className={cn(
-          audioRecorderVariants({ scale }),
+          audioInputVariants({ scale }),
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
         onClick={
@@ -243,6 +243,21 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
                 }
               }
         }
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={e => {
+          if (disabled) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            if (recording) {
+              setRecording(false);
+            } else {
+              setRecording(true);
+              setError(false);
+            }
+          }
+        }}
       >
         <div
           className="absolute bottom-0 left-0 w-full transition-all duration-100 ease-linear"

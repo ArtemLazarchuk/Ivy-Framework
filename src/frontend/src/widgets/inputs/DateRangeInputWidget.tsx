@@ -49,6 +49,8 @@ interface DateRangeInputWidgetProps {
   'data-testid'?: string;
 }
 
+const EMPTY_EVENTS: string[] = [];
+
 export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
   id,
   value,
@@ -58,7 +60,7 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
   invalid,
   nullable = false,
   scale = Scales.Medium,
-  events = [],
+  events = EMPTY_EVENTS,
   'data-testid': dataTestId,
 }) => {
   const eventHandler = useEventHandler();
@@ -136,8 +138,8 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
     to: parseDate(value?.item2),
   };
 
-  const [leftMonth, setLeftMonth] = useState(today);
-  const [rightMonth, setRightMonth] = useState(addMonths(today, 1));
+  const [leftMonth, setLeftMonth] = useState(() => new Date());
+  const [rightMonth, setRightMonth] = useState(() => addMonths(new Date(), 1));
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLeftMonthChange = (newLeft: Date) => {
