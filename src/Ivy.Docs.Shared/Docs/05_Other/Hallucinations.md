@@ -61,6 +61,25 @@ Layout.Vertical().Width(Size.Lg)
 **Found In:**
 a9ee3993-1cfb-4cba-9322-80a60b56c8d2
 
+## LayoutView.SpaceBetween() — non-existent method
+
+**Hallucinated API:**
+```csharp
+Layout.Horizontal().SpaceBetween()
+```
+
+**Error:** `'LayoutView' does not contain a definition for 'SpaceBetween'` (CS1061)
+
+**Correct API:**
+```csharp
+Layout.Horizontal(Align.SpaceBetween)
+```
+
+`SpaceBetween` is an `Align` enum value passed to the layout constructor, not a fluent method. The same applies to `SpaceAround` and `SpaceEvenly`.
+
+**Found In:**
+f6d6e841-9a14-4475-9fa5-0791be30e578
+
 ## Callout constructor — wrong constructor + invented enum
 
 **Hallucinated API:**
