@@ -35,9 +35,39 @@ public class IvyDocsQuestionsClient : IIvyDocsQuestionsClient
         try
         {
             using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
             var raw = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMsg = $"Response status code does not indicate success: {(int)response.StatusCode} ({response.StatusCode}).";
+                if (!string.IsNullOrWhiteSpace(raw))
+                {
+                    try
+                    {
+                        using var errorDoc = JsonDocument.Parse(raw);
+                        if (errorDoc.RootElement.TryGetProperty("message", out var msgProp) && msgProp.ValueKind == JsonValueKind.String)
+                        {
+                            errorMsg = msgProp.GetString()!;
+                        }
+                        else if (errorDoc.RootElement.TryGetProperty("error", out var errProp) && errProp.ValueKind == JsonValueKind.String)
+                        {
+                            errorMsg = errProp.GetString()!;
+                        }
+                        else
+                        {
+                            errorMsg = raw.Trim();
+                        }
+                    }
+                    catch
+                    {
+                        // Not JSON, just use the raw text
+                        errorMsg = raw.Trim();
+                    }
+                }
+                throw new Exception(errorMsg);
+            }
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
             if (string.IsNullOrWhiteSpace(raw))
                 return new IvyDocsQuestionResult("No answer returned.", null);
 
@@ -48,7 +78,7 @@ public class IvyDocsQuestionsClient : IIvyDocsQuestionsClient
         }
         catch (Exception)
         {
-            return null;
+            throw;
         }
     }
 

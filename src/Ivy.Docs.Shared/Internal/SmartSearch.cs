@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 using Ivy.Core.Apps;
 using Ivy.Core.Chrome;
 using Ivy.Docs.Shared.Services;
@@ -45,7 +49,17 @@ public class SmartSearchView : ViewBase
             {
                 var q = pendingFollowUp.Value;
                 if (string.IsNullOrWhiteSpace(q)) return;
-                var result = await questionsClient.AskAsync(q!).ConfigureAwait(false);
+
+                IvyDocsQuestionResult? result = null;
+                try
+                {
+                    result = await questionsClient.AskAsync(q!).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    result = new IvyDocsQuestionResult($"Error: {ex.Message}", null);
+                }
+
                 var prev = followUpMessages.Value;
                 var withoutLoading = prev.Length > 0 && prev[^1].Children.Length == 1 && prev[^1].Children[0] is ChatLoading
                     ? prev.Take(prev.Length - 1).ToArray()
@@ -66,6 +80,7 @@ public class SmartSearchView : ViewBase
             resultForQuestion.Set((string?)null);
             query.Mutator.Invalidate();
             queryQuestion.Set(q);
+            overlayOpen.Set(false);
         }
 
         ValueTask OnFollowUpSend(Event<Chat, string> e)
@@ -82,8 +97,7 @@ public class SmartSearchView : ViewBase
         object? resultsContent = null;
         if (queryQuestion.Value != null)
         {
-            var resultJustArrived = query.Value != null && !query.Loading && !query.Validating && query.Error is null
-                && !ReferenceEquals(query.Value, lastResultRef.Value);
+            var resultJustArrived = !query.Loading && !query.Validating && queryQuestion.Value != resultForQuestion.Value;
             if (resultJustArrived)
             {
                 lastResultRef.Value = query.Value;
@@ -128,7 +142,14 @@ public class SmartSearchView : ViewBase
             .TestId("docs-smart-search-ask");
 
         var clearInputButton = new Button("", _ => inputState.Set(""));
-        var openTrigger = new Button("", _ => overlayOpen.Set(true)).TestId("docs-smart-search-open-trigger");
+        var openTrigger = new Button("", _ =>
+        {
+            inputState.Set("");
+            queryQuestion.Set(_ => (string?)null);
+            followUpMessages.Set(Array.Empty<ChatMessage>());
+            pendingFollowUp.Set(default(string?));
+            overlayOpen.Set(true);
+        }).TestId("docs-smart-search-open-trigger");
 
         var windowQuery = inputState.Value?.Trim() ?? "";
         var allMenuItems = appRepository.GetMenuItems();

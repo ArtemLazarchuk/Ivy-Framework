@@ -8,10 +8,14 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useRef } from 'react';
 
 function getSmartSearchListButtons(root: HTMLElement): HTMLButtonElement[] {
-  const body = root.querySelector('section[role="document"]');
-  if (!body) return [];
-  return Array.from(body.querySelectorAll('button')).filter(
-    btn => !btn.closest('.rounded-field')
+  // We only want the list items, not the "Ask Agent" button in the footer or the dialog close 'X'
+  // Since list items are rendered using Ivy.ListItem, we can explicitly query for those wrappers
+  const listContainer = root.querySelector('[data-smart-search-list]');
+  if (!listContainer) return [];
+  return Array.from(
+    listContainer.querySelectorAll(
+      'ivy-widget[type="Ivy.ListItem"] > button, ivy-widget[type="Ivy.ListItem"] > a'
+    )
   ) as HTMLButtonElement[];
 }
 
@@ -103,97 +107,163 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
     };
   }, [overlayPanel]);
 
+  const selectedIndexRef = useRef(0);
+
   useEffect(() => {
     if (!overlayPanel?.length) return;
 
-    const onKeyDownCapture = (e: KeyboardEvent) => {
-      const rootEl = (e.target as HTMLElement | null)?.closest?.(
-        '[data-smart-search-overlay]'
-      );
-      if (!rootEl || !(rootEl instanceof HTMLElement)) return;
-      const root = rootEl;
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter')
-        return;
-
-      const input = root.querySelector<HTMLInputElement>(
-        'input:not([type="hidden"]):not([disabled])'
-      );
-      const active = document.activeElement;
-      const isInputActive =
-        active === input ||
-        (e.target instanceof HTMLInputElement && e.target === input);
-
-      // Intercept before SearchVariant blurs → sidebarMenuRef (capture phase).
-      if (isInputActive) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          e.stopPropagation();
-          root
-            .querySelector<HTMLElement>('[data-testid="docs-smart-search-ask"]')
-            ?.click();
-          return;
-        }
-        const buttons = getSmartSearchListButtons(root);
-        if (e.key === 'ArrowDown' && buttons.length > 0) {
-          e.preventDefault();
-          e.stopPropagation();
-          const first = buttons[0];
-          first?.focus();
-          first?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-          return;
-        }
-        // No list yet, or ArrowUp in field: do not blur into sidebar.
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          e.stopPropagation();
-        }
+    // Reset selected index on list change
+    selectedIndexRef.current = 0;
+    // We add a class to the DOM list element to mark it, and if it already has it, we know the list hasn't literally just mounted
+    const attemptHighlight = () => {
+      const root = dialogContentRef.current;
+      if (!root) {
+        requestAnimationFrame(attemptHighlight);
         return;
       }
-
       const buttons = getSmartSearchListButtons(root);
       if (buttons.length === 0) return;
 
-      const idx = buttons.indexOf(active as HTMLButtonElement);
+      buttons.forEach((btn, i) => {
+        btn.onmouseenter = () => {
+          selectedIndexRef.current = i;
+          buttons.forEach((b, j) => {
+            b.classList.toggle('bg-accent', selectedIndexRef.current === j);
+            b.classList.toggle(
+              'text-accent-foreground',
+              selectedIndexRef.current === j
+            );
+          });
+        };
+        btn.classList.toggle('bg-accent', i === selectedIndexRef.current);
+        btn.classList.toggle(
+          'text-accent-foreground',
+          i === selectedIndexRef.current
+        );
+      });
 
-      if (e.key === 'Enter' && idx >= 0) {
+      if (buttons[selectedIndexRef.current]) {
+        buttons[selectedIndexRef.current].scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        });
+      }
+    };
+
+    requestAnimationFrame(attemptHighlight);
+
+    const observer = new MutationObserver(() => {
+      selectedIndexRef.current = 0;
+      attemptHighlight();
+    });
+
+    const root = dialogContentRef.current;
+    if (root) {
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [overlayPanel]);
+
+  useEffect(() => {
+    const onKeyDownCapture = (e: KeyboardEvent) => {
+      if (
+        e.key !== 'ArrowDown' &&
+        e.key !== 'ArrowUp' &&
+        e.key !== 'Enter' &&
+        e.key !== 'Tab'
+      )
+        return;
+
+      // Ensure we process earlier than the SearchVariant's standard React onKeyDown handler
+      // We check if the input is our search input OR we are inside the dialog
+      const isSearchInput =
+        e.target instanceof HTMLInputElement && e.target.type === 'search';
+
+      const isDialogContent = !!(e.target as HTMLElement | null)?.closest?.(
+        '[data-smart-search-overlay]'
+      );
+
+      if (!isSearchInput && !isDialogContent) return;
+
+      const overlayRoot = document.querySelector(
+        '[data-smart-search-overlay]'
+      ) as HTMLElement | null;
+      // If there is no overlay rendering, we cannot handle Arrow/Enter for SmartSearch results
+      if (!overlayRoot) return;
+
+      const buttons = getSmartSearchListButtons(overlayRoot);
+
+      if (buttons.length === 0 && e.key === 'Enter') {
+        if (isSearchInput) {
+          // Stop SearchVariant from blurring the input
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          overlayRoot
+            .querySelector<HTMLElement>('[data-testid="docs-smart-search-ask"]')
+            ?.click();
+        }
+        return;
+      }
+
+      if (buttons.length === 0) return;
+
+      if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        (active as HTMLButtonElement).click();
+        e.stopImmediatePropagation();
+        buttons[selectedIndexRef.current]?.click();
         return;
       }
 
-      if (e.key === 'ArrowDown') {
-        if (idx >= 0 && idx < buttons.length - 1) {
-          e.preventDefault();
-          e.stopPropagation();
-          const next = buttons[idx + 1];
-          next?.focus();
-          next?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
-        return;
+      if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectedIndexRef.current = Math.min(
+          selectedIndexRef.current + 1,
+          buttons.length - 1
+        );
+      } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectedIndexRef.current = Math.max(selectedIndexRef.current - 1, 0);
       }
 
-      if (e.key === 'ArrowUp') {
-        if (idx === 0) {
-          e.preventDefault();
-          e.stopPropagation();
-          input?.focus();
-          return;
-        }
-        if (idx > 0) {
-          e.preventDefault();
-          e.stopPropagation();
-          const prev = buttons[idx - 1];
-          prev?.focus();
-          prev?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
+      buttons.forEach((b, j) => {
+        b.classList.toggle('bg-accent', selectedIndexRef.current === j);
+        b.classList.toggle(
+          'text-accent-foreground',
+          selectedIndexRef.current === j
+        );
+      });
+
+      if (buttons[selectedIndexRef.current]) {
+        buttons[selectedIndexRef.current].scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        });
+      }
+
+      if (
+        !isSearchInput &&
+        isDialogContent &&
+        document.activeElement instanceof HTMLInputElement
+      ) {
+        document.activeElement.focus();
       }
     };
 
     document.addEventListener('keydown', onKeyDownCapture, true);
     return () =>
       document.removeEventListener('keydown', onKeyDownCapture, true);
-  }, [overlayPanel]);
+  }, []);
 
   const closeOverlay = () => {
     document
@@ -202,6 +272,20 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
       )
       ?.click();
   };
+
+  const isClosingRef = useRef(false);
+
+  useEffect(() => {
+    if (overlayPanel && overlayPanel.length > 0) {
+      isClosingRef.current = false;
+      return () => {
+        isClosingRef.current = true;
+        setTimeout(() => {
+          isClosingRef.current = false;
+        }, 200);
+      };
+    }
+  }, [overlayPanel]);
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -213,6 +297,8 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
       }
     };
     const handleFocus = (e: FocusEvent) => {
+      // Prevent focus loops triggered by Radix returning focus abruptly upon unmount
+      if (isClosingRef.current) return;
       const el = e.target as HTMLElement | null;
       if (el?.closest?.('[data-testid="sidebar-search"]')) {
         e.preventDefault();
@@ -244,6 +330,7 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
         <Dialog open={true} onOpenChange={() => closeOverlay()}>
           <DialogContent
             ref={dialogContentRef}
+            onCloseAutoFocus={e => e.preventDefault()}
             data-smart-search-overlay
             style={{
               width: '36rem',
