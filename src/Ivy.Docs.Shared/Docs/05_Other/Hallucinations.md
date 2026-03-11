@@ -194,6 +194,8 @@ var selectedItem = UseState(() => (InventoryItem?)null);
 
 When `T` is a reference type, `null` matches both `T?` and `Func<T>`, causing overload ambiguity. Either cast null to the explicit type or wrap it in a lambda.
 
+**Note:** The related `IState<T>.Set(null)` ambiguity has been fixed via `[OverloadResolutionPriority(1)]` on the `Set(T value)` overload. `.Set(null)` now resolves correctly without casting.
+
 **Found In:**
 f20dced8-1689-4289-a2d8-ee67136eb6ce
 
