@@ -70,7 +70,7 @@ public class MetricView(
         ).Height(Size.Full());
     }
 
-    private Colors DetermineColor(double percentage)
+    private static Colors DetermineColor(double percentage)
     {
         return percentage switch
         {
