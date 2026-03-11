@@ -29,7 +29,7 @@ public class MyView : ViewBase
   }
 }
 
-The topmost view in an Ivy application is called an [App](https://docs.ivy.app/onboarding/concepts/apps.md) and is decorated with the `[App]` attribute. The attribute uses **named parameters**: The attribute uses **named parameters**:
+The topmost view in an Ivy application is called an [App](https://docs.ivy.app/onboarding/concepts/apps.md) and is decorated with the `[App]` attribute. The attribute uses **named parameters**: 
 
 [App(title: "Customers", icon: Icons.Rocket)]
 public class CustomersApp : ViewBase
@@ -121,8 +121,6 @@ Layout.Grid()
 Align values: TopLeft, TopCenter, TopRight, Left, Center, Right, BottomLeft, BottomCenter, BottomRight, Stretch
 
 [Layouts](https://docs.ivy.app/onboarding/concepts/layout.md)
-
-> For full-height layout patterns (header + content + footer), centered max-width layouts, and common pitfalls, see the Layout workflow reference in `Ivy.Internals/Workflows/Apps/CreateApp/AdHoc/References/Layout.md`.
 
 ## Text
 

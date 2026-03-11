@@ -999,3 +999,22 @@ The `Server` class does not have `OnReady`, `OnStartup`, or similar lifecycle ca
 
 **Found In:**
 (session not yet recorded)
+
+## MetricCard — non-existent class name
+
+**Hallucinated API:**
+```csharp
+new MetricCard("Title", "Value", Icons.Activity)
+```
+
+**Error:** `CS0246: The type or namespace name 'MetricCard' could not be found`
+
+**Correct API:**
+```csharp
+new MetricView("Title", "Value", icon: Icons.Activity)
+```
+
+`MetricCard` does not exist. The correct class is `MetricView`. Constructor: `MetricView(string title, string value, string? description = null, Icons? icon = null, IView? chart = null)`.
+
+**Found In:**
+c008af27-1cb1-4ab3-b41a-36aa711c6a41
