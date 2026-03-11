@@ -357,6 +357,7 @@ Available `BadgeVariant` values: `Primary`, `Destructive`, `Secondary`, `Outline
 **Found In:**
 3c507fb4-71e1-4136-9d40-8eca6590250d
 ce144de9-0688-490a-bef6-b2766e323154
+642d3167-790d-48c4-a381-bfab78f928cc
 
 ## Callout.Color(Colors.X) — non-existent fluent method
 
@@ -836,6 +837,29 @@ DecisionMatrixApp.cs (two occurrences of `Align.End`)
 | `server.UseSingleApp()` | `server.UseDefaultApp(typeof(AppType))` |
 | `server.UseNoChrome()` | `server.UseDefaultApp(typeof(AppType))` — omit `UseChrome()` instead |
 | `server.UseDefaultApp<T>()` | `server.UseDefaultApp(typeof(T))` — takes Type, not generic |
+
+## TextBuilder.Style() — non-existent styling method
+
+**Hallucinated API:**
+```csharp
+Text.P("🐶").Style("font-size: 48px")
+```
+
+**Error:** `'TextBuilder' does not contain a definition for 'Style'`
+
+**Correct API:**
+```csharp
+Text.P("🐶").Large()
+Text.P("text").Medium()
+Text.P("text").Small()
+```
+
+`TextBuilder` does not have a `.Style()` method for arbitrary CSS. Use `.Large()`, `.Medium()`, or `.Small()` fluent modifiers. The agent invented a CSS-style `.Style()` method similar to JSX `style` props. Variant of the documented `WithFontSize()` hallucination.
+
+Also hallucinated: `Text.Code(expr).FontSize(24)` — CS1929: `.FontSize()` is an extension on `LabelList`, not `TextBuilder`.
+
+**Found In:**
+88e4f0bb-d358-4b34-9458-bc7eb98845e5, 625c285f-068b-4de3-b01c-ae2f7286a5d8
 
 ## TextBuilder.AlignCenter() — non-existent method
 
