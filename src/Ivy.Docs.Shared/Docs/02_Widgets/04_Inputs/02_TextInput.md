@@ -490,16 +490,16 @@ How do I handle enter key press on a TextInput?
 </Summary>
 <Body>
 
-Single-line TextInputs automatically blur when the user presses Enter, so use `HandleBlur` to react to the Enter key:
+Single-line TextInputs automatically blur when the user presses Enter, so use `OnBlur` to react to the Enter key:
 
 ```csharp
 var input = UseState("");
 input.ToTextInput()
     .Placeholder("Type and press Enter")
-    .HandleBlur(() => DoSomething(input.Value))
+    .OnBlur(() => DoSomething(input.Value))
 ```
 
-`HandleBlur` takes an `Action` that is invoked when the input loses focus — which happens automatically on Enter for single-line text inputs.
+`OnBlur` takes an `Action` that is invoked when the input loses focus — which happens automatically on Enter for single-line text inputs.
 
 </Body>
 </Details>
