@@ -342,3 +342,61 @@ public class ConditionalEffectView : ViewBase
 - [UseCallback](./06_UseCallback.md) - Memoizing callback functions
 - [Signals](./10_UseSignal.md) - Reactive state management
 - [Views](../../../01_Onboarding/02_Concepts/02_Views.md) - Understanding Ivy views and components
+
+## Faq
+
+<Details>
+<Summary>
+How do I clean up resources (timers, subscriptions) in UseEffect?
+</Summary>
+<Body>
+
+Return an `IDisposable` from the UseEffect callback. For simple cases, return the resource directly. For custom cleanup logic, use `Disposable.Create()` from `System.Reactive.Disposables`:
+
+```csharp
+// Simple: return the disposable resource directly
+UseEffect(() =>
+{
+    var timer = new System.Threading.Timer(_ =>
+    {
+        counter.Set(counter.Value + 1);
+    }, null, 0, 1000);
+
+    return timer; // Timer implements IDisposable — returned for cleanup
+}, dependencies);
+```
+
+```csharp
+// Custom cleanup: use Disposable.Create() from System.Reactive
+using System.Reactive.Disposables;
+
+UseEffect(() =>
+{
+    var timer = new System.Threading.Timer(_ =>
+    {
+        counter.Set(counter.Value + 1);
+    }, null, 0, 1000);
+
+    return Disposable.Create(() =>
+    {
+        timer?.Dispose();
+        // additional cleanup logic here
+    });
+}, dependencies);
+```
+
+**Important:** `Disposable.Create()` requires `using System.Reactive.Disposables;`. System.Reactive is included as a transitive dependency of Ivy Framework — you do NOT need to add a NuGet package, just the using statement.
+
+For cancellation-based cleanup, use a `CancellationTokenSource`:
+
+```csharp
+UseEffect(() =>
+{
+    var cts = new CancellationTokenSource();
+    StartBackgroundWork(cts.Token);
+    return cts; // CancellationTokenSource implements IDisposable
+}, dependencies);
+```
+
+</Body>
+</Details>
