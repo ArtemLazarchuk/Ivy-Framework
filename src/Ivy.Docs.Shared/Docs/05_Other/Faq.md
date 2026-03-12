@@ -506,3 +506,27 @@ public class MyApp : ViewBase
     }
 }
 ```
+
+## How do I apply styling (width, height, color, padding) to Ivy components?
+
+Ivy uses a fluent API for styling — there is no `.Style()` method for arbitrary CSS. Use the built-in extension methods:
+
+```csharp
+new Box(content)
+    .Width(Size.Px(200))
+    .Height(Size.Px(100))
+    .Color(Colors.Blue)
+    .Padding(16)
+    .Margin(8)
+    .BorderRadius(BorderRadius.Rounded)
+    .BorderStyle(BorderStyle.Solid)
+```
+
+For CSS transforms, rotations, or complex visual effects that can't be expressed with Ivy's styling API, use the `Html` widget with inline styles:
+
+```csharp
+new Html($"<div style='transform: rotate({degrees}deg); width: 100px; height: 2px; background: #000;'></div>")
+    .DangerouslyAllowScripts()
+```
+
+Note: The `Html` widget renders in an iframe. CSS variables like `var(--primary)` do not resolve — use hardcoded color values.
