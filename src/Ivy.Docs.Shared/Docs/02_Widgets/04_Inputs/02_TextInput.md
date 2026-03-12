@@ -503,3 +503,45 @@ input.ToTextInput()
 
 </Body>
 </Details>
+
+<Details>
+<Summary>
+How to create a form with a dynamic number of fields (e.g. dictionary input)?
+</Summary>
+<Body>
+
+Since hooks cannot be called inside loops (IVYHOOK003), you cannot use `UseState` in a `for`/`foreach`/LINQ loop. Instead, use **one state variable** that holds all field values:
+
+```csharp
+public override object Build()
+{
+    var columns = GetColumnNames(); // e.g. ["Name", "Age", "City"]
+    var values = UseState(new Dictionary<string, string>());
+
+    var layout = Layout.Vertical();
+    foreach (var col in columns)
+    {
+        var currentValue = values.Value.GetValueOrDefault(col, "");
+        layout.Add(
+            new TextInput(currentValue, e =>
+            {
+                var updated = new Dictionary<string, string>(values.Value) { [col] = e.Value };
+                values.Set(updated);
+            })
+            .Placeholder(col)
+            .WithField()
+            .Label(col)
+        );
+    }
+    return layout;
+}
+```
+
+Key points:
+- Only one `UseState` call at the top level — no hook rule violations
+- The dictionary keys map to column names, values map to user input
+- Create a new dictionary on each update to trigger a re-render
+- This pattern works for any dynamic input scenario (forms, dialogs, etc.)
+
+</Body>
+</Details>
