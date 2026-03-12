@@ -136,21 +136,21 @@ text.ToTextInput().OnSubmit(() => DoSomething())
 **Found In:**
 bd5f45ac-569d-4be8-8ef8-882451e608a1
 
-## TextInputVariant — non-existent enum (wrong enum name)
+## TextInputVariants — old plural enum name
 
 **Hallucinated API:**
-```csharp
-new TextInput(text.Value, e => text.Set(e.Value)).Variant(TextInputVariant.Textarea)
-```
-
-**Error:** `The name 'TextInputVariant' does not exist in the current context`
-
-**Correct API:**
 ```csharp
 new TextInput(text.Value, e => text.Set(e.Value)).Variant(TextInputVariants.Textarea)
 ```
 
-The enum is `TextInputVariants` (plural with "s" suffix), not `TextInputVariant` (singular). This breaks the naming convention used by other widgets (e.g., `ButtonVariant`, `BadgeVariant`, `CalloutVariant`), which causes the agent to guess `TextInputVariant` by analogy. Values: `Text`, `Textarea`, `Email`, `Tel`, `Url`, `Password`, `Search`.
+**Error:** `The name 'TextInputVariants' does not exist in the current context`
+
+**Correct API:**
+```csharp
+new TextInput(text.Value, e => text.Set(e.Value)).Variant(TextInputVariant.Textarea)
+```
+
+The enum is `TextInputVariant` (singular), not `TextInputVariants` (plural). All input variant enums were renamed from plural to singular in Ivy-Framework#2546 (e.g., `TextInputVariants` → `TextInputVariant`, `ColorInputVariants` → `ColorInputVariant`, etc.). **Auto-fixed:** The refactoring service automatically rewrites `TextInputVariants` → `TextInputVariant`. Values: `Text`, `Textarea`, `Email`, `Tel`, `Url`, `Password`, `Search`.
 
 **Found In:**
 4a94f8f6-865d-4663-8f4c-d4c09913398f
@@ -321,10 +321,10 @@ date.ToDateTimeInput().Variant(DateTimeVariant.Date)
 ```csharp
 date.ToDateInput()
 // or:
-date.ToDateTimeInput().Variant(DateTimeInputVariants.Date)
+date.ToDateTimeInput().Variant(DateTimeInputVariant.Date)
 ```
 
-The enum is `DateTimeInputVariants` (plural with "Variants" suffix), not `DateTimeVariant` (singular). Values: `DateTime`, `Date`, `Time`, `Month`, `Week`. This follows the same naming pattern as `TextInputVariants`.
+The enum is `DateTimeInputVariant` (singular), not `DateTimeVariant` (missing "Input") or `DateTimeInputVariants` (old plural name). All input variant enums were renamed from plural to singular in Ivy-Framework#2546. Values: `DateTime`, `Date`, `Time`, `Month`, `Week`. **Auto-fixed:** The refactoring service automatically rewrites both `DateTimeVariant` and `DateTimeInputVariants` to `DateTimeInputVariant`.
 
 **Found In:**
 d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-tasks)
