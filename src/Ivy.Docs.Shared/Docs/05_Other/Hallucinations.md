@@ -938,12 +938,12 @@ Text.P("Rate: $50.00/hour").AlignCenter()
 ```csharp
 // TextBuilder does not have alignment methods.
 // To center text, wrap it in a layout:
-Layout.Vertical().AlignItems(Align.Center)
+Layout.Vertical().Align(Align.Center)
     | Text.H1("$0.00")
     | Text.H3("00:00:00")
 
 // Or use a Box:
-new Box(Text.H1("$0.00")).AlignItems(Align.Center)
+new Box(Text.H1("$0.00")).Align(Align.Center)
 ```
 
 `TextBuilder` has no `.AlignCenter()` method. Text alignment is controlled at the layout/container level, not on individual text elements.
