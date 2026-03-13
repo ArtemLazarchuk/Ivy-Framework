@@ -64,7 +64,6 @@ Available providers: `SqlServer`, `Postgres`, `MySql`, `MariaDb`, `Sqlite`, `Sup
 >ivy db add --verbose
 ```
 
-
 ## Supported Database Providers
 
 Ivy supports the following database providers. Click on any provider for detailed setup instructions:
