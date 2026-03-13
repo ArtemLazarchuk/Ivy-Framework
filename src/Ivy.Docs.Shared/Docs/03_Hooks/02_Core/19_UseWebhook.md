@@ -131,6 +131,14 @@ var fullUrl = webhook.GetUri(); // Full endpoint URL
 
 Note: `IClientProvider` does NOT have a `BaseUrl` property. Do not attempt to use it for URL construction.
 
+### Can I call my webhook URL from server-side code (HttpClient)?
+
+No. Webhook URLs include a `state` query parameter that Ivy uses internally for session correlation. Making a server-side `HttpClient` request to a webhook URL will fail with a 400 error because the `state` parameter won't be present or valid.
+
+Webhooks are designed to be called by **external clients** (browsers, third-party services, cURL). The `state` parameter is automatically included in the URL returned by `WebhookEndpoint.GetUri()`.
+
+If you need to test a webhook from within your app, use `client.OpenUrl(webhook.GetUri().ToString())` to open the webhook URL in the user's browser (which will include the `state` parameter), or display the full URL so the user can test it externally with cURL or Postman.
+
 ## See Also
 
 - [State Management](./03_UseState.md) - Update state from webhook handlers
