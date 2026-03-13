@@ -24,7 +24,7 @@ public class AnimationApp : SampleBase
         object Create(AnimationType a)
         {
             return (Layout.Vertical().Width(50)
-                    | Text.InlineCode($"AnimationType.{a.ToString()}")
+                    | Text.Monospaced($"AnimationType.{a.ToString()}")
                     | Icons.Star.ToIcon().Color(Colors.Primary).Large().WithAnimation(a).Duration(5));
         }
 

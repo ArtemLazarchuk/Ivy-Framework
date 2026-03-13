@@ -16,7 +16,7 @@ public enum TextVariant
     P,
     Inline,
     Blockquote,
-    InlineCode,
+    Monospaced,
     Lead,
     Muted,
     Danger,

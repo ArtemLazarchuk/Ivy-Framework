@@ -80,12 +80,12 @@ public static class Text
 
     public static TextBuilder Blockquote(IAnyState state) => Blockquote(state.ToString() ?? "");
 
-    public static TextBuilder InlineCode(string content)
+    public static TextBuilder Monospaced(string content)
     {
-        return new TextBuilder(content, TextVariant.InlineCode);
+        return new TextBuilder(content, TextVariant.Monospaced);
     }
 
-    public static TextBuilder InlineCode(IAnyState state) => InlineCode(state.ToString() ?? "");
+    public static TextBuilder Monospaced(IAnyState state) => Monospaced(state.ToString() ?? "");
 
     public static TextBuilder Lead(string content)
     {

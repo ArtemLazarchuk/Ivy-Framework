@@ -26,11 +26,11 @@ public class AlignApp : ViewBase
 
         var alignValues = (Align[])Enum.GetValues(typeof(Align));
 
-        var header = new object[] { null!, Text.InlineCode("Layout.Vertical()"), Text.InlineCode("Layout.Horizontal()") };
+        var header = new object[] { null!, Text.Monospaced("Layout.Vertical()"), Text.Monospaced("Layout.Horizontal()") };
 
         var values = alignValues.Select(e => new[]
         {
-            Text.InlineCode("Align." + e),
+            Text.Monospaced("Align." + e),
             AlignVerticalTest(e),
             AlignHorizontalTest(e)
         }).SelectMany(e => e).ToArray();
