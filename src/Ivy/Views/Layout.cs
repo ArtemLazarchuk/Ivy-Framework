@@ -1,41 +1,51 @@
+using System.Collections;
 
 // ReSharper disable once CheckNamespace
 namespace Ivy;
 
 public static class Layout
 {
+    private static object[] Flatten(IEnumerable<object?> elements)
+    {
+        return elements
+            .SelectMany(e => e is string or not IEnumerable ? [e] : ((IEnumerable)e).Cast<object?>())
+            .Where(e => e != null)
+            .Cast<object>()
+            .ToArray();
+    }
+
     public static LayoutView Horizontal(params IEnumerable<object?> elements)
     {
-        return (new LayoutView()).Horizontal(elements.Where(e => e != null).Cast<object>().ToArray())
+        return (new LayoutView()).Horizontal(Flatten(elements))
             .Height(Size.Full());
     }
 
     public static LayoutView Vertical(params IEnumerable<object?> elements)
     {
-        return (new LayoutView()).Vertical(elements.Where(e => e != null).Cast<object>().ToArray())
+        return (new LayoutView()).Vertical(Flatten(elements))
             .Width(Size.Full());
     }
 
     public static LayoutView Center(params IEnumerable<object?> elements)
     {
-        return Horizontal(elements.Where(e => e != null).Cast<object>().ToArray())
+        return Horizontal(Flatten(elements))
             .RemoveParentPadding().Align(Align.Center);
     }
 
     public static LayoutView TopCenter(params IEnumerable<object?> elements)
     {
-        return Horizontal(elements.Where(e => e != null).Cast<object>().ToArray())
+        return Horizontal(Flatten(elements))
             .RemoveParentPadding().Align(Align.TopCenter);
     }
 
     public static LayoutView Wrap(params IEnumerable<object?> elements)
     {
-        return (new LayoutView()).Wrap(elements.Where(e => e != null).Cast<object>().ToArray());
+        return (new LayoutView()).Wrap(Flatten(elements));
     }
 
     public static GridView Grid(params IEnumerable<object?> elements)
     {
-        return new GridView(elements.Where(e => e != null).Cast<object>().ToArray());
+        return new GridView(Flatten(elements));
     }
 
     public static TabView Tabs(params Tab[] tabs)
