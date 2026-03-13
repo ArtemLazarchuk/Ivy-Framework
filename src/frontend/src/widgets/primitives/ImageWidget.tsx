@@ -17,6 +17,7 @@ interface ImageWidgetProps {
   alt?: string;
   caption?: string;
   link?: string;
+  objectFit?: 'Cover' | 'Contain' | 'Fill' | 'None' | 'ScaleDown';
   events?: string[];
   width?: string;
   height?: string;
@@ -65,12 +66,21 @@ const getLinkProps = (
   return { href: `${getIvyHost()}${relativePath}` };
 };
 
+const objectFitMap: Record<string, React.CSSProperties['objectFit']> = {
+  Cover: 'cover',
+  Contain: 'contain',
+  Fill: 'fill',
+  None: 'none',
+  ScaleDown: 'scale-down',
+};
+
 export const ImageWidget: React.FC<ImageWidgetProps> = ({
   id,
   src,
   alt,
   caption,
   link,
+  objectFit,
   events,
   width = 'MinContent',
   height = 'MinContent',
@@ -85,6 +95,7 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
   const styles: React.CSSProperties = {
     ...getWidth(width),
     ...getHeight(height),
+    ...(objectFit ? { objectFit: objectFitMap[objectFit] } : {}),
   };
 
   // getImageUrl handles null/undefined and validates the URL internally
@@ -115,7 +126,13 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
     ? { onClick: handleClick, style: { cursor: 'pointer' as const } }
     : {};
 
-  const imgElement = <img src={validatedImageSrc} alt={altText} {...clickProps} />;
+  const imgStyles: React.CSSProperties = objectFit ? {
+    width: '100%',
+    height: '100%',
+    objectFit: objectFitMap[objectFit],
+  } : {};
+
+  const imgElement = <img src={validatedImageSrc} alt={altText} style={imgStyles} {...clickProps} />;
 
   const wrappedImg = linkProps ? (
     <a {...linkProps} style={{ cursor: 'pointer' }}>
@@ -139,7 +156,7 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
   if (linkProps) {
     return (
       <a key={id} {...linkProps} style={{ ...styles, cursor: 'pointer' }}>
-        <img src={validatedImageSrc} alt={altText} />
+        <img src={validatedImageSrc} alt={altText} style={imgStyles} />
       </a>
     );
   }

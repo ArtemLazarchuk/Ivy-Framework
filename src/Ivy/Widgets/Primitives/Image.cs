@@ -3,6 +3,15 @@ using Ivy.Core;
 // ReSharper disable once CheckNamespace
 namespace Ivy;
 
+public enum ImageFit
+{
+    Cover,
+    Contain,
+    Fill,
+    None,
+    ScaleDown
+}
+
 /// <summary>
 /// Displays an image.
 /// </summary>
@@ -23,6 +32,7 @@ public record Image : WidgetBase<Image>
     [Prop] public string? Alt { get; set; }
     [Prop] public string? Caption { get; set; }
     [Prop] public string? Link { get; set; }
+    [Prop] public ImageFit? ObjectFit { get; set; }
 
     [Event] public EventHandler<Event<Image>>? OnClick { get; set; }
 }
