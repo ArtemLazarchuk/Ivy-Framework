@@ -27,14 +27,20 @@ public abstract partial class ViewBase
     protected IState<T> UseState<T>(T? initialValue = default(T?), bool buildOnChange = true) =>
         this.Context.UseState(initialValue!, buildOnChange);
 
-    protected IState<T> UseState<T>(Func<T> buildInitialValue, bool buildOnChange = true) =>
-        this.Context.UseState(buildInitialValue, buildOnChange);
+    [OverloadResolutionPriority(1)]
+    protected IState<T> UseState<T>(Func<T>? buildInitialValue, bool buildOnChange = true) =>
+        buildInitialValue is null
+            ? this.Context.UseState<T>(default, buildOnChange)
+            : this.Context.UseState(buildInitialValue, buildOnChange);
 
     protected IState<T> UseRef<T>(T? initialValue = default) =>
         this.Context.UseRef(initialValue);
 
-    protected IState<T> UseRef<T>(Func<T> buildInitialValue) =>
-        this.Context.UseRef(buildInitialValue);
+    [OverloadResolutionPriority(1)]
+    protected IState<T> UseRef<T>(Func<T>? buildInitialValue) =>
+        buildInitialValue is null
+            ? this.Context.UseRef<T>(default)
+            : this.Context.UseRef(buildInitialValue);
 
     [OverloadResolutionPriority(1)]
     protected void UseEffect(Func<Task> handler, params IEffectTriggerConvertible[] triggers) =>
@@ -187,6 +193,9 @@ public abstract partial class ViewBase
 
     protected IWriteStream<T> UseStream<T>() =>
         this.Context.UseStream<T>();
+
+    protected void UseInterval(Action callback, TimeSpan? interval) =>
+        this.Context.UseInterval(callback, interval);
 
     protected static EffectTrigger OnMount() =>
         EffectTrigger.OnMount();
