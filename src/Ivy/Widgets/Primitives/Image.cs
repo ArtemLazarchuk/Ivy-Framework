@@ -20,4 +20,5 @@ public record Image : WidgetBase<Image>
     }
 
     [Prop] public string Src { get; set; } = String.Empty;
+    [Prop] public string? Caption { get; set; }
 }

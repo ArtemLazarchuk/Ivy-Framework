@@ -6,6 +6,7 @@ import React from 'react';
 interface ImageWidgetProps {
   id: string;
   src: string | undefined | null;
+  caption?: string;
   width?: string;
   height?: string;
 }
@@ -33,6 +34,7 @@ const getImageUrl = (url: string | undefined | null): string | null => {
 export const ImageWidget: React.FC<ImageWidgetProps> = ({
   id,
   src,
+  caption,
   width = 'MinContent',
   height = 'MinContent',
 }) => {
@@ -57,6 +59,15 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
           {!src ? 'No image source provided' : 'Invalid image URL'}
         </span>
       </div>
+    );
+  }
+
+  if (caption) {
+    return (
+      <figure key={id} style={styles} className="flex flex-col items-center">
+        <img src={validatedImageSrc} alt="" />
+        <figcaption className="text-sm text-muted-foreground mt-1">{caption}</figcaption>
+      </figure>
     );
   }
 

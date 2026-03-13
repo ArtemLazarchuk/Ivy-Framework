@@ -6,6 +6,6 @@ public class ImageApp : SampleBase
 {
     protected override object? BuildSample()
     {
-        return new Image("https://placehold.co/600x400");
+        return new Image("https://placehold.co/600x400") { Caption = "A placeholder image" };
     }
 }
