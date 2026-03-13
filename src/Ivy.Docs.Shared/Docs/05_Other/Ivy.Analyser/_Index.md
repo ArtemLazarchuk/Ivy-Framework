@@ -16,6 +16,10 @@ Reference pages for all Ivy.Analyser diagnostic codes.
 
 - [IVYAPP001](IVYAPP001.md) - App Must Have Parameterless Constructor
 
+## UseEffect
+
+- [IVYEFFECT001](IVYEFFECT001.md) - Avoid Task.ContinueWith inside UseEffect
+
 ## Widget Children
 
 - [IVYCHILD001](IVYCHILD001.md) - Adding Children to Leaf Widget
