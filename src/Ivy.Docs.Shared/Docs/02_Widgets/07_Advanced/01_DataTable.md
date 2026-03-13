@@ -462,4 +462,48 @@ If columns are truly dynamic (unknown at compile time), consider building a `Lis
 </Body>
 </Details>
 
+<Details>
+<Summary>
+How do I handle row clicks in DataTable?
+</Summary>
+<Body>
+
+There is no `OnRowClick` method. Use `OnCellClick` to handle individual cell clicks:
+
+```csharp
+items.ToDataTable()
+    .OnCellClick(async e =>
+    {
+        var rowIndex = e.Value.RowIndex;
+        var item = items[rowIndex];
+        selectedItem.Set(item);
+    })
+```
+
+For row-level action buttons (edit, delete), use `RowActions()` + `OnRowAction()`:
+
+```csharp
+items.ToDataTable()
+    .RowActions(
+        MenuItem.Default(Icons.Pencil, "edit"),
+        MenuItem.Default(Icons.Trash2, "delete")
+    )
+    .OnRowAction(async e =>
+    {
+        var args = e.Value;
+        var tag = args.Tag?.ToString();
+        if (tag == "edit")
+        {
+            // Handle edit
+        }
+        else if (tag == "delete")
+        {
+            // Handle delete
+        }
+    })
+```
+
+</Body>
+</Details>
+
 <WidgetDocs Type="Ivy.DataTable" ExtensionTypes="Ivy.DataTableWidgetExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/DataTables/DataTable.cs"/>
