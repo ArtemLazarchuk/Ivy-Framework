@@ -3,6 +3,7 @@ import {
   Align,
   BorderRadius,
   BorderStyle,
+  getAspectRatio,
   getRowGap,
   getColumnGap,
   getHeight,
@@ -41,6 +42,7 @@ interface StackLayoutWidgetProps {
   borderRadius?: BorderRadius;
   borderStyle?: BorderStyle;
   borderThickness?: string;
+  aspectRatio?: number;
 }
 
 export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
@@ -63,6 +65,7 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
   borderRadius = 'None',
   borderStyle = 'None',
   borderThickness,
+  aspectRatio,
 }) => {
   const baseStyles: React.CSSProperties = {
     ...getPadding(padding),
@@ -72,6 +75,7 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
     ...getAlign(orientation, align),
     ...getWidth(width),
     ...getHeight(height),
+    ...getAspectRatio(aspectRatio),
     ...getColor(background, 'backgroundColor', 'background'),
     ...(borderStyle !== 'None' ? getBorderStyle(borderStyle) : {}),
     ...(borderThickness ? getBorderThickness(borderThickness) : {}),
