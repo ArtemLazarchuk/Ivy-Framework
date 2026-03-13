@@ -31,6 +31,7 @@ public class TextApp : SampleBase
             Text.Strong("Strong().Italic()").Italic(),
             Text.Bold("Bold().Italic()").Italic(),
             Text.Muted("Muted().Italic()").Italic(),
+            Text.P("Text with Color(Colors.Muted)").Color(Colors.Muted),
             Text.H4("Quotes & Code").Bold(),
             Text.Blockquote("Blockquote().Muted()").Muted(),
             Text.InlineCode("InlineCode().Bold()").Bold(),
