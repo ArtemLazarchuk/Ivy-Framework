@@ -76,4 +76,14 @@ public static class LayoutExtensions
     {
         return Layout.Vertical(anything);
     }
+
+    public static LayoutView Width(this ViewBase view, Size width)
+    {
+        return view.WithLayout().Width(width);
+    }
+
+    public static LayoutView Height(this ViewBase view, Size height)
+    {
+        return view.WithLayout().Height(height);
+    }
 }
