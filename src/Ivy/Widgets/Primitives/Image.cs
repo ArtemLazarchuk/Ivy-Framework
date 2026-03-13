@@ -20,6 +20,7 @@ public record Image : WidgetBase<Image>
     }
 
     [Prop] public string Src { get; set; } = String.Empty;
+    [Prop] public string? Alt { get; set; }
     [Prop] public string? Caption { get; set; }
     [Prop] public string? Link { get; set; }
 }

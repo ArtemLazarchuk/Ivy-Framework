@@ -8,7 +8,7 @@ public class ImageApp : SampleBase
     {
         return new object[]
         {
-            new Image("https://placehold.co/600x400") { Caption = "A placeholder image" },
+            new Image("https://placehold.co/600x400") { Alt = "A placeholder image", Caption = "A placeholder image" },
             new Image("https://placehold.co/600x400") { Caption = "Click to visit example.com" }.Link("https://example.com"),
         };
     }

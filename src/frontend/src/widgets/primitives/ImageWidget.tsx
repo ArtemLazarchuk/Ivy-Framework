@@ -13,6 +13,7 @@ import React from 'react';
 interface ImageWidgetProps {
   id: string;
   src: string | undefined | null;
+  alt?: string;
   caption?: string;
   link?: string;
   width?: string;
@@ -65,6 +66,7 @@ const getLinkProps = (
 export const ImageWidget: React.FC<ImageWidgetProps> = ({
   id,
   src,
+  alt,
   caption,
   link,
   width = 'MinContent',
@@ -96,7 +98,9 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
 
   const linkProps = link ? getLinkProps(link) : null;
 
-  const imgElement = <img src={validatedImageSrc} alt="" />;
+  const altText = alt ?? caption ?? "";
+
+  const imgElement = <img src={validatedImageSrc} alt={altText} />;
 
   const wrappedImg = linkProps ? (
     <a {...linkProps} style={{ cursor: 'pointer' }}>
@@ -120,10 +124,10 @@ export const ImageWidget: React.FC<ImageWidgetProps> = ({
   if (linkProps) {
     return (
       <a key={id} {...linkProps} style={{ ...styles, cursor: 'pointer' }}>
-        <img src={validatedImageSrc} alt="" />
+        <img src={validatedImageSrc} alt={altText} />
       </a>
     );
   }
 
-  return <img src={validatedImageSrc} key={id} style={styles} alt="" />;
+  return <img src={validatedImageSrc} key={id} style={styles} alt={altText} />;
 };
