@@ -97,3 +97,25 @@ server.Services.AddHttpClient<MyService>();
 ```
 
 Then access it via `UseService<MyService>()` in your app. Do NOT use `services.AddHttpClient()` directly — use `server.Services`.
+
+## How do I get a display name or description from an enum value?
+
+**For dropdowns and selects:** Ivy handles this automatically. When you pass an enum type to a `Select` or `RadioGroup`, `ToOptions()` reads `[Description]` attributes and falls back to splitting PascalCase names. No extra code needed.
+
+**For displaying enum values as text:** Use the built-in `GetDescription()` extension method:
+
+```csharp
+using System.ComponentModel;
+
+public enum Status
+{
+    [Description("Not Started")] NotStarted,
+    [Description("In Progress")] InProgress,
+    [Description("At Risk")] AtRisk,
+}
+
+// Usage:
+Text.P(status.GetDescription()) // "Not Started"
+```
+
+`GetDescription()` reads the `[Description]` attribute if present, otherwise splits PascalCase automatically (e.g., `NotStarted` → `"Not Started"`).
