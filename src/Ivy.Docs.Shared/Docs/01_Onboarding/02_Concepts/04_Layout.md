@@ -9,6 +9,8 @@ searchHints:
   - tabs
   - fluent
   - composition
+  - row
+  - column
 ---
 
 # Layout
@@ -159,4 +161,18 @@ The Layout class provides the following factory methods:
 | [FooterLayout](../../02_Widgets/02_Layouts/05_FooterLayout.md) | Page layout with a fixed footer section |
 | [FloatingPanel](../../02_Widgets/02_Layouts/09_FloatingPanel.md) | Overlay panels that float above the main content |
 | [ResizablePanelGroup](../../02_Widgets/02_Layouts/08_ResizablePanelGroup.md) | Split panels that users can resize by dragging |
+
+## Faq
+
+### Does Ivy have Row and Column widgets?
+
+No. Ivy uses `Layout.Horizontal()` for horizontal layouts (similar to Row) and `Layout.Vertical()` for vertical layouts (similar to Column). You can also use `new StackLayout([...], Orientation.Horizontal)` for explicit orientation control.
+
+```csharp
+// Horizontal layout (like "Row")
+Layout.Horizontal([widget1, widget2, widget3]);
+
+// Vertical layout (like "Column")
+Layout.Vertical([widget1, widget2, widget3]);
+```
 
