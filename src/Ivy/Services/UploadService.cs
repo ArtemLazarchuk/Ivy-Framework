@@ -388,22 +388,23 @@ public class UploadService(string connectionId, IClientProvider clientProvider) 
             }
         }
 
-        // Validate file type
-        if (!string.IsNullOrWhiteSpace(accept))
-        {
-            var typeValidation = FileInputValidation.ValidateFileType(fileUpload, accept);
-            if (!typeValidation.IsValid)
-            {
-                // Send toast notification for file type error
-                clientProvider.Toast(typeValidation.ErrorMessage ?? "File type is not allowed", "Invalid file type");
-                return new OkResult(); // Return OK to prevent frontend error handling
-            }
-        }
-
         // Ensure request stream is disposed deterministically to avoid leaking handles
         try
         {
             await using var uploadStream = file.OpenReadStream();
+
+            // Validate file type with magic byte validation
+            if (!string.IsNullOrWhiteSpace(accept))
+            {
+                var typeValidation = FileInputValidation.ValidateFileTypeWithMagicBytes(fileUpload, accept, uploadStream);
+                if (!typeValidation.IsValid)
+                {
+                    // Send toast notification for file type error
+                    clientProvider.Toast(typeValidation.ErrorMessage ?? "File type is not allowed", "Invalid file type");
+                    return new OkResult(); // Return OK to prevent frontend error handling
+                }
+            }
+
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, timeoutCts.Token);
             // Track this upload by fileId so we can cancel on demand
