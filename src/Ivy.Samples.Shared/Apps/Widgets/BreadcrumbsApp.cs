@@ -20,7 +20,7 @@ public class BreadcrumbsApp : SampleBase
             },
             "Details" => new[]
             {
-                new BreadcrumbItem("Home", () => currentPage.Set("Home"), Icons.Home),
+                new BreadcrumbItem("Home", () => currentPage.Set("Home"), Icons.House),
                 new BreadcrumbItem("Products", () => currentPage.Set("Products")),
                 new BreadcrumbItem("Product Details")
             },
@@ -35,7 +35,7 @@ public class BreadcrumbsApp : SampleBase
             | new Breadcrumbs(items).Separator(">")
             | Text.H2("With Icons")
             | new Breadcrumbs(
-                new BreadcrumbItem("Home", () => currentPage.Set("Home"), Icons.Home),
+                new BreadcrumbItem("Home", () => currentPage.Set("Home"), Icons.House),
                 new BreadcrumbItem("Products", () => currentPage.Set("Products"), Icons.ShoppingCart),
                 new BreadcrumbItem("Details")
             )

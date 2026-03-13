@@ -16,6 +16,7 @@ import {
   TooltipWidget,
   PaginationWidget,
 } from '@/widgets';
+import { BreadcrumbsWidget } from '@/widgets/breadcrumbs';
 import { BladeContainerWidget, BladeWidget } from '@/widgets/blades';
 import { DetailsWidget, DetailWidget } from '@/widgets/details';
 import {
@@ -133,6 +134,7 @@ export const widgetMap = {
   'Ivy.Card': CardWidget,
   'Ivy.Sheet': SheetWidget,
   'Ivy.Badge': BadgeWidget,
+  'Ivy.Breadcrumbs': BreadcrumbsWidget,
   'Ivy.Expandable': ExpandableWidget,
   'Ivy.Chat': ChatWidget,
   'Ivy.ChatMessage': ChatMessageWidget,

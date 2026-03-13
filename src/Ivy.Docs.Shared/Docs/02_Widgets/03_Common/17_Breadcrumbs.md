@@ -70,7 +70,7 @@ Add icons to breadcrumb items:
 
 ```csharp demo-below
 new Breadcrumbs(
-    new BreadcrumbItem("Home", () => { }, Icons.Home),
+    new BreadcrumbItem("Home", () => { }, Icons.House),
     new BreadcrumbItem("Products", () => { }, Icons.ShoppingCart),
     new BreadcrumbItem("Details")
 )
