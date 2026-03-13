@@ -149,10 +149,14 @@ public class SidebarMenuExample : ViewBase
 
 ### Main App Sidebar
 
-When used as the main application sidebar, the layout includes a toggle button and responsive behavior:
+When used as the main application sidebar, you can enable toggle mechanics and responsive behavior using the `.MainAppSidebar()` and `.Open()` APIs.
+- `.MainAppSidebar(bool isMainApp = true)`: Configures the layout as the primary application menu. This automatically adds a collapse/expand toggle button for the user and enables responsive behavior on smaller screens.
+- `.Open(bool open = true)`: Controls whether the layout starts in an expanded or collapsed state. By default, this is set to `true`.
+
+When utilizing `ChromeSettings` to define the main application chrome, you can also inject the initialization state through `ChromeSettings.SidebarOpen(false)`.
 
 <Callout Type="tip">
-"You can also create a toggle sidebar layout by defining the sidebar as .MainAppSidebar()">
+"You can combine `.MainAppSidebar(true)` and `.Open(false)` to construct a toggleable sidebar that specifically starts fully collapsed."
 </Callout>
 
 ```csharp demo-tabs
@@ -181,7 +185,7 @@ public class MainAppSidebarExample : ViewBase
             sidebarHeader: Layout.Vertical().Gap(2)
                 | Text.Lead("Workspace")
                 | new TextInput(placeholder: "Search...", variant: TextInputVariant.Search)
-        );
+        ).Open(false).MainAppSidebar(true);
     }
 }
 ```
