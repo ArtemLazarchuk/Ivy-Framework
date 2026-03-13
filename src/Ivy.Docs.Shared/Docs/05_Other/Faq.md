@@ -80,3 +80,20 @@ return Layout.Vertical()
 ```
 
 Each `state.Set()` call triggers a re-render, so the UI updates incrementally as chunks arrive. Use `UseMutation` if you want built-in loading/error tracking for non-streaming async operations instead.
+
+## How do I use HttpClient in an Ivy app?
+
+For simple HTTP requests, create an `HttpClient` instance directly:
+
+```csharp
+var client = new HttpClient();
+var response = await client.GetAsync(url);
+```
+
+For apps that need a shared HttpClient with DI, register it through the server in Program.cs:
+
+```csharp
+server.Services.AddHttpClient<MyService>();
+```
+
+Then access it via `UseService<MyService>()` in your app. Do NOT use `services.AddHttpClient()` directly — use `server.Services`.
