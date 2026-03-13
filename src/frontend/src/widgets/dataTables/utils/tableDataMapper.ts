@@ -81,13 +81,26 @@ export function convertArrowTableToData(
       };
     });
 
+  // Precompute which columns are decimal type so we can convert Arrow Decimal objects to JS numbers
+  const decimalColumns = new Set<number>();
+  for (let j = 0; j < table.schema.fields.length; j++) {
+    if (table.schema.fields[j].type.toString().toLowerCase().includes('decimal')) {
+      decimalColumns.add(j);
+    }
+  }
+
   const rows: DataRow[] = [];
   for (let i = 0; i < table.numRows; i++) {
     const values: (string | number | boolean | null)[] = [];
     for (let j = 0; j < table.numCols; j++) {
       const column = table.getChildAt(j);
       if (column) {
-        const value = column.get(i);
+        let value = column.get(i);
+        // Arrow Decimal128 values are returned as objects, not JS numbers.
+        // Convert them to numbers for proper rendering.
+        if (decimalColumns.has(j) && value != null && typeof value === 'object') {
+          value = Number(value);
+        }
         values.push(value);
       }
     }

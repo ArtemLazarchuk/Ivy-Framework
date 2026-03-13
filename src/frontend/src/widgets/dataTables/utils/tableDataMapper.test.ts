@@ -227,6 +227,63 @@ describe('tableDataMapper', () => {
       ]);
     });
 
+    it('should convert Arrow Decimal128 objects to JS numbers', () => {
+      // Simulate Arrow Decimal128 objects (returned by column.get() for decimal columns)
+      const decimalValues = [
+        { toString: () => '150000.00' },
+        { toString: () => '99.95' },
+      ];
+
+      const mockField = {
+        name: 'price',
+        type: { toString: () => 'Decimal128(38, 28)' },
+        metadata: null,
+      };
+      const mockSchema = { fields: [mockField] };
+      // get() is called during width calculation (2 samples) AND row extraction (2 rows)
+      const mockColumn = {
+        get: vi.fn((i: number) => decimalValues[i]),
+        length: 2,
+      };
+
+      const mockTable = {
+        schema: mockSchema,
+        numRows: 2,
+        numCols: 1,
+        getChildAt: vi.fn().mockReturnValue(mockColumn),
+      } as unknown as arrow.Table;
+
+      const result = convertArrowTableToData(mockTable, 5);
+
+      expect(result.columns[0].type).toBe(ColType.Number);
+      expect(result.rows[0].values[0]).toBe(150000);
+      expect(result.rows[1].values[0]).toBe(99.95);
+      // Verify they are actual numbers, not objects
+      expect(typeof result.rows[0].values[0]).toBe('number');
+    });
+
+    it('should handle null decimal values without conversion', () => {
+      const mockField = {
+        name: 'amount',
+        type: { toString: () => 'Decimal128(18, 2)' },
+        metadata: null,
+      };
+      const mockSchema = { fields: [mockField] };
+      const mockColumn = { get: vi.fn() };
+      mockColumn.get.mockReturnValueOnce(null);
+
+      const mockTable = {
+        schema: mockSchema,
+        numRows: 1,
+        numCols: 1,
+        getChildAt: vi.fn().mockReturnValue(mockColumn),
+      } as unknown as arrow.Table;
+
+      const result = convertArrowTableToData(mockTable, 5);
+
+      expect(result.rows[0].values[0]).toBeNull();
+    });
+
     it('should handle type inference from Arrow types', () => {
       const typeTests = [
         { arrowType: 'int32', expectedType: ColType.Number },
