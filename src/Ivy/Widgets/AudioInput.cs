@@ -8,13 +8,14 @@ namespace Ivy;
 /// </summary>
 public record AudioInput : WidgetBase<AudioInput>
 {
-    public AudioInput(UploadContext upload, string? label = null, string? recordingLabel = null, string mimeType = "audio/webm", int? chunkInterval = null, bool disabled = false)
+    public AudioInput(UploadContext upload, string? label = null, string? recordingLabel = null, string mimeType = "audio/webm", int? chunkInterval = null, int? sampleRate = null, bool disabled = false)
     {
         UploadUrl = upload.UploadUrl;
         Label = label;
         RecordingLabel = recordingLabel;
         MimeType = mimeType;
         ChunkInterval = chunkInterval;
+        SampleRate = sampleRate;
         Disabled = disabled;
     }
 
@@ -29,6 +30,12 @@ public record AudioInput : WidgetBase<AudioInput>
     [Prop] public string MimeType { get; set; } = "audio/webm";
 
     [Prop] public int? ChunkInterval { get; set; }
+
+    /// <summary>
+    /// Target sample rate in Hz. When null, the browser uses its default (typically 48000 Hz).
+    /// Supported values: 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000.
+    /// </summary>
+    [Prop] public int? SampleRate { get; set; }
 
     [Prop] public string? UploadUrl { get; set; }
 }
@@ -58,6 +65,11 @@ public static class AudioInputExtensions
     public static AudioInput ChunkInterval(this AudioInput widget, int? chunkInterval)
     {
         return widget with { ChunkInterval = chunkInterval };
+    }
+
+    public static AudioInput SampleRate(this AudioInput widget, int? sampleRate)
+    {
+        return widget with { SampleRate = sampleRate };
     }
 
     public static AudioInput UploadUrl(this AudioInput widget, string? uploadUrl)

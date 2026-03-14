@@ -27,6 +27,8 @@ interface AudioInputWidgetProps {
   width?: string;
   uploadUrl: string;
   chunkInterval: number;
+  /** Target sample rate in Hz (e.g. 16000 for speech, 48000 for high-fidelity). When null/undefined, browser default is used. */
+  sampleRate?: number | null;
   density?: Densities;
 }
 
@@ -48,6 +50,7 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
   width,
   uploadUrl,
   chunkInterval = 1000,
+  sampleRate,
   density = Densities.Medium,
 }) => {
   const normalizedMimeTypes = useMemo(() => {
@@ -133,7 +136,8 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio:
+            sampleRate != null ? { sampleRate: { ideal: sampleRate } } : true,
         });
         if (cancelled) {
           return;
@@ -219,7 +223,7 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
       onCancel();
       setRecordingStoppedAt(Date.now());
     };
-  }, [recording, chunkInterval, uploadChunk, normalizedMimeTypes]);
+  }, [recording, chunkInterval, sampleRate, uploadChunk, normalizedMimeTypes]);
 
   const volumePercent = recording ? Math.min(volume / 255, 1) * 100 : 0;
 
