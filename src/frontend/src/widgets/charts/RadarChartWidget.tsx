@@ -16,6 +16,15 @@ import { RADAR_DEFAULTS, applyDefaults } from './chartDefaults';
 
 const EMPTY_ARRAY: never[] = [];
 
+// Case-insensitive property lookup to handle CamelCase JSON serialization
+// C# indicator names (e.g. "Sales") may not match camelCase JSON keys (e.g. "sales")
+const getPropertyValue = (obj: Record<string, unknown>, propName: string): unknown => {
+  if (propName in obj) return obj[propName];
+  const lowerName = propName.toLowerCase();
+  const key = Object.keys(obj).find(k => k.toLowerCase() === lowerName);
+  return key ? obj[key] : undefined;
+};
+
 const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
   data = EMPTY_ARRAY,
   width = 'Full',
@@ -87,7 +96,7 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
     if (data.length > 0 && valueKeys.length > 0) {
       return valueKeys.map(key => ({
         name: key,
-        max: Math.max(...data.map((d: Record<string, unknown>) => Number(d[key] || 0))) * 1.2,
+        max: Math.max(...data.map((d: Record<string, unknown>) => Number(getPropertyValue(d, key) || 0))) * 1.2,
       }));
     }
     return [];
@@ -100,7 +109,7 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
       return [{
         type: 'radar' as const,
         data: data.map((item: Record<string, unknown>) => ({
-          value: radarIndicators.map(ind => Number(item[ind.name] || 0)),
+          value: radarIndicators.map(ind => Number(getPropertyValue(item, ind.name) || 0)),
           name: (item.name || item.Name || 'Data') as string,
         })),
       }];
