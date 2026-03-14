@@ -3,7 +3,6 @@ import ReactECharts from 'echarts-for-react';
 import { getHeight, getWidth } from '@/lib/styles';
 import { useThemeWithMonitoring } from '@/components/theme-provider';
 import {
-  generateDataProps,
   generateEChartGrid,
   generateEChartLegend,
   generateTooltip,
@@ -53,18 +52,11 @@ const getCustomSymbol = (shape: ScatterShape): string | undefined => {
 };
 
 const generateScatterXAxis = (
-  data: Record<string, unknown>[],
   xAxis?: Array<{ dataKey?: string; type?: string; [key: string]: unknown }>,
   themeColors?: { mutedForeground: string; fontSans: string }
 ) => {
   const axisConfig = xAxis?.[0] || {};
   const dataKey = axisConfig.dataKey;
-
-  // Extract all values for the X axis
-  const values =
-    dataKey && data.length > 0
-      ? data.map(d => (typeof d[dataKey] === 'number' ? d[dataKey] : 0))
-      : [];
 
   return {
     type: axisConfig.type?.toLowerCase() || 'value',
@@ -103,7 +95,6 @@ const generateScatterXAxis = (
 };
 
 const generateScatterYAxis = (
-  data: Record<string, unknown>[],
   yAxis?: Array<{ dataKey?: string; type?: string; [key: string]: unknown }>,
   themeColors?: { mutedForeground: string; fontSans: string }
 ) => {
@@ -351,11 +342,11 @@ const ScatterChartWidget: React.FC<ScatterChartWidgetProps> = ({
         cartesianGrid,
         !!toolbox && toolbox.enabled !== false
       ),
-      xAxis: generateScatterXAxis(data, xAxis, {
+      xAxis: generateScatterXAxis(xAxis as Array<{ dataKey?: string; type?: string; [key: string]: unknown }>, {
         mutedForeground: themeColors.mutedForeground,
         fontSans: themeColors.fontSans,
       }),
-      yAxis: generateScatterYAxis(data, yAxis, {
+      yAxis: generateScatterYAxis(yAxis, {
         mutedForeground: themeColors.mutedForeground,
         fontSans: themeColors.fontSans,
       }),

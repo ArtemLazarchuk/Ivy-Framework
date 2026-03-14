@@ -40,9 +40,6 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
   outerRadius = '80%',
   startAngle = 0,
   endAngle = 360,
-  barGap = 4,
-  barCategoryGap = '10%',
-  barSize,
 }) => {
   // Use enhanced theme hook with automatic monitoring
   const { colors, isDark } = useThemeWithMonitoring({
@@ -123,7 +120,7 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
   );
 
   // Memoize option configuration
-  const option = useMemo(() => {
+  const option: any = useMemo(() => {
     return {
       color: chartColors,
       polar: {
