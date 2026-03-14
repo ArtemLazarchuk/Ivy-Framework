@@ -13,6 +13,7 @@ public class RadialBarChartApp : SampleBase
             | new RadialBarChart3()
             | new RadialBarChart4()
             | new RadialBarChart5()
+            | new RadialBarChart6()
         ;
     }
 }
@@ -163,5 +164,28 @@ public class RadialBarChart5 : ViewBase
                 .Legend()
                 .Toolbox()
         ;
+    }
+}
+
+public class RadialBarChart6 : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new { Category = "Q1", Revenue = 85000 },
+            new { Category = "Q2", Revenue = 92000 },
+            new { Category = "Q3", Revenue = 78000 },
+            new { Category = "Q4", Revenue = 88000 }
+        };
+
+        return new Card().Title("Quarterly Revenue (ToRadialBarChart)")
+            | data.ToRadialBarChart(
+                dimension: e => e.Category,
+                measure: e => e.Sum(f => f.Revenue),
+                style: RadialBarChartStyles.Dashboard
+            )
+            .Toolbox()
+            .Height(Size.Units(80));
     }
 }
