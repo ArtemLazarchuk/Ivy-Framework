@@ -83,7 +83,11 @@ const SankeyChartWidget: React.FC<SankeyChartWidgetProps> = ({
         {
           type: 'sankey',
           data: data?.nodes || [],
-          links: data?.links || [],
+          links: (data?.links || []).map(link => ({
+            ...link,
+            source: data?.nodes?.[link.source]?.name ?? link.source,
+            target: data?.nodes?.[link.target]?.name ?? link.target,
+          })),
           nodeWidth: nodeWidth,
           nodeGap: nodeGap,
           layoutIterations: layoutIterations,
