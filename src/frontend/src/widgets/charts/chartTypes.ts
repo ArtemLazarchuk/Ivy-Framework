@@ -5,6 +5,7 @@ export enum ChartType {
   Line = 'line',
   Pie = 'pie',
   Scatter = 'scatter',
+  Funnel = 'funnel',
 }
 
 export interface ChartData {
@@ -497,6 +498,35 @@ export interface ChordChartWidgetProps {
   legend?: LegendProps;
   toolbox?: ToolboxProps;
 }
+
+export interface FunnelChartWidgetProps {
+  id: string;
+  data: ChartData[];
+  width?: string;
+  height?: string;
+  funnels?: FunnelProps[];
+  tooltip?: ToolTipProps;
+  legend?: PieLegendProps;
+  toolbox?: ToolboxProps;
+  colorScheme: ColorScheme;
+  sort?: 'Descending' | 'Ascending' | 'None';
+  orientation?: 'Vertical' | 'Horizontal';
+  gap?: number;
+}
+
+export type FunnelProps = {
+  animated?: boolean;
+  dataKey: string;
+  nameKey: string;
+  fill?: string | null;
+  fillOpacity?: number | null;
+  legendType?: string;
+  minSize?: string;
+  maxSize?: string;
+  stroke?: string | null;
+  strokeWidth?: number;
+  labelLists?: string[];
+};
 
 export interface RadialBarChartWidgetProps {
   id: string;

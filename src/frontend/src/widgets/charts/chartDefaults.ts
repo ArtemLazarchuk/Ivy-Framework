@@ -8,6 +8,7 @@ import type {
   LinesProps,
   BarProps,
   PieProps,
+  FunnelProps,
   CartesianGridProps,
   LegendProps,
   PieLegendProps,
@@ -168,6 +169,15 @@ export const RADAR_DEFAULTS: Partial<RadarProps> = {
   strokeWidth: 2,
   showSymbol: true,
   legendType: 'Line',
+};
+
+// Funnel defaults (Funnel.cs)
+export const FUNNEL_DEFAULTS: Partial<FunnelProps> = {
+  legendType: 'Line',
+  strokeWidth: 1,
+  animated: false,
+  minSize: '0%',
+  maxSize: '100%',
 };
 
 // Re-export applyDefaults from shared utils
