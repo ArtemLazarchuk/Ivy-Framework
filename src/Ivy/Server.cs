@@ -517,7 +517,11 @@ public class Server
 
         // CLI-only commands need DI but never call app.StartAsync(),
         // so use port 0 to avoid conflicts with a running instance.
-        var bindUrl = _args.IsCliCommand ? "http://localhost:0" : $"http://localhost:{_args.Port}";
+        // Bind to localhost for local dev (avoids Windows Firewall prompt),
+        // but use wildcard in containers so health probes can reach the app.
+        var isContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+        var host = isContainer ? "*" : "localhost";
+        var bindUrl = _args.IsCliCommand ? "http://localhost:0" : $"http://{host}:{_args.Port}";
         builder.WebHost.UseUrls(bindUrl);
 
         builder.Services.AddSignalR(options =>
