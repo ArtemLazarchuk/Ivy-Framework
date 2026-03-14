@@ -16,6 +16,7 @@ import type {
   XAxisProps,
   YAxisProps,
   RadialBarProps,
+  RadarProps,
   PolarGridProps,
   PolarAngleAxisProps,
   PolarRadiusAxisProps,
@@ -160,6 +161,14 @@ export const POLAR_ANGLE_AXIS_DEFAULTS: Partial<PolarAngleAxisProps> = {
 
 // PolarRadiusAxis defaults (PolarRadiusAxis.cs)
 export const POLAR_RADIUS_AXIS_DEFAULTS: Partial<PolarRadiusAxisProps> = {};
+
+// Radar defaults (Radar.cs)
+export const RADAR_DEFAULTS: Partial<RadarProps> = {
+  filled: false,
+  strokeWidth: 2,
+  showSymbol: true,
+  legendType: 'Line',
+};
 
 // Re-export applyDefaults from shared utils
 export { applyDefaults } from '@/lib/utils';

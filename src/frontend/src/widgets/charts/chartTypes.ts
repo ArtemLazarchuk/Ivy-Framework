@@ -396,6 +396,46 @@ export interface RadialBarProps {
   name?: string | null;
 }
 
+export interface RadarProps {
+  dataKey: string;
+  name?: string | null;
+  filled?: boolean;
+  fill?: string | null;
+  stroke?: string | null;
+  strokeWidth?: number;
+  strokeDashArray?: string | null;
+  showSymbol?: boolean;
+  legendType?: string;
+  labelLists?: string[];
+}
+
+export interface RadarIndicatorProps {
+  name: string;
+  max?: number;
+  min?: number;
+}
+
+export interface RadarChartWidgetProps {
+  id: string;
+  data: ChartData[];
+  width?: string;
+  height?: string;
+  radars?: RadarProps[];
+  indicators?: RadarIndicatorProps[];
+  tooltip?: ToolTipProps;
+  legend?: LegendProps;
+  toolbox?: ToolboxProps;
+  colorScheme: ColorScheme;
+  shape?: 'Polygon' | 'Circle';
+  cx?: string | number;
+  cy?: string | number;
+  radius?: string | number;
+  startAngle?: number;
+  splitLine?: boolean;
+  splitArea?: boolean;
+  axisLine?: boolean;
+}
+
 export interface RadialBarChartWidgetProps {
   id: string;
   data: ChartData[];
