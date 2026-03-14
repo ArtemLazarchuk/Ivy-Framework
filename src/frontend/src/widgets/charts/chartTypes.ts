@@ -436,6 +436,39 @@ export interface RadarChartWidgetProps {
   axisLine?: boolean;
 }
 
+export interface SankeyNode {
+  name: string;
+}
+
+export interface SankeyLink {
+  source: number;
+  target: number;
+  value: number;
+}
+
+export interface SankeyData {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+}
+
+export type SankeyAlign = 'Justify' | 'Left';
+
+export interface SankeyChartWidgetProps {
+  id: string;
+  data: SankeyData | null;
+  width?: string;
+  height?: string;
+  colorScheme: ColorScheme;
+  nodeWidth?: number;
+  nodeGap?: number;
+  curvature?: number;
+  layoutIterations?: number;
+  nodeAlign?: SankeyAlign;
+  tooltip?: ToolTipProps;
+  legend?: LegendProps;
+  toolbox?: ToolboxProps;
+}
+
 export interface RadialBarChartWidgetProps {
   id: string;
   data: ChartData[];
