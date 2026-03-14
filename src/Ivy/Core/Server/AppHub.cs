@@ -516,7 +516,7 @@ public class AppHub(
                 appSession.LastInteraction = DateTime.UtcNow;
                 if (!await appSession.WidgetTree.TriggerEventAsync(widgetId, eventName, args ?? new JsonArray()))
                 {
-                    logger.LogWarning("Event '{EventName}' for Widget '{WidgetId}' not found.", eventName, widgetId);
+                    logger.LogDebug("Event '{EventName}' for Widget '{WidgetId}' not found.", eventName, widgetId);
                 }
             }
             catch (Exception e)
