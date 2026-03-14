@@ -153,6 +153,16 @@ export const widgetMap = {
       default: m.KanbanCardWidget,
     }))
   ),
+  'Ivy.Calendar': React.lazy(() =>
+    import('@/widgets/calendar/CalendarWidget').then(m => ({
+      default: m.CalendarWidget,
+    }))
+  ),
+  'Ivy.CalendarEvent': React.lazy(() =>
+    import('@/widgets/calendar/CalendarEventWidget').then(m => ({
+      default: m.CalendarEventWidget,
+    }))
+  ),
 
   // Layouts
   'Ivy.StackLayout': StackLayoutWidget,
