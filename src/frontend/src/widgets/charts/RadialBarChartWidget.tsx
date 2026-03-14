@@ -104,6 +104,7 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
         return {
           name: barConfig.name ?? key,
           type: 'bar',
+          z: 5,
           coordinateSystem: 'polar',
           data: data.map(d => d[key]),
           animation: barConfig.animated ?? RADIAL_BAR_DEFAULTS.animated,
@@ -141,6 +142,7 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
       polar: polarConfig,
       angleAxis: {
         type: 'category',
+        z: 10,
         data: categories,
         startAngle: startAngle,
         endAngle: endAngle,
@@ -160,6 +162,7 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
       },
       radiusAxis: {
         type: 'value',
+        z: 10,
         ...(polarRadiusAxisConfig?.angle !== null && {
           axisAngle: polarRadiusAxisConfig?.angle,
         }),
