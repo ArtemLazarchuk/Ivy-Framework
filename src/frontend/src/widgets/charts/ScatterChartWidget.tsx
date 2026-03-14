@@ -19,6 +19,8 @@ import {
   ReferenceDot,
   MarkLine,
   MarkArea,
+  XAxisProps,
+  YAxisProps,
 } from './chartTypes';
 
 const EMPTY_ARRAY: never[] = [];
@@ -52,7 +54,7 @@ const getCustomSymbol = (shape: ScatterShape): string | undefined => {
 };
 
 const generateScatterXAxis = (
-  xAxis?: Array<{ dataKey?: string; type?: string; [key: string]: unknown }>,
+  xAxis?: XAxisProps[],
   themeColors?: { mutedForeground: string; fontSans: string }
 ) => {
   const axisConfig = xAxis?.[0] || {};
@@ -95,7 +97,7 @@ const generateScatterXAxis = (
 };
 
 const generateScatterYAxis = (
-  yAxis?: Array<{ dataKey?: string; type?: string; [key: string]: unknown }>,
+  yAxis?: Array<Partial<YAxisProps>>,
   themeColors?: { mutedForeground: string; fontSans: string }
 ) => {
   const axisConfig = yAxis?.[0] || {};
@@ -342,7 +344,7 @@ const ScatterChartWidget: React.FC<ScatterChartWidgetProps> = ({
         cartesianGrid,
         !!toolbox && toolbox.enabled !== false
       ),
-      xAxis: generateScatterXAxis(xAxis as Array<{ dataKey?: string; type?: string; [key: string]: unknown }>, {
+      xAxis: generateScatterXAxis(xAxis, {
         mutedForeground: themeColors.mutedForeground,
         fontSans: themeColors.fontSans,
       }),
