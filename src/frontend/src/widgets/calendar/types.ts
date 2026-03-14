@@ -36,8 +36,10 @@ export interface WidgetNodeChild {
 
 export interface CalendarWidgetProps {
   id: string;
-  defaultView?: CalendarView;
+  defaultView?: CalendarView | string;
   defaultDate?: string;
+  enableDragDrop?: boolean;
+  showToolbar?: boolean;
   events?: string[];
   width?: string;
   height?: string;
