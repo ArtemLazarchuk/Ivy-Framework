@@ -211,6 +211,7 @@ public class TextBuilder(string content, TextVariant variant, Languages codeLang
     private TextAlignment? _textAlignment;
 
     private Density? _density;
+    private string? _testId = null;
 
     public override object? Build()
     {
@@ -233,7 +234,8 @@ public class TextBuilder(string content, TextVariant variant, Languages codeLang
                     var text = new TextBlock(
                         content, variant, _width, _strikeThrough, _color, _noWrap, _overflow, _bold, _italic, _muted, _textAlignment)
                     {
-                        Density = _density
+                        Density = _density,
+                        TestId = _testId
                     };
                     return text;
                 }
@@ -333,6 +335,12 @@ public class TextBuilder(string content, TextVariant variant, Languages codeLang
     public TextBuilder Right() => Align(TextAlignment.Right);
 
     public TextBuilder Justify() => Align(TextAlignment.Justify);
+
+    public TextBuilder TestId(string testId)
+    {
+        _testId = testId;
+        return this;
+    }
 }
 
 
