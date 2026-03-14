@@ -31,10 +31,6 @@ public record AudioInput : WidgetBase<AudioInput>
 
     [Prop] public int? ChunkInterval { get; set; }
 
-    /// <summary>
-    /// Target sample rate in Hz. When null, the browser uses its default (typically 48000 Hz).
-    /// Supported values: 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000.
-    /// </summary>
     [Prop] public int? SampleRate { get; set; }
 
     [Prop] public string? UploadUrl { get; set; }
