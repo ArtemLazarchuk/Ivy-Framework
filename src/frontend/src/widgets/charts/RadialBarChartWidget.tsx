@@ -120,13 +120,25 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
   );
 
   // Memoize option configuration
-  const option: any = useMemo(() => {
+  const option = useMemo(() => {
+    // Build polar config incrementally to avoid circular reference
+    const basePolar = {
+      center: [cx, cy],
+      radius: [innerRadius, outerRadius],
+    };
+
+    const polarConfig = polarGridConfig
+      ? {
+          ...basePolar,
+          ...(polarGridConfig.gridType && {
+            type: polarGridConfig.gridType.toLowerCase(),
+          }),
+        }
+      : basePolar;
+
     return {
       color: chartColors,
-      polar: {
-        center: [cx, cy],
-        radius: [innerRadius, outerRadius],
-      },
+      polar: polarConfig,
       angleAxis: {
         type: 'category',
         data: categories,
@@ -173,14 +185,6 @@ const RadialBarChartWidget: React.FC<RadialBarChartWidgetProps> = ({
           },
         },
       },
-      ...(polarGridConfig && {
-        polar: {
-          ...option.polar,
-          ...(polarGridConfig.gridType && {
-            type: polarGridConfig.gridType.toLowerCase(),
-          }),
-        },
-      }),
       series: series,
       legend: generateEChartLegend(legend, {
         foreground: themeColors.foreground,

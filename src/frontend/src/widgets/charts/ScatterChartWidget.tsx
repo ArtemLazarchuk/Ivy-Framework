@@ -25,6 +25,15 @@ import {
 
 const EMPTY_ARRAY: never[] = [];
 
+// Helper: resolve a value from a data record, trying the original key first, then camelCase.
+// Needed because C# serializes property names as camelCase but DataKey string values stay PascalCase.
+const resolveValue = (d: Record<string, unknown>, key: string): unknown => {
+  if (key in d) return d[key];
+  const camel = key.charAt(0).toLowerCase() + key.slice(1);
+  if (camel in d) return d[camel];
+  return undefined;
+};
+
 // Map ScatterShape to ECharts symbol types
 const mapScatterShape = (shape: ScatterShape): string => {
   const mapping: Record<ScatterShape, string> = {
@@ -60,8 +69,15 @@ const generateScatterXAxis = (
   const axisConfig = xAxis?.[0] || {};
   const dataKey = axisConfig.dataKey;
 
+  // Map AxisTypes to ECharts types: Number -> value, Category -> category
+  const mapAxisType = (type?: string) => {
+    if (!type) return 'value';
+    const lower = type.toLowerCase();
+    return lower === 'number' ? 'value' : lower;
+  };
+
   return {
-    type: axisConfig.type?.toLowerCase() || 'value',
+    type: mapAxisType(axisConfig.type),
     name: dataKey || '',
     nameLocation: 'middle',
     nameGap: 30,
@@ -103,8 +119,15 @@ const generateScatterYAxis = (
   const axisConfig = yAxis?.[0] || {};
   const dataKey = axisConfig.dataKey;
 
+  // Map AxisTypes to ECharts types: Number -> value, Category -> category
+  const mapAxisType = (type?: string) => {
+    if (!type) return 'value';
+    const lower = type.toLowerCase();
+    return lower === 'number' ? 'value' : lower;
+  };
+
   return {
-    type: axisConfig.type?.toLowerCase() || 'value',
+    type: mapAxisType(axisConfig.type),
     name: dataKey || '',
     nameLocation: 'middle',
     nameGap: 50,
@@ -154,10 +177,12 @@ const generateScatterSeries = (
     return [];
   }
 
-  // Convert ReferenceDot[] to ECharts markPoint format
+  // Convert C# ReferenceDot[] to ECharts markPoint format
+  // C# sends: { x, y, label }
   const markPoint =
     referenceDots && referenceDots.length > 0
       ? {
+          label: { show: true },
           data: referenceDots.map(d => ({
             coord: [d.x, d.y],
             name: d.label,
@@ -165,21 +190,46 @@ const generateScatterSeries = (
         }
       : undefined;
 
-  // Merge MarkLine[] into single markLine config
+  // Convert C# ReferenceLine[] to ECharts markLine format
+  // C# sends: { x?, y?, label?, strokeWidth } — NOT ECharts MarkLine objects
   const markLine =
     referenceLines && referenceLines.length > 0
       ? {
-          ...referenceLines[0],
-          data: referenceLines.flatMap(ml => ml.data),
+          silent: true,
+          symbol: ['none', 'none'] as [string, string],
+          label: { show: true, position: 'end' as const },
+          lineStyle: {
+            type: 'dashed' as const,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            width: (referenceLines[0] as any)?.strokeWidth ?? 1,
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: referenceLines.map((line: any) => {
+            if (line.x != null && line.y == null) {
+              return { xAxis: line.x, name: line.label };
+            } else if (line.y != null && line.x == null) {
+              return { yAxis: line.y, name: line.label };
+            }
+            // Both x and y specified — point-to-point line
+            return [
+              { coord: [line.x, line.y], name: line.label },
+              { coord: [line.x, line.y] },
+            ];
+          }),
         }
       : undefined;
 
-  // Merge MarkArea[] into single markArea config
+  // Convert C# ReferenceArea[] to ECharts markArea format
+  // C# sends: { x1, y1, x2, y2, label? }
   const markArea =
     referenceAreas && referenceAreas.length > 0
       ? {
-          ...referenceAreas[0],
-          data: referenceAreas.flatMap(ma => ma.data),
+          silent: true,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: referenceAreas.map((area: any) => [
+            { xAxis: area.x1, yAxis: area.y1, name: area.label },
+            { xAxis: area.x2, yAxis: area.y2 },
+          ]),
         }
       : undefined;
 
@@ -190,12 +240,13 @@ const generateScatterSeries = (
 
     // Prepare data in [x, y, size] format for scatter
     const scatterData = data.map(d => {
-      const x =
-        typeof d[xAxisDataKey] === 'number' ? d[xAxisDataKey] : parseFloat(String(d[xAxisDataKey] || 0));
-      const y =
-        typeof d[yAxisDataKey] === 'number' ? d[yAxisDataKey] : parseFloat(String(d[yAxisDataKey] || 0));
-      const z = zAxisDataKey && d[zAxisDataKey] !== undefined
-        ? typeof d[zAxisDataKey] === 'number' ? d[zAxisDataKey] : parseFloat(String(d[zAxisDataKey] || 0))
+      const xVal = resolveValue(d, xAxisDataKey);
+      const x = typeof xVal === 'number' ? xVal : parseFloat(String(xVal || 0));
+      const yVal = resolveValue(d, yAxisDataKey);
+      const y = typeof yVal === 'number' ? yVal : parseFloat(String(yVal || 0));
+      const zVal = zAxisDataKey ? resolveValue(d, zAxisDataKey) : undefined;
+      const z = zVal !== undefined
+        ? typeof zVal === 'number' ? zVal : parseFloat(String(zVal || 0))
         : undefined;
 
       return z !== undefined ? [x, y, z] : [x, y];
@@ -209,9 +260,10 @@ const generateScatterSeries = (
 
       // Extract all z values to find min/max
       const zValues = data
-        .map(d => zAxisDataKey && d[zAxisDataKey] !== undefined
-          ? typeof d[zAxisDataKey] === 'number' ? d[zAxisDataKey] : parseFloat(String(d[zAxisDataKey] || 0))
-          : 0)
+        .map(d => {
+          const v = zAxisDataKey ? resolveValue(d, zAxisDataKey) : undefined;
+          return v !== undefined ? (typeof v === 'number' ? v : parseFloat(String(v || 0))) : 0;
+        })
         .filter(z => z > 0);
 
       const minZ = Math.min(...zValues);
