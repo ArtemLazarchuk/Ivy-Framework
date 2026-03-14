@@ -469,6 +469,35 @@ export interface SankeyChartWidgetProps {
   toolbox?: ToolboxProps;
 }
 
+export interface ChordNode {
+  name: string;
+}
+
+export interface ChordLink {
+  source: number;
+  target: number;
+  value: number;
+}
+
+export interface ChordData {
+  nodes: ChordNode[];
+  links: ChordLink[];
+}
+
+export interface ChordChartWidgetProps {
+  id: string;
+  data: ChordData | null;
+  width?: string;
+  height?: string;
+  colorScheme: ColorScheme;
+  sort?: boolean;
+  sortSubGroups?: boolean;
+  padAngle?: number;
+  tooltip?: ToolTipProps;
+  legend?: LegendProps;
+  toolbox?: ToolboxProps;
+}
+
 export interface RadialBarChartWidgetProps {
   id: string;
   data: ChartData[];
