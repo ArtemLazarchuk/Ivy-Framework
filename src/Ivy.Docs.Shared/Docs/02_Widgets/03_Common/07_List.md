@@ -81,7 +81,7 @@ public class ListConfigDemo : ViewBase
             | new List(new[]
             {
                 new ListItem("Notifications").Icon(Icons.Bell)
-                    .Content(new BoolInput(notifications, variant: BoolInputVariant.Switch)),
+                    .Content(notifications.ToBoolInput().Variant(BoolInputVariant.Switch)),
                 new ListItem("Status").Icon(Icons.Activity)
                     .Content(
                         Layout.Horizontal().Gap(2)
@@ -89,7 +89,7 @@ public class ListConfigDemo : ViewBase
                             | Text.Muted("Last seen 2 min ago")
                     ),
                 new ListItem("Search").Icon(Icons.Search)
-                    .Content(new TextInput("", placeholder: "Type to search..."))
+                    .Content(UseState("").ToTextInput().Placeholder("Type to search..."))
             });
     }
 }
