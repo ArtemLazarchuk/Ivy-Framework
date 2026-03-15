@@ -273,7 +273,11 @@ public class AppHub(
     {
         try
         {
-            if (exception != null)
+            if (exception is OperationCanceledException)
+            {
+                logger.LogDebug("Client {ConnectionId} timed out", Context.ConnectionId);
+            }
+            else if (exception != null)
             {
                 logger.LogWarning(exception, "Client {ConnectionId} disconnected with error", Context.ConnectionId);
             }
