@@ -109,7 +109,9 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
   const hasScroll = scroll && scroll !== 'None';
 
   if (hasScroll) {
-    const { width: _w, height: _h, ...flexStyles } = baseStyles;
+    const flexStyles = { ...baseStyles };
+    delete flexStyles.width;
+    delete flexStyles.height;
     const outerStyles: React.CSSProperties = {
       ...getWidth(width),
       ...getHeight(height),
