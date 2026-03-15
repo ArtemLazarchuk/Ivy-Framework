@@ -156,12 +156,11 @@ public static class TextInputExtensions
     private static bool VariantHasBuiltInValidation(TextInputVariant variant) =>
         variant is TextInputVariant.Email or TextInputVariant.Tel or TextInputVariant.Url or TextInputVariant.Password;
 
-    /// <summary>Creates the text input without blur-validation wiring (used to avoid recursion when wrapping).</summary>
     private static TextInputBase CreateTextInputCore(IAnyState state, string? placeholder, bool disabled, TextInputVariant variant)
     {
         var type = state.GetStateType();
         Type genericType = typeof(TextInput<>).MakeGenericType(type);
-        TextInputBase input = (TextInputBase)Activator.CreateInstance(genericType, state, placeholder, disabled, variant)!;
+        TextInputBase input = (TextInputBase)Activator.CreateInstance(genericType, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new object?[] { state, placeholder, disabled, variant }, null)!;
         var nullableProperty = genericType.GetProperty("Nullable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         nullableProperty?.SetValue(input, type.IsNullableType());
         return input;

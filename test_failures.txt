@@ -1,0 +1,61 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Ivy.Agent.Filter -> d:\git\ivy-human\Ivy-Framework\src\Ivy.Agent.Filter\bin\Debug\net10.0\Ivy.Agent.Filter.dll
+  Ivy -> d:\git\ivy-human\Ivy-Framework\src\Ivy\bin\Debug\net10.0\Ivy.dll
+  Ivy.Test -> d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\bin\Debug\net10.0\Ivy.Test.dll
+Test run for d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\bin\Debug\net10.0\Ivy.Test.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.44]     Ivy.Test.TextInputTests.TextInput_ChainedExtensionMethods_WorkCorrectly [FAIL]
+  Failed Ivy.Test.TextInputTests.TextInput_ChainedExtensionMethods_WorkCorrectly [6 ms]
+  Error Message:
+   System.MissingMethodException : Constructor on type 'Ivy.TextInput`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]' not found.
+  Stack Trace:
+     at System.RuntimeType.CreateInstanceImpl(BindingFlags bindingAttr, Binder binder, Object[] args, CultureInfo culture)
+   at System.Activator.CreateInstance(Type type, Object[] args)
+   at Ivy.TextInputExtensions.CreateTextInputCore(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 164
+   at Ivy.TextInputExtensions.ToTextInput(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 207
+   at Ivy.Test.TextInputTests.TextInput_ChainedExtensionMethods_WorkCorrectly() in d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\TextInputTests.cs:line 154
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.48]     Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithDisabled_WorkCorrectly [FAIL]
+  Failed Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithDisabled_WorkCorrectly [< 1 ms]
+  Error Message:
+   System.MissingMethodException : Constructor on type 'Ivy.TextInput`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]' not found.
+  Stack Trace:
+     at System.RuntimeType.CreateInstanceImpl(BindingFlags bindingAttr, Binder binder, Object[] args, CultureInfo culture)
+   at System.Activator.CreateInstance(Type type, Object[] args)
+   at Ivy.TextInputExtensions.CreateTextInputCore(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 164
+   at Ivy.TextInputExtensions.ToTextInput(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 207
+   at Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithDisabled_WorkCorrectly() in d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\TextInputTests.cs:line 142
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.48]     Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithPlaceholder_WorkCorrectly [FAIL]
+  Failed Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithPlaceholder_WorkCorrectly [< 1 ms]
+  Error Message:
+   System.MissingMethodException : Constructor on type 'Ivy.TextInput`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]' not found.
+  Stack Trace:
+     at System.RuntimeType.CreateInstanceImpl(BindingFlags bindingAttr, Binder binder, Object[] args, CultureInfo culture)
+   at System.Activator.CreateInstance(Type type, Object[] args)
+   at Ivy.TextInputExtensions.CreateTextInputCore(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 164
+   at Ivy.TextInputExtensions.ToTextInput(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 207
+   at Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WithPlaceholder_WorkCorrectly() in d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\TextInputTests.cs:line 130
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.48]     Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WorkCorrectly [FAIL]
+  Failed Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WorkCorrectly [< 1 ms]
+  Error Message:
+   System.MissingMethodException : Constructor on type 'Ivy.TextInput`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]' not found.
+  Stack Trace:
+     at System.RuntimeType.CreateInstanceImpl(BindingFlags bindingAttr, Binder binder, Object[] args, CultureInfo culture)
+   at System.Activator.CreateInstance(Type type, Object[] args)
+   at Ivy.TextInputExtensions.CreateTextInputCore(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 164
+   at Ivy.TextInputExtensions.ToTextInput(IAnyState state, String placeholder, Boolean disabled, TextInputVariant variant) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 207
+   at Ivy.TextInputExtensions.ToTelInput(IAnyState state, String placeholder, Boolean disabled) in d:\git\ivy-human\Ivy-Framework\src\Ivy\Widgets\Inputs\TextInput.cs:line 233
+   at Ivy.Test.TextInputTests.TextInput_ExtensionMethods_WorkCorrectly() in d:\git\ivy-human\Ivy-Framework\src\Ivy.Test\TextInputTests.cs:line 121
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Failed!  - Failed:     4, Passed:   713, Skipped:     0, Total:   717, Duration: 225 ms - Ivy.Test.dll (net10.0)
