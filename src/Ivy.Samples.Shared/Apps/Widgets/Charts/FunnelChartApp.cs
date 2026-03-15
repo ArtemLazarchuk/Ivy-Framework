@@ -13,7 +13,10 @@ public class FunnelChartApp : SampleBase
             | new FunnelChart4View()
             | new FunnelChart5View()
             | new FunnelChart6View()
-            | new FunnelChart7View();
+            | new FunnelChart7View()
+            | new FunnelChart8View()
+            | new FunnelChart9View()
+            | new FunnelChart10View();
     }
 }
 
@@ -188,5 +191,68 @@ public class FunnelChart7View : ViewBase
                 .Toolbox()
                 .Legend()
                 .Gap(5);
+    }
+}
+
+public record SalesFunnelStage(string Stage, int Count);
+
+public class FunnelChart8View : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new SalesFunnelStage("Prospects", 8000),
+            new SalesFunnelStage("Qualified", 5200),
+            new SalesFunnelStage("Proposals", 3100),
+            new SalesFunnelStage("Negotiations", 1800),
+            new SalesFunnelStage("Closed", 950),
+        }.AsQueryable();
+
+        return new Card().Title("ToFunnelChart - Default")
+            | data.ToFunnelChart(
+                x => x.Stage,
+                x => x.Sum(s => s.Count));
+    }
+}
+
+public class FunnelChart9View : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new SalesFunnelStage("Visits", 12000),
+            new SalesFunnelStage("Cart", 7500),
+            new SalesFunnelStage("Checkout", 4200),
+            new SalesFunnelStage("Payment", 3100),
+            new SalesFunnelStage("Complete", 2800),
+        }.AsQueryable();
+
+        return new Card().Title("ToFunnelChart - Horizontal")
+            | data.ToFunnelChart(
+                x => x.Stage,
+                x => x.Sum(s => s.Count),
+                FunnelChartStyles.Horizontal);
+    }
+}
+
+public class FunnelChart10View : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new SalesFunnelStage("Awareness", 15000),
+            new SalesFunnelStage("Interest", 9000),
+            new SalesFunnelStage("Desire", 4500),
+            new SalesFunnelStage("Action", 2000),
+        }.AsQueryable();
+
+        return new Card().Title("ToFunnelChart - Dashboard")
+            | data.ToFunnelChart(
+                x => x.Stage,
+                x => x.Sum(s => s.Count),
+                FunnelChartStyles.Dashboard);
     }
 }
