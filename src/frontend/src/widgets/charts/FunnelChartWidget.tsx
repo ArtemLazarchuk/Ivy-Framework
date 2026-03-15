@@ -67,10 +67,25 @@ const FunnelChartWidget: React.FC<FunnelChartWidgetProps> = ({
     [colorScheme, colors]
   );
 
-  const funnelData = useMemo(
-    () => data.map(d => ({ value: d.measure, name: d.dimension as string })),
-    [data]
-  );
+  const funnelData = useMemo(() => {
+    // Determine the value and name keys from the first funnel config,
+    // falling back to the standard PieChartData property names
+    const firstFunnel = funnels?.[0];
+    const valKey = firstFunnel?.dataKey
+      ? firstFunnel.dataKey.charAt(0).toLowerCase() + firstFunnel.dataKey.slice(1)
+      : 'measure';
+    const nameKey = firstFunnel?.nameKey
+      ? firstFunnel.nameKey.charAt(0).toLowerCase() + firstFunnel.nameKey.slice(1)
+      : 'dimension';
+
+    return data.map(d => {
+      const record = d as Record<string, unknown>;
+      return {
+        value: record[valKey] ?? d.measure,
+        name: (record[nameKey] ?? d.dimension) as string,
+      };
+    });
+  }, [data, funnels]);
 
   const echartsSort = useMemo(() => {
     switch (sort?.toLowerCase()) {
