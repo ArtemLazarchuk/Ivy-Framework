@@ -119,10 +119,12 @@ const ChordChartWidget: React.FC<ChordChartWidgetProps> = ({
         }),
         trigger: 'item',
       },
-      legend: generateEChartLegend(legend, {
-        foreground: themeColors.foreground,
-        fontSans: themeColors.fontSans,
-      }),
+      legend: legend
+        ? generateEChartLegend(legend, {
+            foreground: themeColors.foreground,
+            fontSans: themeColors.fontSans,
+          })
+        : { show: false },
       animationDurationUpdate: 1500,
       animationEasingUpdate: 'quinticInOut',
       series: [
@@ -130,7 +132,7 @@ const ChordChartWidget: React.FC<ChordChartWidgetProps> = ({
           type: 'graph',
           layout: 'circular',
           circular: {
-            rotateLabel: true,
+            rotateLabel: false,
           },
           data: graphNodes,
           links: graphLinks,

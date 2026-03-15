@@ -119,7 +119,7 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
     return radars.map((rawRadar: RadarProps, i: number) => {
       const radar = applyDefaults(rawRadar, RADAR_DEFAULTS);
       const seriesData = data.map((item: Record<string, unknown>) => ({
-        value: radarIndicators.map(ind => Number(item[ind.name] || 0)),
+        value: radarIndicators.map(ind => Number(getPropertyValue(item, ind.name) || 0)),
         name: (item.name || item.Name || radar.name || radar.dataKey) as string,
       }));
 
@@ -149,8 +149,8 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
     () => ({
       color: chartColors,
       radar: {
-        center: [cx, cy],
-        radius: radius,
+        center: [cx, legend ? '45%' : cy],
+        radius: legend ? '65%' : radius,
         startAngle: startAngle,
         shape: shape.toLowerCase(),
         indicator: radarIndicators,

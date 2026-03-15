@@ -201,7 +201,9 @@ const FunnelChartWidget: React.FC<FunnelChartWidgetProps> = ({
           mutedForeground: themeColors.mutedForeground,
         }),
         trigger: 'item' as const,
-        formatter: '{a} <br/>{b}: {c}',
+        formatter: (params: { name: string; value: number; percent: number; marker: string }) => {
+          return `${params.marker} ${params.name}<br/><strong>${params.value.toLocaleString()}</strong> (${params.percent}%)`;
+        },
       },
       series: series,
       toolbox: generateEChartToolbox(
