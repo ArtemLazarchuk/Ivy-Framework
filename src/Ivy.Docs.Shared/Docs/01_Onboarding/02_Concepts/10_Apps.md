@@ -113,7 +113,11 @@ The `[App]` attribute marks a class as an Ivy application. Key parameters:
 [App(
     title: "My App",           // Display name (optional, defaults to class name)
     icon: Icons.Layout,        // Icon from the Icons enum (optional)
+<<<<<<< HEAD
     group: ["Category"],       // Navigation path/group (optional, array of strings)
+=======
+    group: ["Category"],        // Navigation path/group (optional, array of strings)
+>>>>>>> af97471cbaae2a3120472f906e2b49348d13b58d
     description: "My app desc" // Description text (optional)
 )]
 public class MyApp : ViewBase
