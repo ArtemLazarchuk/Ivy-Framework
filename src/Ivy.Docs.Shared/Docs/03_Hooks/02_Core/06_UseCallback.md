@@ -52,7 +52,7 @@ public class ParentView : ViewBase
         return Layout.Vertical(
             Text.Inline($"Count: {count.Value}"),
             new ChildComponent(handleIncrement, handleReset),
-            new NumberInput("Multiplier", multiplier.Value, v => multiplier.Set(v))
+            multiplier.ToNumberInput().WithField().Label("Multiplier")
         );
     }
 }
@@ -209,7 +209,7 @@ public class TodoListView : ViewBase
         );
         
         return Layout.Vertical(
-            new TextInput("Filter", filter.Value, v => filter.Set(v)),
+            filter.ToTextInput().WithField().Label("Filter"),
             Layout.Vertical(
                 filteredTodos.Select(todo => 
                     new TodoItem(todo, handleToggle, handleDelete).Key(todo.Id)
@@ -260,7 +260,7 @@ public class DataFetcherView : ViewBase
         }, fetchData); // Stable dependency prevents infinite loops
         
         return Layout.Vertical(
-            new TextInput("Search", searchTerm.Value, v => searchTerm.Set(v)),
+            searchTerm.ToTextInput().WithField().Label("Search"),
             loading.Value ? new Loading() : new ItemList(data.Value ?? new List<Item>())
         );
     }
