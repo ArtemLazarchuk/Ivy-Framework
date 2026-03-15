@@ -67,11 +67,11 @@ public class ExpandedJsonExample : ViewBase
         });
 
         return Layout.Vertical().Gap(4)
-            | new Text("Collapsed (default):")
+            | Text.P("Collapsed (default):")
             | new Json(data)
-            | new Text("Expanded 1 level:")
+            | Text.P("Expanded 1 level:")
             | new Json(data) { Expanded = 1 }
-            | new Text("Fully expanded:")
+            | Text.P("Fully expanded:")
             | new Json(data) { Expanded = -1 };
     }
 }

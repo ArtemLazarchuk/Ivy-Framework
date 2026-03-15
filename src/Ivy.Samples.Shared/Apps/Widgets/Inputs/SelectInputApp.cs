@@ -206,9 +206,8 @@ public class SelectInputSliderExample : ViewBase
     public override object? Build()
     {
         var sizeState = UseState("M");
-        var sizeOptions = new[] { "XS", "S", "M", "L", "XL", "XXL" }.ToOptions();
-
         var priorityState = UseState(Priority.Medium);
+        var sizeOptions = new[] { "XS", "S", "M", "L", "XL", "XXL" }.ToOptions();
 
         return Layout.Vertical()
             | Text.H3("Slider Variant")
@@ -490,9 +489,8 @@ public class SelectInputRadioExample : ViewBase
     {
         var genre = UseState(Genre.Comedy);
         var nullableGenre = UseState((Genre?)null);
-        var genreOptions = typeof(Genre).ToOptions();
-
         var notificationFrequency = UseState("Daily");
+        var genreOptions = typeof(Genre).ToOptions();
         var frequencyOptions = new[] { "Immediately", "Daily", "Weekly", "Never" }.ToOptions();
 
         return Layout.Vertical()

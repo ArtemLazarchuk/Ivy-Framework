@@ -113,11 +113,11 @@ public class ExpandedXmlExample : ViewBase
         );
 
         return Layout.Vertical().Gap(4)
-            | new Text("Collapsed (default):")
+            | Text.P("Collapsed (default):")
             | new Xml(xml)
-            | new Text("Expanded 1 level:")
+            | Text.P("Expanded 1 level:")
             | new Xml(xml) { Expanded = 1 }
-            | new Text("Fully expanded:")
+            | Text.P("Fully expanded:")
             | new Xml(xml) { Expanded = -1 };
     }
 }

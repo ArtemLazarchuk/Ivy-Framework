@@ -26,6 +26,10 @@ public class DateTimeInputApp : SampleBase
         var dateTimeOffsetState = UseState(DateTimeOffset.Now);
         var nullableDateTimeOffsetState = UseState<DateTimeOffset?>(() => null);
 
+        // FirstDayOfWeek states
+        var mondayFirstDate = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var mondayFirstRange = UseState<(DateOnly, DateOnly)>((DateOnly.FromDateTime(DateTime.Now.AddDays(-7)), DateOnly.FromDateTime(DateTime.Now)));
+
         // Size examples
         var sizeExamplesGrid = Layout.Grid().Columns(7)
             | Text.Monospaced("Size")
@@ -500,10 +504,6 @@ public class DateTimeInputApp : SampleBase
                 .Variant(DateTimeInputVariant.Year)
                 .Placeholder("Fiscal year")
                 .TestId("datetime-input-placeholder-year");
-
-        // FirstDayOfWeek examples
-        var mondayFirstDate = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var mondayFirstRange = UseState<(DateOnly, DateOnly)>((DateOnly.FromDateTime(DateTime.Now.AddDays(-7)), DateOnly.FromDateTime(DateTime.Now)));
 
         var firstDayOfWeekGrid = Layout.Grid().Columns(2)
             | Text.Monospaced("Monday-first DateInput")

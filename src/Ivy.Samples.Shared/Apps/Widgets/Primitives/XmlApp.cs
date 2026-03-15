@@ -26,11 +26,11 @@ public class XmlApp : SampleBase
             )
         );
         return Layout.Vertical().Gap(4)
-            | new Text("Default (collapsed):")
+            | Text.P("Default (collapsed):")
             | new Xml(xml)
-            | new Text("Expanded to depth 2:")
+            | Text.P("Expanded to depth 2:")
             | new Xml(xml) { Expanded = 2 }
-            | new Text("Fully expanded:")
+            | Text.P("Fully expanded:")
             | new Xml(xml) { Expanded = -1 };
     }
 }

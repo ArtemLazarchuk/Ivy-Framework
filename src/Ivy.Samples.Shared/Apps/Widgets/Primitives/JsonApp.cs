@@ -28,13 +28,13 @@ public class JsonApp : SampleBase
         var dog = new { Breed = "Poodle", Color = "White", Age = 3 };
 
         return Layout.Vertical().Gap(4)
-            | new Text("From JsonNode:")
+            | Text.P("From JsonNode:")
             | new Json(json)
-            | new Text("From object (auto-serialized):")
+            | Text.P("From object (auto-serialized):")
             | new Json(dog)
-            | new Text("Expanded to depth 2:")
+            | Text.P("Expanded to depth 2:")
             | new Json(json) { Expanded = 2 }
-            | new Text("Fully expanded:")
+            | Text.P("Fully expanded:")
             | new Json(json) { Expanded = -1 };
     }
 }
