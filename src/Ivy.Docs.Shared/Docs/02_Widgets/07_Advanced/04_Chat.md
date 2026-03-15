@@ -321,13 +321,27 @@ This example showcasing the full range of Ivy [widgets](../../01_Onboarding/02_C
 ```csharp demo-tabs
 public class AdvancedChatDemo : ViewBase
 {
+    private enum ProjectType
+    {
+        Web,
+        Mobile,
+        Desktop
+    }
+
+    private enum ProjectPriority
+    {
+        Low,
+        Medium,
+        High
+    }
+
     public override object? Build()
     {
         var projName = UseState("");
         var projDesc = UseState("");
-        var projType = UseState("Web");
-        var projPriority = UseState("Low");
-        
+        var projType = UseState(ProjectType.Web);
+        var projPriority = UseState(ProjectPriority.Low);
+
         var messages = UseState(ImmutableArray.Create<ChatMessage>(
             new ChatMessage(ChatSender.Assistant,
                 "Welcome to the Advanced Chat! Try these commands:\n" +
@@ -361,8 +375,8 @@ public class AdvancedChatDemo : ViewBase
                 "create form" => Layout.Vertical().Gap(1)
                     | projName.ToTextInput().Placeholder("Enter project name")
                     | projDesc.ToTextInput().Placeholder("Enter description")
-                    | projType.ToSelectInput(["Web", "Mobile", "Desktop"])
-                    | projPriority.ToSelectInput(["Low", "Medium", "High"])
+                    | projType.ToSelectInput(typeof(ProjectType).ToOptions())
+                    | projPriority.ToSelectInput(typeof(ProjectPriority).ToOptions())
                     | new Button("Create Project").Variant(ButtonVariant.Primary),
 
                 "show chart" => new LineChart(
