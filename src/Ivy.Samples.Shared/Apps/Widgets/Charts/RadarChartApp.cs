@@ -13,6 +13,9 @@ public class RadarChartApp : SampleBase
             | new RadarChart3()
             | new RadarChart4()
             | new RadarChart5()
+            | new RadarChart6()
+            | new RadarChart7()
+            | new RadarChart8()
         ;
     }
 }
@@ -165,6 +168,87 @@ public class RadarChart5 : ViewBase
                 .Tooltip()
                 .Legend()
                 .Toolbox()
+        ;
+    }
+}
+
+public class RadarChart6 : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new { Department = "Engineering", Speed = 85, Quality = 92, Innovation = 78, Collaboration = 88, Delivery = 80 },
+            new { Department = "Marketing", Speed = 70, Quality = 75, Innovation = 90, Collaboration = 85, Delivery = 72 },
+            new { Department = "Sales", Speed = 90, Quality = 68, Innovation = 65, Collaboration = 92, Delivery = 95 },
+        };
+
+        return new Card().Title("ToRadarChart - Default")
+            | data.ToRadarChart(
+                x => x.Department,
+                [
+                    q => q.Sum(x => x.Speed),
+                    q => q.Sum(x => x.Quality),
+                    q => q.Sum(x => x.Innovation),
+                    q => q.Sum(x => x.Collaboration),
+                    q => q.Sum(x => x.Delivery),
+                ]
+            )
+        ;
+    }
+}
+
+public class RadarChart7 : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new { Department = "Engineering", Speed = 85, Quality = 92, Innovation = 78, Collaboration = 88, Delivery = 80 },
+            new { Department = "Marketing", Speed = 70, Quality = 75, Innovation = 90, Collaboration = 85, Delivery = 72 },
+            new { Department = "Sales", Speed = 90, Quality = 68, Innovation = 65, Collaboration = 92, Delivery = 95 },
+        };
+
+        return new Card().Title("ToRadarChart - Circle")
+            | data.ToRadarChart(
+                x => x.Department,
+                [
+                    q => q.Sum(x => x.Speed),
+                    q => q.Sum(x => x.Quality),
+                    q => q.Sum(x => x.Innovation),
+                    q => q.Sum(x => x.Collaboration),
+                    q => q.Sum(x => x.Delivery),
+                ],
+                RadarChartStyles.Circle
+            )
+        ;
+    }
+}
+
+public class RadarChart8 : ViewBase
+{
+    public override object? Build()
+    {
+        var data = new[]
+        {
+            new { Department = "Engineering", Speed = 85, Quality = 92, Innovation = 78, Collaboration = 88, Delivery = 80 },
+            new { Department = "Marketing", Speed = 70, Quality = 75, Innovation = 90, Collaboration = 85, Delivery = 72 },
+            new { Department = "Sales", Speed = 90, Quality = 68, Innovation = 65, Collaboration = 92, Delivery = 95 },
+        };
+
+        return new Card().Title("ToRadarChart - Dashboard")
+            | data.ToRadarChart(
+                x => x.Department,
+                [
+                    q => q.Sum(x => x.Speed),
+                    q => q.Sum(x => x.Quality),
+                    q => q.Sum(x => x.Innovation),
+                    q => q.Sum(x => x.Collaboration),
+                    q => q.Sum(x => x.Delivery),
+                ],
+                RadarChartStyles.Dashboard,
+                polish: chart => chart.Toolbox()
+            )
         ;
     }
 }
