@@ -1150,19 +1150,19 @@ new TextInput(query).Width(Size.Grow())
 
 **Found In:**
 7a9aadf3
-## AppAttribute.path — old parameter name
+## AppAttribute.path old parameter name
 
 **Hallucinated API:**
-`csharp
+```csharp
 [App("Dashboard", path: ["Dashboards"])]
-`
+```
 
 **Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
 
 **Correct API:**
-`csharp
+```csharp
 [App("Dashboard", group: ["Dashboards"])]
-`
+```
 
 The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
 
