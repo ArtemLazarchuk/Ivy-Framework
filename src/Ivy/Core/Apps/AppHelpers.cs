@@ -25,7 +25,7 @@ public static class AppHelpers
         var appAttribute = type.GetCustomAttribute<AppAttribute>();
         if (appAttribute != null)
         {
-            var path = appAttribute.Path ?? GetPathFromNamespace(type) ?? ["Apps"];
+            var path = appAttribute.Group ?? GetPathFromNamespace(type) ?? ["Apps"];
 
             string GetId()
             {
