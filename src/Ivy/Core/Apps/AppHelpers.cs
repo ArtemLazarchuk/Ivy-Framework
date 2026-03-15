@@ -58,7 +58,7 @@ public static class AppHelpers
                 Icon = appAttribute.Icon == Icons.None ? null : appAttribute.Icon,
                 Description = appAttribute.Description,
                 Type = type,
-                Path = path,
+                Group = path,
                 IsVisible = !type.Name.StartsWith("_") && appAttribute.IsVisible,
                 IsIndex = type.Name is "_Index" or "_IndexApp",
                 Order = appAttribute.Order,

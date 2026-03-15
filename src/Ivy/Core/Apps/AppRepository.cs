@@ -88,7 +88,7 @@ public class AppRepository : IAppRepository
             if (appDescriptor.IsVisible || appDescriptor.IsIndex)
             {
                 var current = Root;
-                foreach (var part in appDescriptor.Path)
+                foreach (var part in appDescriptor.Group)
                 {
                     if (current is not IAppRepositoryGroup group)
                     {
