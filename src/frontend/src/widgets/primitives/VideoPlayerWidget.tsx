@@ -91,8 +91,12 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
   }, [hasOnEnded, handleEvent, id]);
 
   const handleLoadedEvent = useCallback(() => {
+    // Re-apply playbackRate after media load (browser resets it to defaultPlaybackRate during load)
+    if (videoRef.current && playbackRate != null) {
+      videoRef.current.playbackRate = Math.max(0.25, playbackRate);
+    }
     if (hasOnLoaded) handleEvent('OnLoaded', id, []);
-  }, [hasOnLoaded, handleEvent, id]);
+  }, [hasOnLoaded, handleEvent, id, playbackRate]);
 
   useEffect(() => {
     if (videoRef.current && volume != null) {
@@ -187,9 +191,13 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
     }
   }, [startTime, validatedVideoSrc]);
 
+  // Apply playbackRate via defaultPlaybackRate (persists across media loads)
+  // and also set playbackRate directly for immediate effect
   useEffect(() => {
     if (videoRef.current && playbackRate != null) {
-      videoRef.current.playbackRate = Math.max(0.25, playbackRate);
+      const rate = Math.max(0.25, playbackRate);
+      videoRef.current.defaultPlaybackRate = rate;
+      videoRef.current.playbackRate = rate;
     }
   }, [playbackRate]);
 
