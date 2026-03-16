@@ -17,8 +17,7 @@ import {
 } from './chartTypes';
 import { getChartThemeColors } from './styles';
 import { RADAR_DEFAULTS, applyDefaults } from './chartDefaults';
-
-const EMPTY_ARRAY: never[] = [];
+import { EMPTY_ARRAY } from '@/lib/constants';
 
 // Case-insensitive property lookup to handle CamelCase JSON serialization
 // C# indicator names (e.g. "Sales") may not match camelCase JSON keys (e.g. "sales")
@@ -132,7 +131,7 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
     }
 
     // Map each radar config to a series
-    return radars.map((rawRadar: RadarProps, i: number) => {
+    return radars.map((rawRadar: RadarProps) => {
       const radar = applyDefaults(rawRadar, RADAR_DEFAULTS);
       const seriesData = data.map((item: Record<string, unknown>) => ({
         value: radarIndicators.map(ind =>
@@ -157,7 +156,6 @@ const RadarChartWidget: React.FC<RadarChartWidgetProps> = ({
             color: radar.fill ?? undefined,
           },
         })),
-        ...(i === 0 ? {} : {}), // keep index for potential future use
       };
     });
   }, [radars, data, radarIndicators]);

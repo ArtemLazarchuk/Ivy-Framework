@@ -17,7 +17,7 @@ import {
   applyDefaults,
 } from './chartDefaults';
 
-const EMPTY_ARRAY: never[] = [];
+import { EMPTY_ARRAY } from '@/lib/constants';
 
 const FunnelChartWidget: React.FC<FunnelChartWidgetProps> = ({
   data = EMPTY_ARRAY,

@@ -11,16 +11,10 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, X } from 'lucide-react';
 import {
   addMonths,
-  endOfMonth,
-  endOfYear,
   format,
   isBefore,
   isSameMonth,
-  startOfMonth,
-  startOfYear,
-  subDays,
   subMonths,
-  subYears,
   format as formatDate,
   isValid,
 } from 'date-fns';
@@ -72,6 +66,8 @@ function resolveDayOfWeek(value?: WeekDay | string): WeekDay | undefined {
   return dayOfWeekMap[value];
 }
 
+import { DateRangePresets } from './DateRangePresets';
+
 export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
   id,
   value,
@@ -116,41 +112,6 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
   );
 
   const today = new Date();
-
-  const yesterday = {
-    from: subDays(today, 1),
-    to: subDays(today, 1),
-  };
-
-  const last7Days = {
-    from: subDays(today, 6),
-    to: today,
-  };
-
-  const last30Days = {
-    from: subDays(today, 29),
-    to: today,
-  };
-
-  const monthToDate = {
-    from: startOfMonth(today),
-    to: today,
-  };
-
-  const lastMonth = {
-    from: startOfMonth(subMonths(today, 1)),
-    to: endOfMonth(subMonths(today, 1)),
-  };
-
-  const yearToDate = {
-    from: startOfYear(today),
-    to: today,
-  };
-
-  const lastYear = {
-    from: startOfYear(subYears(today, 1)),
-    to: endOfYear(subYears(today, 1)),
-  };
 
   const parseDate = (val: string | null | undefined) => {
     if (!val) return undefined;
@@ -272,139 +233,15 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
             <div className="flex max-sm:flex-col">
               <div className="relative border-border py-4 max-sm:order-1 max-sm:border-t sm:w-32">
                 <div className="h-full border-border sm:border-e">
-                  <div className="flex flex-col px-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange({
-                          from: today,
-                          to: today,
-                        });
-                        setLeftMonth(today);
-                        setRightMonth(addMonths(today, 1));
-                        setIsOpen(false);
-                      }}
-                    >
-                      Today
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(yesterday);
-                        setLeftMonth(yesterday.from);
-                        setRightMonth(addMonths(yesterday.from, 1));
-                        setIsOpen(false);
-                      }}
-                    >
-                      Yesterday
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(last7Days);
-                        setLeftMonth(last7Days.from);
-                        setRightMonth(last7Days.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Last 7 Days
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(last30Days);
-                        setLeftMonth(last30Days.from);
-                        setRightMonth(last30Days.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Last 30 Days
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(monthToDate);
-                        setLeftMonth(monthToDate.from);
-                        setRightMonth(monthToDate.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Month to Date
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(lastMonth);
-                        setLeftMonth(lastMonth.from);
-                        setRightMonth(lastMonth.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Last Month
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(yearToDate);
-                        setLeftMonth(yearToDate.from);
-                        setRightMonth(yearToDate.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Year to Date
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start cursor-pointer',
-                        dateRangeInputTextVariant({ density })
-                      )}
-                      onClick={() => {
-                        handleChange(lastYear);
-                        setLeftMonth(lastYear.from);
-                        setRightMonth(lastYear.to);
-                        setIsOpen(false);
-                      }}
-                    >
-                      Last Year
-                    </Button>
-                  </div>
+                  <DateRangePresets
+                    density={density}
+                    onSelect={(range, left, right) => {
+                      handleChange(range);
+                      setLeftMonth(left);
+                      setRightMonth(right);
+                      setIsOpen(false);
+                    }}
+                  />
                 </div>
               </div>
               <div className="flex">
