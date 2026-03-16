@@ -524,4 +524,3 @@ export type FunnelProps = {
   strokeWidth?: number;
   labelLists?: string[];
 };
-
