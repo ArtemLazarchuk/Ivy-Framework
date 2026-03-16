@@ -190,10 +190,11 @@ public class FileInputFileSizeLimits : ViewBase
         var rangeSizeFile = UseState<FileUpload<byte[]>?>(() => null);
 
         var minSizeUploadCtx = UseUpload(MemoryStreamUploadHandler.Create(minSizeFile));
-        var minSizeUpload = minSizeUploadCtx.MinFileSize(1024); // 1 KB minimum
         var maxSizeUploadCtx = UseUpload(MemoryStreamUploadHandler.Create(maxSizeFile));
-        var maxSizeUpload = maxSizeUploadCtx.MaxFileSize(5 * 1024 * 1024); // 5 MB maximum
         var rangeSizeUploadCtx = UseUpload(MemoryStreamUploadHandler.Create(rangeSizeFile));
+
+        var minSizeUpload = minSizeUploadCtx.MinFileSize(1024); // 1 KB minimum
+        var maxSizeUpload = maxSizeUploadCtx.MaxFileSize(5 * 1024 * 1024); // 5 MB maximum
         var rangeSizeUpload = rangeSizeUploadCtx
             .MinFileSize(1024)           // 1 KB minimum
             .MaxFileSize(10 * 1024 * 1024); // 10 MB maximum
