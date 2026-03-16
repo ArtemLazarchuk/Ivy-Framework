@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getHeight, getWidth } from '@/lib/styles';
 import { getIvyHost } from '@/lib/utils';
 import {
@@ -21,6 +21,8 @@ interface VideoPlayerWidgetProps {
   controls?: boolean;
   poster?: string; // optional preview image before playback
   volume?: number; // 0.0 to 1.0
+  startTime?: number; // playback start position in seconds
+  endTime?: number; // playback stop position in seconds
 }
 
 const getVideoUrl = (url: string | undefined | null): string | null => {
@@ -60,6 +62,8 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
   controls = true,
   poster,
   volume,
+  startTime,
+  endTime,
 }) => {
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -116,10 +120,14 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
     const videoId =
       url.searchParams.get('v') ??
       url.pathname.split('/').filter(Boolean).pop();
-    const timeParam = parseInt(url.searchParams.get('t') ?? '', 10).toString();
+    const timeParam = parseInt(url.searchParams.get('t') ?? '', 10);
     const embedUrl = `https://www.youtube.com/embed/${videoId}`;
     const params = new URLSearchParams();
-    params.append('start', timeParam ?? '0');
+    const effectiveStart = startTime ?? (isNaN(timeParam) ? 0 : timeParam);
+    params.append('start', effectiveStart.toString());
+    if (endTime != null) {
+      params.append('end', endTime.toString());
+    }
     params.append('autoplay', autoplay ? '1' : '0');
     params.append('loop', loop ? '1' : '0');
     params.append('muted', muted ? '1' : '0');
@@ -137,11 +145,37 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
     );
   }
 
+  const handleTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (video && endTime != null && video.currentTime >= endTime) {
+      video.pause();
+      video.currentTime = endTime;
+    }
+  }, [endTime]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (startTime != null) {
+      video.currentTime = startTime;
+    }
+  }, [startTime, validatedVideoSrc]);
+
+  // Build src with Media Fragments URI for time range
+  let videoSrc = validatedVideoSrc;
+  if (startTime != null && endTime != null) {
+    videoSrc = `${validatedVideoSrc}#t=${startTime},${endTime}`;
+  } else if (startTime != null) {
+    videoSrc = `${validatedVideoSrc}#t=${startTime}`;
+  } else if (endTime != null) {
+    videoSrc = `${validatedVideoSrc}#t=0,${endTime}`;
+  }
+
   return (
     <video
       ref={videoRef}
       id={id}
-      src={validatedVideoSrc}
+      src={videoSrc}
       style={styles}
       autoPlay={autoplay}
       loop={loop}
@@ -151,6 +185,7 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
       poster={validatedPoster || undefined}
       className="w-full rounded"
       onError={() => setHasError(true)}
+      onTimeUpdate={endTime != null ? handleTimeUpdate : undefined}
       aria-label="Video player"
     >
       Your browser does not support the video element.

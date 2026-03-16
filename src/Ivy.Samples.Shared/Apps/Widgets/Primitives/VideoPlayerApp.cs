@@ -42,6 +42,19 @@ public class VideoPlayerApp : SampleBase
         var posterVideo = new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
             .Poster("https://www.w3schools.com/html/pic_trulli.jpg");
 
+        // StartTime and EndTime
+        var startTimeVideo = new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+            .StartTime(5);
+
+        var segmentVideo = new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+            .StartTime(2)
+            .EndTime(6);
+
+        var youtubeSegment = new VideoPlayer("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            .StartTime(30)
+            .EndTime(60)
+            .Height(Size.Units(100));
+
         // YouTube video
         var youtubeVideo = new VideoPlayer("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=100")
             .Height(Size.Units(100));
@@ -107,6 +120,20 @@ public class VideoPlayerApp : SampleBase
                     | Text.P("Video player with a preview image before playback.").Small()
                     | posterVideo
                 ).Title("Poster Example"))
+
+                // Time Range
+                | (new Card(
+                    Layout.Vertical().Gap(4)
+                    | Text.H4("Start Time")
+                    | Text.P("Video starts at 5 seconds.").Small()
+                    | startTimeVideo
+                    | Text.H4("Segment Playback")
+                    | Text.P("Video plays from 2s to 6s.").Small()
+                    | segmentVideo
+                    | Text.H4("YouTube Segment")
+                    | Text.P("YouTube video plays from 30s to 60s.").Small()
+                    | youtubeSegment
+                ).Title("Time Range Control"))
 
                 // YouTube
                 | (new Card(

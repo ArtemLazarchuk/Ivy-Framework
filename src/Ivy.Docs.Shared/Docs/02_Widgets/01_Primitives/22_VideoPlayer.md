@@ -76,6 +76,26 @@ new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
     .Poster("https://www.w3schools.com/html/pic_trulli.jpg")
 ```
 
+### Time Range Control
+
+Play a specific segment of a video by setting start and end times (in seconds):
+
+```csharp demo-tabs
+Layout.Vertical().Gap(4)
+| Text.P("Start at 5 seconds").Small()
+| new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .StartTime(5)
+| Text.P("Play from 2s to 6s").Small()
+| new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .StartTime(2)
+    .EndTime(6)
+| Text.P("YouTube segment (30s to 60s)").Small()
+| new VideoPlayer("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    .StartTime(30)
+    .EndTime(60)
+    .Height(Size.Units(100))
+```
+
 ### Large Video Files
 
 The VideoPlayer also supports streaming of large video files.
