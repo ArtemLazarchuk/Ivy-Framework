@@ -8,7 +8,7 @@ namespace Ivy;
 
 public enum FileInputVariant
 {
-    Standard,
+    Default,
     Drop
 }
 

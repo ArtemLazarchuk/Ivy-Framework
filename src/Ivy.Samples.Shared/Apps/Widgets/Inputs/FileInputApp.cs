@@ -61,12 +61,12 @@ public class FileInputVariantTests : ViewBase
                   | multipleFiles.ToFileInput(multipleFilesUpload).Invalid("Please select valid files")
                   | multipleFiles.ToFileInput(multipleFilesUpload).Placeholder("Click to select files")
 
-                  | Text.Monospaced("Standard Variant")
-                  | singleFile.ToFileInput(singleFileUpload).Variant(FileInputVariant.Standard).Placeholder("Select one file...")
-                  | placeholderFile.ToFileInput(placeholderFileUpload).Variant(FileInputVariant.Standard).Placeholder("Click to select a file")
-                  | singleFile.ToFileInput(singleFileUpload).Variant(FileInputVariant.Standard).Disabled()
-                  | multipleFiles.ToFileInput(multipleFilesUpload).Variant(FileInputVariant.Standard).Placeholder("Select multiple...")
-                  | multipleFiles.ToFileInput(multipleFilesUpload).Variant(FileInputVariant.Standard).MaxFiles(3).Placeholder("Max 3 files...")
+                  | Text.Monospaced("Default Variant")
+                  | singleFile.ToFileInput(singleFileUpload).Variant(FileInputVariant.Default).Placeholder("Select one file...")
+                  | placeholderFile.ToFileInput(placeholderFileUpload).Variant(FileInputVariant.Default).Placeholder("Click to select a file")
+                  | singleFile.ToFileInput(singleFileUpload).Variant(FileInputVariant.Default).Disabled()
+                  | multipleFiles.ToFileInput(multipleFilesUpload).Variant(FileInputVariant.Default).Placeholder("Select multiple...")
+                  | multipleFiles.ToFileInput(multipleFilesUpload).Variant(FileInputVariant.Default).MaxFiles(3).Placeholder("Max 3 files...")
                );
     }
 }

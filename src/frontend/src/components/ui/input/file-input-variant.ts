@@ -6,7 +6,7 @@ export const fileInputVariant = cva(
   {
     variants: {
       variant: {
-        Standard: 'border-transparent bg-transparent p-0 min-h-0',
+        Default: 'border-transparent bg-transparent p-0 min-h-0',
         Drop: 'border-2 border-muted-foreground/25 bg-transparent min-h-[100px] max-h-[300px] p-4',
       },
       density: {

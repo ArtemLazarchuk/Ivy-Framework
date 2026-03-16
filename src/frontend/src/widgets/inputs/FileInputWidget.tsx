@@ -49,7 +49,7 @@ interface FileInputWidgetProps {
   placeholder?: string;
   uploadUrl?: string;
   density?: Densities;
-  variant?: 'Standard' | 'Drop';
+  variant?: 'Default' | 'Drop';
 }
 
 export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
@@ -339,9 +339,9 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
         return;
       }
 
-      // For Standard variant, only the trigger button should open the dialog
+      // For Default variant, only the trigger button should open the dialog
       if (
-        variant === 'Standard' &&
+        variant === 'Default' &&
         !target.closest('[data-file-input-trigger]')
       ) {
         return;
@@ -448,7 +448,7 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
           className="hidden"
         />
 
-        {variant === 'Standard' ? (
+        {variant === 'Default' ? (
           <div className="flex flex-col gap-2 w-full">
             <div className="flex items-center gap-2">
               <Button
