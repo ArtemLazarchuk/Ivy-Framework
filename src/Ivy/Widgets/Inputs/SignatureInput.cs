@@ -62,6 +62,7 @@ public record SignatureInput<TValue> : SignatureInputBase, IInput<TValue>, IAnyS
     {
         var typedState = state.As<TValue>();
         Value = typedState.Value;
+        OnChange = new(e => { typedState.Set(e.Value); return ValueTask.CompletedTask; });
     }
 
     [OverloadResolutionPriority(1)]
@@ -88,7 +89,7 @@ public record SignatureInput<TValue> : SignatureInputBase, IInput<TValue>, IAnyS
 
     [Prop] public new bool Nullable { get; set; } = typeof(TValue).IsNullableType();
 
-    [Event] public EventHandler<Event<IInput<TValue>, TValue>>? OnChange => null;
+    [Event] public EventHandler<Event<IInput<TValue>, TValue>>? OnChange { get; }
 }
 
 public static class SignatureInputExtensions

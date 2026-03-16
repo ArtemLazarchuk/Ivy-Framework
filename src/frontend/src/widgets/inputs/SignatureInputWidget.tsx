@@ -20,6 +20,7 @@ interface SignatureInputWidgetProps {
   background?: string;
   penThickness?: number;
   placeholder?: string;
+  'data-testid'?: string;
 }
 
 const colorMap: Record<string, string> = {
@@ -72,6 +73,7 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
   background,
   penThickness = 2,
   placeholder,
+  'data-testid': dataTestId,
 }) => {
   const eventHandler = useEventHandler();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -137,7 +139,8 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         setHasDrawn(true);
       };
-      img.src = value;
+      // Value from C# is raw base64 (byte[] serialized); add data URL prefix for img.src
+      img.src = value.startsWith('data:') ? value : `data:image/png;base64,${value}`;
     } else {
       clearCanvas();
       setHasDrawn(false);
@@ -217,11 +220,12 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
       currentPathRef.current = [];
     }
 
-    // Emit the canvas as a data URL
+    // Emit the canvas as raw base64 (C# deserializes base64 strings to byte[])
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
-    eventHandler('OnChange', id, [dataUrl]);
+    const base64 = dataUrl.split(',')[1] ?? dataUrl;
+    eventHandler('OnChange', id, [base64]);
   };
 
   const handleClear = () => {
@@ -248,6 +252,7 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
       )}
       onBlur={handleBlur}
       tabIndex={0}
+      data-testid={dataTestId}
     >
       <canvas
         ref={canvasRef}
@@ -265,7 +270,7 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
       />
 
       {/* Placeholder */}
-      {!hasDrawn && !disabled && placeholder && (
+      {!hasDrawn && placeholder && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-muted-foreground text-sm">
           {placeholder}
         </div>
