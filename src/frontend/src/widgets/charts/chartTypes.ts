@@ -102,6 +102,7 @@ export type CartesianGridProps = {
   fillOpacity: number | null;
   height: number | null;
   horizontal: boolean;
+  stroke: string | null;
   strokeDashArray: string | null;
   vertical: boolean;
   width: number | null;
