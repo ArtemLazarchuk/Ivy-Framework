@@ -18,8 +18,6 @@ const ChordChartWidget: React.FC<ChordChartWidgetProps> = ({
   height = 'Full',
   colorScheme = 'Default',
   sort = false,
-  sortSubGroups = false,
-  padAngle = 2,
   tooltip,
   legend,
   toolbox,
@@ -170,17 +168,7 @@ const ChordChartWidget: React.FC<ChordChartWidgetProps> = ({
         toolbox && { ...toolbox, magicType: false }
       ),
     };
-  }, [
-    chartColors,
-    data,
-    sort,
-    sortSubGroups,
-    padAngle,
-    legend,
-    themeColors,
-    tooltip,
-    toolbox,
-  ]);
+  }, [chartColors, data, sort, legend, themeColors, tooltip, toolbox]);
 
   return (
     <div style={styles}>
