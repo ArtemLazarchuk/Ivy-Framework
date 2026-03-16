@@ -1,0 +1,3226 @@
+# Ivy Framework Weekly Notes - Week of 2026-03-16
+
+## New Features
+
+### New Calendar Widget
+
+Manage events and schedules with the new `Calendar` widget! Display events in four different views—month, week, day, and agenda—with full interactive capabilities including drag-and-drop, event clicks, and time slot selection.
+
+**Basic calendar with events:**
+
+```csharp
+public class EventScheduler : ViewBase
+{
+    public override object? Build()
+    {
+        return new Calendar(
+            new CalendarEvent()
+                .EventId("meeting-1")
+                .Title("Team Standup")
+                .Start(new DateTime(2026, 3, 17, 9, 0, 0))
+                .End(new DateTime(2026, 3, 17, 9, 30, 0))
+                .Color("primary"),
+
+            new CalendarEvent()
+                .EventId("deadline-1")
+                .Title("Project Deadline")
+                .Start(new DateTime(2026, 3, 20, 0, 0, 0))
+                .End(new DateTime(2026, 3, 20, 23, 59, 59))
+                .AllDay(true)
+                .Color("destructive")
+        );
+    }
+}
+```
+
+**Configure view mode and date range:**
+
+```csharp
+new Calendar()
+    .DefaultView(CalendarDisplayMode.Week)  // Month, Week, Day, or Agenda
+    .Date(DateTime.Now)
+    .MinDate(new DateTime(2026, 1, 1))
+    .MaxDate(new DateTime(2026, 12, 31))
+    .ShowToolbar(true)
+```
+
+**Handle user interactions:**
+
+```csharp
+new Calendar()
+    .EnableDragDrop(true)
+    .OnEventClick(eventId =>
+    {
+        Console.WriteLine($"Clicked event: {eventId}");
+    })
+    .OnEventMove((eventId, start, end) =>
+    {
+        Console.WriteLine($"Moved {eventId} to {start}");
+    })
+    .OnEventResize((eventId, start, end) =>
+    {
+        Console.WriteLine($"Resized {eventId}");
+    })
+    .OnSelectSlot((start, end) =>
+    {
+        Console.WriteLine($"Selected time slot: {start} to {end}");
+    })
+```
+
+**Build from collections with `.ToCalendar()`:**
+
+Similar to `.ToKanban()`, you can create calendars from any collection using the builder pattern:
+
+```csharp
+public class MeetingSchedule : ViewBase
+{
+    record Meeting(string Id, string Title, DateTime Start, DateTime End, string Category);
+
+    public override object? Build()
+    {
+        var meetings = UseState(new[]
+        {
+            new Meeting("1", "Team Sync", DateTime.Today.AddHours(9), DateTime.Today.AddHours(10), "Work"),
+            new Meeting("2", "Design Review", DateTime.Today.AddHours(14), DateTime.Today.AddHours(15), "Work"),
+            new Meeting("3", "Gym", DateTime.Today.AddDays(1).AddHours(7), DateTime.Today.AddDays(1).AddHours(8), "Personal")
+        });
+
+        return meetings.Value
+            .ToCalendar(
+                startSelector: m => m.Start,
+                endSelector: m => m.End,
+                eventIdSelector: m => m.Id)
+            .Title(m => m.Title)
+            .Color(m => m.Category == "Work" ? "Blue" : "Green")
+            .DefaultView(CalendarDisplayMode.Week)
+            .EnableDragDrop()
+            .OnMove(move =>
+            {
+                // Update meeting times when dragged
+                var updated = meetings.Value.Select(m =>
+                {
+                    if (m.Id == move.EventId?.ToString())
+                        return m with { Start = move.Start, End = move.End };
+                    return m;
+                }).ToArray();
+                meetings.Set(updated);
+            });
+    }
+}
+```
+
+The builder pattern makes it easy to map your domain objects to calendar events while maintaining type safety and enabling drag-and-drop updates.
+
+**Add events dynamically:**
+
+```csharp
+var calendar = new Calendar();
+
+// Add events using the | operator
+calendar = calendar
+    | new CalendarEvent()
+        .Title("Morning Coffee")
+        .Start(DateTime.Now.AddHours(1))
+        .End(DateTime.Now.AddHours(1.5))
+    | new CalendarEvent()
+        .Title("Lunch Break")
+        .Start(DateTime.Now.AddHours(4))
+        .End(DateTime.Now.AddHours(5))
+        .AllDay(false);
+```
+
+**Key features:**
+
+- **Four view modes**: Month grid, week time grid, single day view, and agenda list
+- **All-day events**: Set `.AllDay(true)` for events that span entire days
+- **Color coding**: Use theme colors like "primary", "destructive", "warning", or "success"
+- **Interactive toolbar**: Built-in navigation with Today/Previous/Next buttons and view switcher
+- **Event interactions**: Click events, drag to move, resize handles, and click empty slots to create
+- **Theme-aware**: Automatically adapts to your app's theme with proper contrast
+
+The Calendar widget follows the same pattern as Kanban, where `CalendarEvent` children define the data while the parent `Calendar` manages the display and interactions.
+
+### AudioInput Sample Rate Control
+
+The `AudioInput` widget now supports configurable sample rates, giving you precise control over audio recording quality and file size. Set the target sample rate in Hz to optimize for your use case—lower rates for speech recognition efficiency, higher rates for music and high-fidelity recordings.
+
+**Basic usage:**
+
+```csharp
+var upload = new UploadContext("/api/upload");
+
+// Default browser sample rate (typically 48000 Hz)
+new AudioInput(upload)
+
+// Speech recognition (16kHz is optimal for most speech models)
+new AudioInput(upload)
+    .SampleRate(16000)
+
+// High-fidelity audio recording
+new AudioInput(upload)
+    .SampleRate(48000)
+```
+
+**Supported sample rates:**
+
+The widget supports standard audio sample rates: 8000, 11025, 16000, 22050, 24000, 32000, 44100, and 48000 Hz. When `SampleRate` is null or not specified, the browser uses its default (typically 48000 Hz).
+
+**Common use cases:**
+
+```csharp
+// Voice notes and speech-to-text (smaller files, faster processing)
+new AudioInput(upload, label: "Record Voice Note")
+    .SampleRate(16000)
+
+// Podcasts and interviews (balanced quality and size)
+new AudioInput(upload, label: "Record Podcast")
+    .SampleRate(32000)
+
+// Music and high-quality recording
+new AudioInput(upload, label: "Record Audio")
+    .SampleRate(48000)
+```
+
+Lower sample rates produce smaller audio files and are more efficient for bandwidth-constrained scenarios, while higher sample rates preserve more audio detail for music and high-fidelity applications.
+
+**Guaranteed sample rate accuracy:** The framework now uses Web Audio API resampling to ensure your specified sample rate is always applied, regardless of the microphone's native sample rate. Previously, browsers could ignore sample rate requests—now the audio is automatically resampled to match your exact specification.
+
+### New NumberRangeInput Widget
+
+Select numeric ranges with an intuitive dual-handle slider! The new `NumberRangeInput` widget provides a sleek interface for selecting minimum and maximum numeric values, perfect for filtering by price ranges, thresholds, or any min/max bounds.
+
+**Basic usage:**
+
+```csharp
+public class PriceFilterDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var priceRange = UseState<(int, int)>(() => (25, 75));
+
+        return Layout.Vertical()
+            | priceRange.ToNumberRangeInput()
+                .Min(0)
+                .Max(100)
+            | Text.P($"Price: ${priceRange.Value.Item1} - ${priceRange.Value.Item2}");
+    }
+}
+```
+
+The widget uses a tuple `(min, max)` to represent the range, following the same pattern as `DateRangeInput`. Access values with `.Item1` (lower bound) and `.Item2` (upper bound).
+
+**Currency and formatting:**
+
+Like `NumberInput`, the `NumberRangeInput` supports all the same formatting options including currency, percentages, and custom precision:
+
+```csharp
+// Currency formatting
+priceRange.ToNumberRangeInput()
+    .Min(0)
+    .Max(10000)
+    .Currency("USD")
+    .Precision(2)
+
+// Percentage range
+percentRange.ToNumberRangeInput()
+    .Min(0)
+    .Max(100)
+    .Percent(true)
+
+// Custom step intervals
+quantityRange.ToNumberRangeInput()
+    .Min(0)
+    .Max(1000)
+    .Step(50)
+```
+
+**Supported types:**
+
+The widget supports all numeric tuple types including `(int, int)`, `(decimal, decimal)`, `(double, double)`, `(float, float)`, `(short, short)`, `(long, long)`, and their nullable variants.
+
+### DateTimeInput and DateRangeInput Enhancements
+
+The date input widgets now support custom placeholder text for date ranges and configurable calendar week start days, making them more flexible for international use and domain-specific scenarios.
+
+**Custom placeholders for DateRangeInput:**
+
+Set separate placeholders for the start and end date fields to provide context-specific hints to users:
+
+```csharp
+// Hotel booking with check-in/check-out placeholders
+var bookingDates = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
+
+bookingDates.ToDateRangeInput()
+    .StartPlaceholder("Check-in")
+    .EndPlaceholder("Check-out")
+    .Format("MM/dd/yyyy")
+
+// Event planning with start/end labels
+var eventDates = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
+
+eventDates.ToDateRangeInput()
+    .StartPlaceholder("Start Date")
+    .EndPlaceholder("End Date")
+```
+
+When both placeholders are set, they replace the generic "Pick a date range" placeholder with your custom text separated by a dash (e.g., "Check-in - Check-out").
+
+**Custom week start day:**
+
+Customize which day the calendar week starts on for both `DateTimeInput` and `DateRangeInput` to match regional conventions or business requirements:
+
+```csharp
+// Monday-first calendar (common in Europe, ISO 8601)
+var appointmentDate = UseState(DateOnly.FromDateTime(DateTime.Now));
+
+appointmentDate.ToDateInput()
+    .FirstDayOfWeek(DayOfWeek.Monday)
+
+// Monday-first date range
+var dateRange = UseState<(DateOnly, DateOnly)>((
+    DateOnly.FromDateTime(DateTime.Now.AddDays(-7)),
+    DateOnly.FromDateTime(DateTime.Now)
+));
+
+dateRange.ToDateRangeInput()
+    .FirstDayOfWeek(DayOfWeek.Monday)
+
+// Sunday-first calendar (default in US)
+appointmentDate.ToDateInput()
+    .FirstDayOfWeek(DayOfWeek.Sunday)
+```
+
+The `FirstDayOfWeek` property accepts any `DayOfWeek` enum value (Sunday through Saturday) and automatically adjusts the calendar display to start weeks on your specified day. This is particularly useful for:
+
+- **International applications**: Match regional conventions (Monday-first for ISO 8601 / most of world, Sunday-first for US/Canada)
+- **Business scheduling**: Align with your organization's workweek (e.g., Monday-Sunday for standard business weeks)
+- **Domain-specific needs**: Custom week definitions for retail, healthcare, or other industries
+
+### FileInput Default Variant
+
+The `FileInput` widget now supports two display variants: the existing `Drop` variant (default) with its large drag-and-drop zone, and a new `Default` variant that provides a more compact, button-based interface. Both variants fully support drag-and-drop functionality.
+
+**Using the Default variant:**
+
+```csharp
+public class FileUploadDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var file = UseState<FileUpload<byte[]>?>();
+        var upload = UseUpload(MemoryStreamUploadHandler.Create(file));
+
+        return Layout.Vertical()
+            | file.ToFileInput(upload)
+                .Variant(FileInputVariant.Default)
+                .Placeholder("Select file");
+    }
+}
+```
+
+**When to use each variant:**
+
+- **`FileInputVariant.Drop`** (default): Best for dedicated upload pages, large cards, or when you want to emphasize the file upload action with a prominent drag-and-drop zone.
+- **`FileInputVariant.Default`**: Best for forms, sidebars, toolbars, or dense layouts where space is at a premium. The button-based interface is more compact while still supporting drag-and-drop directly onto the button.
+
+**Comparing both variants:**
+
+```csharp
+public class VariantComparison : ViewBase
+{
+    public override object? Build()
+    {
+        var file1 = UseState<FileUpload<byte[]>?>();
+        var upload1 = UseUpload(MemoryStreamUploadHandler.Create(file1));
+
+        var file2 = UseState<FileUpload<byte[]>?>();
+        var upload2 = UseUpload(MemoryStreamUploadHandler.Create(file2));
+
+        return Layout.Vertical()
+            | Text.H3("Drop Variant")
+            | file1.ToFileInput(upload1)
+            | Text.H3("Default Variant")
+            | file2.ToFileInput(upload2).Variant(FileInputVariant.Default);
+    }
+}
+```
+
+The Default variant maintains all the same features as the Drop variant including validation, progress tracking, multiple file support, and file type restrictions—just in a more compact form factor.
+
+### CameraInput Widget
+
+Capture photos directly from the user's webcam or device camera with the new `CameraInput` widget! It provides a live video preview, one-click capture, and automatic upload—all using the same familiar upload pattern as `FileInput`.
+
+**Basic usage:**
+
+```csharp
+public class BasicCameraDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var photo = UseState<FileUpload<byte[]>?>();
+        var upload = UseUpload(MemoryStreamUploadHandler.Create(photo));
+
+        return Layout.Vertical()
+            | new CameraInput(upload.Value, "Take a photo")
+            | (photo.Value != null
+                ? Text.P($"Captured: {photo.Value.FileName} ({StringHelper.FormatBytes(photo.Value.Length)})")
+                : Text.P("No photo captured yet."));
+    }
+}
+```
+
+**How it works:**
+
+1. User clicks the widget to start the camera (browser prompts for permission)
+2. Live video preview displays from the device camera
+3. Clicking **Capture** takes a snapshot and uploads it as a PNG image
+4. The captured image is shown with a **Retake** button to restart the camera
+
+**Camera selection:**
+
+Control which camera to use on devices with multiple cameras:
+
+```csharp
+// Front-facing camera (default)
+new CameraInput(upload.Value).FacingMode("user")
+
+// Rear-facing camera
+new CameraInput(upload.Value).FacingMode("environment")
+```
+
+**Access captured photos:**
+
+The widget uses the same upload pattern as FileInput, making it easy to work with captured photos:
+
+```csharp
+var photo = UseState<FileUpload<byte[]>?>();
+var upload = UseUpload(MemoryStreamUploadHandler.Create(photo));
+
+// Access captured photo data
+if (photo.Value != null)
+{
+    var fileName = photo.Value.FileName;    // "capture.png"
+    var fileSize = photo.Value.Length;       // Size in bytes
+    var fileData = photo.Value.Content;      // byte[] containing PNG data
+}
+```
+
+The CameraInput widget is perfect for profile photos, document scanning, ID verification, or any scenario where you need to capture images directly from the user's camera.
+
+### TextInput Pattern Validation
+
+The `TextInput` widget now supports regex pattern validation with the new `Pattern` property. Validate input formats like email addresses, phone numbers, URLs, postal codes, and custom patterns—all with built-in client-side validation and user-friendly error messages.
+
+**Basic usage:**
+
+```csharp
+// Email validation
+new TextInput()
+    .Pattern(@"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    .Placeholder("Enter your email")
+
+// Phone number (US format)
+new TextInput()
+    .Pattern(@"^\d{3}-\d{3}-\d{4}$")
+    .Placeholder("xxx-xxx-xxxx")
+
+// Postal code (US ZIP)
+new TextInput()
+    .Pattern(@"^\d{5}(-\d{4})?$")
+    .Placeholder("12345 or 12345-6789")
+```
+
+**How validation works:**
+
+- Validation triggers on **blur** (when the user leaves the input field)
+- Error message displays if the input doesn't match the pattern
+- Error clears automatically as soon as the input matches during typing
+- Works alongside other validation like `MinLength` and server-side validation
+
+**With fluent API:**
+
+```csharp
+var email = UseState<string>("");
+
+email.ToTextInput()
+    .Pattern(@"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    .Placeholder("Email address")
+    .Label("Email")
+```
+
+**Common patterns:**
+
+```csharp
+// URL validation
+.Pattern(@"^https?://[^\s]+$")
+
+// Alphanumeric only
+.Pattern(@"^[a-zA-Z0-9]+$")
+
+// Username (letters, numbers, underscore, 3-16 chars)
+.Pattern(@"^[a-zA-Z0-9_]{3,16}$")
+
+// Hexadecimal color code
+.Pattern(@"^#[0-9A-Fa-f]{6}$")
+```
+
+The error message shown to users is "Please match the requested format". Pattern validation is applied **after** server-provided errors and `MinLength` validation, ensuring the most relevant error is always displayed first.
+
+### New ScatterChart Widget
+
+Scatter charts are now available in Ivy! This new widget supports standard scatter plots, bubble charts, and connected scatter plots with extensive customization options.
+
+**Basic scatter plot:**
+
+```csharp
+ScatterChartView.Create(myData)
+    .Dimension("temperature", d => d.Temperature)
+    .Measure("pressure", d => d.Pressure)
+    .Build()
+```
+
+**Bubble chart with size encoding:**
+
+```csharp
+ScatterChartView.Create(myData)
+    .Dimension("x", d => d.XValue)
+    .Measure("y", d => d.YValue)
+    .Size("population", d => d.Population)
+    .ZAxis(zAxis => zAxis
+        .Min(0)
+        .Max(1000000))
+    .Build()
+```
+
+**Color-encoded scatter plot:**
+
+```csharp
+ScatterChartView.Create(myData)
+    .Dimension("height", d => d.Height)
+    .Measure("weight", d => d.Weight)
+    .Color("category", d => d.Category)
+    .Build()
+```
+
+**Customize point shapes:**
+
+The widget supports 7 different point shapes: Circle (default), Square, Cross, Diamond, Star, Triangle, and Wye. Configure shapes through the Scatter series:
+
+```csharp
+new ScatterChart()
+    .Series(new Scatter()
+        .Shape(ScatterShape.Diamond)
+        .Name("Data Points"))
+```
+
+**Connected scatter plots:**
+
+Create connected scatter plots to show progression or relationships:
+
+```csharp
+new ScatterChart()
+    .Series(new Scatter()
+        .ShowLine(true)
+        .LineType(ScatterLineType.Smooth))
+```
+
+Like all Ivy charts, ScatterChart supports tooltips, legends, toolbox controls, grid customization, and reference lines.
+
+### New RadarChart Widget
+
+Visualize multi-dimensional data across multiple quantitative variables with the new `RadarChart` widget! Display data on axes radiating from a center point to create spider web patterns—perfect for comparing profiles, skill assessments, and performance metrics.
+
+**Basic radar chart:**
+
+```csharp
+var data = new[]
+{
+    new { name = "Product A", Sales = 85, Marketing = 72, Development = 90, Support = 78, Quality = 88 }
+};
+
+new RadarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .Indicator("Sales", 100)
+    .Indicator("Marketing", 100)
+    .Indicator("Development", 100)
+    .Indicator("Support", 100)
+    .Indicator("Quality", 100)
+    .Tooltip()
+    .Legend()
+```
+
+**Skill assessment with filled areas:**
+
+```csharp
+var data = new[]
+{
+    new { name = "Candidate A", Technical = 90, Communication = 75, Leadership = 80, ProblemSolving = 85, Teamwork = 88 }
+};
+
+new RadarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .Indicator("Technical", 100)
+    .Indicator("Communication", 100)
+    .Indicator("Leadership", 100)
+    .Indicator("ProblemSolving", 100)
+    .Indicator("Teamwork", 100)
+    .Radar(new Radar("values").Filled())
+    .Shape(RadarShape.Circle)
+    .Tooltip()
+```
+
+**Key features:**
+
+- **Two shape modes**: Polygon (angular spider web) or Circle (smooth circular pattern)
+- **Indicators**: Define each axis with custom min/max values for each dimension
+- **Filled areas**: Enable `.Filled()` on Radar series to highlight overall capability patterns
+- **Visual customization**: Control split lines, split areas, axis lines, and start angle
+- **Symbol markers**: Show or hide data point symbols with `.ShowSymbol()`
+- **Multiple series**: Compare multiple datasets on the same radar chart
+
+Each indicator represents an axis dimension. Configure them with custom ranges:
+
+```csharp
+new RadarChart(data)
+    .Indicator("Performance", max: 100)
+    .Indicator("Scalability", max: 100)
+    .Indicator("Security", max: 100)
+    .Radar(new Radar("values")
+        .Fill(Colors.Primary)
+        .Stroke(Colors.Primary)
+        .Filled())
+    .Shape(RadarShape.Polygon)
+```
+
+Like all Ivy charts, RadarChart supports tooltips, legends, and toolbox controls for a complete interactive experience.
+
+**Ergonomic .ToRadarChart() extension methods:**
+
+Create radar charts quickly using the `.ToRadarChart()` extension method, which follows the same ergonomic pattern as `.ToBarChart()`, `.ToPieChart()`, and `.ToScatterChart()`:
+
+```csharp
+var data = new[]
+{
+    new { Department = "Engineering", Speed = 85, Quality = 92, Innovation = 78, Collaboration = 88, Delivery = 80 },
+    new { Department = "Marketing", Speed = 70, Quality = 75, Innovation = 90, Collaboration = 85, Delivery = 72 },
+    new { Department = "Sales", Speed = 90, Quality = 68, Innovation = 65, Collaboration = 92, Delivery = 95 },
+};
+
+// Default style
+data.ToRadarChart(
+    x => x.Department,
+    [
+        q => q.Sum(x => x.Speed),
+        q => q.Sum(x => x.Quality),
+        q => q.Sum(x => x.Innovation),
+        q => q.Sum(x => x.Collaboration),
+        q => q.Sum(x => x.Delivery),
+    ]
+)
+
+// Circle style with filled areas
+data.ToRadarChart(
+    x => x.Department,
+    [
+        q => q.Sum(x => x.Speed),
+        q => q.Sum(x => x.Quality),
+        q => q.Sum(x => x.Innovation),
+        q => q.Sum(x => x.Collaboration),
+        q => q.Sum(x => x.Delivery),
+    ],
+    RadarChartStyles.Circle
+)
+
+// Dashboard style with custom polish
+data.ToRadarChart(
+    x => x.Department,
+    [
+        q => q.Sum(x => x.Speed),
+        q => q.Sum(x => x.Quality),
+        q => q.Sum(x => x.Innovation),
+        q => q.Sum(x => x.Collaboration),
+        q => q.Sum(x => x.Delivery),
+    ],
+    RadarChartStyles.Dashboard,
+    polish: chart => chart.Toolbox()
+)
+```
+
+The extension method takes:
+- **Category expression**: Groups your data (e.g., department names)
+- **Measure expressions**: Array of aggregations for each radar axis
+- **Style** (optional): Choose from `Default`, `Circle`, or `Dashboard`
+- **Polish function** (optional): Further customize the generated chart
+
+This pattern makes it easy to generate radar charts from collections without manually configuring indicators and series.
+
+### New SankeyChart Widget
+
+Visualize flows and transfers between nodes with the new `SankeyChart` widget! This diagram style shows relationships where the width of each connecting arrow represents the magnitude of flow—perfect for analyzing user funnels, budget allocation, energy flows, and supply chains.
+
+**Basic Sankey chart:**
+
+```csharp
+var data = new SankeyData(
+    Nodes: new[]
+    {
+        new SankeyNode("Visit"),
+        new SankeyNode("Add to Cart"),
+        new SankeyNode("Checkout"),
+        new SankeyNode("Purchase"),
+        new SankeyNode("Bounce"),
+    },
+    Links: new[]
+    {
+        new SankeyLink(0, 1, 3500),   // Visit -> Add to Cart
+        new SankeyLink(0, 4, 1500),   // Visit -> Bounce
+        new SankeyLink(1, 2, 2800),   // Cart -> Checkout
+        new SankeyLink(1, 4, 700),    // Cart -> Bounce
+        new SankeyLink(2, 3, 2200),   // Checkout -> Purchase
+        new SankeyLink(2, 4, 600),    // Checkout -> Bounce
+    }
+);
+
+new SankeyChart(data)
+    .Tooltip()
+    .Toolbox()
+```
+
+Links reference nodes by their index in the Nodes array, with a value representing flow magnitude.
+
+**Customize appearance:**
+
+```csharp
+new SankeyChart(data)
+    .NodeWidth(25)                    // Width of node rectangles
+    .NodeGap(15)                      // Vertical spacing between nodes
+    .Curvature(0.7)                   // Link curve amount (0-1)
+    .NodeAlign(SankeyAlign.Left)      // Align nodes to left
+    .ColorScheme(ColorScheme.Rainbow)
+    .Tooltip()
+    .Toolbox()
+```
+
+**Key features:**
+
+- **Flow visualization**: Arrow widths scale proportionally to flow quantities
+- **Node alignment**: Use `SankeyAlign.Justify` (default) or `SankeyAlign.Left` for layout control
+- **Visual customization**: Configure node dimensions, spacing, and link curvature
+- **Color schemes**: Apply any ColorScheme to differentiate nodes and links
+- **Interactive**: Full support for tooltips, legends, and toolbox controls
+
+The SankeyChart is ideal for conversion funnels, budget breakdowns, energy distribution, user journey flows, and any scenario where you need to visualize both relationships and their relative magnitudes.
+
+**Ergonomic .ToSankeyChart() extension methods:**
+
+Create Sankey charts quickly using the `.ToSankeyChart()` extension method, which follows the same ergonomic pattern as other chart builders:
+
+```csharp
+public record EnergyFlow(string Source, string Target, double Amount);
+
+var flows = new[]
+{
+    new EnergyFlow("Coal", "Electricity", 300),
+    new EnergyFlow("Coal", "Heating", 150),
+    new EnergyFlow("Natural Gas", "Electricity", 400),
+    new EnergyFlow("Natural Gas", "Heating", 250),
+    new EnergyFlow("Solar", "Electricity", 200),
+    new EnergyFlow("Wind", "Electricity", 180),
+    new EnergyFlow("Electricity", "Residential", 450),
+    new EnergyFlow("Electricity", "Industrial", 350),
+};
+
+// Default style
+flows.ToSankeyChart(
+    f => f.Source,
+    f => f.Target,
+    f => f.Amount
+)
+
+// Left-aligned style
+flows.ToSankeyChart(
+    f => f.Source,
+    f => f.Target,
+    f => f.Amount,
+    SankeyChartStyles.LeftAligned
+)
+
+// Dashboard style
+flows.ToSankeyChart(
+    f => f.Source,
+    f => f.Target,
+    f => f.Amount,
+    SankeyChartStyles.Dashboard
+)
+```
+
+The extension method takes:
+- **Source expression**: The origin node for each flow
+- **Target expression**: The destination node for each flow
+- **Value expression**: The magnitude of the flow
+- **Style** (optional): Choose from `Default`, `LeftAligned`, or `Dashboard`
+- **Polish function** (optional): Further customize the generated chart
+
+This pattern makes it easy to generate Sankey charts from collections without manually creating `SankeyData`, `SankeyNode`, and `SankeyLink` instances.
+
+### New ChordChart Widget
+
+Visualize relationships and flows between entities with the new `ChordChart` widget! This circular diagram displays inter-relationships between nodes using connecting arcs—perfect for analyzing migration flows, trade relationships, network traffic, department collaboration, and any data where connections between entities matter.
+
+**Basic chord chart:**
+
+```csharp
+var data = new ChordData(
+    Nodes: new[]
+    {
+        new ChordNode("North America"),
+        new ChordNode("Europe"),
+        new ChordNode("Asia"),
+        new ChordNode("South America"),
+        new ChordNode("Africa"),
+    },
+    Links: new[]
+    {
+        new ChordLink(0, 1, 1200),  // North America → Europe: 1200
+        new ChordLink(0, 2, 900),   // North America → Asia: 900
+        new ChordLink(1, 2, 800),   // Europe → Asia: 800
+        new ChordLink(2, 3, 300),   // Asia → South America: 300
+        new ChordLink(3, 4, 150),   // South America → Africa: 150
+    }
+);
+
+new ChordChart(data)
+    .Tooltip()
+    .Toolbox()
+```
+
+Links reference nodes by their index in the Nodes array, with a value representing the relationship strength or flow magnitude.
+
+**Trade relationships with color schemes:**
+
+```csharp
+var data = new ChordData(
+    Nodes: new[]
+    {
+        new ChordNode("USA"),
+        new ChordNode("China"),
+        new ChordNode("Germany"),
+        new ChordNode("Japan"),
+        new ChordNode("UK"),
+    },
+    Links: new[]
+    {
+        new ChordLink(0, 1, 5800),
+        new ChordLink(0, 3, 3400),
+        new ChordLink(1, 3, 3200),
+        new ChordLink(2, 4, 1200),
+    }
+);
+
+new ChordChart(data)
+    .ColorScheme(ColorScheme.Rainbow)
+    .Tooltip()
+    .Toolbox()
+    .Legend()
+```
+
+**Key features:**
+
+- **Circular layout**: Nodes arranged in a circle with arcs connecting related entities
+- **Visual flow magnitude**: Connection widths represent relationship strength
+- **Sorting**: Use `.Sort()` to arrange nodes by total connection value
+- **Visual customization**: Configure padding angles, color schemes, and sub-group sorting
+- **Interactive**: Full support for tooltips, legends, and toolbox controls
+
+Customize the chart appearance with configuration options:
+
+```csharp
+new ChordChart(data)
+    .Sort(true)              // Sort nodes by connection totals
+    .SortSubGroups(true)     // Sort sub-groups within nodes
+    .PadAngle(5)             // Spacing between nodes in degrees
+    .ColorScheme(ColorScheme.Rainbow)
+    .Tooltip()
+    .Legend()
+```
+
+The ChordChart is ideal for visualizing any bidirectional or unidirectional relationships where both the connections and their magnitudes are important to understand.
+
+**Ergonomic .ToChordChart() extension methods:**
+
+Create chord charts quickly using the `.ToChordChart()` extension method, which follows the same ergonomic pattern as other chart builders:
+
+```csharp
+var trades = new[]
+{
+    new TradeFlow("USA", "China", 5800),
+    new TradeFlow("USA", "Germany", 2100),
+    new TradeFlow("USA", "Japan", 3400),
+    new TradeFlow("China", "Germany", 1800),
+    new TradeFlow("China", "Japan", 3200),
+    new TradeFlow("Germany", "Japan", 800),
+};
+
+// Default style
+trades.ToChordChart(
+    t => t.Exporter,
+    t => t.Importer,
+    t => t.Volume
+)
+
+// Sorted style (sorts by connection totals)
+trades.ToChordChart(
+    t => t.Exporter,
+    t => t.Importer,
+    t => t.Volume,
+    ChordChartStyles.Sorted
+)
+
+// Dashboard style with toolbox
+trades.ToChordChart(
+    t => t.Exporter,
+    t => t.Importer,
+    t => t.Volume,
+    ChordChartStyles.Dashboard
+)
+```
+
+The extension method takes:
+- **Source expression**: The origin node for each connection
+- **Target expression**: The destination node for each connection
+- **Value expression**: The magnitude of the flow/relationship
+- **Style** (optional): Choose from `Default`, `Sorted`, or `Dashboard`
+- **Polish function** (optional): Further customize the generated chart
+
+This pattern makes it easy to generate chord charts from any collection without manually creating `ChordData`, `ChordNode`, and `ChordLink` instances.
+
+### New FunnelChart Widget
+
+Visualize conversion rates and multi-stage processes with the new `FunnelChart` widget! Display data as progressively narrowing stages—perfect for sales pipelines, user onboarding flows, recruitment processes, and any workflow where values move through sequential steps.
+
+**Basic funnel chart:**
+
+```csharp
+var data = new[]
+{
+    new PieChartData("Awareness", 5000),
+    new PieChartData("Interest", 3500),
+    new PieChartData("Decision", 2100),
+    new PieChartData("Action", 1200),
+};
+
+new FunnelChart(data)
+    .Funnel("Measure", "Dimension")
+    .Tooltip()
+    .Toolbox()
+```
+
+**Control sort order:**
+
+By default, stages sort in descending order (largest at top). Change this with `.Sort()`:
+
+```csharp
+// Ascending order (smallest at top)
+new FunnelChart(data)
+    .Funnel("Measure", "Dimension")
+    .Sort(FunnelSort.Ascending)
+
+// No sorting (preserves data order)
+new FunnelChart(data)
+    .Funnel("Measure", "Dimension")
+    .Sort(FunnelSort.None)
+```
+
+**Horizontal orientation:**
+
+Display funnels horizontally instead of vertically:
+
+```csharp
+new FunnelChart(data)
+    .Funnel("Measure", "Dimension")
+    .Orientation(FunnelOrientation.Horizontal)
+    .Tooltip()
+```
+
+**Key features:**
+
+- **Stage visualization**: Width proportional to stage values shows drop-off at each step
+- **Sort options**: Choose `Descending`, `Ascending`, or `None` to control stage ordering
+- **Orientation**: Display as `Vertical` (default) or `Horizontal` funnels
+- **Gap control**: Add spacing between stages with `.Gap(pixels)`
+- **Color schemes**: Apply any ColorScheme to differentiate stages
+- **Interactive**: Full support for tooltips, legends, and toolbox controls
+
+The FunnelChart uses the same `PieChartData` record format (dimension/measure pairs) and supports the standard chart customization options. Ideal for analyzing conversion funnels, sales pipelines, recruitment workflows, and any process where understanding drop-off between stages is important.
+
+**Ergonomic .ToFunnelChart() extension methods:**
+
+Create funnel charts quickly using the `.ToFunnelChart()` extension method, which follows the same ergonomic pattern as `.ToBarChart()`, `.ToPieChart()`, and `.ToRadarChart()`:
+
+```csharp
+var data = new[]
+{
+    new SalesFunnelStage("Prospects", 8000),
+    new SalesFunnelStage("Qualified", 5200),
+    new SalesFunnelStage("Proposals", 3100),
+    new SalesFunnelStage("Negotiations", 1800),
+    new SalesFunnelStage("Closed", 950),
+};
+
+// Default style
+data.ToFunnelChart(
+    x => x.Stage,
+    x => x.Sum(s => s.Count)
+)
+
+// Horizontal style
+data.ToFunnelChart(
+    x => x.Stage,
+    x => x.Sum(s => s.Count),
+    FunnelChartStyles.Horizontal
+)
+
+// Dashboard style with custom polish
+data.ToFunnelChart(
+    x => x.Stage,
+    x => x.Sum(s => s.Count),
+    FunnelChartStyles.Dashboard
+)
+```
+
+The extension method takes:
+- **Stage expression**: Labels for each funnel stage (e.g., stage names)
+- **Value expression**: Aggregation for the value at each stage
+- **Style** (optional): Choose from `Default`, `Horizontal`, or `Dashboard`
+- **Polish function** (optional): Further customize the generated chart
+
+This pattern makes it easy to generate funnel charts from collections without manually creating `FunnelChart` and `PieChartData` instances.
+
+### RadialBarChart Widget Re-Added with Polar Coordinate Support
+
+The `RadialBarChart` widget is back! Display categorical data as concentric arcs radiating from a center point—perfect for progress tracking, KPI dashboards, and gauge-like visualizations.
+
+**Basic usage:**
+
+```csharp
+var data = new[]
+{
+    new { Category = "Completed", Value = 85 },
+    new { Category = "In Progress", Value = 65 },
+    new { Category = "Pending", Value = 45 },
+    new { Category = "Blocked", Value = 25 }
+};
+
+new RadialBarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .RadialBar("Value")
+    .Tooltip()
+    .Legend()
+```
+
+**Fitness-style progress rings (Apple Watch style):**
+
+```csharp
+var data = new[]
+{
+    new { Goal = "Move", Progress = 78 },
+    new { Goal = "Exercise", Progress = 62 },
+    new { Goal = "Stand", Progress = 90 }
+};
+
+new RadialBarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .RadialBar(new RadialBar("Progress").Background(true))
+    .InnerRadius("20%")
+    .OuterRadius("90%")
+    .StartAngle(90)
+    .EndAngle(450)
+    .Tooltip()
+```
+
+**Gauge-style KPI dashboard:**
+
+```csharp
+var data = new[]
+{
+    new { Metric = "Performance", Score = 88 },
+    new { Metric = "Quality", Score = 92 },
+    new { Metric = "Efficiency", Score = 75 }
+};
+
+new RadialBarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .RadialBar(new RadialBar("Score").Background(true).Animated(true))
+    .StartAngle(-90)
+    .EndAngle(270)
+    .InnerRadius("30%")
+    .OuterRadius("80%")
+    .Tooltip()
+    .Legend()
+    .Toolbox()
+```
+
+**Build from collections with `.ToRadialBarChart()`:**
+
+Similar to `.ToCalendar()` and `.ToKanban()`, you can create radial bar charts from any collection using the builder pattern with pivot table integration:
+
+```csharp
+var data = new[]
+{
+    new { Category = "Q1", Revenue = 85000 },
+    new { Category = "Q2", Revenue = 92000 },
+    new { Category = "Q3", Revenue = 78000 },
+    new { Category = "Q4", Revenue = 88000 }
+};
+
+return new Card().Title("Quarterly Revenue")
+    | data.ToRadialBarChart(
+        dimension: e => e.Category,
+        measure: e => e.Sum(f => f.Revenue),
+        style: RadialBarChartStyles.Dashboard
+    )
+    .Toolbox()
+    .Height(Size.Units(80));
+```
+
+The extension method supports three built-in styles:
+
+- **`RadialBarChartStyles.Default`**: Standard layout with legend at the bottom and horizontal alignment
+- **`RadialBarChartStyles.Dashboard`**: Compact dashboard style with background tracks, optimized inner/outer radius, and tighter bar gaps
+- **`RadialBarChartStyles.Gauge`**: Semi-circular gauge layout (90° to 450°) perfect for single-metric displays
+
+You can also apply custom polish to the chart after the style is applied:
+
+```csharp
+data.ToRadialBarChart(
+    dimension: e => e.Category,
+    measure: e => e.Sum(f => f.Revenue),
+    style: RadialBarChartStyles.Gauge,
+    polish: chart => chart
+        .StartAngle(180)
+        .EndAngle(360)
+        .InnerRadius("40%")
+)
+```
+
+**Key features:**
+
+- **Concentric ring layout**: Each value gets its own circular track, unlike PieChart which shows proportions
+- **Background tracks**: Enable `.Background(true)` to show unfilled portions for progress indicators
+- **Customizable angular range**: Control arc span with `StartAngle` and `EndAngle` for full circles, three-quarter gauges, or activity rings
+- **Polar coordinate system**: Built on shared polar components (`PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`) for consistent circular chart behavior
+- **Animation support**: Enable smooth animations with `.Animated(true)`
+- **Radius control**: Configure `InnerRadius` and `OuterRadius` with percentages or pixels
+
+The widget is implemented using ECharts' polar coordinate system for accurate, performant circular visualizations. Perfect for dashboards, fitness tracking, capacity monitoring, and any scenario where you want to compare multiple progress indicators side-by-side.
+
+### Enhanced ScreenshotFeedback Widget with Annotation Tools
+
+The `ScreenshotFeedback` widget now includes powerful annotation tools and structured data export! Add callout markers, arrows, blur censoring, and text annotations to screenshots with an Ivy-themed interface and keyboard shortcuts.
+
+**New annotation tools:**
+
+- **Callout**: Two-click numbered annotations perfect for step-by-step instructions
+- **Arrow**: Point to specific UI elements with directional arrows
+- **Censor**: Blur sensitive information with pixelation effect
+- **Freehand, Line, Rectangle, Circle, Text**: All the essential drawing tools
+
+**Structured annotation data export:**
+
+The `OnSave` event now returns detailed annotation data including all shapes, positions, and metadata:
+
+```csharp
+new ScreenshotFeedback()
+    .IsOpen(isOpen)
+    .HandleSave(annotationData =>
+    {
+        // Access structured annotation data
+        foreach (var shape in annotationData.Shapes)
+        {
+            switch (shape)
+            {
+                case CalloutAnnotation callout:
+                    Console.WriteLine($"Callout #{callout.Number}: {callout.Text}");
+                    Console.WriteLine($"  Position: ({callout.Anchor.X}, {callout.Anchor.Y})");
+                    break;
+
+                case ArrowAnnotation arrow:
+                    Console.WriteLine($"Arrow from ({arrow.Start.X}, {arrow.Start.Y}) to ({arrow.End.X}, {arrow.End.Y})");
+                    break;
+
+                case CensorAnnotation censor:
+                    Console.WriteLine($"Censored area: {censor.Start.X},{censor.Start.Y} to {censor.End.X},{censor.End.Y}");
+                    break;
+            }
+        }
+
+        // Screenshot dimensions available
+        Console.WriteLine($"Screenshot size: {annotationData.ScreenshotWidth}x{annotationData.ScreenshotHeight}");
+    })
+```
+
+**Convenient overloads:**
+
+If you don't need the annotation data, use the simple callback:
+
+```csharp
+new ScreenshotFeedback()
+    .IsOpen(isOpen)
+    .HandleSave(() => Console.WriteLine("Screenshot saved!"))
+```
+
+**Keyboard shortcuts:**
+
+- **Ctrl+S** (or Cmd+S): Submit annotated screenshot
+- **Ctrl+Z** (or Cmd+Z): Undo last annotation
+- **ESC**: Cancel (closes the widget)
+
+**UI improvements:**
+
+The widget now features an Ivy dark green theme with drop shadows, SVG toolbar icons, and CSS tooltips for a polished user experience. Callout numbers automatically increment, and all annotations support customizable colors and line widths.
+
+The annotation system uses `JsonPolymorphic` attributes for clean deserialization, making it easy to process different annotation types in your C# code.
+
+### Scroll Support for Layout and StackLayout
+
+Layouts now support scrollable content! Add scroll behavior to any `Layout` or `StackLayout` with height or width constraints using the new `.Scroll()` method.
+
+**Vertical scrolling:**
+
+```csharp
+Layout.Vertical()
+    .Height(Size.Units(30))
+    .Scroll(Scroll.Vertical)
+    .Gap(2)
+    | new Badge("Item 1") | new Badge("Item 2") | new Badge("Item 3")
+    | new Badge("Item 4") | new Badge("Item 5") | new Badge("Item 6")
+    | new Badge("Item 7") | new Badge("Item 8") | new Badge("Item 9")
+    | new Badge("Item 10") | new Badge("Item 11") | new Badge("Item 12")
+```
+
+**Using with StackLayout:**
+
+```csharp
+new StackLayout([
+    new Badge("Item 1"), new Badge("Item 2"), new Badge("Item 3"),
+    new Badge("Item 4"), new Badge("Item 5"), new Badge("Item 6"),
+    new Badge("Item 7"), new Badge("Item 8"), new Badge("Item 9"),
+    new Badge("Item 10"), new Badge("Item 11"), new Badge("Item 12")
+], gap: 2) { Scroll = Scroll.Vertical }
+    .Height(Size.Units(30))
+    .Width(Size.Full())
+```
+
+**Scroll modes:**
+
+- `Scroll.Vertical` - Scrolls vertically, hides horizontal overflow
+- `Scroll.Horizontal` - Scrolls horizontally, hides vertical overflow
+- `Scroll.Both` - Scrolls in both directions
+- `Scroll.Auto` - Browser determines scroll behavior
+- `Scroll.None` - No scrolling (default)
+
+Perfect for creating fixed-height containers with scrollable content like sidebar navigation, chat message lists, or data tables.
+
+### Independent Row and Column Gap Control
+
+Fine-tune spacing in your layouts with independent control over vertical (row) and horizontal (column) gaps. The `.Gap()` method now accepts two parameters for precise spacing control.
+
+**Basic usage:**
+
+```csharp
+// Gap applies to both directions
+Layout.Wrap().Gap(4)
+    | new Badge("A") | new Badge("B") | new Badge("C")
+
+// Independent row and column gap
+Layout.Wrap().Gap(rowGap: 8, columnGap: 2)
+    .Width(Size.Units(60))
+    | new Badge("A") | new Badge("B") | new Badge("C")
+    | new Badge("D") | new Badge("E") | new Badge("F")
+    | new Badge("G") | new Badge("H") | new Badge("I")
+```
+
+**With StackLayout:**
+
+```csharp
+new StackLayout([
+    new Badge("A"), new Badge("B"), new Badge("C"),
+    new Badge("D"), new Badge("E"), new Badge("F"),
+    new Badge("G"), new Badge("H")
+], Orientation.Horizontal, wrap: true)
+{
+    RowGap = 8,      // Vertical spacing
+    ColumnGap = 2    // Horizontal spacing
+}.Width(Size.Units(60))
+```
+
+This is especially useful in wrapped layouts where you want tighter horizontal spacing between items but more vertical breathing room between rows.
+
+### Space Distribution Alignment
+
+Distribute space between elements in your layouts using `SpaceBetween`, `SpaceAround`, or `SpaceEvenly` alignment options. These work with both `Layout` methods and `StackLayout` widgets.
+
+**Using with Layout methods:**
+
+```csharp
+Layout.Vertical().Gap(4)
+    | Text.Label("SpaceBetween — items pushed to edges:")
+    | (Layout.Horizontal().Align(Align.SpaceBetween).Width(Size.Full())
+        | new Badge("A") | new Badge("B") | new Badge("C"))
+    | Text.Label("SpaceAround — equal space around each item:")
+    | (Layout.Horizontal().Align(Align.SpaceAround).Width(Size.Full())
+        | new Badge("A") | new Badge("B") | new Badge("C"))
+    | Text.Label("SpaceEvenly — equal space between all items:")
+    | (Layout.Horizontal().Align(Align.SpaceEvenly).Width(Size.Full())
+        | new Badge("A") | new Badge("B") | new Badge("C"))
+```
+
+**Using with StackLayout:**
+
+```csharp
+new StackLayout([
+    Text.Label("SpaceBetween:"),
+    new StackLayout([new Badge("A"), new Badge("B"), new Badge("C")],
+        Orientation.Horizontal, align: Align.SpaceBetween),
+    Text.Label("SpaceAround:"),
+    new StackLayout([new Badge("A"), new Badge("B"), new Badge("C")],
+        Orientation.Horizontal, align: Align.SpaceAround),
+    Text.Label("SpaceEvenly:"),
+    new StackLayout([new Badge("A"), new Badge("B"), new Badge("C")],
+        Orientation.Horizontal, align: Align.SpaceEvenly)
+], gap: 4).Width(Size.Full())
+```
+
+### AlignSelf for Individual Widget Alignment
+
+Override alignment for individual widgets within a layout using `.AlignSelf()`. This allows you to position specific elements independently of the parent layout's alignment.
+
+**Example with Layout:**
+
+```csharp
+Layout.Vertical().Gap(4)
+    | new Badge("Top").Primary().AlignSelf(Align.TopLeft)
+    | new Badge("Center").Primary().AlignSelf(Align.Center)
+    | new Badge("Bottom").Primary().AlignSelf(Align.BottomRight)
+```
+
+**Example with StackLayout:**
+
+```csharp
+new StackLayout([
+    new Badge("Top").Primary().AlignSelf(Align.TopLeft),
+    new Badge("Center").Primary().AlignSelf(Align.Center),
+    new Badge("Bottom").Primary().AlignSelf(Align.BottomRight)
+], gap: 4).Width(Size.Full())
+```
+
+In a horizontal layout, `AlignSelf` controls the vertical positioning of each child independently, giving you fine-grained control over individual widget placement.
+
+### AspectRatio Support for All Widgets
+
+You can now maintain proportional dimensions on any widget using the new `AspectRatio` property. This is particularly useful for creating responsive layouts that preserve aspect ratios regardless of screen size.
+
+Use the `.AspectRatio()` extension method with any widget:
+
+```csharp
+// Common aspect ratios
+new Box(Text.Block("16:9 Video"))
+    .Width(Size.Units(80))
+    .AspectRatio(16f / 9f)
+    .Background(Colors.Primary);
+
+new Box(Text.Block("Square"))
+    .Width(Size.Units(40))
+    .AspectRatio(1f)
+    .Background(Colors.Warning);
+
+// Works with any widget inheriting from WidgetBase
+new Card()
+    .Width(Size.Units(100))
+    .AspectRatio(4f / 3f);
+```
+
+The `AspectRatio` property is available on `WidgetBase`, so it works with all widgets including `Box`, `Card`, `StackLayout`, and more.
+
+### SelectInput Radio and Slider Variants
+
+The `SelectInput` widget now supports two powerful new variants: **Radio** for traditional radio button selection and **Slider** for selecting from ordered discrete options.
+
+**Radio variant for single-select forms:**
+
+The Radio variant renders familiar radio buttons, perfect for settings, configuration UIs, and forms where all options should be visible:
+
+```csharp
+public class NotificationSettings : ViewBase
+{
+    public override object? Build()
+    {
+        var frequency = UseState("Daily");
+
+        return frequency.ToSelectInput(["Immediately", "Daily", "Weekly", "Never"])
+            .Radio()
+            .WithField()
+            .Label("Notification frequency")
+            .Width(Size.Full());
+    }
+}
+```
+
+**Slider variant for ordered options:**
+
+The Slider variant is ideal for selecting from an ordered list like sizes, priority levels, or quality settings. It renders a range slider that snaps to each option:
+
+```csharp
+public class ProductSelector : ViewBase
+{
+    private enum Priority { Low, Medium, High, Critical }
+
+    public override object? Build()
+    {
+        var size = UseState("M");
+        var priority = UseState(Priority.Medium);
+
+        return Layout.Vertical()
+            | size.ToSelectInput(new[] { "XS", "S", "M", "L", "XL", "XXL" }.ToOptions())
+                .Slider()
+                .WithField()
+                .Label("T-Shirt Size")
+            | priority.ToSelectInput()
+                .Slider()
+                .WithField()
+                .Label("Priority");
+    }
+}
+```
+
+The Slider variant shows option labels in a tooltip as you slide, displays dot indicators for each value, and provides intuitive feedback for ordered discrete selections. Both variants support all standard SelectInput features including validation, disabled state, and density controls.
+
+### SelectInput Option Descriptions
+
+Options in `SelectInput` widgets can now include descriptions that display as caption text below the label. This feature works with Toggle, Radio (List), and Checkbox (List) variants, making it easy to provide helpful context for each option.
+
+**Add descriptions to options:**
+
+```csharp
+var genreOptions = new IAnyOption[]
+{
+    new Option<string>("Comedy", "Comedy")
+        { Description = "Laugh out loud." },
+    new Option<string>("Drama", "Drama")
+        { Description = "Get the popcorn." },
+    new Option<string>("Documentary", "Documentary")
+        { Description = "Never stop learning." },
+    new Option<string>("Action", "Action")
+        { Description = "Edge of your seat thrills." }
+};
+
+// Works with Toggle variant
+genreToggle.ToSelectInput(genreOptions)
+    .Variant(SelectInputVariant.Toggle)
+
+// Works with Radio variant (List, single-select)
+genreRadio.ToSelectInput(genreOptions)
+    .Variant(SelectInputVariant.List)
+
+// Works with Checkbox variant (List, multi-select)
+genreCheckbox.ToSelectInput(genreOptions)
+    .Variant(SelectInputVariant.List)
+```
+
+Descriptions appear as smaller, muted text below the option label, providing a clean way to add explanatory text without cluttering the interface.
+
+### TestId Support for E2E Testing
+
+View builders now support setting TestId attributes for end-to-end testing! You can add test identifiers to `Layout`, `Text`, `Grid`, and `Tabs` views, making it easy to locate and interact with specific elements in your automated tests.
+
+**Add TestIds to your views:**
+
+```csharp
+public class MyApp : ViewBase
+{
+    public override object? Build()
+    {
+        return Layout.Vertical(
+            Text.H1("Welcome").TestId("page-heading"),
+            Text.P("This is the description").TestId("description"),
+            Layout.Horizontal(
+                new Button("Cancel"),
+                new Button("Submit")
+            ).TestId("action-buttons")
+        ).TestId("main-layout");
+    }
+}
+```
+
+**Works with all layout types:**
+
+```csharp
+// Text elements
+Text.H1("Title").TestId("heading")
+Text.P("Content").TestId("paragraph")
+Text.Block("Code").TestId("code-block")
+
+// Layout views
+Layout.Horizontal(children).TestId("horizontal-layout")
+Layout.Vertical(children).TestId("vertical-layout")
+
+// Grid layouts
+Layout.Grid(cells)
+    .Columns(2)
+    .TestId("grid-layout")
+
+// Tabs
+Layout.Tabs(
+    new Tab("Tab 1", content1),
+    new Tab("Tab 2", content2)
+).TestId("tabs-container")
+```
+
+TestIds are rendered as HTML `data-testid` attributes in the generated markup, following standard conventions for test automation frameworks like Playwright, Cypress, and Selenium. This makes it easy to write stable, maintainable E2E tests that aren't tied to CSS selectors or brittle DOM structure.
+
+### Configurable Server Listening Interface
+
+You can now configure which network interface your Ivy server listens on using the `--host` CLI argument or `HOST` environment variable. This is particularly useful when deploying to containerized or hosted environments.
+
+**Using the CLI argument:**
+
+```bash
+ivy run --host 0.0.0.0 --port 8080
+```
+
+**Using environment variable:**
+
+```bash
+export HOST=0.0.0.0
+ivy run
+```
+
+**Default behavior:**
+- Local development: Binds to `localhost` by default
+- Docker containers: Automatically binds to `*` (all interfaces)
+- When `PORT` environment variable is set: Automatically binds to `*` (all interfaces)
+
+The `--host` CLI argument takes precedence over the `HOST` environment variable, following standard CLI conventions.
+
+### New Script Widget
+
+Load external JavaScript files or execute inline JavaScript code with the new `Script` widget! This widget doesn't render any visible output—it simply injects `<script>` elements into the page head, making it perfect for adding analytics, third-party libraries, or custom JavaScript behavior to your apps.
+
+**Load an external JavaScript library:**
+
+```csharp
+new Script("https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js")
+```
+
+**Execute inline JavaScript:**
+
+```csharp
+new Script().InlineCode("console.log('Hello from Ivy!');")
+```
+
+**Control script loading behavior:**
+
+```csharp
+// Load asynchronously (doesn't block page rendering)
+new Script("https://example.com/analytics.js").Async()
+
+// Defer execution until page is parsed
+new Script("https://example.com/widget.js").Defer()
+```
+
+**Add security with Subresource Integrity:**
+
+```csharp
+new Script("https://cdn.example.com/lib.js")
+    .Integrity("sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8w")
+    .CrossOrigin("anonymous")
+```
+
+**Security considerations:**
+
+- **Never pass user-supplied input** to `Src` or `InlineCode`—this widget executes arbitrary JavaScript
+- Use `Integrity` for external scripts to prevent tampering
+- Set `CrossOrigin` when using integrity checks
+
+The Script widget is ideal for integrating analytics platforms, loading visualization libraries, adding custom tracking code, or injecting third-party widgets into your Ivy apps.
+
+### TextBlock Anchor Navigation
+
+Headings in `TextBlock` (H1-H6) now support anchor IDs for URL hash navigation! Add explicit anchor IDs or auto-generate them from heading text to enable deep linking and table-of-contents style navigation.
+
+**Auto-generate anchor from heading text:**
+
+```csharp
+Text.H2("Getting Started").Anchor()
+// Creates anchor: #getting-started
+```
+
+**Set explicit anchor ID:**
+
+```csharp
+Text.H2("API Reference").Anchor("api-docs")
+// Creates anchor: #api-docs
+```
+
+**Build a navigation structure:**
+
+```csharp
+Layout.Vertical()
+    | Text.H1("Documentation").Anchor("top")
+    | Text.H2("Installation").Anchor()
+    | Text.P("Follow these steps to install...")
+    | Text.H2("Configuration").Anchor()
+    | Text.P("Configure your app settings...")
+    | Text.H2("Advanced Topics").Anchor("advanced")
+    | Text.P("Deep dive into advanced features...")
+```
+
+When using `.Anchor()` without parameters, the framework automatically generates a URL-safe slug by converting to lowercase, replacing spaces with hyphens, and stripping special characters. For example, "Getting Started!" becomes "getting-started".
+
+Anchors render as HTML `id` attributes on heading elements, allowing users to link directly to specific sections with URLs like `yourapp.com#getting-started`.
+
+### VideoPlayer Volume Control
+
+The `VideoPlayer` widget now supports fine-grained volume control! Set the playback volume from 0.0 (muted) to 1.0 (full volume) for precise audio level management.
+
+**Set volume levels:**
+
+```csharp
+// Half volume
+new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .Volume(0.5f)
+
+// Quiet background video
+new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .Volume(0.2f)
+    .Autoplay(true)
+    .Loop(true)
+
+// Full volume (same as browser default)
+new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .Volume(1.0f)
+```
+
+**Combine with other controls:**
+
+```csharp
+new VideoPlayer("https://www.w3schools.com/html/mov_bbb.mp4")
+    .Volume(0.3f)
+    .Autoplay(false)
+    .Controls(true)
+    .Loop(true)
+    .Muted(false)
+```
+
+Volume values are automatically clamped between 0.0 and 1.0, so you don't need to worry about out-of-range values. The volume setting is applied when the video element loads in the browser.
+
+This is especially useful for background videos, ambient soundscapes, tutorials with voiceover, or any scenario where you want to control the default audio level programmatically.
+
+### Json and Xml Widget Enhancements
+
+The `Json` and `Xml` widgets now support expansion control and simplified usage, making it easier to work with structured data visualization.
+
+**Control initial tree expansion:**
+
+Both widgets now have an `Expanded` property to control how deeply the tree is initially expanded:
+
+```csharp
+var data = new { name = "John", address = new { city = "NYC", zip = "10001" } };
+
+// Collapsed (default)
+new Json(data)
+
+// Expand first level
+new Json(data) { Expanded = 1 }
+
+// Fully expanded
+new Json(data) { Expanded = -1 }
+```
+
+**Direct object serialization for Json:**
+
+The `Json` widget now accepts any object directly—no need to manually serialize:
+
+```csharp
+// Before: manual serialization required
+var json = JsonSerializer.Serialize(myData);
+new Json(json)
+
+// Now: pass objects directly
+new Json(myData)
+```
+
+The object is automatically serialized with proper indentation. You can still pass JSON strings directly for full control over formatting.
+
+**Improved visual hierarchy:**
+
+Tree indentation has been reduced from 4 to 3 spacing units, making deeply nested structures easier to scan while maintaining clear visual hierarchy.
+
+### Small Icon Buttons
+
+Icon-only buttons now support the `.Small()` density option for a more compact appearance. When combined with icon buttons, this creates a smaller 6x6 unit button (compared to the default 9x9 units).
+
+```csharp
+// Small icon buttons
+Layout.Horizontal(
+    Icons.MessageSquareX.ToButton(eventHandler).Small(),
+    Icons.Heart.ToButton(eventHandler, ButtonVariant.Destructive).Small(),
+    Icons.Star.ToButton(eventHandler, ButtonVariant.Outline).Small()
+)
+```
+
+This is particularly useful in toolbars, action panels, and other UI areas where space is at a premium.
+
+### Ivy.Analyser: Detect Inline Hook Calls
+
+A new analyzer rule **IVYHOOK007** helps you write cleaner, more maintainable code by detecting hooks that are called inline within expressions. While inline hooks may work at runtime, they obscure state management and make debugging harder.
+
+**What triggers the warning:**
+
+```csharp
+// ❌ Hooks called inline in a pipe chain
+public override object? Build()
+{
+    return new Card(
+        Layout.Vertical().Gap(3)
+            | UseState(true).ToBoolInput().Label("Email notifications")
+            | UseState(false).ToBoolInput().Label("SMS notifications")
+    );
+}
+
+// ❌ Hook inline in return statement
+public override object? Build()
+{
+    return UseState(true).ToBoolInput();
+}
+
+// ❌ Hook inline as constructor argument
+public override object? Build()
+{
+    return new Card(UseState(0).Value);
+}
+```
+
+**How to fix it:**
+
+Extract each hook call to a local variable at the top of your `Build()` method:
+
+```csharp
+// ✅ Hooks assigned to variables first
+public override object? Build()
+{
+    var emailNotifications = UseState(true);
+    var smsNotifications = UseState(false);
+
+    return new Card(
+        Layout.Vertical().Gap(3)
+            | emailNotifications.ToBoolInput().Label("Email notifications")
+            | smsNotifications.ToBoolInput().Label("SMS notifications")
+    );
+}
+```
+
+This pattern makes your state management explicit and easier to track, especially when building complex UIs with multiple hooks.
+
+## Bug Fixes
+
+### DataTable Height Calculation in Flex Containers
+
+Fixed an issue where `DataTable` widgets using `Height.Full` would grow infinitely when placed inside flex containers (like `Layout.Vertical()`), causing layout issues and overflow.
+
+**What was broken:**
+
+When a DataTable with `Height.Full` was placed inside a vertical layout alongside other elements, it would grow without bounds rather than respecting the available space and becoming scrollable.
+
+**What's fixed:**
+
+The DataTable now properly constrains its height in flex containers by setting `flexGrow: 1` and `minHeight: 0`, ensuring it can shrink and grow correctly within the available space:
+
+```csharp
+// DataTable now works correctly in flex layouts
+Layout.Vertical()
+    .Width(Size.Full())
+    .Height(Size.Full())
+    | Text.H1("Dashboard")
+    | employeeTable.Height(Size.Full())  // Now properly constrained
+    | footerWidget
+```
+
+This fix applies automatically to all DataTable instances using `Height.Full`—your tables will now calculate their height correctly even when nested in complex layouts.
+
+### ScatterChart Reference Markers and Data Key Resolution
+
+The `ScatterChart` widget now properly handles reference markers and data key casing:
+
+**Fixed reference markers**: `ReferenceDot`, `ReferenceLine`, and `ReferenceArea` now render correctly. Previously, these C# records weren't being transformed into the proper ECharts format:
+
+```csharp
+// Reference dots, lines, and areas now work as expected
+ScatterChartView.Create(data)
+    .Dimension("x", d => d.XValue)
+    .Measure("y", d => d.YValue)
+    .ReferenceDot(50, 75, "Target")
+    .ReferenceLine(xValue: 100, label: "Threshold")
+    .ReferenceArea(0, 0, 50, 50, "Safe Zone")
+    .Build()
+```
+
+**Fixed data key casing**: The widget now correctly resolves property names when C# serialization converts them to camelCase but your DataKey uses PascalCase. A new `resolveValue()` helper tries both the original key and camelCase variants, ensuring your data is always found correctly.
+
+### RadialBarChart Label Rendering
+
+Fixed an issue where axis labels in `RadialBarChart` were rendering behind the chart bars, making category and value labels difficult or impossible to read. The chart now uses proper z-index layering to ensure axis labels always appear above the radial bars.
+
+This fix applies automatically to all RadialBarChart implementations—your labels will now be clearly visible on top of the chart bars.
+
+### RadialBarChart Polar Grid Configuration
+
+Fixed a circular reference bug in `RadialBarChart` where the polar grid configuration was referencing itself during construction. The polar config is now built incrementally, ensuring stable rendering when using custom `PolarGrid` configurations.
+
+### RadarChart Data Property Casing Issue
+
+Fixed a critical bug in `RadarChart` where indicator data wasn't rendering correctly due to property name casing mismatches. C# indicator names (like "Sales", "Marketing") weren't matching the camelCase JSON keys (like "sales", "marketing") produced by the framework's serialization, causing data polygons to render as tiny dots near the center instead of proper radar shapes.
+
+The chart now uses case-insensitive property lookup to match indicator names with data properties, ensuring your radar charts display correctly regardless of property casing:
+
+```csharp
+// This now works correctly even though C# uses PascalCase
+var data = new[]
+{
+    new { name = "Product A", Sales = 85, Marketing = 72, Development = 90 }
+};
+
+new RadarChart(data)
+    .Indicator("Sales", 100)      // Matches "sales" in JSON
+    .Indicator("Marketing", 100)  // Matches "marketing" in JSON
+    .Indicator("Development", 100) // Matches "development" in JSON
+```
+
+This fix applies automatically to all existing RadarChart implementations—no code changes needed.
+
+### Breadcrumbs Widget Now Working
+
+The `Breadcrumbs` widget is now fully functional! This release fixes several issues that prevented breadcrumbs from working properly:
+
+- **Fixed serialization errors** when using breadcrumb items with click handlers
+- **Added frontend implementation** with proper click handling, icons, and separators
+- **Fixed icon reference**: `Icons.Home` has been corrected to `Icons.House` in documentation and samples
+
+The breadcrumbs now properly wire up click events from the frontend to your C# event handlers:
+
+```csharp
+new Breadcrumbs(
+    new BreadcrumbItem("Home", () => currentPage.Set("Home"), Icons.House),
+    new BreadcrumbItem("Products", () => currentPage.Set("Products"), Icons.ShoppingCart),
+    new BreadcrumbItem("Details")
+)
+```
+
+Click handlers on breadcrumb items now work as expected, with the last item automatically rendered as non-clickable to indicate the current page.
+
+### Improved App ID Validation
+
+App ID validation now blocks additional special characters that could cause issues. The characters `%` (percent) and `\` (backslash) are no longer allowed in App IDs, joining the existing restrictions on `:`, `?`, `#`, and `&`.
+
+### Calendar Empty Slot Content Fix
+
+Fixed an issue where the `Calendar` widget would attempt to render empty content slots even when no child content was provided. The calendar now properly checks if children exist before rendering slot content, preventing unnecessary empty renders.
+
+This fix applies automatically—calendars without custom event content will now render more efficiently.
+
+### Chart Widget UI Improvements
+
+Several visual improvements have been made to chart widgets for better readability and consistency:
+
+**Series naming**: Area, Bar, and Line charts now respect the `.Name()` configuration for series labels in legends and tooltips. Previously, charts would always display the raw data key; now they use your configured name when provided:
+
+```csharp
+// Series will show "Revenue" in legend instead of "revenueValue"
+new BarChart(data)
+    .Bar("revenueValue", bar => bar.Name("Revenue"))
+```
+
+**Funnel chart tooltips**: Improved tooltip formatting now shows values with proper number formatting and percentages:
+- Before: `{a} <br/>{b}: {c}`
+- After: `Revenue<br/><strong>125,000</strong> (45%)`
+
+**Bar chart backgrounds**: Disabled the default semi-transparent background rectangles behind bars (`showBackground: false`) for a cleaner appearance.
+
+**Chart legend spacing**: Increased bottom grid spacing from 30px to 50px to better accommodate legends below the chart, preventing overlap with axis labels.
+
+**Chord chart legends**: Legend visibility is now properly controlled—when no legend is configured, it's completely hidden rather than showing an empty legend box.
+
+**Radar chart with legends**: When a legend is enabled on radar charts, the chart now automatically adjusts its center position and radius to accommodate the legend below, preventing overlap.
+
+This prevents potential URL encoding issues and path separator conflicts. If you're creating new apps, ensure your App IDs only contain alphanumeric characters, hyphens, and underscores for best compatibility.
+
+### Fixed Docker Container Health Probe Failures
+
+Ivy apps now correctly bind to the wildcard address (`*`) when running in Docker containers, fixing health probe failures in Azure App Service and other container orchestration platforms.
+
+**What was broken:**
+
+A recent change to bind to `localhost` (to avoid Windows Firewall prompts during local development) broke container deployments because health probes couldn't reach localhost-bound ports from outside the container.
+
+**What's fixed:**
+
+The server now automatically detects when running in a container using the `DOTNET_RUNNING_IN_CONTAINER` environment variable and binds to `*` (all interfaces) in that case, while preserving the `localhost` binding for local development.
+
+**No action required:**
+
+If you're deploying Ivy apps to Docker containers, this fix is automatic. Your health probes should now work correctly without any configuration changes.
+
+### SankeyChart Tooltips Now Show Node Names
+
+Fixed an issue where `SankeyChart` tooltips were displaying numeric indices (like "0 → 1") instead of readable node names (like "Visit → Add to Cart"). The chart now automatically maps link source and target indices to their corresponding node names, making tooltips much more user-friendly.
+
+This fix applies automatically to all existing SankeyChart implementations—no code changes needed.
+
+### Chart Extension Methods Now Extract Correct Property Names
+
+Fixed a bug where chart extension methods like `.ToRadarChart()`, `.ToBarChart()`, and `.ToScatterChart()` were incorrectly labeling axes with aggregation method names instead of property names.
+
+**What was broken:**
+
+When using aggregation expressions in chart builders, axes were labeled with method names like "Sum", "Average", "Count" instead of the actual property names:
+
+```csharp
+data.ToRadarChart(
+    x => x.Department,
+    [
+        q => q.Sum(x => x.Speed),      // Was labeled "Sum"
+        q => q.Average(x => x.Quality), // Was labeled "Average"
+    ]
+)
+```
+
+**What's fixed:**
+
+The framework now correctly extracts property names from aggregation expressions, so your charts display meaningful axis labels automatically:
+
+```csharp
+data.ToRadarChart(
+    x => x.Department,
+    [
+        q => q.Sum(x => x.Speed),      // Now labeled "Speed"
+        q => q.Average(x => x.Quality), // Now labeled "Quality"
+    ]
+)
+```
+
+This fix applies automatically to all chart extension methods—your existing charts will now show proper axis labels without any code changes.
+
+### FunnelChart Now Respects Custom Data Keys
+
+Fixed an issue where `FunnelChart` was hardcoded to read property names as 'measure' and 'dimension' (the default `PieChartData` properties), ignoring any custom `DataKey` or `NameKey` values configured in the funnel series.
+
+**What was broken:**
+
+If you configured a funnel with custom data/name keys, the widget would still try to read 'measure' and 'dimension' properties, causing your data not to display:
+
+```csharp
+new FunnelChart(data)
+    .Funnel("CustomValue", "CustomLabel")  // These were ignored
+```
+
+**What's fixed:**
+
+The widget now correctly reads the `DataKey` and `NameKey` from the first funnel configuration, with proper camelCase conversion to match JSON serialization, and falls back to the default 'measure'/'dimension' names for backward compatibility.
+
+This fix applies automatically to all existing FunnelChart implementations—charts with custom data keys will now work correctly.
+
+### Card Widget Density Scaling Improvements
+
+The `Card` widget now properly scales icons and spacing across all density levels (small, medium, large). Previously, card headers had inconsistent icon sizes and spacing that didn't adapt well to different density settings.
+
+**What's improved:**
+
+- **Density-aware icon sizing**: Icons in card headers now scale appropriately—16px for small, 20px for medium, and 24px for large density
+- **Better header spacing**: Header padding has been refined for visual harmony (small density now uses pt-2/pb-1, large uses pt-6)
+- **Smarter content padding**: When a card has no header, the content padding now adjusts based on density level
+
+These improvements apply automatically to all existing Card implementations—your cards will now look more polished at every density setting.
+
+### Chart Series Labels Now Respect Custom Names
+
+Area, Bar, and Line charts now properly use your configured series names instead of falling back to raw data keys. This makes chart legends and tooltips much more readable:
+
+```csharp
+// Series now display with your custom names
+new BarChart(data)
+    .Bar("revenue", r => r.Revenue).Name("Total Revenue")     // Shows "Total Revenue" not "revenue"
+    .Bar("expenses", e => e.Expenses).Name("Operating Costs") // Shows "Operating Costs" not "expenses"
+```
+
+This fix applies automatically—if you've configured custom names via `.Name()`, they'll now appear correctly in legends and tooltips.
+
+### Funnel Chart Tooltips Improved
+
+Funnel chart tooltips now display formatted numbers with locale-aware thousand separators and show percentage values, making data much easier to read:
+
+**Before**: `a <br/>Stage Name: 1234567`
+
+**Now**: `● Stage Name<br/><strong>1,234,567</strong> (45%)`
+
+The new format includes the series marker, bold formatted values, and percentage contribution. This improvement applies automatically to all FunnelChart instances.
+
+### Calendar Slot Content Rendering Fixed
+
+Fixed an issue where Calendar widgets would attempt to render empty slot content even when no child widgets were provided, potentially causing layout issues or unnecessary DOM elements.
+
+The calendar now only renders custom slot content when the calendar actually has children defined. This fix applies automatically to all Calendar implementations.
+
+### Bar Chart Visual Clarity Improved
+
+Bar charts no longer show background shading behind bars by default (`showBackground: false`), resulting in a cleaner, more focused visualization. This change applies automatically to all BarChart widgets and helps data stand out more clearly against the chart background.
+
+### Chart Legend Spacing Improved
+
+Chart widgets now allocate more bottom spacing (50px instead of 30px) to properly accommodate legends and axis labels without overlap. This prevents legends from being cut off or colliding with x-axis labels, especially in charts with longer label text.
+
+This improvement applies automatically to all chart widgets that display legends.
+
+### Text Widget Markdown Density Now Applied
+
+Fixed an issue where the `Text` widget with `TextVariant.Markdown` wasn't respecting the density setting. When you set a density on markdown text, it was being ignored and defaulting to medium density.
+
+**What's fixed:**
+
+The markdown variant now properly inherits the density setting from the Text builder:
+
+```csharp
+// Density now works correctly with markdown
+Text.Markdown("# Hello World")
+    .Density(Density.Small)  // Now properly applied to the Markdown widget
+```
+
+This fix applies automatically to all Text widgets using markdown variant—your density settings will now work as expected.
+
+### Card Content Body Visibility Fixed
+
+Fixed a critical issue where the Card widget's content body would be invisible despite being present in the DOM. This was caused by incorrect flex sizing (`flex-1`) that prevented the content from rendering visibly in certain layout contexts.
+
+**What's fixed:**
+
+The Card content now uses `flex-auto` instead of `flex-1`, ensuring the content body displays correctly in all scenarios:
+
+```csharp
+// Card content now renders visibly in all layouts
+new Card()
+    .Header("Card Title")
+    .Content(
+        Text.Body("This content is now properly visible")
+    )
+    .Footer("Card Footer")
+```
+
+This fix applies automatically to all Card widgets—your card content will now display correctly without any code changes needed.
+
+### External Widget Re-render Performance Improved
+
+Fixed a performance issue where external widgets would cause unnecessary full re-renders every time their parent component updated. This happened because React.lazy wrappers weren't being cached, creating new component instances on each render.
+
+**What's fixed:**
+
+The framework now caches React.lazy wrappers for external widgets by type name, maintaining component identity across renders. This significantly improves performance when using custom external widgets in dynamic layouts or frequently updating views.
+
+This optimization applies automatically to all external widgets—you'll notice smoother performance without any code changes needed, especially in views that update frequently or contain multiple external widgets.
+
+### Ivy.Analyser Now Supports Null-Forgiving Operator in Hook Calls
+
+Fixed analyzer rule IVYHOOK007 to correctly recognize hook calls that use the null-forgiving operator (`!`). Previously, patterns like `UseArgs<T>()!` would incorrectly trigger the "hooks must not be used inline" warning even though they were valid direct assignments.
+
+**What was broken:**
+
+```csharp
+// This would incorrectly trigger IVYHOOK007
+var args = UseArgs<MyArgs>()!;
+```
+
+**What's fixed:**
+
+The analyzer now unwraps the null-forgiving operator to check if the underlying expression is a valid hook call:
+
+```csharp
+// These patterns are now correctly recognized as valid
+var args = UseArgs<MyArgs>()!;
+var state = UseState(0)!;
+var effect = UseEffect(() => { })!;
+```
+
+This fix applies automatically when using Ivy.Analyser—no code changes needed. Your existing code using `!` with hooks will no longer produce false positive warnings.
+
+### Markdown Files Now Handled as Static Files
+
+Fixed a routing issue where `.md` (Markdown) files were being processed by the PathToAppIdMiddleware instead of being served as static files. Markdown files are now correctly included in the static file extensions list, ensuring they're served directly without routing interference.
+
+This fix applies automatically—if you're serving markdown files in your Ivy app, they'll now be handled correctly by the static file middleware.
+
+### FileInput Default Variant Click Behavior Improved
+
+Fixed click handling for the `FileInput` widget when using the Default variant. Previously, clicking anywhere in the file input container would trigger the file selection dialog, which could be confusing when clicking on action buttons or file items.
+
+**What's fixed:**
+
+- For Default variant, only the designated trigger button (with the upload icon) now opens the file dialog
+- Clicking on remove buttons, file items, or empty space in the container no longer triggers file selection
+- Cursor styling refined to show `cursor-default` instead of `cursor-pointer` for the container, providing better visual feedback that only the button is clickable
+
+```csharp
+// Default variant now has more intuitive click behavior
+new FileInput()
+    .Variant(FileInputVariant.Default)  // Only the upload button triggers selection
+    .Multiple(true)
+```
+
+This fix applies automatically to all FileInput widgets using the Default variant—your file inputs will now have more predictable and intuitive click behavior.
+
+### FileInput Button Density Scaling Fixed
+
+Fixed an issue where `FileInput` buttons didn't properly scale when using `Density.Large`. Previously, only Small and Medium (default) densities were handled, causing Large density settings to fall back to Medium size.
+
+**What's fixed:**
+
+The FileInput upload button now correctly responds to all three density levels:
+- `Density.Small` → small button ('sm')
+- `Density.Medium` → default button size
+- `Density.Large` → large button ('lg')
+
+```csharp
+// FileInput buttons now scale correctly at all density levels
+new FileInput()
+    .Density(Density.Large)  // Button now properly renders as large
+    .Multiple(true)
+```
+
+This fix applies automatically to all FileInput widgets—buttons will now scale correctly when using Large density.
+
+### FileInput Button Text Now Respects Single vs Multiple Selection
+
+The `FileInput` widget's default button text now intelligently displays "Select file" or "Select files" based on whether multiple file selection is enabled, providing clearer feedback to users.
+
+**What's improved:**
+
+When you don't provide a custom placeholder, the button text automatically adjusts:
+- `Multiple(false)` → "Select file" (singular)
+- `Multiple(true)` → "Select files" (plural)
+
+```csharp
+// Button shows "Select file" (singular)
+new FileInput()
+    .Multiple(false)
+
+// Button shows "Select files" (plural)
+new FileInput()
+    .Multiple(true)
+
+// Custom placeholder overrides the default
+new FileInput()
+    .Multiple(true)
+    .Placeholder("Choose your documents")  // Shows custom text
+```
+
+This improvement applies automatically to all FileInput widgets without custom placeholders—the button text will now be more accurate and user-friendly.
+
+### Sidebar Hook Name Capitalization Fixed
+
+Fixed a display bug where hook names in the sidebar were being incorrectly split with spaces in the middle of the hook name. For example, "UseRefreshToken" was being displayed as "UseRefresh Token" instead of staying intact as "UseRefreshToken".
+
+**What was broken:**
+
+The `TitleCaseToReadable` helper method (used for formatting names in the sidebar) was only suppressing the space after "Use" but still inserting spaces at subsequent word boundaries within hook names.
+
+**What's fixed:**
+
+Hook names (any identifier starting with "Use" followed by an uppercase letter) are now returned unchanged without any space insertion, preserving their correct capitalization:
+- `UseState` → "UseState" (not "Use State")
+- `UseRefreshToken` → "UseRefreshToken" (not "UseRefresh Token")
+- `UseContext` → "UseContext" (not "Use Context")
+
+This fix applies automatically to all hook names displayed in the sidebar—your hook names will now appear correctly formatted.
+
+## Security Enhancements
+
+### Enhanced File Upload Security with Magic Byte Validation
+
+File uploads are now protected against MIME type spoofing attacks! Ivy now validates that uploaded file content actually matches the declared Content-Type by checking magic bytes (file signatures).
+
+**What this means for you:**
+
+Previously, malicious users could potentially upload dangerous files (like executables or scripts) disguised as images by simply changing the Content-Type header. Now Ivy verifies the actual file content to ensure it matches the claimed type.
+
+**Automatic protection:**
+
+If you're using `FileInput` widgets with file type restrictions, this security enhancement is automatically applied. No code changes needed:
+
+```csharp
+new FileInput()
+    .Accept("image/*")  // Now validates actual file content, not just headers
+    .OnChange(files => HandleUpload(files))
+```
+
+**Manual validation API:**
+
+For custom file handling scenarios, you can use the new validation methods directly:
+
+```csharp
+// Validate a single file with magic byte checking
+var result = FileInputValidation.ValidateFileTypeWithMagicBytes(
+    file,
+    "image/*",
+    fileStream
+);
+
+if (!result.IsValid)
+{
+    // File content doesn't match declared type - potential attack
+    Console.WriteLine(result.ErrorMessage);
+}
+```
+
+**Validate multiple files:**
+
+```csharp
+var result = FileInputValidation.ValidateFileTypesWithMagicBytes(
+    files,
+    ".pdf,.docx",
+    file => file.OpenReadStream()
+);
+```
+
+**Supported file types:**
+
+Magic byte validation is implemented for all common file types including:
+- **Images**: JPEG, PNG, GIF, BMP, WebP, TIFF, ICO
+- **Documents**: PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.pptx)
+- **Archives**: ZIP, RAR, 7z, gzip, tar
+- **Audio**: MP3, WAV, OGG
+- **Video**: MP4, WebM, AVI, QuickTime
+- **Text formats**: Plain text, CSV, JSON, XML, SVG (allowed without magic byte checks)
+
+This enhancement provides defense-in-depth security for your file upload features without any breaking changes.
+
+### Stricter App ID Validation
+
+App ID validation has been strengthened to prevent potential security issues. The framework now blocks additional characters that could be exploited in URL manipulation or path traversal attacks.
+
+**Blocked characters:**
+
+App IDs can no longer contain:
+- `:` (colon) - URL protocol separator
+- `?` (question mark) - URL query parameter separator
+- `#` (hash) - URL fragment identifier
+- `&` (ampersand) - URL query parameter separator
+- `%` (percent) - URL encoding character **[NEW]**
+- `\` (backslash) - Path separator on Windows **[NEW]**
+
+**What this means:**
+
+If your app creates or validates app IDs, ensure they don't contain these characters. App IDs should use alphanumeric characters, hyphens, and underscores for best compatibility:
+
+```csharp
+// Valid app IDs
+"my-app"
+"user_dashboard"
+"app123"
+
+// Invalid app IDs (will fail validation)
+"my%20app"      // Contains %
+"app\\name"     // Contains \
+"app:version"   // Contains :
+```
+
+The validation is performed automatically by `ValidationHelper.IsValidAppId()` to protect against injection attacks and ensure app IDs work correctly across all platforms and URL contexts.
+
+## Breaking Changes
+
+### Visible Property Removed from Widgets
+
+The `Visible` property and related methods have been removed from `WidgetBase`. This simplifies the widget API and encourages the use of conditional rendering, which is more idiomatic in Ivy.
+
+**Removed APIs:**
+- `widget.Visible` property
+- `.Visible(bool)` extension method
+- `.Show()` extension method
+- `.Hide()` extension method
+
+**Migration:**
+
+Instead of using the `Visible` property to conditionally show/hide widgets, use C#'s conditional operators (`?:` or `??`) to conditionally render widgets:
+
+```csharp
+// Before (no longer works)
+new Button("Click me")
+    .Visible(isActive)
+
+new Card()
+    .Visible(showCard)
+
+// After (use conditional rendering)
+isActive ? new Button("Click me") : null
+
+showCard ? new Card() : null
+```
+
+For more complex conditional layouts, you can use C#'s pattern matching or conditional expressions:
+
+```csharp
+// Conditional layout children
+Layout.Vertical()
+    | Text.H1("Title")
+    | (hasContent ? contentWidget : null)
+    | (showFooter ? footerWidget : null)
+
+// Ternary for different widgets
+condition
+    ? new Button("Option A")
+    : new Button("Option B")
+```
+
+This pattern is more explicit about what gets rendered and aligns with modern UI framework patterns like React's conditional rendering.
+
+### Input Widget Constructors Made Internal
+
+All Input widget constructors have been made `internal`, requiring you to use the `.To[Type]Input()` extension methods instead of direct instantiation. This enforces a more consistent API pattern across the framework.
+
+**Affected widgets:**
+- `TextInput`, `CodeInput`, `ColorInput`
+- `NumberInput`, `BoolInput`, `SelectInput`
+- `DateTimeInput`, `DateRangeInput`
+- `FileInput`, `FeedbackInput`, `IconInput`
+- `ReadOnlyInput`
+
+**Migration:**
+
+Direct instantiation with `new` will now result in compilation errors. You must use the extension methods:
+
+```csharp
+// Before (no longer works)
+var textInput = new TextInput(state);
+var selectInput = new SelectInput<string>(state, options);
+var numberInput = new NumberInput();
+
+// After (use extension methods)
+var textInput = state.ToTextInput();
+var selectInput = state.ToSelectInput(options);
+// For stateless inputs, create a state first:
+var numberState = UseState(0);
+var numberInput = numberState.ToNumberInput();
+```
+
+**With values and callbacks:**
+
+```csharp
+// Before (no longer works)
+var input = new TextInput("initial", onChange, placeholder: "Enter text");
+var select = new SelectInput<string>("value", onSelectChange, options);
+
+// After (use extension methods)
+var input = "initial".ToTextInput(onChange, placeholder: "Enter text");
+var select = "value".ToSelectInput(onSelectChange, options);
+```
+
+**Extension methods work on:**
+- States: `state.ToTextInput()`
+- Values: `"text".ToTextInput(onChange)`
+- Primitives with state creation: Create a state first, then call the extension method
+
+This change ensures all Input widgets are created consistently through extension methods, making the API more predictable and easier to learn.
+
+### FileInput: Standard Variant Renamed to Default
+
+The `FileInputVariant.Standard` variant has been renamed to `FileInputVariant.Default` to better align with naming conventions across the framework.
+
+**What changed:**
+- `FileInputVariant.Standard` → `FileInputVariant.Default`
+
+**Migration:**
+
+Update your code to use the new variant name:
+
+```csharp
+// Before (no longer works)
+fileState.ToFileInput(upload)
+    .Variant(FileInputVariant.Standard)
+
+// After
+fileState.ToFileInput(upload)
+    .Variant(FileInputVariant.Default)
+```
+
+The `Default` variant provides a compact button-based file input, as opposed to the `Drop` variant which provides a large drag-and-drop zone. Both variants continue to support drag-and-drop functionality.
+
+### Size.FractionGap API Removed
+
+The `Size.FractionGap()` method and `SizeType.FractionGap` enum value have been removed from the framework. This API was unused and provided redundant functionality—the same behavior can be achieved using standard `Size.Fraction()` combined with layout gaps.
+
+**Removed APIs:**
+- `Size.FractionGap(float)` method
+- `SizeType.FractionGap` enum value
+
+**Migration:**
+
+Replace any usage of `Size.FractionGap()` with `Size.Fraction()`. If gaps were previously handled by the FractionGap behavior, ensure your `Layout` has a `Gap` configured:
+
+```csharp
+// Before (no longer works)
+new Box().Width(Size.FractionGap(0.5f))
+
+// After
+new Box().Width(Size.Fraction(0.5f))
+```
+
+If you need gap handling in your layouts:
+
+```csharp
+Layout.Horizontal()
+    .Gap(Size.Rem(1))
+    | new Box().Width(Size.Fraction(0.5f))
+    | new Box().Width(Size.Fraction(0.5f))
+```
+
+The standard `Fraction` size type combined with explicit layout gaps provides clearer, more predictable sizing behavior.
+
+### Widget Event Handlers Renamed from Handle* to On*
+
+Event handler extension methods in external widget packages have been renamed from `Handle*` to `On*` to align with the naming convention established throughout the framework. This affects the Leaflet, ScreenshotFeedback, Tiptap, and Xterm widget packages.
+
+**Affected widgets and methods:**
+
+**Iframe widget:**
+- `HandleMessageReceived` → `OnMessageReceived`
+
+**Leaflet Map widget:**
+- `HandleMapClick` → `OnMapClick`
+- `HandleMarkerClick` → `OnMarkerClick`
+- `HandleMarkerDrag` → `OnMarkerDrag`
+- `HandleZoomChange` → `OnZoomChange`
+- `HandleCenterChange` → `OnCenterChange`
+- `HandleBoundsChange` → `OnBoundsChange`
+
+**ScreenshotFeedback widget:**
+- `HandleSave` → `OnSave`
+- `HandleCancel` → `OnCancel`
+
+**TiptapInput widget:**
+- `HandleFocus` → `OnFocus`
+- `HandleBlur` → `OnBlur`
+
+**Xterm Terminal widget:**
+- `HandleInput` → `OnInput`
+- `HandleResize` → `OnResize`
+- `HandleLinkClick` → `OnLinkClick`
+
+**Migration examples:**
+
+```csharp
+// Iframe - Before
+new Iframe()
+    .HandleMessageReceived(e => ProcessMessage(e.Value))
+
+// Iframe - After
+new Iframe()
+    .OnMessageReceived(e => ProcessMessage(e.Value))
+
+// Leaflet Map - Before
+new Map()
+    .HandleMapClick(latLng => Console.WriteLine($"Clicked: {latLng}"))
+    .HandleMarkerClick(markerId => Console.WriteLine($"Marker: {markerId}"))
+    .HandleZoomChange(zoom => Console.WriteLine($"Zoom: {zoom}"))
+
+// Leaflet Map - After
+new Map()
+    .OnMapClick(latLng => Console.WriteLine($"Clicked: {latLng}"))
+    .OnMarkerClick(markerId => Console.WriteLine($"Marker: {markerId}"))
+    .OnZoomChange(zoom => Console.WriteLine($"Zoom: {zoom}"))
+
+// ScreenshotFeedback - Before
+new ScreenshotFeedback()
+    .HandleSave(() => SaveScreenshot())
+    .HandleCancel(() => CloseDialog())
+
+// ScreenshotFeedback - After
+new ScreenshotFeedback()
+    .OnSave(() => SaveScreenshot())
+    .OnCancel(() => CloseDialog())
+
+// Xterm Terminal - Before
+new Terminal()
+    .HandleInput(pty.HandleInput)
+    .HandleResize(pty.HandleResize)
+    .HandleLinkClick(url => OpenLink(url))
+
+// Xterm Terminal - After
+new Terminal()
+    .OnInput(pty.HandleInput)
+    .OnResize(pty.HandleResize)
+    .OnLinkClick(url => OpenLink(url))
+
+// TiptapInput - Before
+new TiptapInput()
+    .HandleFocus(() => Console.WriteLine("Focused"))
+    .HandleBlur(() => Console.WriteLine("Blurred"))
+
+// TiptapInput - After
+new TiptapInput()
+    .OnFocus(() => Console.WriteLine("Focused"))
+    .OnBlur(() => Console.WriteLine("Blurred"))
+```
+
+This change makes event handling consistent across all Ivy widgets, making the API more predictable and easier to learn. Simply find and replace `Handle` with `On` in your widget event handler calls.
+
+### RadialBarChart Widget Removed
+
+The `RadialBarChart` widget has been removed from the framework. This circular bar chart widget displayed categorical data as concentric arcs radiating from a center point.
+
+**Removed APIs:**
+- `RadialBarChart` widget
+- `RadialBar` configuration class
+- `.ToRadialBarChart()` extension methods
+- All related view builders and styles
+
+**Migration:**
+
+If you were using `RadialBarChart` for progress tracking or gauge-like visualizations, consider these alternatives:
+
+**For progress tracking and KPIs, use `RadarChart`:**
+
+```csharp
+// RadarChart can display similar data in a different format
+var data = new[]
+{
+    new { Category = "Performance", Score = 88 },
+    new { Category = "Quality", Score = 92 },
+    new { Category = "Efficiency", Score = 75 }
+};
+
+new RadarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .Radar("Score")
+    .Tooltip()
+    .Legend()
+```
+
+**For proportional data, use `PieChart`:**
+
+```csharp
+// PieChart works well for showing parts of a whole
+var data = new[]
+{
+    new { Status = "Completed", Count = 85 },
+    new { Status = "In Progress", Count = 65 },
+    new { Status = "Pending", Count = 45 }
+};
+
+new PieChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .Pie("Count")
+    .Tooltip()
+    .Legend()
+```
+
+**For comparisons across categories, use `BarChart`:**
+
+```csharp
+// BarChart provides clear categorical comparisons
+var data = new[]
+{
+    new { Department = "Engineering", Capacity = 92 },
+    new { Department = "Marketing", Capacity = 78 },
+    new { Department = "Sales", Capacity = 85 }
+};
+
+new BarChart(data)
+    .ColorScheme(ColorScheme.Default)
+    .Bar("Capacity")
+    .XAxis("Department")
+    .Tooltip()
+    .Legend()
+```
+
+## Documentation Updates
+
+### Forms: Submit Strategy Documentation
+
+The Forms documentation now includes a comprehensive section on submit strategies, explaining when form state is committed back to your model. Three strategies are available:
+
+- **`OnSubmit` (default)**: State is committed only when the user clicks the submit button or presses Enter. Best for traditional forms where users explicitly save their changes.
+- **`OnBlur`**: State is committed when any field loses focus (tab away or click outside). The submit button is hidden. Ideal for forms where you want to commit after the user finishes editing each field.
+- **`OnChange`**: State is committed on every field value change (keystroke or selection). The submit button is hidden. Perfect for settings panels where changes should apply immediately.
+
+**Example with OnChange strategy:**
+
+```csharp
+public class SettingsExample : ViewBase
+{
+    public record SettingsModel(string Name, string Theme, int FontSize);
+
+    public override object? Build()
+    {
+        var settings = UseState(() => new SettingsModel("Default", "Light", 14));
+
+        return Layout.Vertical()
+            | settings.ToForm()
+                .SubmitStrategy(FormSubmitStrategy.OnChange)
+                .Label(m => m.Name, "Name")
+                .Label(m => m.Theme, "Theme")
+                .Label(m => m.FontSize, "Font Size")
+            | Text.Block($"Current: {settings.Value.Name}");
+    }
+}
+```
+
+The documentation now includes detailed examples for each strategy with clear guidance on when to use which approach.
+
+### CLI: Prefer `ivy ask` over `ivy question`
+
+The CLI documentation now promotes `ivy ask` as the primary command for querying the Ivy knowledge base. While both commands work (they're aliases), `ivy ask` is now the recommended and documented form.
+
+**Updated usage:**
+
+```terminal
+# Preferred command
+ivy ask "How do I implement a new Application Shell in Ivy?"
+
+# Also works (alias)
+ivy question "How do I implement a new Application Shell in Ivy?"
+```
+
+All documentation examples now use `ivy ask` for consistency and brevity. This command queries the local context dynamically using integrated Local RAG features specifically tailored to your semantic `ivyVersion`.
+
+### StackLayout Fluent API Examples
+
+The StackLayout documentation has been updated to use the modern fluent API pattern throughout all examples, making them more readable and consistent with current Ivy best practices. **Important: The traditional `new StackLayout([...])` constructor is now explicitly discouraged and should be avoided in favor of the Fluent API.**
+
+**Updated pattern:**
+
+```csharp
+// Old style - NOT RECOMMENDED
+new StackLayout([
+    Text.H2("Stack"),
+    Text.Label("Creation of a simple Stack Layout")
+])
+
+// New fluent style - RECOMMENDED
+Layout.Vertical()
+    | Text.H2("Stack")
+    | Text.Label("Creation of a simple Stack Layout")
+```
+
+The fluent API uses `Layout.Horizontal()` and `Layout.Vertical()` factory methods combined with fluent configuration methods like `.Gap()`, `.Padding()`, `.Align()`, and `.Margin()`. Children are added using the `|` operator, which provides a cleaner, more declarative syntax that's easier to read and maintain.
+
+**More examples updated across documentation:**
+
+```csharp
+// Markdown widget examples now use fluent API
+return Layout.Vertical()
+    | new Markdown(content)
+    | new Markdown(content).Center()
+    | new Markdown(content).Right()
+    | new Markdown(longContent).Justify();
+```
+
+All code examples in the Layout, StackLayout, and widget documentation have been updated to consistently use this pattern.
+
+### UseCallback Documentation Removed
+
+The framework documentation has been cleaned up to remove all references to `UseCallback`, which never existed as an actual implementation in Ivy Framework. This phantom hook was causing confusion and incorrect code generation.
+
+**What changed:**
+- All `UseCallback` references removed from documentation
+- Examples updated to use `UseMemo` for callback memoization instead
+- Cross-references and hook comparison tables corrected
+
+**How to memoize callbacks:**
+
+Use `UseMemo` to create stable callback references when needed:
+
+```csharp
+// Memoize a callback using UseMemo
+var handleClick = UseMemo(() => (Action)(() =>
+{
+    count.Set(count.Value + 1);
+}), count);
+
+// Memoize callbacks with parameters
+var navigateToUser = UseMemo(() => (Action<int>)((int userId) =>
+{
+    navigator.Navigate(typeof(UserProfileApp), new UserProfileArgs(userId));
+}), navigator);
+```
+
+The documentation now correctly shows that `UseMemo` handles both value memoization and callback memoization—there's no separate `UseCallback` hook in Ivy Framework.
+
+### AspectRatio Examples Enhanced
+
+The Box widget documentation and AspectRatio sample app now include comprehensive examples showing how to use the `.AspectRatio()` method to maintain proportional dimensions on any widget.
+
+**New examples demonstrate:**
+- Common aspect ratios (16:9 widescreen, 4:3 classic, 1:1 square)
+- AspectRatio on different widget types (Box, Card)
+- Scaling behavior at different widths
+
+```csharp
+public class AspectRatioExamplesView : ViewBase
+{
+    public override object? Build()
+    {
+        return Layout.Horizontal().Gap(4)
+            | new Box("16:9").Width(Size.Units(80)).AspectRatio(16f / 9f).Background(Colors.Primary)
+            | new Box("4:3").Width(Size.Units(80)).AspectRatio(4f / 3f).Background(Colors.Secondary)
+            | new Box("1:1").Width(Size.Units(40)).AspectRatio(1f).Background(Colors.Warning);
+    }
+}
+```
+
+Set a width and pass the ratio as a float (e.g., `16f / 9f` for widescreen, `1f` for square)—the height adjusts automatically. AspectRatio works on any widget since it's defined on `WidgetBase`.
+
+### AudioInput Sample Rate Configuration
+
+The AudioInput documentation now includes comprehensive guidance on controlling audio recording quality using the `.SampleRate()` method. The docs explain that when `SampleRate` is null, the browser uses its default (typically 48000 Hz), and you can specify common values like 8000, 11025, 16000, 22050, 24000, 32000, 44100, or 48000 Hz.
+
+**Example with 24 kHz for speech:**
+
+```csharp
+public class AudioFormatDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var audioFile = UseState<FileUpload<byte[]>?>();
+        var upload = UseUpload(
+            MemoryStreamUploadHandler.Create(audioFile),
+            defaultContentType: "audio/webm"
+        );
+
+        return new AudioInput(upload.Value, "Record WebM", "Recording WebM...")
+            .MimeType("audio/webm")
+            .SampleRate(24000);  // 24 kHz for speech recording
+    }
+}
+```
+
+The samples app now includes a dedicated example showing how different sample rates affect recording quality and file size, making it easier to choose the right rate for your use case (e.g., 16-24 kHz for speech, 44.1-48 kHz for high-fidelity audio).
+
+### DataTable Row Actions Best Practices
+
+The DataTable documentation has been significantly enhanced with clearer guidance on implementing row actions with type safety. The updated docs emphasize three critical requirements:
+
+1. **Always set a tag** - Each `MenuItem` must have a tag via `.Tag()` so the handler can identify which action was clicked
+2. **Use one handler with branching** - Use a single `OnRowAction()` handler and branch on the tag value so edit/delete run different logic
+3. **Convert tag to string** - Since `args.Tag` is `object?`, you must use `args.Tag?.ToString()` before comparing
+
+**Updated pattern with enum-based tags:**
+
+```csharp
+private enum RowAction { Edit, Delete, Archive }
+
+items.ToDataTable(idSelector: e => e.Id)
+    .RowActions(
+        MenuItem.Default(Icons.Pencil).Tag(RowAction.Edit),
+        MenuItem.Default(Icons.Trash2).Tag(RowAction.Delete),
+        MenuItem.Default(Icons.Archive).Tag(RowAction.Archive))
+    .OnRowAction(e =>
+    {
+        var args = e.Value;
+        if (!Enum.TryParse<RowAction>(args.Tag?.ToString(), ignoreCase: true, out var action))
+            return ValueTask.CompletedTask;
+
+        var rowId = ResolveId(args.Id);
+        if (rowId < 0) return ValueTask.CompletedTask;
+
+        switch (action)
+        {
+            case RowAction.Edit: EditItem(rowId); break;
+            case RowAction.Delete: DeleteItem(rowId); break;
+            case RowAction.Archive: ArchiveItem(rowId); break;
+        }
+        return ValueTask.CompletedTask;
+    })
+```
+
+The documentation now includes detailed examples with nested menus (using `.Children()` for dropdowns), proper error handling, and explains common pitfalls like comparing `args.Tag` directly to strings without conversion. All code samples have been updated to follow this enum-based pattern for compile-time safety and better IntelliSense support.
+
+### Using Enums for MenuItem Tags
+
+Documentation has been updated to demonstrate type-safe MenuItem tag handling using C# enums instead of strings. This pattern provides better compile-time safety, IntelliSense support, and eliminates magic string issues when working with menus.
+
+**Before (string-based tags):**
+
+```csharp
+MenuItem.Default("Save").Tag("save-action")
+MenuItem.Default("Export").Tag("export-action")
+
+new DropDownMenu(@evt => {
+    var value = @evt.Value?.ToString();
+    if (value == "save-action") {
+        // Handle save
+    }
+})
+```
+
+**After (enum-based tags):**
+
+```csharp
+private enum MenuAction { Save, Export, Import }
+
+MenuItem.Default("Save").Tag(MenuAction.Save)
+MenuItem.Default("Export").Tag(MenuAction.Export)
+
+new DropDownMenu(@evt => {
+    if (Enum.TryParse<MenuAction>(@evt.Value?.ToString(), ignoreCase: true, out var action)) {
+        switch (action) {
+            case MenuAction.Save: /* Handle save */ break;
+            case MenuAction.Export: /* Handle export */ break;
+        }
+    }
+})
+```
+
+This pattern applies to all widgets that use MenuItem tags including `SidebarMenu`, `DropDownMenu`, and `Tree` with row actions. Using enums makes refactoring safer and provides better IntelliSense support when handling menu selections.
+
+### When to Use UseDefaultApp vs UseChrome
+
+New FAQ documentation clarifies the choice between `UseDefaultApp` and `UseChrome` when configuring your Ivy application in Program.cs.
+
+**UseDefaultApp** is for single-app projects where you want a clean, focused experience without sidebar navigation:
+
+```csharp
+server.UseDefaultApp(typeof(MyApp));
+```
+
+**UseChrome** is for multi-app projects where users need sidebar navigation to switch between multiple apps:
+
+```csharp
+server.UseChrome(new ChromeSettings().DefaultApp<MyApp>().UseTabs(preventDuplicates: true));
+```
+
+**Recommendation**: For new projects with a single app, prefer `UseDefaultApp` for a cleaner user experience. If you later need to add more apps and require sidebar navigation, you can switch to `UseChrome`.
+
+### Chat Widget Examples Fixed
+
+The Chat widget documentation examples have been corrected to properly instantiate interactive forms with state management. The previous examples showed form inputs without the required state bindings, which would not work if copied.
+
+**What was fixed:**
+
+All interactive form examples in the Chat widget documentation now include proper state declarations and use the correct extension method pattern:
+
+```csharp
+public class InteractiveChatDemo : ViewBase
+{
+    public override object? Build()
+    {
+        // States are now properly declared
+        var formName = UseState("");
+        var formEmail = UseState("");
+        var messages = UseState(/*...*/);
+
+        return new Chat(messages)
+            .OnSubmit(@event => {
+                var response = @event.Value.ToLower() switch
+                {
+                    "form" => Layout.Vertical().Gap(1)
+                        | formName.ToTextInput().Placeholder("Enter your name")
+                        | formEmail.ToTextInput().Placeholder("Enter your email")
+                        | new Button("Submit").Variant(ButtonVariant.Primary),
+                    // ...
+                };
+            });
+    }
+}
+```
+
+This ensures the examples work correctly when copied and demonstrates the proper pattern for using input widgets with state management inside Chat responses.
+
+### Using Enums for SelectInput Options
+
+The Chat widget documentation now demonstrates using enums with SelectInput for better type safety and maintainability. Instead of hardcoded string arrays, you can use the `.ToOptions()` extension method to convert enum types directly into SelectInput options.
+
+**Before (string arrays):**
+
+```csharp
+var projType = UseState("Web");
+var projPriority = UseState("Low");
+
+projType.ToSelectInput(["Web", "Mobile", "Desktop"])
+projPriority.ToSelectInput(["Low", "Medium", "High"])
+```
+
+**After (enum-based):**
+
+```csharp
+private enum ProjectType
+{
+    Web,
+    Mobile,
+    Desktop
+}
+
+private enum ProjectPriority
+{
+    Low,
+    Medium,
+    High
+}
+
+var projType = UseState(ProjectType.Web);
+var projPriority = UseState(ProjectPriority.Low);
+
+projType.ToSelectInput(typeof(ProjectType).ToOptions())
+projPriority.ToSelectInput(typeof(ProjectPriority).ToOptions())
+```
+
+This pattern provides compile-time type safety, eliminates magic strings, and makes refactoring easier. The `.ToOptions()` extension method automatically converts enum values into the options format required by SelectInput.
+
+### SelectInput with UseEffect for Dependent State
+
+The SelectInput documentation now includes an improved example showing how to use `UseEffect` to synchronize dependent state. When one SelectInput depends on another (like cascading dropdowns), `UseEffect` provides a clean way to reset dependent values when the parent selection changes.
+
+**Updated pattern:**
+
+```csharp
+public class EventHandlingDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var selectedCategory = UseState("Programming");
+        var selectedSkill = UseState("");
+
+        var categoryOptions = CategoryOptions.Keys.ToOptions();
+        var skillOptions = CategoryOptions[selectedCategory.Value].ToOptions();
+
+        // Reset skill selection when category changes
+        UseEffect(() => {
+            selectedSkill.Set("");
+        }, selectedCategory);
+
+        return Layout.Vertical()
+            | Layout.Grid().Columns(2)
+                | selectedCategory.ToSelectInput(categoryOptions)
+                    .WithField()
+                    .Label("Category:")
+                | selectedSkill.ToSelectInput(skillOptions)
+                    .Placeholder("Select a skill...")
+                    .WithField()
+                    .Label("Skill:")
+            | (!string.IsNullOrEmpty(selectedSkill.Value)
+                ? Text.Block($"Selected: {selectedCategory.Value} → {selectedSkill.Value}")
+                : null);
+    }
+}
+```
+
+**Key improvements in the updated example:**
+
+1. **UseEffect for state synchronization** - Automatically clears the skill selection when the category changes, preventing invalid state combinations
+2. **Cleaner code** - Uses `.ToSelectInput()` extension method instead of the full `SelectInput` constructor with custom `onChange` handlers
+3. **Derived state** - Conditional rendering directly checks `selectedSkill.Value` instead of maintaining a separate `showInfo` state variable
+
+This pattern is recommended for any scenario where one input's value should be reset or updated based on changes to another input.
+
+### ColorInput Extension Method Pattern
+
+The ColorInput documentation has been updated to demonstrate the modern extension method pattern for creating input widgets. Instead of using constructors directly, ColorInput instances are now created using extension methods on state objects.
+
+**Creating ColorInput instances:**
+
+```csharp
+// Creating a ColorInput from a state
+var colorState = UseState("#ff0000");
+var colorInput = colorState.ToColorInput();
+
+// With placeholder using fluent API
+var colorInputWithPlaceholder = colorState.ToColorInput()
+    .Placeholder("Choose a color");
+
+// With all options
+var colorInputFull = colorState.ToColorInput()
+    .Placeholder("Select your favorite color")
+    .Disabled(false)
+    .Variant(ColorInputVariant.TextAndPicker);
+```
+
+**Event handling with UseEffect:**
+
+Instead of using `onChange` handlers, the documentation now demonstrates using `UseEffect` to respond to color changes:
+
+```csharp
+public class ColorChangedDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var colorState = UseState("#ff0000");
+        var colorName = UseState(colorState.Value);
+
+        // React to color changes using UseEffect
+        UseEffect(() => {
+            colorName.Set(colorState.Value);
+        }, colorState);
+
+        return Layout.Horizontal()
+            | colorState.ToColorInput().Variant(ColorInputVariant.Picker)
+            | new CodeBlock(colorName.Value).ShowCopyButton();
+    }
+}
+```
+
+This pattern aligns with the framework's preferred approach for state-driven input widgets and provides a cleaner, more maintainable way to handle color selection events.
+
+### Field with TextInput Fluent API Pattern
+
+The Field documentation has been updated to demonstrate the modern fluent API pattern for wrapping inputs in fields. Instead of passing the input as a constructor argument to Field, you now chain `.WithField()` after the input configuration.
+
+**Before (constructor-based):**
+
+```csharp
+return new Field(
+    new TextInput(name)
+        .Placeholder("Enter your name")
+)
+.Label("Name")
+.Description("Your full name as it appears on official documents")
+.Required();
+```
+
+**After (fluent API):**
+
+```csharp
+return name.ToTextInput()
+    .Placeholder("Enter your name")
+    .WithField()
+    .Label("Name")
+    .Description("Your full name as it appears on official documents")
+    .Required();
+```
+
+This pattern provides a more natural reading flow where you:
+1. Create the input from state using `.ToTextInput()`
+2. Configure the input with methods like `.Placeholder()`
+3. Wrap it in a Field using `.WithField()`
+4. Configure the Field with `.Label()`, `.Description()`, `.Required()`, etc.
+
+The fluent approach makes the code flow top-to-bottom and eliminates the need for nesting the input inside the Field constructor. This pattern works with all input types including TextInput, NumberInput, SelectInput, and others.
+
+### ReadOnlyInput Extension Method Pattern
+
+The ReadOnlyInput documentation has been updated to use the modern extension method pattern and demonstrate proper state management for calculated values. The examples now show the recommended approach for creating read-only inputs from state objects.
+
+**Basic usage with state:**
+
+```csharp
+public class ReadOnlyDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var value = UseState(123.45);
+        var readOnlyInput = value.ToReadOnlyInput();
+        return readOnlyInput;
+    }
+}
+```
+
+**Calculated values with UseEffect:**
+
+For read-only fields that display calculated values, the documentation now demonstrates using `UseEffect` to keep the calculated value in sync with its dependencies:
+
+```csharp
+public class ReadOnlyFormDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var price = UseState(100.0);
+        var quantity = UseState(5);
+        var total = UseState(price.Value * quantity.Value);
+
+        // Keep total synchronized with price and quantity
+        UseEffect(() => {
+            total.Set(price.Value * quantity.Value);
+        }, price, quantity);
+
+        return Layout.Vertical().Gap(2)
+            | price.ToNumberInput()
+                .WithField().Label("Price")
+            | quantity.ToNumberInput()
+                .WithField().Label("Quantity")
+            | total.ToReadOnlyInput()
+                .WithField().Label("Total");
+    }
+}
+```
+
+**Key improvements:**
+
+1. **Extension method pattern** - Use `.ToReadOnlyInput()` instead of `new ReadOnlyInput<T>(value)` for consistency with other input widgets
+2. **State-based values** - Even read-only calculated values should be stored in state using `UseState`
+3. **Reactive calculations** - Use `UseEffect` to automatically update calculated values when their dependencies change
+
+This pattern ensures that calculated values are properly tracked and updated throughout the component lifecycle, making them work correctly with Ivy's reactive rendering system.
+
+### Input Constructor Examples Modernized
+
+Documentation examples across Forms, List, and NumberInput have been updated to consistently use the modern extension method pattern instead of verbose constructors. This makes examples more readable and demonstrates best practices for creating input widgets.
+
+**Forms documentation now shows:**
+
+```csharp
+// Modern pattern
+selectedProduct.ToSelectInput(products.Value.ToOptions())
+    .Placeholder("Choose a product...")
+
+// Instead of the old verbose constructor:
+// new SelectInput<ProductModel?>(
+//     selectedProduct.Value,
+//     e => selectedProduct.Set(e.Value),
+//     products.Value.ToOptions()
+// ).Placeholder("Choose a product...")
+```
+
+**List widget examples updated:**
+
+```csharp
+// BoolInput with fluent variant configuration
+notifications.ToBoolInput().Variant(BoolInputVariant.Switch)
+
+// TextInput with state management
+UseState("").ToTextInput().Placeholder("Type to search...")
+```
+
+**NumberInput examples now use UseEffect:**
+
+```csharp
+// Reactive state updates replace inline onChange handlers
+var tapes = UseState(1.0);
+var cart = UseState("");
+
+UseEffect(() => {
+    cart.Set($"Added {tapes.Value} cm tape to your cart");
+}, tapes);
+
+return Layout.Vertical()
+    | tapes.ToNumberInput()
+        .Min(30.0)
+        .Max(500.0)
+```
+
+**Key benefits of the updated examples:**
+
+1. **Cleaner syntax** - Extension methods eliminate boilerplate constructor parameters
+2. **Better separation of concerns** - `UseEffect` handles reactive state updates instead of inline event handlers
+3. **Consistent patterns** - All input widgets follow the same `.ToInputType()` convention
+4. **More maintainable** - State dependencies are explicit in `UseEffect` rather than hidden in callbacks
+
+### AspectRatio Examples and Sample App
+
+The Box widget documentation now includes comprehensive AspectRatio examples showing how to maintain proportional dimensions on any widget. The AspectRatio sample app has also been enhanced with more practical examples.
+
+**Basic usage:**
+
+```csharp
+public class AspectRatioExamplesView : ViewBase
+{
+    public override object? Build()
+    {
+        return Layout.Horizontal().Gap(4)
+            | new Box("16:9").Width(Size.Units(80)).AspectRatio(16f / 9f).Background(Colors.Primary)
+            | new Box("4:3").Width(Size.Units(80)).AspectRatio(4f / 3f).Background(Colors.Secondary)
+            | new Box("1:1").Width(Size.Units(40)).AspectRatio(1f).Background(Colors.Warning);
+    }
+}
+```
+
+**How it works:** Set a width and an aspect ratio—the height adjusts automatically. Pass the ratio as a float: `16f / 9f` for widescreen, `1f` for square. The AspectRatio method is defined on `WidgetBase`, so it works on any widget including Box, Card, Image, and custom widgets.
+
+**Updated sample app features:**
+
+- Common ratios (16:9 widescreen, 4:3 classic, 1:1 square) with descriptive labels
+- Examples showing AspectRatio on different widget types (Box, Card)
+- Scaling demonstration showing the same 1:1 ratio at different widths (small, medium, large)
+
+This documentation update makes it easier to understand how AspectRatio maintains proportional dimensions and provides ready-to-use examples for common scenarios.
+
+### UseStream Hook Documentation Enhanced
+
+The `UseStream` hook documentation has been significantly improved with better structure, clearer examples, and comprehensive usage guidance. The enhanced docs make it easier to understand when and how to use streaming for real-time data updates.
+
+**Key improvements:**
+
+- **Clearer introduction** — The docs now start with a concise ingress explaining that UseStream creates server-to-client streams that push data in real time without triggering full view re-renders
+- **Better organized structure** — New sections include Overview, Basic Usage, How It Works, Buffering, When to Use, and See Also
+- **Improved code example** — The streaming demo is now more compact and follows current Ivy best practices with the fluent API pattern
+- **Comparison table** — A "When to Use" table helps developers decide between UseStream and alternatives like UseState, UseQuery, or UseSignal
+- **Cross-references** — Added links to related documentation including RichTextBlock streaming, Rules of Hooks, UseState, and UseSignal
+
+**Updated demo:**
+
+```csharp
+public class StreamingApp : ViewBase
+{
+    public override object? Build()
+    {
+        var stream = Context.UseStream<TextRun>();
+
+        return Layout.Vertical()
+            | Text.Rich()
+                .Bold("🤖 ")
+                .UseStream(stream)
+            | new Button("Generate").OnClick(async () =>
+            {
+                var words = new[] { "Hello", "world", "from", "the", "stream!" };
+                foreach (var word in words)
+                {
+                    await Task.Delay(200);
+                    stream.Write(new TextRun(word) { Word = true });
+                }
+            });
+    }
+}
+```
+
+The UseStream hook is primarily used with `RichTextBlock` for LLM text streaming, progress updates, and live logs. The improved documentation makes it clear when UseStream is the right choice versus other state management approaches.
+
+### List and ListItem Documentation Enhanced
+
+The List widget documentation now includes comprehensive details about `ListItem` customization options, making it easier to build rich, interactive lists. The documentation now covers all ListItem features with clear explanations:
+
+**ListItem features now documented:**
+
+- **Title & Subtitle** - Primary and secondary text labels for each item
+- **Icon** - Visual indicators using the Icons enum
+- **Badge** - Small status indicators or counters for notifications
+- **Tag** - Hidden object references (e.g., database entities) for identifying items in click handlers
+- **Disabled** - Disable interactions and apply muted visual styling
+- **Content** - Inject custom widgets into items (switches, inputs, complex layouts)
+
+**Example with disabled state and custom content:**
+
+```csharp
+public class RichListDemo : ViewBase
+{
+    public override object? Build()
+    {
+        var items = new[]
+        {
+            // Disabled item with age check
+            new ListItem("John Smith", onClick: HandleClick, tag: user, subtitle: "john@example.com")
+                .Badge(user.Age.ToString())
+                .Disabled(user.Age > 80),
+
+            // Rich item with custom content
+            new ListItem("Framework Updates", icon: Icons.Activity, subtitle: "Important notifications")
+                .Badge("New")
+                .Content(new Badge("Critical", BadgeVariant.Destructive)),
+
+            // Locked item
+            new ListItem("Settings", icon: Icons.Settings, subtitle: "Configure your profile")
+                .Disabled()
+                .Badge("Locked")
+        };
+
+        return new List(items);
+    }
+}
+```
+
+The documentation now includes complete API reference for both `List` and `ListItem`, and the sample app demonstrates practical examples including disabled states, custom content injection, and rich item composition. These examples make it clear how to build feature-rich lists for settings panels, notification centers, and menu systems.
+
+These documentation updates make it easier for developers to write clean, maintainable Ivy code by showing the preferred patterns throughout the framework documentation.
