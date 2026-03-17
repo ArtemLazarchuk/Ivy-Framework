@@ -140,6 +140,50 @@ calendar = calendar
 
 The Calendar widget follows the same pattern as Kanban, where `CalendarEvent` children define the data while the parent `Calendar` manages the display and interactions.
 
+### New XAML Renderer Widget
+
+**This is a new feature.** Ivy now includes a **XAML renderer** that turns Ivy XAML markup (XML) into live UI. You can define layouts, badges, buttons, cards, charts, and more in XML and have them rendered as normal widgets—ideal for dynamic UIs, generated content, or the Advanced → Xaml Builder sample.
+
+**Reference the package:**
+
+The renderer lives in the `Ivy.XamlBuilder` package. When using the framework from source, the sample app and XamlBuilder are already available; for package-based projects, add:
+
+```bash
+dotnet add package Ivy.XamlBuilder
+```
+
+**Basic usage:**
+
+```csharp
+using Ivy;
+
+var builder = new XamlBuilder();
+var widget = builder.Build(xamlString);
+
+// Use the resulting widget in your view
+return Layout.Vertical()
+    | Text.H2("Preview")
+    | widget;
+```
+
+**Example XAML:**
+
+```xml
+<StackLayout Orientation="Vertical">
+  <Badge Title="Hello" />
+  <Badge Title="World" Variant="Success" />
+</StackLayout>
+```
+
+**What the renderer does:**
+
+- Parses Ivy XAML (XML) and maps element names to widget types (e.g. `StackLayout`, `Badge`, `Button`, `Card`, `LineChart`).
+- Sets properties from attributes (e.g. `Title="Hello"`, `Variant="Success"`).
+- Handles nested layout and property elements (e.g. `LineChart.Lines`, `XAxis`, `Data` with CDATA for chart data).
+- Returns an `AbstractWidget` tree that the framework renders like any other view content.
+
+Use this for tooling, agents (e.g. EfQuery generating visualizations), or anywhere you need to build UI from markup instead of C#.
+
 ### AudioInput Sample Rate Control
 
 The `AudioInput` widget now supports configurable sample rates, giving you precise control over audio recording quality and file size. Set the target sample rate in Hz to optimize for your use case—lower rates for speech recognition efficiency, higher rates for music and high-fidelity recordings.
