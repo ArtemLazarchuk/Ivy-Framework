@@ -648,6 +648,7 @@ data.ToRadarChart(
 ```
 
 The extension method takes:
+
 - **Category expression**: Groups your data (e.g., department names)
 - **Measure expressions**: Array of aggregations for each radar axis
 - **Style** (optional): Choose from `Default`, `Circle`, or `Dashboard`
@@ -756,6 +757,7 @@ flows.ToSankeyChart(
 ```
 
 The extension method takes:
+
 - **Source expression**: The origin node for each flow
 - **Target expression**: The destination node for each flow
 - **Value expression**: The magnitude of the flow
@@ -887,6 +889,7 @@ trades.ToChordChart(
 ```
 
 The extension method takes:
+
 - **Source expression**: The origin node for each connection
 - **Target expression**: The destination node for each connection
 - **Value expression**: The magnitude of the flow/relationship
@@ -990,6 +993,7 @@ data.ToFunnelChart(
 ```
 
 The extension method takes:
+
 - **Stage expression**: Labels for each funnel stage (e.g., stage names)
 - **Value expression**: Aggregation for the value at each stage
 - **Style** (optional): Choose from `Default`, `Horizontal`, or `Dashboard`
@@ -1497,6 +1501,7 @@ ivy run
 ```
 
 **Default behavior:**
+
 - Local development: Binds to `localhost` by default
 - Docker containers: Automatically binds to `*` (all interfaces)
 - When `PORT` environment variable is set: Automatically binds to `*` (all interfaces)
@@ -1842,6 +1847,7 @@ new BarChart(data)
 ```
 
 **Funnel chart tooltips**: Improved tooltip formatting now shows values with proper number formatting and percentages:
+
 - Before: `{a} <br/>{b}: {c}`
 - After: `Revenue<br/><strong>125,000</strong> (45%)`
 
@@ -2083,6 +2089,7 @@ Fixed an issue where `FileInput` buttons didn't properly scale when using `Densi
 **What's fixed:**
 
 The FileInput upload button now correctly responds to all three density levels:
+
 - `Density.Small` → small button ('sm')
 - `Density.Medium` → default button size
 - `Density.Large` → large button ('lg')
@@ -2103,6 +2110,7 @@ The `FileInput` widget's default button text now intelligently displays "Select 
 **What's improved:**
 
 When you don't provide a custom placeholder, the button text automatically adjusts:
+
 - `Multiple(false)` → "Select file" (singular)
 - `Multiple(true)` → "Select files" (plural)
 
@@ -2134,6 +2142,7 @@ The `TitleCaseToReadable` helper method (used for formatting names in the sideba
 **What's fixed:**
 
 Hook names (any identifier starting with "Use" followed by an uppercase letter) are now returned unchanged without any space insertion, preserving their correct capitalization:
+
 - `UseState` → "UseState" (not "Use State")
 - `UseRefreshToken` → "UseRefreshToken" (not "UseRefresh Token")
 - `UseContext` → "UseContext" (not "Use Context")
@@ -2192,6 +2201,7 @@ var result = FileInputValidation.ValidateFileTypesWithMagicBytes(
 **Supported file types:**
 
 Magic byte validation is implemented for all common file types including:
+
 - **Images**: JPEG, PNG, GIF, BMP, WebP, TIFF, ICO
 - **Documents**: PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.pptx)
 - **Archives**: ZIP, RAR, 7z, gzip, tar
@@ -2208,6 +2218,7 @@ App ID validation has been strengthened to prevent potential security issues. Th
 **Blocked characters:**
 
 App IDs can no longer contain:
+
 - `:` (colon) - URL protocol separator
 - `?` (question mark) - URL query parameter separator
 - `#` (hash) - URL fragment identifier
@@ -2240,6 +2251,7 @@ The validation is performed automatically by `ValidationHelper.IsValidAppId()` t
 The `Visible` property and related methods have been removed from `WidgetBase`. This simplifies the widget API and encourages the use of conditional rendering, which is more idiomatic in Ivy.
 
 **Removed APIs:**
+
 - `widget.Visible` property
 - `.Visible(bool)` extension method
 - `.Show()` extension method
@@ -2285,6 +2297,7 @@ This pattern is more explicit about what gets rendered and aligns with modern UI
 All Input widget constructors have been made `internal`, requiring you to use the `.To[Type]Input()` extension methods instead of direct instantiation. This enforces a more consistent API pattern across the framework.
 
 **Affected widgets:**
+
 - `TextInput`, `CodeInput`, `ColorInput`
 - `NumberInput`, `BoolInput`, `SelectInput`
 - `DateTimeInput`, `DateRangeInput`
@@ -2322,6 +2335,7 @@ var select = "value".ToSelectInput(onSelectChange, options);
 ```
 
 **Extension methods work on:**
+
 - States: `state.ToTextInput()`
 - Values: `"text".ToTextInput(onChange)`
 - Primitives with state creation: Create a state first, then call the extension method
@@ -2333,6 +2347,7 @@ This change ensures all Input widgets are created consistently through extension
 The `FileInputVariant.Standard` variant has been renamed to `FileInputVariant.Default` to better align with naming conventions across the framework.
 
 **What changed:**
+
 - `FileInputVariant.Standard` → `FileInputVariant.Default`
 
 **Migration:**
@@ -2356,6 +2371,7 @@ The `Default` variant provides a compact button-based file input, as opposed to 
 The `Size.FractionGap()` method and `SizeType.FractionGap` enum value have been removed from the framework. This API was unused and provided redundant functionality—the same behavior can be achieved using standard `Size.Fraction()` combined with layout gaps.
 
 **Removed APIs:**
+
 - `Size.FractionGap(float)` method
 - `SizeType.FractionGap` enum value
 
@@ -2382,16 +2398,18 @@ Layout.Horizontal()
 
 The standard `Fraction` size type combined with explicit layout gaps provides clearer, more predictable sizing behavior.
 
-### Widget Event Handlers Renamed from Handle* to On*
+### Widget Event Handlers Renamed from Handle*to On*
 
 Event handler extension methods in external widget packages have been renamed from `Handle*` to `On*` to align with the naming convention established throughout the framework. This affects the Leaflet, ScreenshotFeedback, Tiptap, and Xterm widget packages.
 
 **Affected widgets and methods:**
 
 **Iframe widget:**
+
 - `HandleMessageReceived` → `OnMessageReceived`
 
 **Leaflet Map widget:**
+
 - `HandleMapClick` → `OnMapClick`
 - `HandleMarkerClick` → `OnMarkerClick`
 - `HandleMarkerDrag` → `OnMarkerDrag`
@@ -2400,14 +2418,17 @@ Event handler extension methods in external widget packages have been renamed fr
 - `HandleBoundsChange` → `OnBoundsChange`
 
 **ScreenshotFeedback widget:**
+
 - `HandleSave` → `OnSave`
 - `HandleCancel` → `OnCancel`
 
 **TiptapInput widget:**
+
 - `HandleFocus` → `OnFocus`
 - `HandleBlur` → `OnBlur`
 
 **Xterm Terminal widget:**
+
 - `HandleInput` → `OnInput`
 - `HandleResize` → `OnResize`
 - `HandleLinkClick` → `OnLinkClick`
@@ -2475,6 +2496,7 @@ This change makes event handling consistent across all Ivy widgets, making the A
 The `RadialBarChart` widget has been removed from the framework. This circular bar chart widget displayed categorical data as concentric arcs radiating from a center point.
 
 **Removed APIs:**
+
 - `RadialBarChart` widget
 - `RadialBar` configuration class
 - `.ToRadialBarChart()` extension methods
@@ -2539,45 +2561,9 @@ new BarChart(data)
     .Legend()
 ```
 
-## Documentation Updates
-
-### Forms: Submit Strategy Documentation
-
-The Forms documentation now includes a comprehensive section on submit strategies, explaining when form state is committed back to your model. Three strategies are available:
-
-- **`OnSubmit` (default)**: State is committed only when the user clicks the submit button or presses Enter. Best for traditional forms where users explicitly save their changes.
-- **`OnBlur`**: State is committed when any field loses focus (tab away or click outside). The submit button is hidden. Ideal for forms where you want to commit after the user finishes editing each field.
-- **`OnChange`**: State is committed on every field value change (keystroke or selection). The submit button is hidden. Perfect for settings panels where changes should apply immediately.
-
-**Example with OnChange strategy:**
-
-```csharp
-public class SettingsExample : ViewBase
-{
-    public record SettingsModel(string Name, string Theme, int FontSize);
-
-    public override object? Build()
-    {
-        var settings = UseState(() => new SettingsModel("Default", "Light", 14));
-
-        return Layout.Vertical()
-            | settings.ToForm()
-                .SubmitStrategy(FormSubmitStrategy.OnChange)
-                .Label(m => m.Name, "Name")
-                .Label(m => m.Theme, "Theme")
-                .Label(m => m.FontSize, "Font Size")
-            | Text.Block($"Current: {settings.Value.Name}");
-    }
-}
-```
-
-The documentation now includes detailed examples for each strategy with clear guidance on when to use which approach.
-
 ### CLI: Prefer `ivy ask` over `ivy question`
 
 The CLI documentation now promotes `ivy ask` as the primary command for querying the Ivy knowledge base. While both commands work (they're aliases), `ivy ask` is now the recommended and documented form.
-
-**Updated usage:**
 
 ```terminal
 # Preferred command
@@ -2588,639 +2574,3 @@ ivy question "How do I implement a new Application Shell in Ivy?"
 ```
 
 All documentation examples now use `ivy ask` for consistency and brevity. This command queries the local context dynamically using integrated Local RAG features specifically tailored to your semantic `ivyVersion`.
-
-### StackLayout Fluent API Examples
-
-The StackLayout documentation has been updated to use the modern fluent API pattern throughout all examples, making them more readable and consistent with current Ivy best practices. **Important: The traditional `new StackLayout([...])` constructor is now explicitly discouraged and should be avoided in favor of the Fluent API.**
-
-**Updated pattern:**
-
-```csharp
-// Old style - NOT RECOMMENDED
-new StackLayout([
-    Text.H2("Stack"),
-    Text.Label("Creation of a simple Stack Layout")
-])
-
-// New fluent style - RECOMMENDED
-Layout.Vertical()
-    | Text.H2("Stack")
-    | Text.Label("Creation of a simple Stack Layout")
-```
-
-The fluent API uses `Layout.Horizontal()` and `Layout.Vertical()` factory methods combined with fluent configuration methods like `.Gap()`, `.Padding()`, `.Align()`, and `.Margin()`. Children are added using the `|` operator, which provides a cleaner, more declarative syntax that's easier to read and maintain.
-
-**More examples updated across documentation:**
-
-```csharp
-// Markdown widget examples now use fluent API
-return Layout.Vertical()
-    | new Markdown(content)
-    | new Markdown(content).Center()
-    | new Markdown(content).Right()
-    | new Markdown(longContent).Justify();
-```
-
-All code examples in the Layout, StackLayout, and widget documentation have been updated to consistently use this pattern.
-
-### UseCallback Documentation Removed
-
-The framework documentation has been cleaned up to remove all references to `UseCallback`, which never existed as an actual implementation in Ivy Framework. This phantom hook was causing confusion and incorrect code generation.
-
-**What changed:**
-- All `UseCallback` references removed from documentation
-- Examples updated to use `UseMemo` for callback memoization instead
-- Cross-references and hook comparison tables corrected
-
-**How to memoize callbacks:**
-
-Use `UseMemo` to create stable callback references when needed:
-
-```csharp
-// Memoize a callback using UseMemo
-var handleClick = UseMemo(() => (Action)(() =>
-{
-    count.Set(count.Value + 1);
-}), count);
-
-// Memoize callbacks with parameters
-var navigateToUser = UseMemo(() => (Action<int>)((int userId) =>
-{
-    navigator.Navigate(typeof(UserProfileApp), new UserProfileArgs(userId));
-}), navigator);
-```
-
-The documentation now correctly shows that `UseMemo` handles both value memoization and callback memoization—there's no separate `UseCallback` hook in Ivy Framework.
-
-### AspectRatio Examples Enhanced
-
-The Box widget documentation and AspectRatio sample app now include comprehensive examples showing how to use the `.AspectRatio()` method to maintain proportional dimensions on any widget.
-
-**New examples demonstrate:**
-- Common aspect ratios (16:9 widescreen, 4:3 classic, 1:1 square)
-- AspectRatio on different widget types (Box, Card)
-- Scaling behavior at different widths
-
-```csharp
-public class AspectRatioExamplesView : ViewBase
-{
-    public override object? Build()
-    {
-        return Layout.Horizontal().Gap(4)
-            | new Box("16:9").Width(Size.Units(80)).AspectRatio(16f / 9f).Background(Colors.Primary)
-            | new Box("4:3").Width(Size.Units(80)).AspectRatio(4f / 3f).Background(Colors.Secondary)
-            | new Box("1:1").Width(Size.Units(40)).AspectRatio(1f).Background(Colors.Warning);
-    }
-}
-```
-
-Set a width and pass the ratio as a float (e.g., `16f / 9f` for widescreen, `1f` for square)—the height adjusts automatically. AspectRatio works on any widget since it's defined on `WidgetBase`.
-
-### AudioInput Sample Rate Configuration
-
-The AudioInput documentation now includes comprehensive guidance on controlling audio recording quality using the `.SampleRate()` method. The docs explain that when `SampleRate` is null, the browser uses its default (typically 48000 Hz), and you can specify common values like 8000, 11025, 16000, 22050, 24000, 32000, 44100, or 48000 Hz.
-
-**Example with 24 kHz for speech:**
-
-```csharp
-public class AudioFormatDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var audioFile = UseState<FileUpload<byte[]>?>();
-        var upload = UseUpload(
-            MemoryStreamUploadHandler.Create(audioFile),
-            defaultContentType: "audio/webm"
-        );
-
-        return new AudioInput(upload.Value, "Record WebM", "Recording WebM...")
-            .MimeType("audio/webm")
-            .SampleRate(24000);  // 24 kHz for speech recording
-    }
-}
-```
-
-The samples app now includes a dedicated example showing how different sample rates affect recording quality and file size, making it easier to choose the right rate for your use case (e.g., 16-24 kHz for speech, 44.1-48 kHz for high-fidelity audio).
-
-### DataTable Row Actions Best Practices
-
-The DataTable documentation has been significantly enhanced with clearer guidance on implementing row actions with type safety. The updated docs emphasize three critical requirements:
-
-1. **Always set a tag** - Each `MenuItem` must have a tag via `.Tag()` so the handler can identify which action was clicked
-2. **Use one handler with branching** - Use a single `OnRowAction()` handler and branch on the tag value so edit/delete run different logic
-3. **Convert tag to string** - Since `args.Tag` is `object?`, you must use `args.Tag?.ToString()` before comparing
-
-**Updated pattern with enum-based tags:**
-
-```csharp
-private enum RowAction { Edit, Delete, Archive }
-
-items.ToDataTable(idSelector: e => e.Id)
-    .RowActions(
-        MenuItem.Default(Icons.Pencil).Tag(RowAction.Edit),
-        MenuItem.Default(Icons.Trash2).Tag(RowAction.Delete),
-        MenuItem.Default(Icons.Archive).Tag(RowAction.Archive))
-    .OnRowAction(e =>
-    {
-        var args = e.Value;
-        if (!Enum.TryParse<RowAction>(args.Tag?.ToString(), ignoreCase: true, out var action))
-            return ValueTask.CompletedTask;
-
-        var rowId = ResolveId(args.Id);
-        if (rowId < 0) return ValueTask.CompletedTask;
-
-        switch (action)
-        {
-            case RowAction.Edit: EditItem(rowId); break;
-            case RowAction.Delete: DeleteItem(rowId); break;
-            case RowAction.Archive: ArchiveItem(rowId); break;
-        }
-        return ValueTask.CompletedTask;
-    })
-```
-
-The documentation now includes detailed examples with nested menus (using `.Children()` for dropdowns), proper error handling, and explains common pitfalls like comparing `args.Tag` directly to strings without conversion. All code samples have been updated to follow this enum-based pattern for compile-time safety and better IntelliSense support.
-
-### Using Enums for MenuItem Tags
-
-Documentation has been updated to demonstrate type-safe MenuItem tag handling using C# enums instead of strings. This pattern provides better compile-time safety, IntelliSense support, and eliminates magic string issues when working with menus.
-
-**Before (string-based tags):**
-
-```csharp
-MenuItem.Default("Save").Tag("save-action")
-MenuItem.Default("Export").Tag("export-action")
-
-new DropDownMenu(@evt => {
-    var value = @evt.Value?.ToString();
-    if (value == "save-action") {
-        // Handle save
-    }
-})
-```
-
-**After (enum-based tags):**
-
-```csharp
-private enum MenuAction { Save, Export, Import }
-
-MenuItem.Default("Save").Tag(MenuAction.Save)
-MenuItem.Default("Export").Tag(MenuAction.Export)
-
-new DropDownMenu(@evt => {
-    if (Enum.TryParse<MenuAction>(@evt.Value?.ToString(), ignoreCase: true, out var action)) {
-        switch (action) {
-            case MenuAction.Save: /* Handle save */ break;
-            case MenuAction.Export: /* Handle export */ break;
-        }
-    }
-})
-```
-
-This pattern applies to all widgets that use MenuItem tags including `SidebarMenu`, `DropDownMenu`, and `Tree` with row actions. Using enums makes refactoring safer and provides better IntelliSense support when handling menu selections.
-
-### When to Use UseDefaultApp vs UseChrome
-
-New FAQ documentation clarifies the choice between `UseDefaultApp` and `UseChrome` when configuring your Ivy application in Program.cs.
-
-**UseDefaultApp** is for single-app projects where you want a clean, focused experience without sidebar navigation:
-
-```csharp
-server.UseDefaultApp(typeof(MyApp));
-```
-
-**UseChrome** is for multi-app projects where users need sidebar navigation to switch between multiple apps:
-
-```csharp
-server.UseChrome(new ChromeSettings().DefaultApp<MyApp>().UseTabs(preventDuplicates: true));
-```
-
-**Recommendation**: For new projects with a single app, prefer `UseDefaultApp` for a cleaner user experience. If you later need to add more apps and require sidebar navigation, you can switch to `UseChrome`.
-
-### Chat Widget Examples Fixed
-
-The Chat widget documentation examples have been corrected to properly instantiate interactive forms with state management. The previous examples showed form inputs without the required state bindings, which would not work if copied.
-
-**What was fixed:**
-
-All interactive form examples in the Chat widget documentation now include proper state declarations and use the correct extension method pattern:
-
-```csharp
-public class InteractiveChatDemo : ViewBase
-{
-    public override object? Build()
-    {
-        // States are now properly declared
-        var formName = UseState("");
-        var formEmail = UseState("");
-        var messages = UseState(/*...*/);
-
-        return new Chat(messages)
-            .OnSubmit(@event => {
-                var response = @event.Value.ToLower() switch
-                {
-                    "form" => Layout.Vertical().Gap(1)
-                        | formName.ToTextInput().Placeholder("Enter your name")
-                        | formEmail.ToTextInput().Placeholder("Enter your email")
-                        | new Button("Submit").Variant(ButtonVariant.Primary),
-                    // ...
-                };
-            });
-    }
-}
-```
-
-This ensures the examples work correctly when copied and demonstrates the proper pattern for using input widgets with state management inside Chat responses.
-
-### Using Enums for SelectInput Options
-
-The Chat widget documentation now demonstrates using enums with SelectInput for better type safety and maintainability. Instead of hardcoded string arrays, you can use the `.ToOptions()` extension method to convert enum types directly into SelectInput options.
-
-**Before (string arrays):**
-
-```csharp
-var projType = UseState("Web");
-var projPriority = UseState("Low");
-
-projType.ToSelectInput(["Web", "Mobile", "Desktop"])
-projPriority.ToSelectInput(["Low", "Medium", "High"])
-```
-
-**After (enum-based):**
-
-```csharp
-private enum ProjectType
-{
-    Web,
-    Mobile,
-    Desktop
-}
-
-private enum ProjectPriority
-{
-    Low,
-    Medium,
-    High
-}
-
-var projType = UseState(ProjectType.Web);
-var projPriority = UseState(ProjectPriority.Low);
-
-projType.ToSelectInput(typeof(ProjectType).ToOptions())
-projPriority.ToSelectInput(typeof(ProjectPriority).ToOptions())
-```
-
-This pattern provides compile-time type safety, eliminates magic strings, and makes refactoring easier. The `.ToOptions()` extension method automatically converts enum values into the options format required by SelectInput.
-
-### SelectInput with UseEffect for Dependent State
-
-The SelectInput documentation now includes an improved example showing how to use `UseEffect` to synchronize dependent state. When one SelectInput depends on another (like cascading dropdowns), `UseEffect` provides a clean way to reset dependent values when the parent selection changes.
-
-**Updated pattern:**
-
-```csharp
-public class EventHandlingDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var selectedCategory = UseState("Programming");
-        var selectedSkill = UseState("");
-
-        var categoryOptions = CategoryOptions.Keys.ToOptions();
-        var skillOptions = CategoryOptions[selectedCategory.Value].ToOptions();
-
-        // Reset skill selection when category changes
-        UseEffect(() => {
-            selectedSkill.Set("");
-        }, selectedCategory);
-
-        return Layout.Vertical()
-            | Layout.Grid().Columns(2)
-                | selectedCategory.ToSelectInput(categoryOptions)
-                    .WithField()
-                    .Label("Category:")
-                | selectedSkill.ToSelectInput(skillOptions)
-                    .Placeholder("Select a skill...")
-                    .WithField()
-                    .Label("Skill:")
-            | (!string.IsNullOrEmpty(selectedSkill.Value)
-                ? Text.Block($"Selected: {selectedCategory.Value} → {selectedSkill.Value}")
-                : null);
-    }
-}
-```
-
-**Key improvements in the updated example:**
-
-1. **UseEffect for state synchronization** - Automatically clears the skill selection when the category changes, preventing invalid state combinations
-2. **Cleaner code** - Uses `.ToSelectInput()` extension method instead of the full `SelectInput` constructor with custom `onChange` handlers
-3. **Derived state** - Conditional rendering directly checks `selectedSkill.Value` instead of maintaining a separate `showInfo` state variable
-
-This pattern is recommended for any scenario where one input's value should be reset or updated based on changes to another input.
-
-### ColorInput Extension Method Pattern
-
-The ColorInput documentation has been updated to demonstrate the modern extension method pattern for creating input widgets. Instead of using constructors directly, ColorInput instances are now created using extension methods on state objects.
-
-**Creating ColorInput instances:**
-
-```csharp
-// Creating a ColorInput from a state
-var colorState = UseState("#ff0000");
-var colorInput = colorState.ToColorInput();
-
-// With placeholder using fluent API
-var colorInputWithPlaceholder = colorState.ToColorInput()
-    .Placeholder("Choose a color");
-
-// With all options
-var colorInputFull = colorState.ToColorInput()
-    .Placeholder("Select your favorite color")
-    .Disabled(false)
-    .Variant(ColorInputVariant.TextAndPicker);
-```
-
-**Event handling with UseEffect:**
-
-Instead of using `onChange` handlers, the documentation now demonstrates using `UseEffect` to respond to color changes:
-
-```csharp
-public class ColorChangedDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var colorState = UseState("#ff0000");
-        var colorName = UseState(colorState.Value);
-
-        // React to color changes using UseEffect
-        UseEffect(() => {
-            colorName.Set(colorState.Value);
-        }, colorState);
-
-        return Layout.Horizontal()
-            | colorState.ToColorInput().Variant(ColorInputVariant.Picker)
-            | new CodeBlock(colorName.Value).ShowCopyButton();
-    }
-}
-```
-
-This pattern aligns with the framework's preferred approach for state-driven input widgets and provides a cleaner, more maintainable way to handle color selection events.
-
-### Field with TextInput Fluent API Pattern
-
-The Field documentation has been updated to demonstrate the modern fluent API pattern for wrapping inputs in fields. Instead of passing the input as a constructor argument to Field, you now chain `.WithField()` after the input configuration.
-
-**Before (constructor-based):**
-
-```csharp
-return new Field(
-    new TextInput(name)
-        .Placeholder("Enter your name")
-)
-.Label("Name")
-.Description("Your full name as it appears on official documents")
-.Required();
-```
-
-**After (fluent API):**
-
-```csharp
-return name.ToTextInput()
-    .Placeholder("Enter your name")
-    .WithField()
-    .Label("Name")
-    .Description("Your full name as it appears on official documents")
-    .Required();
-```
-
-This pattern provides a more natural reading flow where you:
-1. Create the input from state using `.ToTextInput()`
-2. Configure the input with methods like `.Placeholder()`
-3. Wrap it in a Field using `.WithField()`
-4. Configure the Field with `.Label()`, `.Description()`, `.Required()`, etc.
-
-The fluent approach makes the code flow top-to-bottom and eliminates the need for nesting the input inside the Field constructor. This pattern works with all input types including TextInput, NumberInput, SelectInput, and others.
-
-### ReadOnlyInput Extension Method Pattern
-
-The ReadOnlyInput documentation has been updated to use the modern extension method pattern and demonstrate proper state management for calculated values. The examples now show the recommended approach for creating read-only inputs from state objects.
-
-**Basic usage with state:**
-
-```csharp
-public class ReadOnlyDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var value = UseState(123.45);
-        var readOnlyInput = value.ToReadOnlyInput();
-        return readOnlyInput;
-    }
-}
-```
-
-**Calculated values with UseEffect:**
-
-For read-only fields that display calculated values, the documentation now demonstrates using `UseEffect` to keep the calculated value in sync with its dependencies:
-
-```csharp
-public class ReadOnlyFormDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var price = UseState(100.0);
-        var quantity = UseState(5);
-        var total = UseState(price.Value * quantity.Value);
-
-        // Keep total synchronized with price and quantity
-        UseEffect(() => {
-            total.Set(price.Value * quantity.Value);
-        }, price, quantity);
-
-        return Layout.Vertical().Gap(2)
-            | price.ToNumberInput()
-                .WithField().Label("Price")
-            | quantity.ToNumberInput()
-                .WithField().Label("Quantity")
-            | total.ToReadOnlyInput()
-                .WithField().Label("Total");
-    }
-}
-```
-
-**Key improvements:**
-
-1. **Extension method pattern** - Use `.ToReadOnlyInput()` instead of `new ReadOnlyInput<T>(value)` for consistency with other input widgets
-2. **State-based values** - Even read-only calculated values should be stored in state using `UseState`
-3. **Reactive calculations** - Use `UseEffect` to automatically update calculated values when their dependencies change
-
-This pattern ensures that calculated values are properly tracked and updated throughout the component lifecycle, making them work correctly with Ivy's reactive rendering system.
-
-### Input Constructor Examples Modernized
-
-Documentation examples across Forms, List, and NumberInput have been updated to consistently use the modern extension method pattern instead of verbose constructors. This makes examples more readable and demonstrates best practices for creating input widgets.
-
-**Forms documentation now shows:**
-
-```csharp
-// Modern pattern
-selectedProduct.ToSelectInput(products.Value.ToOptions())
-    .Placeholder("Choose a product...")
-
-// Instead of the old verbose constructor:
-// new SelectInput<ProductModel?>(
-//     selectedProduct.Value,
-//     e => selectedProduct.Set(e.Value),
-//     products.Value.ToOptions()
-// ).Placeholder("Choose a product...")
-```
-
-**List widget examples updated:**
-
-```csharp
-// BoolInput with fluent variant configuration
-notifications.ToBoolInput().Variant(BoolInputVariant.Switch)
-
-// TextInput with state management
-UseState("").ToTextInput().Placeholder("Type to search...")
-```
-
-**NumberInput examples now use UseEffect:**
-
-```csharp
-// Reactive state updates replace inline onChange handlers
-var tapes = UseState(1.0);
-var cart = UseState("");
-
-UseEffect(() => {
-    cart.Set($"Added {tapes.Value} cm tape to your cart");
-}, tapes);
-
-return Layout.Vertical()
-    | tapes.ToNumberInput()
-        .Min(30.0)
-        .Max(500.0)
-```
-
-**Key benefits of the updated examples:**
-
-1. **Cleaner syntax** - Extension methods eliminate boilerplate constructor parameters
-2. **Better separation of concerns** - `UseEffect` handles reactive state updates instead of inline event handlers
-3. **Consistent patterns** - All input widgets follow the same `.ToInputType()` convention
-4. **More maintainable** - State dependencies are explicit in `UseEffect` rather than hidden in callbacks
-
-### AspectRatio Examples and Sample App
-
-The Box widget documentation now includes comprehensive AspectRatio examples showing how to maintain proportional dimensions on any widget. The AspectRatio sample app has also been enhanced with more practical examples.
-
-**Basic usage:**
-
-```csharp
-public class AspectRatioExamplesView : ViewBase
-{
-    public override object? Build()
-    {
-        return Layout.Horizontal().Gap(4)
-            | new Box("16:9").Width(Size.Units(80)).AspectRatio(16f / 9f).Background(Colors.Primary)
-            | new Box("4:3").Width(Size.Units(80)).AspectRatio(4f / 3f).Background(Colors.Secondary)
-            | new Box("1:1").Width(Size.Units(40)).AspectRatio(1f).Background(Colors.Warning);
-    }
-}
-```
-
-**How it works:** Set a width and an aspect ratio—the height adjusts automatically. Pass the ratio as a float: `16f / 9f` for widescreen, `1f` for square. The AspectRatio method is defined on `WidgetBase`, so it works on any widget including Box, Card, Image, and custom widgets.
-
-**Updated sample app features:**
-
-- Common ratios (16:9 widescreen, 4:3 classic, 1:1 square) with descriptive labels
-- Examples showing AspectRatio on different widget types (Box, Card)
-- Scaling demonstration showing the same 1:1 ratio at different widths (small, medium, large)
-
-This documentation update makes it easier to understand how AspectRatio maintains proportional dimensions and provides ready-to-use examples for common scenarios.
-
-### UseStream Hook Documentation Enhanced
-
-The `UseStream` hook documentation has been significantly improved with better structure, clearer examples, and comprehensive usage guidance. The enhanced docs make it easier to understand when and how to use streaming for real-time data updates.
-
-**Key improvements:**
-
-- **Clearer introduction** — The docs now start with a concise ingress explaining that UseStream creates server-to-client streams that push data in real time without triggering full view re-renders
-- **Better organized structure** — New sections include Overview, Basic Usage, How It Works, Buffering, When to Use, and See Also
-- **Improved code example** — The streaming demo is now more compact and follows current Ivy best practices with the fluent API pattern
-- **Comparison table** — A "When to Use" table helps developers decide between UseStream and alternatives like UseState, UseQuery, or UseSignal
-- **Cross-references** — Added links to related documentation including RichTextBlock streaming, Rules of Hooks, UseState, and UseSignal
-
-**Updated demo:**
-
-```csharp
-public class StreamingApp : ViewBase
-{
-    public override object? Build()
-    {
-        var stream = Context.UseStream<TextRun>();
-
-        return Layout.Vertical()
-            | Text.Rich()
-                .Bold("🤖 ")
-                .UseStream(stream)
-            | new Button("Generate").OnClick(async () =>
-            {
-                var words = new[] { "Hello", "world", "from", "the", "stream!" };
-                foreach (var word in words)
-                {
-                    await Task.Delay(200);
-                    stream.Write(new TextRun(word) { Word = true });
-                }
-            });
-    }
-}
-```
-
-The UseStream hook is primarily used with `RichTextBlock` for LLM text streaming, progress updates, and live logs. The improved documentation makes it clear when UseStream is the right choice versus other state management approaches.
-
-### List and ListItem Documentation Enhanced
-
-The List widget documentation now includes comprehensive details about `ListItem` customization options, making it easier to build rich, interactive lists. The documentation now covers all ListItem features with clear explanations:
-
-**ListItem features now documented:**
-
-- **Title & Subtitle** - Primary and secondary text labels for each item
-- **Icon** - Visual indicators using the Icons enum
-- **Badge** - Small status indicators or counters for notifications
-- **Tag** - Hidden object references (e.g., database entities) for identifying items in click handlers
-- **Disabled** - Disable interactions and apply muted visual styling
-- **Content** - Inject custom widgets into items (switches, inputs, complex layouts)
-
-**Example with disabled state and custom content:**
-
-```csharp
-public class RichListDemo : ViewBase
-{
-    public override object? Build()
-    {
-        var items = new[]
-        {
-            // Disabled item with age check
-            new ListItem("John Smith", onClick: HandleClick, tag: user, subtitle: "john@example.com")
-                .Badge(user.Age.ToString())
-                .Disabled(user.Age > 80),
-
-            // Rich item with custom content
-            new ListItem("Framework Updates", icon: Icons.Activity, subtitle: "Important notifications")
-                .Badge("New")
-                .Content(new Badge("Critical", BadgeVariant.Destructive)),
-
-            // Locked item
-            new ListItem("Settings", icon: Icons.Settings, subtitle: "Configure your profile")
-                .Disabled()
-                .Badge("Locked")
-        };
-
-        return new List(items);
-    }
-}
-```
-
-The documentation now includes complete API reference for both `List` and `ListItem`, and the sample app demonstrates practical examples including disabled states, custom content injection, and rich item composition. These examples make it clear how to build feature-rich lists for settings panels, notification centers, and menu systems.
-
-These documentation updates make it easier for developers to write clean, maintainable Ivy code by showing the preferred patterns throughout the framework documentation.
