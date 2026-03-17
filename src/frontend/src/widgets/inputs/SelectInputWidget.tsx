@@ -141,6 +141,17 @@ const ToggleOptionItem: React.FC<{
     );
   }
 
+  if (option.tooltip) {
+    return (
+      <TooltipProvider key={option.value}>
+        <Tooltip>
+          <TooltipTrigger asChild>{toggleItem}</TooltipTrigger>
+          <TooltipContent>{option.tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return toggleItem;
 };
 
@@ -449,34 +460,72 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
                       isOptionDisabled && 'opacity-50 cursor-not-allowed'
                     )}
                   />
-                  <Label
-                    htmlFor={`${id}-${option.value}`}
-                    className={cn(
-                      'cursor-pointer leading-none flex items-center gap-2',
-                      selectTextVariant[density],
-                      stringValue === option.value.toString() && invalid
-                        ? inputStyles.invalidInput
-                        : undefined,
-                      isOptionDisabled && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    {option.icon && (
-                      <Icon
-                        name={option.icon}
-                        className="h-4 w-4 flex-shrink-0"
-                      />
-                    )}
-                    {option.description ? (
-                      <div className="flex flex-col">
-                        <span>{option.label}</span>
-                        <span className="text-xs text-muted-foreground mt-0.5 font-normal">
-                          {option.description}
-                        </span>
-                      </div>
-                    ) : (
-                      option.label
-                    )}
-                  </Label>
+                  {option.tooltip ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label
+                            htmlFor={`${id}-${option.value}`}
+                            className={cn(
+                              'cursor-pointer leading-none flex items-center gap-2',
+                              selectTextVariant[density],
+                              stringValue === option.value.toString() && invalid
+                                ? inputStyles.invalidInput
+                                : undefined,
+                              isOptionDisabled && 'opacity-50 cursor-not-allowed'
+                            )}
+                          >
+                            {option.icon && (
+                              <Icon
+                                name={option.icon}
+                                className="h-4 w-4 flex-shrink-0"
+                              />
+                            )}
+                            {option.description ? (
+                              <div className="flex flex-col">
+                                <span>{option.label}</span>
+                                <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                                  {option.description}
+                                </span>
+                              </div>
+                            ) : (
+                              option.label
+                            )}
+                          </Label>
+                        </TooltipTrigger>
+                        <TooltipContent>{option.tooltip}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Label
+                      htmlFor={`${id}-${option.value}`}
+                      className={cn(
+                        'cursor-pointer leading-none flex items-center gap-2',
+                        selectTextVariant[density],
+                        stringValue === option.value.toString() && invalid
+                          ? inputStyles.invalidInput
+                          : undefined,
+                        isOptionDisabled && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      {option.icon && (
+                        <Icon
+                          name={option.icon}
+                          className="h-4 w-4 flex-shrink-0"
+                        />
+                      )}
+                      {option.description ? (
+                        <div className="flex flex-col">
+                          <span>{option.label}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                            {option.description}
+                          </span>
+                        </div>
+                      ) : (
+                        option.label
+                      )}
+                    </Label>
+                  )}
                 </div>
               );
             })}
@@ -738,32 +787,68 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
                         )}
                       />
                     )}
-                    <Label
-                      htmlFor={`${id}-${option.value}`}
-                      className={cn(
-                        'flex-1 cursor-pointer flex items-center gap-2',
-                        selectTextVariant[density],
-                        isInvalid ? inputStyles.invalidInput : undefined,
-                        isDisabled && !isSelected ? 'opacity-50' : undefined
-                      )}
-                    >
-                      {option.icon && (
-                        <Icon
-                          name={option.icon}
-                          className="h-4 w-4 flex-shrink-0"
-                        />
-                      )}
-                      {option.description ? (
-                        <div className="flex flex-col">
-                          <span>{option.label}</span>
-                          <span className="text-xs text-muted-foreground mt-0.5 font-normal">
-                            {option.description}
-                          </span>
-                        </div>
-                      ) : (
-                        option.label
-                      )}
-                    </Label>
+                    {option.tooltip ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label
+                              htmlFor={`${id}-${option.value}`}
+                              className={cn(
+                                'flex-1 cursor-pointer flex items-center gap-2',
+                                selectTextVariant[density],
+                                isInvalid ? inputStyles.invalidInput : undefined,
+                                isDisabled && !isSelected ? 'opacity-50' : undefined
+                              )}
+                            >
+                              {option.icon && (
+                                <Icon
+                                  name={option.icon}
+                                  className="h-4 w-4 flex-shrink-0"
+                                />
+                              )}
+                              {option.description ? (
+                                <div className="flex flex-col">
+                                  <span>{option.label}</span>
+                                  <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                                    {option.description}
+                                  </span>
+                                </div>
+                              ) : (
+                                option.label
+                              )}
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent>{option.tooltip}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Label
+                        htmlFor={`${id}-${option.value}`}
+                        className={cn(
+                          'flex-1 cursor-pointer flex items-center gap-2',
+                          selectTextVariant[density],
+                          isInvalid ? inputStyles.invalidInput : undefined,
+                          isDisabled && !isSelected ? 'opacity-50' : undefined
+                        )}
+                      >
+                        {option.icon && (
+                          <Icon
+                            name={option.icon}
+                            className="h-4 w-4 flex-shrink-0"
+                          />
+                        )}
+                        {option.description ? (
+                          <div className="flex flex-col">
+                            <span>{option.label}</span>
+                            <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                              {option.description}
+                            </span>
+                          </div>
+                        ) : (
+                          option.label
+                        )}
+                      </Label>
+                    )}
                   </div>
                 );
               })}
