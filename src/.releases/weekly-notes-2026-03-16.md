@@ -1178,31 +1178,6 @@ new StackLayout([
 ], gap: 4).Width(Size.Full())
 ```
 
-### AlignSelf for Individual Widget Alignment
-
-Override alignment for individual widgets within a layout using `.AlignSelf()`. This allows you to position specific elements independently of the parent layout's alignment.
-
-**Example with Layout:**
-
-```csharp
-Layout.Vertical().Gap(4)
-    | new Badge("Top").Primary().AlignSelf(Align.TopLeft)
-    | new Badge("Center").Primary().AlignSelf(Align.Center)
-    | new Badge("Bottom").Primary().AlignSelf(Align.BottomRight)
-```
-
-**Example with StackLayout:**
-
-```csharp
-new StackLayout([
-    new Badge("Top").Primary().AlignSelf(Align.TopLeft),
-    new Badge("Center").Primary().AlignSelf(Align.Center),
-    new Badge("Bottom").Primary().AlignSelf(Align.BottomRight)
-], gap: 4).Width(Size.Full())
-```
-
-In a horizontal layout, `AlignSelf` controls the vertical positioning of each child independently, giving you fine-grained control over individual widget placement.
-
 ### AspectRatio Support for All Widgets
 
 You can now maintain proportional dimensions on any widget using the new `AspectRatio` property. This is particularly useful for creating responsive layouts that preserve aspect ratios regardless of screen size.
@@ -1315,55 +1290,6 @@ genreCheckbox.ToSelectInput(genreOptions)
 ```
 
 Descriptions appear as smaller, muted text below the option label, providing a clean way to add explanatory text without cluttering the interface.
-
-### TestId Support for E2E Testing
-
-View builders now support setting TestId attributes for end-to-end testing! You can add test identifiers to `Layout`, `Text`, `Grid`, and `Tabs` views, making it easy to locate and interact with specific elements in your automated tests.
-
-**Add TestIds to your views:**
-
-```csharp
-public class MyApp : ViewBase
-{
-    public override object? Build()
-    {
-        return Layout.Vertical(
-            Text.H1("Welcome").TestId("page-heading"),
-            Text.P("This is the description").TestId("description"),
-            Layout.Horizontal(
-                new Button("Cancel"),
-                new Button("Submit")
-            ).TestId("action-buttons")
-        ).TestId("main-layout");
-    }
-}
-```
-
-**Works with all layout types:**
-
-```csharp
-// Text elements
-Text.H1("Title").TestId("heading")
-Text.P("Content").TestId("paragraph")
-Text.Block("Code").TestId("code-block")
-
-// Layout views
-Layout.Horizontal(children).TestId("horizontal-layout")
-Layout.Vertical(children).TestId("vertical-layout")
-
-// Grid layouts
-Layout.Grid(cells)
-    .Columns(2)
-    .TestId("grid-layout")
-
-// Tabs
-Layout.Tabs(
-    new Tab("Tab 1", content1),
-    new Tab("Tab 2", content2)
-).TestId("tabs-container")
-```
-
-TestIds are rendered as HTML `data-testid` attributes in the generated markup, following standard conventions for test automation frameworks like Playwright, Cypress, and Selenium. This makes it easy to write stable, maintainable E2E tests that aren't tied to CSS selectors or brittle DOM structure.
 
 ### Configurable Server Listening Interface
 
@@ -1540,10 +1466,6 @@ new Json(myData)
 
 The object is automatically serialized with proper indentation. You can still pass JSON strings directly for full control over formatting.
 
-**Improved visual hierarchy:**
-
-Tree indentation has been reduced from 4 to 3 spacing units, making deeply nested structures easier to scan while maintaining clear visual hierarchy.
-
 ### Small Icon Buttons
 
 Icon-only buttons now support the `.Small()` density option for a more compact appearance. When combined with icon buttons, this creates a smaller 6x6 unit button (compared to the default 9x9 units).
@@ -1566,7 +1488,7 @@ A new analyzer rule **IVYHOOK007** helps you write cleaner, more maintainable co
 **What triggers the warning:**
 
 ```csharp
-// ❌ Hooks called inline in a pipe chain
+// Hooks called inline in a pipe chain
 public override object? Build()
 {
     return new Card(
@@ -1576,13 +1498,13 @@ public override object? Build()
     );
 }
 
-// ❌ Hook inline in return statement
+// Hook inline in return statement
 public override object? Build()
 {
     return UseState(true).ToBoolInput();
 }
 
-// ❌ Hook inline as constructor argument
+// Hook inline as constructor argument
 public override object? Build()
 {
     return new Card(UseState(0).Value);
@@ -1594,7 +1516,7 @@ public override object? Build()
 Extract each hook call to a local variable at the top of your `Build()` method:
 
 ```csharp
-// ✅ Hooks assigned to variables first
+// Hooks assigned to variables first
 public override object? Build()
 {
     var emailNotifications = UseState(true);
@@ -1707,62 +1629,6 @@ var select = "value".ToSelectInput(onSelectChange, options);
 - Primitives with state creation: Create a state first, then call the extension method
 
 This change ensures all Input widgets are created consistently through extension methods, making the API more predictable and easier to learn.
-
-### FileInput: Standard Variant Renamed to Default
-
-The `FileInputVariant.Standard` variant has been renamed to `FileInputVariant.Default` to better align with naming conventions across the framework.
-
-**What changed:**
-
-- `FileInputVariant.Standard` → `FileInputVariant.Default`
-
-**Migration:**
-
-Update your code to use the new variant name:
-
-```csharp
-// Before (no longer works)
-fileState.ToFileInput(upload)
-    .Variant(FileInputVariant.Standard)
-
-// After
-fileState.ToFileInput(upload)
-    .Variant(FileInputVariant.Default)
-```
-
-The `Default` variant provides a compact button-based file input, as opposed to the `Drop` variant which provides a large drag-and-drop zone. Both variants continue to support drag-and-drop functionality.
-
-### Size.FractionGap API Removed
-
-The `Size.FractionGap()` method and `SizeType.FractionGap` enum value have been removed from the framework. This API was unused and provided redundant functionality—the same behavior can be achieved using standard `Size.Fraction()` combined with layout gaps.
-
-**Removed APIs:**
-
-- `Size.FractionGap(float)` method
-- `SizeType.FractionGap` enum value
-
-**Migration:**
-
-Replace any usage of `Size.FractionGap()` with `Size.Fraction()`. If gaps were previously handled by the FractionGap behavior, ensure your `Layout` has a `Gap` configured:
-
-```csharp
-// Before (no longer works)
-new Box().Width(Size.FractionGap(0.5f))
-
-// After
-new Box().Width(Size.Fraction(0.5f))
-```
-
-If you need gap handling in your layouts:
-
-```csharp
-Layout.Horizontal()
-    .Gap(Size.Rem(1))
-    | new Box().Width(Size.Fraction(0.5f))
-    | new Box().Width(Size.Fraction(0.5f))
-```
-
-The standard `Fraction` size type combined with explicit layout gaps provides clearer, more predictable sizing behavior.
 
 ### Widget Event Handlers Renamed from Handle*to On*
 
