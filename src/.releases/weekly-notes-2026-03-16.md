@@ -1728,101 +1728,6 @@ public override object? Build()
 
 This pattern makes your state management explicit and easier to track, especially when building complex UIs with multiple hooks.
 
-## Security Enhancements
-
-### Enhanced File Upload Security with Magic Byte Validation
-
-File uploads are now protected against MIME type spoofing attacks! Ivy now validates that uploaded file content actually matches the declared Content-Type by checking magic bytes (file signatures).
-
-**What this means for you:**
-
-Previously, malicious users could potentially upload dangerous files (like executables or scripts) disguised as images by simply changing the Content-Type header. Now Ivy verifies the actual file content to ensure it matches the claimed type.
-
-**Automatic protection:**
-
-If you're using `FileInput` widgets with file type restrictions, this security enhancement is automatically applied. No code changes needed:
-
-```csharp
-new FileInput()
-    .Accept("image/*")  // Now validates actual file content, not just headers
-    .OnChange(files => HandleUpload(files))
-```
-
-**Manual validation API:**
-
-For custom file handling scenarios, you can use the new validation methods directly:
-
-```csharp
-// Validate a single file with magic byte checking
-var result = FileInputValidation.ValidateFileTypeWithMagicBytes(
-    file,
-    "image/*",
-    fileStream
-);
-
-if (!result.IsValid)
-{
-    // File content doesn't match declared type - potential attack
-    Console.WriteLine(result.ErrorMessage);
-}
-```
-
-**Validate multiple files:**
-
-```csharp
-var result = FileInputValidation.ValidateFileTypesWithMagicBytes(
-    files,
-    ".pdf,.docx",
-    file => file.OpenReadStream()
-);
-```
-
-**Supported file types:**
-
-Magic byte validation is implemented for all common file types including:
-
-- **Images**: JPEG, PNG, GIF, BMP, WebP, TIFF, ICO
-- **Documents**: PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.pptx)
-- **Archives**: ZIP, RAR, 7z, gzip, tar
-- **Audio**: MP3, WAV, OGG
-- **Video**: MP4, WebM, AVI, QuickTime
-- **Text formats**: Plain text, CSV, JSON, XML, SVG (allowed without magic byte checks)
-
-This enhancement provides defense-in-depth security for your file upload features without any breaking changes.
-
-### Stricter App ID Validation
-
-App ID validation has been strengthened to prevent potential security issues. The framework now blocks additional characters that could be exploited in URL manipulation or path traversal attacks.
-
-**Blocked characters:**
-
-App IDs can no longer contain:
-
-- `:` (colon) - URL protocol separator
-- `?` (question mark) - URL query parameter separator
-- `#` (hash) - URL fragment identifier
-- `&` (ampersand) - URL query parameter separator
-- `%` (percent) - URL encoding character **[NEW]**
-- `\` (backslash) - Path separator on Windows **[NEW]**
-
-**What this means:**
-
-If your app creates or validates app IDs, ensure they don't contain these characters. App IDs should use alphanumeric characters, hyphens, and underscores for best compatibility:
-
-```csharp
-// Valid app IDs
-"my-app"
-"user_dashboard"
-"app123"
-
-// Invalid app IDs (will fail validation)
-"my%20app"      // Contains %
-"app\\name"     // Contains \
-"app:version"   // Contains :
-```
-
-The validation is performed automatically by `ValidationHelper.IsValidAppId()` to protect against injection attacks and ensure app IDs work correctly across all platforms and URL contexts.
-
 ## Breaking Changes
 
 ### Visible Property Removed from Widgets
@@ -2153,6 +2058,101 @@ ivy question "How do I implement a new Application Shell in Ivy?"
 ```
 
 All documentation examples now use `ivy ask` for consistency and brevity. This command queries the local context dynamically using integrated Local RAG features specifically tailored to your semantic `ivyVersion`.
+
+## Security Enhancements
+
+### Enhanced File Upload Security with Magic Byte Validation
+
+File uploads are now protected against MIME type spoofing attacks! Ivy now validates that uploaded file content actually matches the declared Content-Type by checking magic bytes (file signatures).
+
+**What this means for you:**
+
+Previously, malicious users could potentially upload dangerous files (like executables or scripts) disguised as images by simply changing the Content-Type header. Now Ivy verifies the actual file content to ensure it matches the claimed type.
+
+**Automatic protection:**
+
+If you're using `FileInput` widgets with file type restrictions, this security enhancement is automatically applied. No code changes needed:
+
+```csharp
+new FileInput()
+    .Accept("image/*")  // Now validates actual file content, not just headers
+    .OnChange(files => HandleUpload(files))
+```
+
+**Manual validation API:**
+
+For custom file handling scenarios, you can use the new validation methods directly:
+
+```csharp
+// Validate a single file with magic byte checking
+var result = FileInputValidation.ValidateFileTypeWithMagicBytes(
+    file,
+    "image/*",
+    fileStream
+);
+
+if (!result.IsValid)
+{
+    // File content doesn't match declared type - potential attack
+    Console.WriteLine(result.ErrorMessage);
+}
+```
+
+**Validate multiple files:**
+
+```csharp
+var result = FileInputValidation.ValidateFileTypesWithMagicBytes(
+    files,
+    ".pdf,.docx",
+    file => file.OpenReadStream()
+);
+```
+
+**Supported file types:**
+
+Magic byte validation is implemented for all common file types including:
+
+- **Images**: JPEG, PNG, GIF, BMP, WebP, TIFF, ICO
+- **Documents**: PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.pptx)
+- **Archives**: ZIP, RAR, 7z, gzip, tar
+- **Audio**: MP3, WAV, OGG
+- **Video**: MP4, WebM, AVI, QuickTime
+- **Text formats**: Plain text, CSV, JSON, XML, SVG (allowed without magic byte checks)
+
+This enhancement provides defense-in-depth security for your file upload features without any breaking changes.
+
+### Stricter App ID Validation
+
+App ID validation has been strengthened to prevent potential security issues. The framework now blocks additional characters that could be exploited in URL manipulation or path traversal attacks.
+
+**Blocked characters:**
+
+App IDs can no longer contain:
+
+- `:` (colon) - URL protocol separator
+- `?` (question mark) - URL query parameter separator
+- `#` (hash) - URL fragment identifier
+- `&` (ampersand) - URL query parameter separator
+- `%` (percent) - URL encoding character **[NEW]**
+- `\` (backslash) - Path separator on Windows **[NEW]**
+
+**What this means:**
+
+If your app creates or validates app IDs, ensure they don't contain these characters. App IDs should use alphanumeric characters, hyphens, and underscores for best compatibility:
+
+```csharp
+// Valid app IDs
+"my-app"
+"user_dashboard"
+"app123"
+
+// Invalid app IDs (will fail validation)
+"my%20app"      // Contains %
+"app\\name"     // Contains \
+"app:version"   // Contains :
+```
+
+The validation is performed automatically by `ValidationHelper.IsValidAppId()` to protect against injection attacks and ensure app IDs work correctly across all platforms and URL contexts.
 
 ## Bug Fixes
 
