@@ -184,6 +184,52 @@ return Layout.Vertical()
 
 Use this for tooling, agents (e.g. EfQuery generating visualizations), or anywhere you need to build UI from markup instead of C#.
 
+### Build Desktop Apps with Ivy
+
+You can now run Ivy applications as **native desktop apps** on Windows, macOS, and Linux using the **Ivy.Desktop** package. The same C# and Ivy UI you use for web run in a native window—no Electron, no Chromium; the stack uses [Photino](https://tryphotino.io) for a lightweight, cross-platform desktop host.
+
+**Install the package:**
+
+```bash
+dotnet add package Ivy.Desktop
+```
+
+**Run your app as a desktop window:**
+
+Create your Ivy app (views, widgets, hooks) as usual, then host it with a desktop window instead of a browser. Configure the window title, size, and optional icon; the window loads your app via the same Ivy server and UI pipeline.
+
+```csharp
+using Ivy;
+using Ivy.Desktop;
+
+public class MyDesktopApp : ViewBase
+{
+    public override object? Build()
+    {
+        return Layout.Vertical()
+            | Text.H2("Hello from Ivy.Desktop!")
+            | Text.P("Native desktop UI powered by C#.");
+    }
+}
+
+// Program.cs: run as desktop app
+var appDescriptor = new AppDescriptor()
+{
+    RootComponent = typeof(MyDesktopApp),
+    InitialTitle = "My Desktop App",
+};
+DesktopWindow.Run(appDescriptor, args);
+```
+
+**What you get:**
+
+- **Cross-platform:** One codebase for Windows, macOS, and Linux.
+- **Lightweight:** Photino-based window; no bundled Chromium/Electron.
+- **Same Ivy stack:** Your existing views, widgets, and C# logic run unchanged; only the host (desktop window instead of browser) changes.
+- **Window options:** Set title, size, resizable, top-most, DPI scaling, center on screen, dev tools, and custom window icon from an embedded resource.
+
+Use **Ivy.Desktop** when you want a native desktop experience (installable app, window on the taskbar) while keeping 100% C# and the same Ivy UI.
+
 ### AudioInput Sample Rate Control
 
 The `AudioInput` widget now supports configurable sample rates, giving you precise control over audio recording quality and file size. Set the target sample rate in Hz to optimize for your use case—lower rates for speech recognition efficiency, higher rates for music and high-fidelity recordings.
