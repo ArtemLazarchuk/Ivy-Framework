@@ -30,6 +30,12 @@ public class DateTimeInputApp : SampleBase
         var mondayFirstDate = UseState(DateOnly.FromDateTime(DateTime.Now));
         var mondayFirstRange = UseState<(DateOnly, DateOnly)>((DateOnly.FromDateTime(DateTime.Now.AddDays(-7)), DateOnly.FromDateTime(DateTime.Now)));
 
+        // Events states
+        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onBlurLabel = UseState("");
+        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onFocusLabel = UseState("");
+
         // Size examples
         var sizeExamplesGrid = Layout.Grid().Columns(7)
             | Text.Monospaced("Size")
@@ -518,11 +524,6 @@ public class DateTimeInputApp : SampleBase
                 .TestId("daterange-input-monday-first");
 
         // Events section
-        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var onBlurLabel = UseState("");
-        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var onFocusLabel = UseState("");
-
         var eventsGrid = Layout.Vertical()
             | Text.H3("OnBlur")
             | Layout.Horizontal(
