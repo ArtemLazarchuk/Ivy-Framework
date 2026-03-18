@@ -1,3 +1,4 @@
+using System.Linq;
 using Ivy.Core;
 using Microsoft.Extensions.Logging;
 
@@ -29,7 +30,7 @@ public class DataTableView(
         // Check if query returned empty results and render empty state if configured
         if (emptyViewFactory != null)
         {
-            var isEmpty = queryable.Count() == 0;
+            var isEmpty = queryable.Cast<object>().Count() == 0;
             if (isEmpty)
             {
                 return emptyViewFactory(Context);

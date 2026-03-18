@@ -24,14 +24,14 @@ public static class DataTableExtensions
 
     private static void SetDefaultEmptyState<TModel>(DataTableBuilder<TModel> builder)
     {
-        builder.Empty((context) => new Stack()
-            .Padding(Spacing.ExtraLarge)
-            .Gap(Spacing.Medium)
-            .AlignItems(Align.Center)
-            | new Text("No items found")
-                .Size(TextSize.Large)
+        builder.Empty((context) => Layout.Vertical()
+            .Padding(16)
+            .Gap(8)
+            .Align(Align.Center)
+            | Text.Block("No items found")
+                .Large()
                 .Color(Colors.Muted)
-            | new Text("This table is currently empty.")
+            | Text.Block("This table is currently empty.")
                 .Color(Colors.Muted)
         );
     }

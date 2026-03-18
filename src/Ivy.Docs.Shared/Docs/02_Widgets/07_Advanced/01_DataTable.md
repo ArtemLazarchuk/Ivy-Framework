@@ -243,34 +243,35 @@ public class RefreshTokenDemo : ViewBase
 Configure what users see when the table has no data. By default, DataTable shows a generic "No items found" message, but you can customize it to match your application's needs:
 
 ```csharp demo-tabs
-public class TenantListDemo : ViewBase
+public class EmptyDataTableDemo : ViewBase
 {
+    public record Person(int Id, string Name, string Email);
+
     public override object? Build()
     {
-        var db = UseService<TenantDb>();
-        var tenants = db.Tenants.AsQueryable();
+        // Empty list to demonstrate empty state
+        var emptyList = new List<Person>().AsQueryable();
 
-        return tenants.ToDataTable(e => e.Id)
-            .Header(t => t.Name, "Name")
-            .Header(t => t.Email, "Email")
-            .Empty((context) => new Stack()
-                .Padding(Spacing.ExtraLarge)
-                .Gap(Spacing.Medium)
-                .AlignItems(Align.Center)
-                | new Text("No tenants yet")
-                    .Size(TextSize.Large)
-                    .Weight(FontWeight.SemiBold)
-                | new Text("Create your first tenant to get started")
+        return emptyList.ToDataTable(e => e.Id)
+            .Header(e => e.Name, "Name")
+            .Header(e => e.Email, "Email")
+            .Empty((context) => Layout.Vertical()
+                .Padding(16)
+                .Gap(8)
+                .Align(Align.Center)
+                | Text.Block("No people found")
+                    .Large()
+                    .Bold()
+                | Text.Block("Add people to get started")
                     .Color(Colors.Muted)
-                | new Button("Create Tenant", variant: ButtonVariant.Primary)
-                    .ToTrigger((isOpen) => new TenantCreateDialog(isOpen))
+                | new Button("Add Person", variant: ButtonVariant.Primary)
             )
             .Height(Size.Units(100));
     }
 }
 ```
 
-The `Empty` method accepts a `FuncViewBuilder` (which is `Func<IViewContext, object?>`) — you can use the context parameter to access hooks like UseState or UseQuery if needed, or simply ignore it and return a widget tree. Use Stack, Card, or any other layout to design your empty state exactly how you want it.
+The `Empty` method accepts a `FuncViewBuilder` (which is `Func<IViewContext, object?>`) — you can use the context parameter to access hooks like UseState or UseQuery if needed, or simply ignore it and return a widget tree. Use Layout.Vertical(), Card, or any other layout to design your empty state exactly how you want it.
 
 <Callout Type="tip">
 Empty states are checked server-side by executing a Count() query. The empty state view is only rendered if the count is zero, preventing unnecessary "Loading..." states when data doesn't exist.
