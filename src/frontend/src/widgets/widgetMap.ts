@@ -111,6 +111,7 @@ export const widgetMap = {
   'Ivy.Icon': IconWidget,
   'Ivy.Box': BoxWidget,
   'Ivy.Embed': React.lazy(() => import('@/widgets/primitives/EmbedWidget')),
+  'Ivy.Script': React.lazy(() => import('@/widgets/primitives/ScriptWidget')),
   'Ivy.Callout': CalloutWidget,
   'Ivy.Kbd': KbdWidget,
   'Ivy.Empty': EmptyWidget,
@@ -198,6 +199,9 @@ export const widgetMap = {
   'Ivy.AudioInput': React.lazy(
     () => import('@/widgets/inputs/AudioInputWidget')
   ),
+  'Ivy.CameraInput': React.lazy(
+    () => import('@/widgets/cameraInput/CameraInputWidget')
+  ),
 
   // Forms
   'Ivy.Form': FormWidget,
@@ -239,8 +243,17 @@ export const widgetMap = {
   'Ivy.ScatterChart': React.lazy(
     () => import('@/widgets/charts/ScatterChartWidget')
   ),
-  'Ivy.RadialBarChart': React.lazy(
-    () => import('@/widgets/charts/RadialBarChartWidget')
+  'Ivy.RadarChart': React.lazy(
+    () => import('@/widgets/charts/RadarChartWidget')
+  ),
+  'Ivy.SankeyChart': React.lazy(
+    () => import('@/widgets/charts/SankeyChartWidget')
+  ),
+  'Ivy.ChordChart': React.lazy(
+    () => import('@/widgets/charts/ChordChartWidget')
+  ),
+  'Ivy.FunnelChart': React.lazy(
+    () => import('@/widgets/charts/FunnelChartWidget')
   ),
 
   // Effects
