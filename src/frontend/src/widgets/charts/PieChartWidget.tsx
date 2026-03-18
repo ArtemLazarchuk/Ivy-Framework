@@ -73,8 +73,12 @@ const PieChartWidget: React.FC<PieChartWidgetProps> = ({
   const newData = useMemo(() => {
     // Use dataKey/nameKey from first Pie config, with camelCase conversion for C# property names
     const pieConfig = pies?.[0];
-    const valueKey = pieConfig?.dataKey ? String(camelCase(pieConfig.dataKey)) : 'measure';
-    const labelKey = pieConfig?.nameKey ? String(camelCase(pieConfig.nameKey)) : 'dimension';
+    const valueKey = pieConfig?.dataKey
+      ? String(camelCase(pieConfig.dataKey))
+      : 'measure';
+    const labelKey = pieConfig?.nameKey
+      ? String(camelCase(pieConfig.nameKey))
+      : 'dimension';
 
     return data.map(d => ({
       value: d[valueKey],
