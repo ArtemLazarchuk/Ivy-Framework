@@ -142,6 +142,25 @@ input.OnBlur(() => Validate())
 
 All `Handle*` event handler extension methods were renamed to `On*` in v1.2.17 (Ivy-Framework#2459, #2510): `HandleClick` → `OnClick`, `HandleSubmit` → `OnSubmit`, `HandleChange` → `OnChange`, `HandleSelect` → `OnSelect`, `HandleClose` → `OnClose`, `HandleBlur` → `OnBlur`, `HandleRowAction` → `OnRowAction`, `HandleCardMove` → `OnCardMove`, `HandleExpand` → `OnExpand`, `HandleCollapse` → `OnCollapse`, `HandlePageChange` → `OnPageChange`, `HandleUpload` → `OnUpload`, `HandleDownload` → `OnDownload`. **Auto-fixed:** The refactoring service automatically rewrites all `Handle*` calls to `On*`.
 
+## AppAttribute.path — renamed to group
+
+**Hallucinated API:**
+```csharp
+[App(path: ["Tests"])]
+```
+
+**Error:** `'AppAttribute' does not contain a definition for 'path'`
+
+**Correct API:**
+```csharp
+[App(group: ["Tests"])]
+```
+
+The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it defines the organizational group/folder in the sidebar, not a URL path. This applies to both the `[App]` attribute and the `AppDescriptor` class (`Path` property → `Group` property).
+
+**Found In:**
+Ivy-Framework#2612
+
 **Found In:**
 (multiple sessions — agent uses old API names from training data)
 
@@ -1249,6 +1268,25 @@ query.ToTextInput().Width(Size.Grow())
 
 **Found In:**
 7a9aadf3
+## AppAttribute.path old parameter name
+
+**Hallucinated API:**
+```csharp
+[App("Dashboard", path: ["Dashboards"])]
+```
+
+**Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
+
+**Correct API:**
+```csharp
+[App("Dashboard", group: ["Dashboards"])]
+```
+
+The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
+
+**Found In:**
+875efaff-8eb2-4604-b3aa-a2b5799df88c
+
 
 ## Button.Visible() / Widget.Visible() — removed conditional rendering method
 

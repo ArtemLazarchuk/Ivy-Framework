@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Ivy.Samples.Shared.Apps.Widgets;
 
-[App(icon: Icons.FolderOpen, path: ["Widgets"], searchHints: ["file", "dialog", "picker", "open", "save", "folder", "browse", "native"])]
+[App(icon: Icons.FolderOpen, group: ["Widgets"], searchHints: ["file", "dialog", "picker", "open", "save", "folder", "browse", "native"])]
 public class FileDialogApp : SampleBase
 {
     protected override object? BuildSample()
