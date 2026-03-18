@@ -7,7 +7,7 @@ public class ManifestOptions
     public string StartUrl { get; set; } = "/";
     public string Display { get; set; } = "standalone";
     public string BackgroundColor { get; set; } = "#ffffff";
-    public string ThemeColor { get; set; } = "#000000";
+    public string ThemeColor { get; set; } = "#dc2626";
     public List<ManifestIcon>? Icons { get; set; }
 
     public object ToManifest() => new
