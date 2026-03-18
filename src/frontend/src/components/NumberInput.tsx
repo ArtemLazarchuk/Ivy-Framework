@@ -90,7 +90,8 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         if (num === null) return '';
         try {
           if (isFocused) return num.toString();
-          if (isBytesFormat) return formatBytes(num, format.maximumFractionDigits ?? 2);
+          if (isBytesFormat)
+            return formatBytes(num, format.maximumFractionDigits ?? 2);
           return formatter.format(num);
         } catch {
           return num.toString();

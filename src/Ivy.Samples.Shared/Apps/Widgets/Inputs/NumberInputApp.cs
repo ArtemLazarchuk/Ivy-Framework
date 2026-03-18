@@ -58,40 +58,7 @@ public class NumberInputApp : SampleBase
         var temperatureValue = UseState(22);
         var percentValue = UseState(0.75);
 
-        var shortState = UseState((short)0);
-        var shortNullState = UseState((short?)null);
-        var intVariantState = UseState(0);
-        var intNullVariantState = UseState((int?)null);
-        var longState = UseState((long)0);
-        var longNullState = UseState((long?)null);
-        var byteState = UseState((byte)0);
-        var byteNullState = UseState((byte?)null);
-        var floatState = UseState(0.0f);
-        var floatNullState = UseState((float?)null);
-        var doubleState = UseState(0.0);
-        var doubleNullState = UseState((double?)null);
-        var decimalState = UseState((decimal)0);
-        var decimalNullState = UseState((decimal?)null);
 
-        // Numeric type test states
-        var numericTypes = new (string TypeName, object NonNullableState, object NullableState)[]
-        {
-            // Signed integer types
-            ("short", shortState, shortNullState),
-            ("int", intVariantState, intNullVariantState),
-            ("long", longState, longNullState),
-
-            // Unsigned integer types
-            ("byte", byteState, byteNullState),
-
-            // Floating-point types
-            ("float", floatState, floatNullState),
-            ("double", doubleState, doubleNullState),
-            ("decimal", decimalState, decimalNullState)
-        };
-
-        var dataBinding = CreateNumericTypeTests(numericTypes);
-        var currencyExamples = CreateCurrencyExamples((IState<decimal>)usdValue, (IState<decimal>)eurValue, (IState<decimal>)gbpValue, (IState<decimal>)jpyValue, (IState<decimal?>)nullCurrencyValue);
 
 
 
