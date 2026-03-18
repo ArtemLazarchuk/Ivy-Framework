@@ -517,6 +517,24 @@ public class DateTimeInputApp : SampleBase
                 .FirstDayOfWeek(DayOfWeek.Monday)
                 .TestId("daterange-input-monday-first");
 
+        // Events section
+        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onBlurLabel = UseState("");
+        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onFocusLabel = UseState("");
+
+        var eventsGrid = Layout.Vertical()
+            | Text.H3("OnBlur")
+            | Layout.Horizontal(
+                onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Triggered")),
+                onBlurLabel
+            )
+            | Text.H3("OnFocus")
+            | Layout.Horizontal(
+                onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Triggered")),
+                onFocusLabel
+            );
+
         // Current values section
         var currentValues = Layout.Vertical()
             | Text.H3("Current Values")
@@ -547,6 +565,8 @@ public class DateTimeInputApp : SampleBase
             | placeholderExamplesGrid
             | Text.H2("FirstDayOfWeek")
             | firstDayOfWeekGrid
+            | Text.H2("Events")
+            | eventsGrid
             | currentValues;
     }
 }

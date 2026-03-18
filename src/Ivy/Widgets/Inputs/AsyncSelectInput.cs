@@ -65,6 +65,7 @@ public class AsyncSelectInputView<TValue> : ViewBase, IAnyAsyncSelectInputBase, 
     public EventHandler<Event<IInput<TValue>, TValue>>? OnChange { get; init; }
 
     [Event] public EventHandler<Event<IAnyInput>>? OnBlur { get; set; }
+    [Event] public EventHandler<Event<IAnyInput>>? OnFocus { get; set; }
 
     public bool Disabled { get; set; }
 
@@ -246,6 +247,39 @@ public static class AsyncSelectInputViewExtensions
     public static IAnyAsyncSelectInputBase OnBlur(this IAnyAsyncSelectInputBase widget, Action onBlur)
     {
         return widget.OnBlur(_ => { onBlur(); return ValueTask.CompletedTask; });
+    }
+
+    [OverloadResolutionPriority(1)]
+    public static IAnyAsyncSelectInputBase OnFocus(this IAnyAsyncSelectInputBase widget, Func<Event<IAnyInput>, ValueTask> onFocus)
+    {
+        if (widget is AsyncSelectInputView<object> typedWidget)
+        {
+            typedWidget.OnFocus = new(onFocus);
+            return typedWidget;
+        }
+
+        var widgetType = widget.GetType();
+        if (widgetType.IsGenericType && widgetType.GetGenericTypeDefinition() == typeof(AsyncSelectInputView<>))
+        {
+            var onFocusProperty = widgetType.GetProperty("OnFocus");
+            if (onFocusProperty != null)
+            {
+                onFocusProperty.SetValue(widget, new EventHandler<Event<IAnyInput>>(onFocus));
+                return widget;
+            }
+        }
+
+        throw new InvalidOperationException("Unable to set focus handler on async select input");
+    }
+
+    public static IAnyAsyncSelectInputBase OnFocus(this IAnyAsyncSelectInputBase widget, Action<Event<IAnyInput>> onFocus)
+    {
+        return widget.OnFocus(onFocus.ToValueTask());
+    }
+
+    public static IAnyAsyncSelectInputBase OnFocus(this IAnyAsyncSelectInputBase widget, Action onFocus)
+    {
+        return widget.OnFocus(_ => { onFocus(); return ValueTask.CompletedTask; });
     }
 
     public static IAnyAsyncSelectInputBase Ghost(this IAnyAsyncSelectInputBase widget, bool ghost = true)

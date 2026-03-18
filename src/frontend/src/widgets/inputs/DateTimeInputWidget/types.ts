@@ -22,6 +22,7 @@ export interface DateTimeInputWidgetProps {
   firstDayOfWeek?: WeekDay | string;
   density?: Densities;
   'data-testid'?: string;
+  events?: string[];
 }
 
 export interface BaseVariantProps {

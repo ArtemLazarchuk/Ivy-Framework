@@ -183,7 +183,7 @@ export const NumberRangeInputWidget = memo(
     noGrouping,
     targetType,
     density = Densities.Medium,
-    events,
+    events = [],
     'data-testid': dataTestId,
   }: NumberRangeInputWidgetProps) => {
     const eventHandler = useEventHandler() as EventHandler;
@@ -302,7 +302,19 @@ export const NumberRangeInputWidget = memo(
     const suffixContent = renderAffix(suffix);
 
     return (
-      <div className="relative w-full">
+      <div 
+        className="relative w-full"
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+          }
+        }}
+        onFocus={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+          }
+        }}
+      >
         {/* Prefix/Suffix labels */}
         {(prefixContent || suffixContent) && (
           <div className="flex items-center justify-between mb-2">

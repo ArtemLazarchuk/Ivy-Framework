@@ -78,6 +78,7 @@ interface NumberInputBaseProps {
   prefix?: Affix;
   suffix?: Affix;
   noGrouping?: boolean;
+  events?: string[];
 }
 
 interface NumberInputWidgetProps
@@ -344,6 +345,7 @@ export const NumberInputWidget = memo(
     formatStyle = 'Decimal',
     nullable = false,
     width,
+    events = [],
     ...props
   }: NumberInputWidgetProps) => {
     const eventHandler = useEventHandler() as EventHandler;

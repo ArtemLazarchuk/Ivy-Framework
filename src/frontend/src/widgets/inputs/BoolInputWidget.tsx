@@ -36,6 +36,7 @@ interface BoolInputWidgetProps {
   variant: VariantType;
   icon?: string;
   density?: Densities;
+  events?: string[];
   'data-testid'?: string;
 }
 
@@ -292,6 +293,7 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
   variant = 'Checkbox',
   icon,
   density = Densities.Medium,
+  events = [],
   'data-testid': dataTestId,
 }) => {
   const eventHandler = useEventHandler();
@@ -316,21 +318,34 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);
 
   return (
-    <VariantComponent
-      id={id}
-      label={label}
-      description={description}
-      value={localValue}
-      disabled={disabled}
-      loading={loading}
-      nullable={nullable}
-      icon={icon}
-      invalid={invalid}
-      density={density}
-      onCheckedChange={handleChange}
-      onPressedChange={handleChange}
-      data-testid={dataTestId}
-    />
+    <div
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+        }
+      }}
+    >
+      <VariantComponent
+        id={id}
+        label={label}
+        description={description}
+        value={localValue}
+        disabled={disabled}
+        loading={loading}
+        nullable={nullable}
+        icon={icon}
+        invalid={invalid}
+        density={density}
+        onCheckedChange={handleChange}
+        onPressedChange={handleChange}
+        data-testid={dataTestId}
+      />
+    </div>
   );
 };
 

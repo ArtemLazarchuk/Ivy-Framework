@@ -15,6 +15,8 @@ public class TextInputApp : SampleBase
         UseEffect(() => { onChangeLabel.Set(string.IsNullOrEmpty(onChangedState.Value) ? "" : "Changed"); }, onChangedState);
         var onBlurState = UseState("");
         var onBlurLabel = UseState("");
+        var onFocusState = UseState("");
+        var onFocusLabel = UseState("");
 
         var stringState = UseState("");
         var nullStringState = UseState<string?>();
@@ -100,6 +102,11 @@ public class TextInputApp : SampleBase
                | Layout.Horizontal(
                    onBlurState.ToTextInput().OnBlur(e => onBlurLabel.Set("Blur")),
                    onBlurLabel
+               )
+               | Text.H3("OnFocus")
+               | Layout.Horizontal(
+                   onFocusState.ToTextInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                   onFocusLabel
                )
                | Text.H3("OnSubmit (press Enter)")
                | new TextInputSubmitDemo()

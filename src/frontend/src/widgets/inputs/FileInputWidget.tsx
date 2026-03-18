@@ -414,6 +414,16 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events?.includes('OnBlur')) handleEvent('OnBlur', id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events?.includes('OnFocus')) handleEvent('OnFocus', id, []);
+        }
+      }}
     >
       {/* Invalid icon in top right corner - only for required field validation */}
       {invalid && variant === 'Drop' && (

@@ -13,6 +13,8 @@ public class NumberInputApp : SampleBase
         UseEffect(() => { onChangeLabel.Set("Changed"); }, onChangedState);
         var onBlurState = UseState(0);
         var onBlurLabel = UseState("");
+        var onFocusState = UseState(0);
+        var onFocusLabel = UseState("");
         var usdValue = UseState(1234.56m);
         var eurValue = UseState(987.65m);
         var gbpValue = UseState(567.89m);
@@ -211,6 +213,13 @@ public class NumberInputApp : SampleBase
                     .ToNumberInput()
                     .OnBlur(e => onBlurLabel.Set("Blur")),
                    onBlurLabel
+               )
+               | Text.H3("OnFocus")
+               | Layout.Horizontal(
+                   onFocusState
+                    .ToNumberInput()
+                    .OnFocus(e => onFocusLabel.Set("Focus")),
+                   onFocusLabel
                )
             ;
     }

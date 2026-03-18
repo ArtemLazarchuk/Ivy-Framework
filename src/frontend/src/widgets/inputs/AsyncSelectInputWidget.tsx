@@ -57,6 +57,7 @@ interface AsyncSelectInputWidgetProps {
   invalid?: string;
   density?: Densities;
   ghost?: boolean;
+  events?: string[];
 }
 
 export const AsyncSelectInputWidget: React.FC<AsyncSelectInputWidgetProps> = ({
@@ -68,6 +69,7 @@ export const AsyncSelectInputWidget: React.FC<AsyncSelectInputWidgetProps> = ({
   loading,
   density = Densities.Medium,
   ghost = false,
+  events = [],
 }) => {
   const eventHandler = useEventHandler();
 
@@ -152,6 +154,16 @@ export const AsyncSelectInputWidget: React.FC<AsyncSelectInputWidgetProps> = ({
         type="button"
         disabled={disabled}
         onClick={handleSelect}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+          }
+        }}
+        onFocus={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+          }
+        }}
         className={cn(
           asyncSelectContainerVariant({ density }),
           invalid && inputStyles.invalidInput,

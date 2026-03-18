@@ -40,4 +40,5 @@ export interface SelectInputWidgetProps {
   'data-testid'?: string;
   density?: Densities;
   width?: string;
+  events?: string[];
 }

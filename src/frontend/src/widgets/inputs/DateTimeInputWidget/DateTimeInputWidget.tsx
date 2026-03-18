@@ -57,6 +57,7 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
   format: formatProp,
   firstDayOfWeek: firstDayOfWeekRaw,
   density = Densities.Medium,
+  events = [],
   'data-testid': dataTestId,
 }) => {
   const eventHandler = useEventHandler();
@@ -105,19 +106,33 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);
 
   return (
-    <VariantComponent
-      id={id}
-      value={localValue}
-      placeholder={placeholder}
-      disabled={disabled}
-      nullable={nullable}
-      invalid={invalid}
-      format={formatProp}
-      firstDayOfWeek={firstDayOfWeek}
-      density={density}
-      onDateChange={handleDateChange}
-      onTimeChange={handleTimeChange}
-      data-testid={dataTestId}
-    />
+    <div
+      className="relative w-full"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+        }
+      }}
+    >
+      <VariantComponent
+        id={id}
+        value={localValue}
+        placeholder={placeholder}
+        disabled={disabled}
+        nullable={nullable}
+        invalid={invalid}
+        format={formatProp}
+        firstDayOfWeek={firstDayOfWeek}
+        density={density}
+        onDateChange={handleDateChange}
+        onTimeChange={handleTimeChange}
+        data-testid={dataTestId}
+      />
+    </div>
   );
 };

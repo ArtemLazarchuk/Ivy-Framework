@@ -105,7 +105,8 @@ export const CodeInputWidget: React.FC<CodeInputWidgetProps> = ({
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);
-  }, []);
+    if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+  }, [eventHandler, id, events]);
 
   const handleClear = useCallback(
     (e: React.MouseEvent) => {
