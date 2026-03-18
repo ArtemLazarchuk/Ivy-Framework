@@ -104,13 +104,39 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
     }
   }, [volume]);
 
+  // getVideoUrl handles null/undefined and validates the URL internally
+  const validatedVideoSrc = getVideoUrl(source);
+
+  const handleTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (video && endTime != null && video.currentTime >= endTime) {
+      video.pause();
+      video.currentTime = endTime;
+    }
+  }, [endTime]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (startTime != null) {
+      video.currentTime = startTime;
+    }
+  }, [startTime, validatedVideoSrc]);
+
+  // Apply playbackRate via defaultPlaybackRate (persists across media loads)
+  // and also set playbackRate directly for immediate effect
+  useEffect(() => {
+    if (videoRef.current && playbackRate != null) {
+      const rate = Math.max(0.25, playbackRate);
+      videoRef.current.defaultPlaybackRate = rate;
+      videoRef.current.playbackRate = rate;
+    }
+  }, [playbackRate]);
+
   const styles: React.CSSProperties = {
     ...getWidth(width),
     ...getHeight(height),
   };
-
-  // getVideoUrl handles null/undefined and validates the URL internally
-  const validatedVideoSrc = getVideoUrl(source);
   if (!validatedVideoSrc) {
     // Show error message for missing or invalid URLs
     return (
@@ -174,32 +200,6 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
       ></iframe>
     );
   }
-
-  const handleTimeUpdate = useCallback(() => {
-    const video = videoRef.current;
-    if (video && endTime != null && video.currentTime >= endTime) {
-      video.pause();
-      video.currentTime = endTime;
-    }
-  }, [endTime]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (startTime != null) {
-      video.currentTime = startTime;
-    }
-  }, [startTime, validatedVideoSrc]);
-
-  // Apply playbackRate via defaultPlaybackRate (persists across media loads)
-  // and also set playbackRate directly for immediate effect
-  useEffect(() => {
-    if (videoRef.current && playbackRate != null) {
-      const rate = Math.max(0.25, playbackRate);
-      videoRef.current.defaultPlaybackRate = rate;
-      videoRef.current.playbackRate = rate;
-    }
-  }, [playbackRate]);
 
   // Build src with Media Fragments URI for time range
   let videoSrc = validatedVideoSrc;
