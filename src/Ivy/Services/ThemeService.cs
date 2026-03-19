@@ -145,8 +145,8 @@ public class ThemeService : IThemeService
         AppendColorVariable(sb, "--yellow-foreground", IvyFrameworkChromaticTokens.Color.YellowForeground);
         AppendColorVariable(sb, "--lime", IvyFrameworkChromaticTokens.Color.Lime);
         AppendColorVariable(sb, "--lime-foreground", IvyFrameworkChromaticTokens.Color.LimeForeground);
-        AppendColorVariable(sb, "--green", IvyFrameworkChromaticTokens.Color.Green);
-        AppendColorVariable(sb, "--green-foreground", IvyFrameworkChromaticTokens.Color.GreenForeground);
+        AppendColorVariable(sb, "--green", IvyFrameworkChromaticTokens.Color.Red);
+        AppendColorVariable(sb, "--green-foreground", IvyFrameworkChromaticTokens.Color.RedForeground);
         AppendColorVariable(sb, "--emerald", IvyFrameworkChromaticTokens.Color.Emerald);
         AppendColorVariable(sb, "--emerald-foreground", IvyFrameworkChromaticTokens.Color.EmeraldForeground);
         AppendColorVariable(sb, "--teal", IvyFrameworkChromaticTokens.Color.Teal);
