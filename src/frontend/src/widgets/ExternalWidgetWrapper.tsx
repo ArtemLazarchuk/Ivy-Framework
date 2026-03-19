@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/lib/logger';
 import { useEventHandler } from '@/components/event-handler';
 import { useStreamSubscriber } from '@/components/stream-handler';
 
@@ -25,7 +26,7 @@ export const ExternalWidgetWrapper: React.FC<ExternalWidgetWrapperProps> = ({
   // Debug: log when external widget gets events prop
   React.useEffect(() => {
     if (props.events && (props.events as string[]).length > 0) {
-      console.log(
+      logger.debug(
         '[ExternalWidgetWrapper] Rendering with events:',
         props.events,
         'eventHandler present:',
