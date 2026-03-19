@@ -26,17 +26,23 @@ public class ColorInputApp : SampleBase
                | Text.H2("Data Binding")
                | new ColorInputDataBindings()
                | Text.H2("Events")
-               | (Layout.Vertical()
-                   | Text.H3("OnBlur")
-                   | Layout.Horizontal(
-                       onBlurState.ToColorInput().OnBlur(e => onBlurLabel.Set("Blur")),
-                       onBlurLabel
-                   )
-                   | Text.H3("OnFocus")
-                   | Layout.Horizontal(
-                       onFocusState.ToColorInput().OnFocus(e => onFocusLabel.Set("Focus")),
-                       onFocusLabel
-                   )
+               | (Layout.Vertical().Gap(4)
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The blur event fires when the color input loses focus.").Small()
+                           | onBlurState.ToColorInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                           | (onBlurLabel.Value != ""
+                               ? Callout.Success(onBlurLabel.Value)
+                               : Callout.Info("Interact then click away to see blur events"))
+                   ).Title("OnBlur Handler")
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The focus event fires when you click on or tab into the color input.").Small()
+                           | onFocusState.ToColorInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                           | (onFocusLabel.Value != ""
+                               ? Callout.Success(onFocusLabel.Value)
+                               : Callout.Info("Click or tab into the input to see focus events"))
+                   ).Title("OnFocus Handler")
                )
             ;
     }

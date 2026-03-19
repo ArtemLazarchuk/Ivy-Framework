@@ -43,6 +43,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   density,
   'data-testid': dataTestId,
   width,
+  events = [],
 }) => {
   const validOptions = options.filter(
     option => option.value != null && option.value.toString().trim() !== ''
@@ -124,6 +125,14 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   const hasValue = stringValue !== undefined;
   const styles = getWidth(width);
 
+  const handleBlur = () => {
+    if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+  };
+
+  const handleFocus = () => {
+    if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+  };
+
   const selectTriggerElement = (
     <SelectTrigger
       ref={triggerRef}
@@ -135,6 +144,8 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
           'border-transparent shadow-none bg-transparent hover:bg-accent hover:text-accent-foreground dark:border-transparent dark:bg-transparent dark:hover:bg-accent dark:hover:text-accent-foreground'
       )}
       density={density}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
     >
       <SelectValue placeholder={placeholder} />
     </SelectTrigger>

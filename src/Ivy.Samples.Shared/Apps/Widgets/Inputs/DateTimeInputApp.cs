@@ -524,17 +524,23 @@ public class DateTimeInputApp : SampleBase
                 .TestId("daterange-input-monday-first");
 
         // Events section
-        var eventsGrid = Layout.Vertical()
-            | Text.H3("OnBlur")
-            | Layout.Horizontal(
-                onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Triggered")),
-                onBlurLabel
-            )
-            | Text.H3("OnFocus")
-            | Layout.Horizontal(
-                onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Triggered")),
-                onFocusLabel
-            );
+        var eventsGrid = Layout.Vertical().Gap(4)
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The blur event fires when the date input loses focus.").Small()
+                    | onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                    | (onBlurLabel.Value != ""
+                        ? Callout.Success(onBlurLabel.Value)
+                        : Callout.Info("Interact then click away to see blur events"))
+            ).Title("OnBlur Handler")
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The focus event fires when you click on or tab into the date input.").Small()
+                    | onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                    | (onFocusLabel.Value != ""
+                        ? Callout.Success(onFocusLabel.Value)
+                        : Callout.Info("Click or tab into the input to see focus events"))
+            ).Title("OnFocus Handler");
 
         // Current values section
         var currentValues = Layout.Vertical()

@@ -124,31 +124,39 @@ export const FeedbackInputWidget: React.FC<FeedbackInputWidgetProps> = ({
     ]
   );
 
-  if (variant === 'Thumbs') {
-    return (
-      <ThumbsRating
-        disabled={disabled}
-        value={numericValue}
-        onRate={handleChange}
-        invalid={invalid}
-        density={density}
-      />
-    );
-  }
+  const handleBlur = useCallback(() => {
+    if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+  }, [eventHandler, id, events]);
 
-  if (variant === 'Emojis') {
-    return (
-      <EmojiRating
-        disabled={disabled}
-        value={numericValue}
-        onRate={handleChange}
-        invalid={invalid}
-        density={density}
-      />
-    );
-  }
+  const handleFocus = useCallback(() => {
+    if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+  }, [eventHandler, id, events]);
 
-  if (variant === 'Stars') {
+  const ratingComponent = useMemo(() => {
+    if (variant === 'Thumbs') {
+      return (
+        <ThumbsRating
+          disabled={disabled}
+          value={numericValue}
+          onRate={handleChange}
+          invalid={invalid}
+          density={density}
+        />
+      );
+    }
+
+    if (variant === 'Emojis') {
+      return (
+        <EmojiRating
+          disabled={disabled}
+          value={numericValue}
+          onRate={handleChange}
+          invalid={invalid}
+          density={density}
+        />
+      );
+    }
+
     return (
       <StarRating
         disabled={disabled}
@@ -158,5 +166,16 @@ export const FeedbackInputWidget: React.FC<FeedbackInputWidgetProps> = ({
         density={density}
       />
     );
-  }
+  }, [variant, disabled, numericValue, handleChange, invalid, density]);
+
+  return (
+    <div
+      onBlur={handleBlur}
+      onFocus={handleFocus}
+      tabIndex={disabled ? -1 : 0}
+      className="outline-none focus:outline-none focus:ring-1 focus:ring-ring rounded-md p-1"
+    >
+      {ratingComponent}
+    </div>
+  );
 };

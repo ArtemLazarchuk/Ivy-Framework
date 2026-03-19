@@ -319,12 +319,12 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
 
   return (
     <div
-      onBlur={(e) => {
+      onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
         }
       }}
-      onFocus={(e) => {
+      onFocus={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
         }

@@ -20,6 +20,7 @@ interface NumberInputProps {
   value: number | null;
   onChange?: (value: number | null) => void;
   onBlur?: (e: FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: FocusEvent<HTMLInputElement>) => void;
   format?: Intl.NumberFormatOptions;
   allowNegative?: boolean;
   className?: string;
@@ -45,6 +46,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       value = null,
       onChange,
       onBlur,
+      onFocus,
       format = {
         style: 'decimal',
         minimumFractionDigits: 0,
@@ -255,10 +257,11 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       [parseValue, onChange]
     );
 
-    const handleFocus = useCallback(() => {
+    const handleFocus = useCallback((e: FocusEvent<HTMLInputElement>) => {
       setIsFocused(true);
       setDisplayValue(value?.toString() ?? '');
-    }, [value]);
+      onFocus?.(e);
+    }, [value, onFocus]);
 
     const handleBlur = useCallback(
       (e: FocusEvent<HTMLInputElement>) => {

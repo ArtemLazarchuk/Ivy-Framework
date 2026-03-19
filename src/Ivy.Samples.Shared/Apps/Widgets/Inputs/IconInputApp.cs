@@ -99,18 +99,24 @@ public class IconInputDataBindings : ViewBase
                         | new Icon(nullableIconsState.Value!.Value)
                         | Text.Block(nullableIconsState.Value.ToString()!)
                      : Text.Monospaced("null"))
-               | Text.H2("Events")
-               | (Layout.Vertical()
-                   | Text.H3("OnBlur")
-                   | Layout.Horizontal(
-                       onBlurState.ToIconInput().OnBlur(e => onBlurLabel.Set("Blur")),
-                       onBlurLabel
-                   )
-                   | Text.H3("OnFocus")
-                   | Layout.Horizontal(
-                       onFocusState.ToIconInput().OnFocus(e => onFocusLabel.Set("Focus")),
-                       onFocusLabel
-                   )
-               );
+                | Text.H2("Events")
+                | (Layout.Vertical().Gap(4)
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The blur event fires when the input loses focus.").Small()
+                           | onBlurState.ToIconInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                           | (onBlurLabel.Value != ""
+                               ? Callout.Success(onBlurLabel.Value)
+                               : Callout.Info("Interact then click away to see blur events"))
+                   ).Title("OnBlur Handler")
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The focus event fires when you click on or tab into the input.").Small()
+                           | onFocusState.ToIconInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                           | (onFocusLabel.Value != ""
+                               ? Callout.Success(onFocusLabel.Value)
+                               : Callout.Info("Click or tab into the input to see focus events"))
+                   ).Title("OnFocus Handler")
+                );
     }
 }

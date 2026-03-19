@@ -95,17 +95,23 @@ public class AsyncSelectInputApp : SampleBase
             | Text.P("Testing the nullable mapping fix where the state is Guid? but delegates return Option<Guid>.")
             | guidStateNullableMismatch.ToAsyncSelectInput(QueryCategoriesNonNullable, LookupCategoryNonNullable, placeholder: "Select Category (Nullable Mismatch)")
             | Text.H2("Events")
-            | (Layout.Vertical()
-                | Text.H3("OnBlur")
-                | Layout.Horizontal(
-                    onBlurState.ToAsyncSelectInput(QueryCategories, LookupCategory, placeholder: "Select Category").OnBlur(e => onBlurLabel.Set("Blur")),
-                    onBlurLabel
-                )
-                | Text.H3("OnFocus")
-                | Layout.Horizontal(
-                    onFocusState.ToAsyncSelectInput(QueryCategories, LookupCategory, placeholder: "Select Category").OnFocus(e => onFocusLabel.Set("Focus")),
-                    onFocusLabel
-                )
+            | (Layout.Vertical().Gap(4)
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The blur event fires when the input loses focus.").Small()
+                        | onBlurState.ToAsyncSelectInput(QueryCategories, LookupCategory, placeholder: "Select Category").OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                        | (onBlurLabel.Value != ""
+                            ? Callout.Success(onBlurLabel.Value)
+                            : Callout.Info("Interact then click away to see blur events"))
+                ).Title("OnBlur Handler")
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The focus event fires when you click on or tab into the input.").Small()
+                        | onFocusState.ToAsyncSelectInput(QueryCategories, LookupCategory, placeholder: "Select Category").OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                        | (onFocusLabel.Value != ""
+                            ? Callout.Success(onFocusLabel.Value)
+                            : Callout.Info("Click or tab into the input to see focus events"))
+                ).Title("OnFocus Handler")
             );
     }
 }

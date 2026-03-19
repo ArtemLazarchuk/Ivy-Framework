@@ -255,12 +255,12 @@ const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
           'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
-      onBlur={(e) => {
+      onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
         }
       }}
-      onFocus={(e) => {
+      onFocus={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
         }
@@ -436,12 +436,12 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
           'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
-      onBlur={(e) => {
+      onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
         }
       }}
-      onFocus={(e) => {
+      onFocus={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
         }
@@ -670,12 +670,12 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
           'border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent'
       )}
       style={styles}
-      onBlur={(e) => {
+      onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
         }
       }}
-      onFocus={(e) => {
+      onFocus={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
         }
@@ -871,6 +871,7 @@ const SliderVariant: React.FC<
   density = Densities.Medium,
   'data-testid': dataTestId,
   width,
+  events = [],
 }) => {
   if (selectMany) {
     logger.warn(
@@ -937,6 +938,13 @@ const SliderVariant: React.FC<
       )}
       style={width ? getWidth(width) : undefined}
       data-testid={dataTestId}
+      onBlur={() => {
+        if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+      }}
+      onFocus={() => {
+        if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+      }}
+      tabIndex={disabled ? -1 : 0}
     >
       <div className="relative">
         <Slider

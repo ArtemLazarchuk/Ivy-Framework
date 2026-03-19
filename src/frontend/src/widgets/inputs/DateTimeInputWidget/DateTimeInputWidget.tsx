@@ -108,12 +108,12 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
   return (
     <div
       className="relative w-full"
-      onBlur={(e) => {
+      onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
         }
       }}
-      onFocus={(e) => {
+      onFocus={e => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
         }

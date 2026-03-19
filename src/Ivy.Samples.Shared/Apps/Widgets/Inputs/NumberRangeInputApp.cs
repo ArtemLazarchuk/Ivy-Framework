@@ -268,15 +268,23 @@ public class NumberRangeInputApp : SampleBase
                 },
                 Text.Monospaced(onChangeLabel.Value.Length > 0 ? onChangeLabel.Value : "Move the sliders")
             )
-            | Text.H3("OnBlur")
-            | Layout.Horizontal(
-                onBlurState.ToNumberRangeInput().Min(0).Max(100).OnBlur(e => onBlurLabel.Set("Blur")),
-                onBlurLabel
-            )
-            | Text.H3("OnFocus")
-            | Layout.Horizontal(
-                onFocusState.ToNumberRangeInput().Min(0).Max(100).OnFocus(e => onFocusLabel.Set("Focus")),
-                onFocusLabel
+            | (Layout.Vertical().Gap(4)
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The blur event fires when either of the range sliders loses focus.").Small()
+                        | onBlurState.ToNumberRangeInput().Min(0).Max(100).OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                        | (onBlurLabel.Value != ""
+                            ? Callout.Success(onBlurLabel.Value)
+                            : Callout.Info("Interact then click away to see blur events"))
+                ).Title("OnBlur Handler")
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The focus event fires when you click on or tab into either of the range sliders.").Small()
+                        | onFocusState.ToNumberRangeInput().Min(0).Max(100).OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                        | (onFocusLabel.Value != ""
+                            ? Callout.Success(onFocusLabel.Value)
+                            : Callout.Info("Click or tab into the input to see focus events"))
+                ).Title("OnFocus Handler")
             )
 
             // Current Values

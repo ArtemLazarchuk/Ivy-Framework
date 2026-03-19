@@ -98,15 +98,23 @@ public class TextInputApp : SampleBase
                    onChangedState.ToTextInput(),
                    onChangeLabel
                 )
-               | Text.H3("OnBlur")
-               | Layout.Horizontal(
-                   onBlurState.ToTextInput().OnBlur(e => onBlurLabel.Set("Blur")),
-                   onBlurLabel
-               )
-               | Text.H3("OnFocus")
-               | Layout.Horizontal(
-                   onFocusState.ToTextInput().OnFocus(e => onFocusLabel.Set("Focus")),
-                   onFocusLabel
+               | (Layout.Vertical().Gap(4)
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The blur event fires when the text input loses focus.").Small()
+                           | onBlurState.ToTextInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                           | (onBlurLabel.Value != ""
+                               ? Callout.Success(onBlurLabel.Value)
+                               : Callout.Info("Interact then click away to see blur events"))
+                   ).Title("OnBlur Handler")
+                   | new Card(
+                       Layout.Vertical().Gap(2)
+                           | Text.P("The focus event fires when you click on or tab into the text input.").Small()
+                           | onFocusState.ToTextInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                           | (onFocusLabel.Value != ""
+                               ? Callout.Success(onFocusLabel.Value)
+                               : Callout.Info("Click or tab into the input to see focus events"))
+                   ).Title("OnFocus Handler")
                )
                | Text.H3("OnSubmit (press Enter)")
                | new TextInputSubmitDemo()

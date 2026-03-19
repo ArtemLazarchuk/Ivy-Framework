@@ -220,6 +220,12 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
     }
   };
 
+  const handleFocus = () => {
+    if (events.includes('OnFocus')) {
+      eventHandler('OnFocus', id, []);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -229,6 +235,7 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
         invalid && inputStyles.invalidInput
       )}
       onBlur={handleBlur}
+      onFocus={handleFocus}
       tabIndex={0}
       data-testid={dataTestId}
     >

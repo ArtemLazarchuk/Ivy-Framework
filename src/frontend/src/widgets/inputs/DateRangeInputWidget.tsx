@@ -164,6 +164,18 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
     }
   };
 
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setIsOpen(newOpen);
+      if (!newOpen) {
+        if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+      } else {
+        if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+      }
+    },
+    [eventHandler, id, events]
+  );
+
   // Use custom format if provided, otherwise use default
   const displayFormat = formatProp || 'LLL dd, y';
 
@@ -172,7 +184,7 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
 
   return (
     <div className="relative w-full select-none">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -190,6 +202,14 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
                   ? 'pr-8'
                   : ''
             )}
+            onBlur={() => {
+              if (events.includes('OnBlur') && !isOpen)
+                eventHandler('OnBlur', id, []);
+            }}
+            onFocus={() => {
+              if (events.includes('OnFocus') && !isOpen)
+                eventHandler('OnFocus', id, []);
+            }}
           >
             <CalendarIcon
               className={cn(

@@ -29,6 +29,7 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
   density,
   'data-testid': dataTestId,
   width,
+  events = [],
 }) => {
   const validOptions = options.filter(
     option => option.value != null && option.value.toString().trim() !== ''
@@ -114,6 +115,14 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
     ]
   );
 
+  const handleBlur = () => {
+    if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+  };
+
+  const handleFocus = () => {
+    if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+  };
+
   const styles = getWidth(width);
 
   return (
@@ -130,6 +139,8 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
           hidePlaceholderWhenSelected
           density={density}
           ghost={ghost}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
           data-testid={dataTestId}
         />
         {(selectedMultiSelectOptions.length > 0 && !disabled) ||

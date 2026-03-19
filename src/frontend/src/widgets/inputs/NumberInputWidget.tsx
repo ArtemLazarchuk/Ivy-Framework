@@ -70,6 +70,8 @@ interface NumberInputBaseProps {
   invalid?: string;
   nullable?: boolean;
   onValueChange: (value: number | null) => void;
+  onBlur?: (e: React.FocusEvent) => void;
+  onFocus?: (e: React.FocusEvent) => void;
   currency?: string | undefined;
   'data-testid'?: string;
   // Add type information for validation
@@ -81,8 +83,10 @@ interface NumberInputBaseProps {
   events?: string[];
 }
 
-interface NumberInputWidgetProps
-  extends Omit<NumberInputBaseProps, 'onValueChange'> {
+interface NumberInputWidgetProps extends Omit<
+  NumberInputBaseProps,
+  'onValueChange'
+> {
   variant?: 'Number' | 'Slider';
   targetType?: string;
   width?: string;
@@ -145,6 +149,8 @@ const SliderVariant = memo(
     currency,
     density = Densities.Medium,
     onValueChange,
+    onBlur,
+    onFocus,
     'data-testid': dataTestId,
   }: NumberInputBaseProps) => {
     // Local state for live feedback (optional, fallback to prop value)
@@ -188,6 +194,8 @@ const SliderVariant = memo(
           density={density}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
+          onBlur={onBlur}
+          onFocus={onFocus}
           className={cn(invalid && inputStyles.invalidInput)}
           data-testid={dataTestId}
         />
@@ -230,6 +238,8 @@ const NumberVariant = memo(
     invalid,
     nullable = false,
     onValueChange,
+    onBlur,
+    onFocus,
     currency,
     density = Densities.Medium,
     prefix,
@@ -289,6 +299,8 @@ const NumberVariant = memo(
             disabled={disabled}
             density={density}
             onChange={handleNumberChange}
+            onBlur={onBlur}
+            onFocus={onFocus}
             className={cn(
               'border-0 shadow-none',
               invalid && inputStyles.invalidInput,
@@ -359,6 +371,14 @@ export const NumberInputWidget = memo(
       false
     );
 
+    const handleBlur = useCallback(() => {
+      if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+    }, [eventHandler, id, events]);
+
+    const handleFocus = useCallback(() => {
+      if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
+    }, [eventHandler, id, events]);
+
     const handleChange = useCallback(
       (newValue: number | null) => {
         // Apply bounds only if value is not null
@@ -397,6 +417,8 @@ export const NumberInputWidget = memo(
             {...props}
             value={localValue}
             onValueChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
           />
         ) : (
           <NumberVariant
@@ -406,6 +428,8 @@ export const NumberInputWidget = memo(
             value={localValue}
             nullable={nullable}
             onValueChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
           />
         )}
       </div>

@@ -47,17 +47,23 @@ public class SelectInputBasicExample : ViewBase
                     .WithField()
                     .Label("Notification types")
             | Text.H3("Events")
-            | (Layout.Vertical()
-                | Text.H4("OnBlur")
-                | Layout.Horizontal(
-                    onBlurState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnBlur(e => onBlurLabel.Set("Blur")),
-                    onBlurLabel
-                )
-                | Text.H4("OnFocus")
-                | Layout.Horizontal(
-                    onFocusState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnFocus(e => onFocusLabel.Set("Focus")),
-                    onFocusLabel
-                )
+            | (Layout.Vertical().Gap(4)
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The blur event fires when the input loses focus.").Small()
+                        | onBlurState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                        | (onBlurLabel.Value != ""
+                            ? Callout.Success(onBlurLabel.Value)
+                            : Callout.Info("Interact then click away to see blur events"))
+                ).Title("OnBlur Handler")
+                | new Card(
+                    Layout.Vertical().Gap(2)
+                        | Text.P("The focus event fires when you click on or tab into the input.").Small()
+                        | onFocusState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                        | (onFocusLabel.Value != ""
+                            ? Callout.Success(onFocusLabel.Value)
+                            : Callout.Info("Click or tab into the input to see focus events"))
+                ).Title("OnFocus Handler")
             );
     }
 }

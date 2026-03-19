@@ -236,6 +236,8 @@ interface CustomColorPickerProps {
   displayColor: string;
   actualColor: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const CustomColorPicker: React.FC<CustomColorPickerProps> = ({
@@ -245,6 +247,8 @@ const CustomColorPicker: React.FC<CustomColorPickerProps> = ({
   displayColor,
   actualColor,
   onChange,
+  onBlur,
+  onFocus,
 }) => (
   <div
     className={cn(
@@ -270,6 +274,8 @@ const CustomColorPicker: React.FC<CustomColorPickerProps> = ({
       type="color"
       value={displayColor}
       onChange={onChange}
+      onBlur={onBlur}
+      onFocus={onFocus}
       disabled={disabled}
       title="Choose color"
       className="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -426,7 +432,11 @@ export const ColorInputWidget: React.FC<ColorInputWidgetProps> = ({
   const handleInputBlur = () => {
     const convertedValue = convertToHex(inputValue);
     fireColorChange(convertedValue);
-    if (events.includes('OnBlur')) eventHandler('OnBlur', id, [convertedValue]);
+    if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
+  };
+
+  const handleInputFocus = () => {
+    if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
@@ -449,6 +459,7 @@ export const ColorInputWidget: React.FC<ColorInputWidgetProps> = ({
             value={inputValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
+            onFocus={handleInputFocus}
             onKeyDown={handleInputKeyDown}
             placeholder={
               placeholder ||
@@ -528,6 +539,8 @@ export const ColorInputWidget: React.FC<ColorInputWidgetProps> = ({
           displayColor={getDisplayColor()}
           actualColor={convertToHex(displayValue)}
           onChange={handleColorChange}
+          onBlur={handleInputBlur}
+          onFocus={handleInputFocus}
         />
         {allowAlpha && (
           <AlphaSlider
@@ -559,6 +572,7 @@ export const ColorInputWidget: React.FC<ColorInputWidgetProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
+          onFocus={handleInputFocus}
           onKeyDown={handleInputKeyDown}
           placeholder={
             placeholder ||
