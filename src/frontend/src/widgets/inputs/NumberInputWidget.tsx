@@ -85,10 +85,8 @@ interface NumberInputBaseProps {
   noGrouping?: boolean;
 }
 
-interface NumberInputWidgetProps extends Omit<
-  NumberInputBaseProps,
-  'onValueChange'
-> {
+interface NumberInputWidgetProps
+  extends Omit<NumberInputBaseProps, 'onValueChange'> {
   variant?: 'Number' | 'Slider';
   targetType?: string;
   width?: string;
