@@ -7,7 +7,7 @@ namespace Ivy;
 /// <summary>
 /// Allows users to record audio directly from the browser.
 /// </summary>
-public record AudioInput : WidgetBase<AudioInput>
+public record AudioInput : WidgetBase<AudioInput>, IAnyInput
 {
     public AudioInput(UploadContext upload, string? label = null, string? recordingLabel = null, string mimeType = "audio/webm", int? chunkInterval = null, int? sampleRate = null, bool disabled = false)
     {
@@ -36,8 +36,14 @@ public record AudioInput : WidgetBase<AudioInput>
 
     [Prop] public string? UploadUrl { get; set; }
     
+    [Prop] public string? Placeholder { get; set; }
+    [Prop] public string? Invalid { get; set; }
+    [Prop] public bool Nullable { get; set; }
+
     [Event] public EventHandler<Event<IAnyInput>>? OnBlur { get; set; }
     [Event] public EventHandler<Event<IAnyInput>>? OnFocus { get; set; }
+
+    public Type[] SupportedStateTypes() => [];
 }
 
 public static class AudioInputExtensions
