@@ -296,17 +296,17 @@ public class SelectInputTooltipsExample : ViewBase
             | Text.P("Hover over options to see contextual help tooltips. Tooltips work across all variants.")
             | Layout.Grid().Columns(3).Gap(6)
                 | (Layout.Vertical().Gap(2)
-                    | Text.InlineCode("Select Variant")
+                    | Text.Monospaced("Select Variant")
                     | cacheStrategy.ToSelectInput(cacheOptions)
                         .Placeholder("Select a cache strategy..."))
                 | (Layout.Vertical().Gap(2)
-                    | Text.InlineCode("List Variant")
+                    | Text.Monospaced("List Variant")
                     | cacheStrategyMulti.ToSelectInput(cacheOptions)
-                        .Variant(SelectInputVariants.List))
+                        .Variant(SelectInputVariant.List))
                 | (Layout.Vertical().Gap(2)
-                    | Text.InlineCode("Toggle Variant")
+                    | Text.Monospaced("Toggle Variant")
                     | cacheStrategyMulti.ToSelectInput(cacheOptions)
-                        .Variant(SelectInputVariants.Toggle));
+                        .Variant(SelectInputVariant.Toggle));
     }
 }
 

@@ -303,17 +303,17 @@ public class OptionTooltipsDemo : ViewBase
         };
 
         return Layout.Vertical()
-            | Text.InlineCode("Select Variant")
+            | Text.Monospaced("Select Variant")
             | strategy.ToSelectInput(options)
                 .Placeholder("Select a cache strategy...")
 
-            | Text.InlineCode("Toggle Variant")
+            | Text.Monospaced("Toggle Variant")
             | strategies.ToSelectInput(options)
-                .Variant(SelectInputVariants.Toggle)
+                .Variant(SelectInputVariant.Toggle)
 
-            | Text.InlineCode("List Variant")
+            | Text.Monospaced("List Variant")
             | strategies.ToSelectInput(options)
-                .Variant(SelectInputVariants.List);
+                .Variant(SelectInputVariant.List);
     }
 }
 ```
