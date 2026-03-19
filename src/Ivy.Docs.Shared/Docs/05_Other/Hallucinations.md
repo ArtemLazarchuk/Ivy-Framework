@@ -1056,33 +1056,25 @@ Also hallucinated: `Text.Code(expr).FontSize(24)` — CS1929: `.FontSize()` is a
 **Found In:**
 88e4f0bb-d358-4b34-9458-bc7eb98845e5, 625c285f-068b-4de3-b01c-ae2f7286a5d8
 
-## TextBuilder.AlignCenter() — non-existent method
+## TextBuilder.AlignCenter() / .Centered() — use .Center()
 
 **Hallucinated API:**
 ```csharp
 Text.H1("$0.00").AlignCenter()
-Text.H3("00:00:00").AlignCenter()
-Text.P("Rate: $50.00/hour").AlignCenter()
+Text.H1("title").Centered()
 ```
 
-**Error:** `CS1061: 'TextBuilder' does not contain a definition for 'AlignCenter'`
+**Error:** `CS1061: 'TextBuilder' does not contain a definition for 'AlignCenter'` / `'Centered'`
 
 **Correct API:**
 ```csharp
-// TextBuilder does not have alignment methods.
-// To center text, wrap it in a layout:
-Layout.Vertical().Align(Align.Center)
-    | Text.H1("$0.00")
-    | Text.H3("00:00:00")
-
-// Or use a Box:
-new Box(Text.H1("$0.00")).Align(Align.Center)
+Text.H1("$0.00").Center()
 ```
 
-`TextBuilder` has no `.AlignCenter()` method. Text alignment is controlled at the layout/container level, not on individual text elements.
+`TextBuilder` now has a `.Center()` method (returns `Align(TextAlignment.Center)`). The agent sometimes hallucinates `.AlignCenter()` or `.Centered()` instead. The correct method name is `.Center()`.
 
 **Found In:**
-713546f7-32fb-4961-ab78-def91e7c010d
+713546f7-32fb-4961-ab78-def91e7c010d, 5d2202d2-9d6b-4198-9922-c3763534aca5
 
 ## TextBuilder.Padding() — non-existent method
 
@@ -1353,6 +1345,28 @@ card | (child1 / child2);
 **Found In:**
 ab38eba1-af47-4003-905b-4fe9cea8ba4f
 
+## Card.Child — Non-existent property
+
+**Hallucinated API:**
+```csharp
+Card.Child(content)
+// or
+new Card { Child = content }
+```
+
+**Error:** `CS0117: 'Card' does not contain a definition for 'Child'`
+
+**Correct API:**
+```csharp
+// Use the constructor, pipe operator, or .Content():
+new Card(content)
+new Card() | content
+new Card().Content(content)
+```
+
+**Found In:**
+2e18b175-94ec-459c-94a5-8f28b81ecfdc
+
 ## Card.Background() — Box extension used on Card
 
 **Hallucinated API:**
@@ -1563,3 +1577,87 @@ Always wrap nested layouts in parentheses `(Layout.Horizontal() | child1 | child
 
 **Found In:**
 19ec33cf-3e86-409e-806c-babf0d20730f
+
+## Edge — Non-existent margin edge enum
+
+**Hallucinated API:**
+```csharp
+widget.Margin(Edge.Top, 4)
+```
+
+**Error:** `CS0103: The name 'Edge' does not exist in the current context`
+
+**Correct API:**
+```csharp
+// Use WithMargin with positional int parameters (left, top, right, bottom):
+widget.WithMargin(0, 4, 0, 0) // top margin of 4
+
+// Or use Layout.Margin:
+Layout.Vertical().Margin(0, 4, 0, 0) | widget
+```
+
+**Found In:**
+2e18b175-94ec-459c-94a5-8f28b81ecfdc
+
+## WithMargin(top: 4) — Named parameters don't exist
+
+**Hallucinated API:**
+```csharp
+widget.WithMargin(top: 4)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'left' of 'LayoutExtensions.WithMargin(object, int, int, int, int)'`
+
+**Correct API:**
+```csharp
+// WithMargin has three overloads, all with positional parameters:
+widget.WithMargin(4)            // uniform margin
+widget.WithMargin(4, 2)         // horizontal, vertical
+widget.WithMargin(0, 4, 0, 0)   // left, top, right, bottom
+```
+
+**Found In:**
+2e18b175-94ec-459c-94a5-8f28b81ecfdc
+
+## Margin(new Thickness(...)) — Margin takes int, not Thickness
+
+**Hallucinated API:**
+```csharp
+layout.Margin(new Thickness(0, 4, 0, 0))
+```
+
+**Error:** `CS1503: Argument 1: cannot convert from 'Ivy.Thickness' to 'int'`
+
+**Correct API:**
+```csharp
+// Margin() takes int parameters directly:
+layout.Margin(4)              // uniform
+layout.Margin(4, 2)           // horizontal, vertical
+layout.Margin(0, 4, 0, 0)    // left, top, right, bottom
+```
+
+**Found In:**
+2e18b175-94ec-459c-94a5-8f28b81ecfdc
+
+## Form() — internal constructor
+
+**Hallucinated API:**
+```csharp
+new Form()
+new Form(children)
+```
+
+**Error:** `CS1729: 'Form' does not contain a constructor that takes 0 arguments`
+
+**Correct API:**
+```csharp
+// Forms are created from state objects:
+state.ToForm()
+    .Field(f => f.Name)
+    .Field(f => f.Email)
+```
+
+`Form` constructors are `internal`. Forms must be created using the `.ToForm()` extension method on `IState<T>`. The agent should never use `new Form()` directly.
+
+**Found In:**
+5d2202d2-9d6b-4198-9922-c3763534aca5
