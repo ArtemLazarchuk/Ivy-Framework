@@ -6,6 +6,11 @@ public class ColorInputApp : SampleBase
 {
     protected override object? BuildSample()
     {
+        var onBlurState = UseState("#ff0000");
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState("#ff0000");
+        var onFocusLabel = UseState("");
+
         return Layout.Vertical()
                | Text.H2("Size Variants")
                | new ColorInputSizeVariants()
@@ -20,6 +25,19 @@ public class ColorInputApp : SampleBase
                | new ColorInputFormatTests()
                | Text.H2("Data Binding")
                | new ColorInputDataBindings()
+               | Text.H2("Events")
+               | (Layout.Vertical()
+                   | Text.H3("OnBlur")
+                   | Layout.Horizontal(
+                       onBlurState.ToColorInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                       onBlurLabel
+                   )
+                   | Text.H3("OnFocus")
+                   | Layout.Horizontal(
+                       onFocusState.ToColorInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                       onFocusLabel
+                   )
+               )
             ;
     }
 

@@ -78,6 +78,11 @@ public class IconInputDataBindings : ViewBase
         var iconsState = UseState<Icons>(Icons.ChevronDown);
         var nullableIconsState = UseState<Icons?>(Icons.User);
 
+        var onBlurState = UseState<Icons>(Icons.Check);
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState<Icons>(Icons.Check);
+        var onFocusLabel = UseState("");
+
         return Layout.Vertical()
                | Text.H2("Data Binding")
                | Text.P("Icon inputs support Icons (non-nullable) and Icons? (nullable) state types. The selected value updates in real time.")
@@ -93,6 +98,19 @@ public class IconInputDataBindings : ViewBase
                      ? Layout.Horizontal().Gap(2)
                         | new Icon(nullableIconsState.Value!.Value)
                         | Text.Block(nullableIconsState.Value.ToString()!)
-                     : Text.Monospaced("null"));
+                     : Text.Monospaced("null"))
+               | Text.H2("Events")
+               | (Layout.Vertical()
+                   | Text.H3("OnBlur")
+                   | Layout.Horizontal(
+                       onBlurState.ToIconInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                       onBlurLabel
+                   )
+                   | Text.H3("OnFocus")
+                   | Layout.Horizontal(
+                       onFocusState.ToIconInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                       onFocusLabel
+                   )
+               );
     }
 }

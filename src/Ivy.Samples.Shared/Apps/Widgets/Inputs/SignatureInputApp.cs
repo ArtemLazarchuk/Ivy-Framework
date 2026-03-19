@@ -13,6 +13,8 @@ public class SignatureInputApp : SampleBase
                | new SignatureInputStyling()
                | Text.H2("States")
                | new SignatureInputStates()
+               | Text.H2("Events")
+               | new SignatureInputEvents()
             ;
     }
 }
@@ -78,5 +80,28 @@ public class SignatureInputStates : ViewBase
                | invalidSig.ToSignatureInput()
                    .Invalid("Signature is required")
                    .Placeholder("Draw here");
+    }
+}
+
+public class SignatureInputEvents : ViewBase
+{
+    public override object Build()
+    {
+        var onBlurState = UseState<byte[]?>(() => null);
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState<byte[]?>(() => null);
+        var onFocusLabel = UseState("");
+
+        return Layout.Vertical()
+            | Text.H3("OnBlur")
+            | Layout.Horizontal(
+                onBlurState.ToSignatureInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                onBlurLabel
+            )
+            | Text.H3("OnFocus")
+            | Layout.Horizontal(
+                onFocusState.ToSignatureInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                onFocusLabel
+            );
     }
 }

@@ -10,6 +10,10 @@ public class BoolInputApp : SampleBase
         var trueState = UseState(true);
         var nullState = UseState((bool?)null);
         var loadingState = UseState(true);
+        var onBlurState = UseState(false);
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState(false);
+        var onFocusLabel = UseState("");
 
         var variants = Layout.Grid().Columns(7)
                        | null!
@@ -202,6 +206,19 @@ public class BoolInputApp : SampleBase
                | variants
                | Text.H2("Data Binding")
                | new BoolInputDataBinding()
+               | Text.H2("Events")
+               | (Layout.Vertical()
+                   | Text.H3("OnBlur")
+                   | Layout.Horizontal(
+                       onBlurState.ToBoolInput().Label("Label").OnBlur(e => onBlurLabel.Set("Blur")),
+                       onBlurLabel
+                   )
+                   | Text.H3("OnFocus")
+                   | Layout.Horizontal(
+                       onFocusState.ToBoolInput().Label("Label").OnFocus(e => onFocusLabel.Set("Focus")),
+                       onFocusLabel
+                   )
+               )
             ;
     }
 

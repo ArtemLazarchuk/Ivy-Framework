@@ -20,6 +20,11 @@ public class FeedbackInputApp : SampleBase
         var boolState = UseState(false);
         var nullableBoolState = UseState((bool?)null);
 
+        var onBlurState = UseState(0);
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState(0);
+        var onFocusLabel = UseState("");
+
         var variants = Layout.Grid().Columns(5)
                | Text.Monospaced("var")
                | Text.Monospaced("rating")
@@ -109,6 +114,19 @@ public class FeedbackInputApp : SampleBase
                | sizeExamples
                | Text.H2("Data Binding")
                | dataBinding
+               | Text.H2("Events")
+               | (Layout.Vertical()
+                   | Text.H3("OnBlur")
+                   | Layout.Horizontal(
+                       onBlurState.ToFeedbackInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                       onBlurLabel
+                   )
+                   | Text.H3("OnFocus")
+                   | Layout.Horizontal(
+                       onFocusState.ToFeedbackInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                       onFocusLabel
+                   )
+               )
 
             ;
 

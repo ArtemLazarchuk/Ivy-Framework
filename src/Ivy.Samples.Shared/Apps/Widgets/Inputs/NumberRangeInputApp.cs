@@ -26,6 +26,11 @@ public class NumberRangeInputApp : SampleBase
         var onChangeState = UseState<(int, int)>(() => (0, 100));
         var onChangeLabel = UseState("");
 
+        var onBlurState = UseState<(int, int)>(() => (0, 100));
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState<(int, int)>(() => (0, 100));
+        var onFocusLabel = UseState("");
+
         // Size examples
         var sizeRange = UseState<(int, int)>(() => (30, 70));
 
@@ -262,6 +267,16 @@ public class NumberRangeInputApp : SampleBase
                     Max = 100
                 },
                 Text.Monospaced(onChangeLabel.Value.Length > 0 ? onChangeLabel.Value : "Move the sliders")
+            )
+            | Text.H3("OnBlur")
+            | Layout.Horizontal(
+                onBlurState.ToNumberRangeInput().Min(0).Max(100).OnBlur(e => onBlurLabel.Set("Blur")),
+                onBlurLabel
+            )
+            | Text.H3("OnFocus")
+            | Layout.Horizontal(
+                onFocusState.ToNumberRangeInput().Min(0).Max(100).OnFocus(e => onFocusLabel.Set("Focus")),
+                onFocusLabel
             )
 
             // Current Values

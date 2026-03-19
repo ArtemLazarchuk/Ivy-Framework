@@ -31,6 +31,11 @@ public class SelectInputBasicExample : ViewBase
         var defaultBehavior = UseState("Allowed");
         var notificationTypes = UseState<string[]>([]);
 
+        var onBlurState = UseState("Allowed");
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState("Allowed");
+        var onFocusLabel = UseState("");
+
         return Layout.Vertical()
             | Text.H3("Basic Usage")
             | Layout.Vertical().Gap(6)
@@ -40,7 +45,20 @@ public class SelectInputBasicExample : ViewBase
                     .Variant(SelectInputVariant.List)
                     .Placeholder("Select notification types...")
                     .WithField()
-                    .Label("Notification types");
+                    .Label("Notification types")
+            | Text.H3("Events")
+            | (Layout.Vertical()
+                | Text.H4("OnBlur")
+                | Layout.Horizontal(
+                    onBlurState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnBlur(e => onBlurLabel.Set("Blur")),
+                    onBlurLabel
+                )
+                | Text.H4("OnFocus")
+                | Layout.Horizontal(
+                    onFocusState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnFocus(e => onFocusLabel.Set("Focus")),
+                    onFocusLabel
+                )
+            );
     }
 }
 

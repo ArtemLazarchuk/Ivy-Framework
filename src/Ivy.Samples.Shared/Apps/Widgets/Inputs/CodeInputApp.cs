@@ -70,6 +70,11 @@ public class CodeInputApp : SampleBase
         var emptyHtmlState = UseState("");
         var emptyYamlState = UseState("");
 
+        var onBlurState = UseState("");
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState("");
+        var onFocusLabel = UseState("");
+
         var cardCode = UseState(
             """
             public class Example
@@ -243,6 +248,19 @@ public class CodeInputApp : SampleBase
                    cardCode.ToCodeInput().Language(Languages.Csharp).ShowCopyButton().Height(Size.Auto())
                ).Title("Code Example").Description("Testing copy button visibility with card background")
                | socialMediaLinks
+               | Text.H2("Events")
+               | (Layout.Vertical()
+                   | Text.H3("OnBlur")
+                   | Layout.Horizontal(
+                       onBlurState.ToCodeInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                       onBlurLabel
+                   )
+                   | Text.H3("OnFocus")
+                   | Layout.Horizontal(
+                       onFocusState.ToCodeInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                       onFocusLabel
+                   )
+               )
                ;
     }
 

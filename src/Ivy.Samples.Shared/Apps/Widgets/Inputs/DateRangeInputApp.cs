@@ -16,6 +16,10 @@ public class DateRangeInputApp : SampleBase
         var nullableInvalidDateOnlyState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
         var nullableDisabledDateOnlyState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
         var emptyNullableDateOnlyState = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
+        var onBlurState = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
+        var onFocusLabel = UseState("");
 
         // Size examples
         var sizeExamplesGrid = Layout.Grid().Columns(4)
@@ -91,6 +95,19 @@ public class DateRangeInputApp : SampleBase
             | startEndPlaceholderExample
             | Text.H2("Data Binding")
             | dataBindingGrid
+            | Text.H2("Events")
+            | (Layout.Vertical()
+                | Text.H3("OnBlur")
+                | Layout.Horizontal(
+                    onBlurState.ToDateRangeInput().OnBlur(e => onBlurLabel.Set("Blur")),
+                    onBlurLabel
+                )
+                | Text.H3("OnFocus")
+                | Layout.Horizontal(
+                    onFocusState.ToDateRangeInput().OnFocus(e => onFocusLabel.Set("Focus")),
+                    onFocusLabel
+                )
+            )
             | currentValues;
     }
 }
