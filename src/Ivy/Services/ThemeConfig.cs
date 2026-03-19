@@ -77,8 +77,8 @@ public class ThemeColors
 
     public static ThemeColors DefaultLight => new()
     {
-        Primary = IvyFrameworkChromaticTokens.Color.Blue,
-        PrimaryForeground = IvyFrameworkChromaticTokens.Color.BlueForeground,
+        Primary = IvyFrameworkChromaticTokens.Color.Yellow,
+        PrimaryForeground = IvyFrameworkChromaticTokens.Color.YellowForeground,
         Secondary = IvyFrameworkLightThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkLightThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkLightThemeTokens.Color.Background,
@@ -106,8 +106,8 @@ public class ThemeColors
 
     public static ThemeColors DefaultDark => new()
     {
-        Primary = IvyFrameworkChromaticTokens.Color.Blue,
-        PrimaryForeground = IvyFrameworkChromaticTokens.Color.BlueForeground,
+        Primary = IvyFrameworkChromaticTokens.Color.Yellow,
+        PrimaryForeground = IvyFrameworkChromaticTokens.Color.YellowForeground,
         Secondary = IvyFrameworkDarkThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkDarkThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkDarkThemeTokens.Color.Background,
