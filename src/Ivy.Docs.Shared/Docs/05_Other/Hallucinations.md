@@ -439,6 +439,7 @@ Available `BadgeVariant` values: `Primary`, `Destructive`, `Secondary`, `Outline
 3c507fb4-71e1-4136-9d40-8eca6590250d
 ce144de9-0688-490a-bef6-b2766e323154
 642d3167-790d-48c4-a381-bfab78f928cc
+857de09c-ab87-49a5-aac4-394f7d0aa207
 
 ## Callout.Color(Colors.X) — non-existent fluent method
 
@@ -589,6 +590,33 @@ queryResult.IsLoading
 
 **Found In:**
 a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002, 004)
+
+## QueryMutator.Trigger() / .IsLoading / .Error — non-existent properties
+
+**Hallucinated API:**
+```csharp
+var mutation = UseMutation(key);
+mutation.Trigger();    // doesn't exist
+mutation.IsLoading     // doesn't exist
+mutation.Error         // doesn't exist
+```
+
+**Error:** `CS1061: 'QueryMutator' does not contain a definition for 'Trigger'/'IsLoading'/'Error'`
+
+**Correct API:**
+`QueryMutator` only has `Revalidate` (Action) and `Invalidate` (Action). `QueryMutator<T>` adds `Mutate` (MutateDelegate<T>). For loading state and error, use `QueryResult<T>` from `UseQuery()`, which has `.Loading`, `.Error`, and `.Value`.
+
+For async operations triggered by a button click, use the button's async `OnClick` handler directly:
+```csharp
+new Button("Validate", async () => {
+    result = await service.ValidateAsync(input);
+})
+```
+
+Source: `D:\Repos\_Ivy\Ivy-Framework\src\Ivy\Hooks\UseQuery.cs`
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
 
 ## ListItem.Description / ListItem.Meta / ListItem.Actions — non-existent members
 
@@ -1431,6 +1459,29 @@ The method is `ToTextareaInput()`, not `ToTextArea()`. Alternatively use `ToText
 **Found In:**
 19ec33cf-3e86-409e-806c-babf0d20730f
 
+## TextInputBase.Lines() — non-existent multi-line property
+
+**Hallucinated API:**
+```csharp
+var text = UseState("");
+text.ToTextInput().Lines(8)
+```
+
+**Error:** `CS1061: 'TextInputBase' does not contain a definition for 'Lines'`
+
+**Correct API:**
+```csharp
+var text = UseState("");
+text.ToTextareaInput()
+// or equivalently:
+text.ToTextInput().Multiline()
+```
+
+There is no `.Lines()` method. Use `ToTextareaInput()` or `ToTextInput().Multiline()` for multi-line text input. The textarea height can be controlled via `.Height()` on the widget.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
+
 ## IState\<T\>.ToSelect() — incorrect select method name
 
 **Hallucinated API:**
@@ -1639,7 +1690,7 @@ layout.Margin(0, 4, 0, 0)    // left, top, right, bottom
 **Found In:**
 2e18b175-94ec-459c-94a5-8f28b81ecfdc
 
-## UseService vs UseContext
+## UseService vs UseContext — blade/context services
 
 LLMs sometimes use `UseService<IBladeService>()` to obtain the blade service. This is incorrect — `IBladeService` is a **context** service provided by `UseBlades()`, not a DI-registered service. Using `UseService` returns `null`, causing `NullReferenceException` at runtime.
 
@@ -1677,3 +1728,47 @@ state.ToForm()
 
 **Found In:**
 5d2202d2-9d6b-4198-9922-c3763534aca5
+
+**Rule:** Use `UseContext<T>()` for framework-provided context services (`IBladeService`, etc.). Use `UseService<T>()` only for application-registered DI services (e.g., `DbContextFactory`, `HttpClient`).
+
+## ToForm(OnSubmit: ...) — OnSubmit is an extension method, not a parameter
+
+**Hallucinated API:**
+```csharp
+state.ToForm(OnSubmit: async form => { ... })
+```
+
+**Error:** `CS1739: The best overload for 'ToForm' does not have a parameter named 'OnSubmit'`
+
+**Correct API:**
+```csharp
+state.ToForm().OnSubmit(async form => { ... })
+```
+
+`OnSubmit` is a fluent extension method that chains after `ToForm()`, not a constructor parameter. The same pattern applies to other form event handlers like `OnChange`.
+
+## Details() — empty constructor instead of passing items
+
+**Hallucinated API:**
+```csharp
+new Details()
+    | new Detail("Country Code", result.CountryCode, false)
+    | new Detail("VAT Number", result.VatNumber, false)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
+
+**Correct API:**
+```csharp
+new Details(new[] {
+    new Detail("Country Code", result.CountryCode, false),
+    new Detail("VAT Number", result.VatNumber, false)
+})
+// or use the builder pattern:
+result.ToDetails()
+```
+
+`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
