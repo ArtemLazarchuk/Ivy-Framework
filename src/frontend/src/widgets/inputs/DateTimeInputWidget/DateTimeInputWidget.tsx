@@ -107,13 +107,14 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
 
   const handleFocusChange = useCallback(
     (focused: boolean) => {
+      if (disabled) return;
       if (focused) {
         if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
       } else {
         if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
       }
     },
-    [events, eventHandler, id]
+    [disabled, events, eventHandler, id]
   );
 
   return (

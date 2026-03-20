@@ -283,11 +283,13 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
         role="button"
         tabIndex={disabled ? -1 : 0}
         onBlur={e => {
+          if (disabled) return;
           if (!e.currentTarget.contains(e.relatedTarget)) {
             if (events?.includes('OnBlur')) eventHandler('OnBlur', id, []);
           }
         }}
         onFocus={e => {
+          if (disabled) return;
           if (!e.currentTarget.contains(e.relatedTarget)) {
             if (events?.includes('OnFocus')) eventHandler('OnFocus', id, []);
           }

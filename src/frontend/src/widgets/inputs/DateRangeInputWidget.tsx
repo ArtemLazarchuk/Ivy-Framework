@@ -175,6 +175,7 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
+      if (disabled) return;
       setIsOpen(newOpen);
       if (!newOpen) {
         if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
@@ -182,7 +183,7 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
         if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
       }
     },
-    [eventHandler, id, events, setIsOpen]
+    [disabled, eventHandler, id, events, setIsOpen]
   );
 
   // Use custom format if provided, otherwise use default
@@ -212,10 +213,12 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
                   : ''
             )}
             onBlur={() => {
+              if (disabled) return;
               if (events.includes('OnBlur') && !isOpen)
                 eventHandler('OnBlur', id, []);
             }}
             onFocus={() => {
+              if (disabled) return;
               if (events.includes('OnFocus') && !isOpen)
                 eventHandler('OnFocus', id, []);
             }}

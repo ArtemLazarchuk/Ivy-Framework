@@ -129,12 +129,14 @@ export const FeedbackInputWidget: React.FC<FeedbackInputWidgetProps> = ({
   );
 
   const handleBlur = useCallback(() => {
+    if (disabled) return;
     if (events.includes('OnBlur')) eventHandler('OnBlur', id, []);
-  }, [eventHandler, id, events]);
+  }, [disabled, eventHandler, id, events]);
 
   const handleFocus = useCallback(() => {
+    if (disabled) return;
     if (events.includes('OnFocus')) eventHandler('OnFocus', id, []);
-  }, [eventHandler, id, events]);
+  }, [disabled, eventHandler, id, events]);
 
   const ratingComponent = useMemo(() => {
     if (variant === 'Thumbs') {
@@ -198,7 +200,9 @@ export const FeedbackInputWidget: React.FC<FeedbackInputWidgetProps> = ({
         }
       }}
       tabIndex={disabled ? -1 : 0}
-      className="outline-none focus:outline-none focus:ring-1 focus:ring-ring rounded-md p-1"
+      className={`outline-none focus:outline-none focus:ring-1 focus:ring-ring rounded-md p-1 ${
+        disabled ? 'opacity-50 cursor-not-allowed' : ''
+      }`}
     >
       {ratingComponent}
     </div>

@@ -266,7 +266,7 @@ export const SignatureInputWidget: React.FC<SignatureInputWidgetProps> = ({
       )}
       onBlur={handleBlur}
       onFocus={handleFocus}
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
       onPointerDown={() => {
         if (disabled) return;
         containerRef.current?.focus();
