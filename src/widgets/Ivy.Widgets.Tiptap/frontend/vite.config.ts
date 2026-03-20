@@ -1,5 +1,5 @@
 import { defineConfig } from "vite-plus";;
-import react from "@vitejs/plugin-react-oxc";
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 import { fileURLToPath } from "url";
@@ -14,7 +14,7 @@ export default defineConfig({
     react({
       // Use classic JSX transform (React.createElement) instead of automatic (jsx-runtime)
       // This allows external widgets to use the global React without needing jsx-runtime
-      jsxRuntime: "classic",
+      ,
     }),
   ],
   define: {

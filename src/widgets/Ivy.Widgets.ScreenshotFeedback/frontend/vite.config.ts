@@ -1,5 +1,5 @@
 import { defineConfig } from "vite-plus";;
-import react from "@vitejs/plugin-react-oxc";
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 import { fileURLToPath } from "url";
@@ -11,7 +11,7 @@ export default defineConfig({
   lint: { options: { typeCheck: false } },
   plugins: [
     react({
-      jsxRuntime: "classic",
+      ,
     }),
   ],
   define: {

@@ -1,7 +1,7 @@
 import path from "path";
 import { type Plugin } from "vite";
 import { defineConfig } from "vite-plus";;
-import react from "@vitejs/plugin-react-oxc";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 import { fileURLToPath } from "url";
