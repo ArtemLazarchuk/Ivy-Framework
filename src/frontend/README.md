@@ -1,12 +1,12 @@
 # Frontend
 
-**Node.js Version Requirement**: This project requires Node.js version 22.12.0 or greater.
+**Node.js Version Requirement**: This project requires Node.js version 22.12.0 or greater, and uses **pnpm** as its package manager.
 
 ## Development
 
 ```bash
-npm run dev
-npm run build
+pnpm run dev
+pnpm run build
 ```
 
 ## Developer Logging
@@ -55,17 +55,15 @@ Developer options are stored in localStorage and persist across:
 
 ## Code Quality
 
-The frontend project uses ESLint and Prettier for code quality and formatting, with automatic pre-commit hooks. It is also responsible for handling `dotnet format` precommit hook for the BE.
+The frontend project uses **Vite+** integrated tools (**Oxlint** and **Oxfmt**) for high-performance code quality and formatting, alongside automatic pre-commit hooks. It is also responsible for handling `dotnet format` precommit hook for the BE.
 
 ### Pre-commit Hooks
 
 We use a Husky npm package to setup precommit hooks for both the FE and the BE.
 
-To get the auto-linting for staged files, you need to have run `npm run install` in `./frontend` at least once. Ideally, you would not then need to run any formatting or lint commands as it will be done for you. In case you want to manually run them, you still can.
+To get the auto-linting for staged files, you need to have run `pnpm install` in `./frontend` at least once. Ideally, you would not then need to run any formatting or lint commands as it will be done for you. In case you want to manually run them, you still can.
 
-If you have Prettier and ESLint, you can configure your IDE to respect the repositories styling guidelines and easily format your code.
-
-If there are issues that auto-linting and formatting can't be resolved, your commit will be blocked from being pushed. If you really need to push, you can specify checks behavior per commit (not recommended):
+If there are issues that auto-linting and formatting can't resolve automatically, your commit will be blocked from being pushed. If you really need to push, you can specify checks behavior per commit (not recommended):
 
 ```bash
 git commit --no-verify -m "Commit message"
@@ -73,49 +71,47 @@ git commit --no-verify -m "Commit message"
 
 ### Code Formatting
 
-Format all files with Prettier:
+Format all files with Oxfmt (via Vite+):
 
 ```bash
-npm run format
+pnpm run format
 ```
 
 Check if files are properly formatted:
 
 ```bash
-npm run format:check
+pnpm run format:check
 ```
 
 ### Linting
 
-Check for linting issues:
+Check for linting issues with Oxlint (via Vite+):
 
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 Automatically fix linting issues:
 
 ```bash
-npm run lint:fix
+pnpm run lint:fix
 ```
 
 ### Configuration Files
 
-- `.prettierrc` - Prettier configuration
-- `.prettierignore` - Files to exclude from formatting
-- `eslint.config.js` - ESLint configuration with Prettier integration
-- `package.json` - Contains lint-staged configuration and scripts
+- `vite.config.ts` - Contains Vite+ syntax formatting and linting preferences
+- `package.json` - Contains lint-staged configuration and execution scripts
 
 ## Testing
 
-This project uses Vitest for unit testing and Playwright for end-to-end testing.
+This project uses Vitest (via Vite+) for unit testing and Playwright for end-to-end testing.
 
 ### Unit Testing with Vitest
 
 Run unit tests:
 
 ```bash
-npm run test
+pnpm run test
 ```
 
 Unit tests are configured to run only on files ending with `.test.ts`. Place your unit test files alongside your source code with the `.test.ts` extension.
@@ -133,13 +129,13 @@ cd frontend
 ### Install Dependencies
 
 ```bash
-npm ci
+pnpm install
 ```
 
 ### Install Playwright Browsers
 
 ```bash
-npx playwright install --with-deps
+pnpm exec playwright install --with-deps
 ```
 
 ### Running Tests
@@ -147,57 +143,55 @@ npx playwright install --with-deps
 Run all e2e tests:
 
 ```bash
-npm run e2e
+pnpm run e2e
 ```
 
 Run only Ivy.Docs e2e tests:
 
 ```bash
-npm run e2e:docs
+pnpm run e2e:docs
 ```
 
 Run only Ivy.Samples e2e tests:
 
 ```bash
-npm run e2e:samples
+pnpm run e2e:samples
 ```
 
 Run tests in a specific browser:
 
 ```bash
-npm run e2e -- --project=chromium
-npm run e2e -- --project=firefox
-npm run e2e -- --project=webkit
+pnpm run e2e -- --project=chromium
+pnpm run e2e -- --project=firefox
+pnpm run e2e -- --project=webkit
 ```
 
 Run tests in headed mode (to see the browser):
 
 ```bash
-npm run e2e -- --headed
+pnpm run e2e -- --headed
 ```
 
 Run tests in debug mode:
 
 ```bash
-npm run e2e -- --debug
+pnpm run e2e -- --debug
 ```
 
 Run a specific test file:
 
 ```bash
-npm run e2e -- example.spec.ts
+pnpm run e2e -- example.spec.ts
 ```
-
-**Note**: We use npm scripts instead of `npx playwright test` to ensure consistent usage of the locally installed Playwright version and avoid version conflicts.
 
 ### Test Reports
 
 View the HTML test report:
 
 ```bash
-npm run e2e -- --reporter=html
+pnpm run e2e -- --reporter=html
 # Then open the report
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 
 ### Test Files
@@ -208,23 +202,23 @@ npx playwright show-report
 
 Tests are automatically run in GitHub Actions on push to main/master branches and pull requests. The CI pipeline includes:
 
-1. Code formatting checks (`npm run format:check`)
-2. Linting checks (`npm run lint`)
-3. Unit tests (`npm run test`)
+1. Code formatting checks (`pnpm run format:check`)
+2. Linting checks (`pnpm run lint`)
+3. Unit tests (`pnpm run test`)
 4. Playwright end-to-end tests
 
 ## Available Scripts
 
 | Script                 | Description                           |
 | ---------------------- | ------------------------------------- |
-| `npm run dev`          | Start development server              |
-| `npm run build`        | Build for production                  |
-| `npm run preview`      | Preview production build              |
-| `npm run test`         | Run unit tests with Vitest            |
-| `npm run e2e`          | Run all end-to-end tests              |
-| `npm run e2e:docs`     | Run Ivy.Docs end-to-end tests         |
-| `npm run e2e:samples`  | Run Ivy.Samples end-to-end tests      |
-| `npm run lint`         | Check for linting issues              |
-| `npm run lint:fix`     | Fix linting issues automatically      |
-| `npm run format`       | Format all files with Prettier        |
-| `npm run format:check` | Check if files are properly formatted |
+| `pnpm run dev`         | Start development server              |
+| `pnpm run build`       | Build for production                  |
+| `pnpm run preview`     | Preview production build              |
+| `pnpm run test`        | Run unit tests with Vitest            |
+| `pnpm run e2e`         | Run all end-to-end tests              |
+| `pnpm run e2e:docs`    | Run Ivy.Docs end-to-end tests         |
+| `pnpm run e2e:samples` | Run Ivy.Samples end-to-end tests      |
+| `pnpm run lint`        | Check for linting issues              |
+| `pnpm run lint:fix`    | Fix linting issues automatically      |
+| `pnpm run format`      | Format all files with Oxfmt           |
+| `pnpm run format:check`| Check if files are properly formatted |
