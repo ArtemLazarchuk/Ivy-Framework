@@ -20,6 +20,7 @@ public class DateRangeInputApp : SampleBase
         var onBlurLabel = UseState("");
         var onFocusState = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
         var onFocusLabel = UseState("");
+        var constrainedRangeState = UseState<(DateOnly?, DateOnly?)>(() => (null, null));
 
         // Size examples
         var sizeExamplesGrid = Layout.Grid().Columns(4)
@@ -85,6 +86,16 @@ public class DateRangeInputApp : SampleBase
             .Format("MM/dd/yyyy")
             .TestId("daterange-input-start-end-placeholder");
 
+        // Min/Max Constraints Example
+        var minMaxExample = Layout.Vertical().Gap(2)
+            | Text.P("Date range constrained to 2026 only").Small()
+            | constrainedRangeState.ToDateRangeInput()
+                .Min(new DateOnly(2026, 1, 1))
+                .Max(new DateOnly(2026, 12, 31))
+                .Placeholder("Select dates within 2026")
+                .Format("MM/dd/yyyy")
+                .TestId("daterange-input-min-max-example");
+
         return Layout.Vertical()
             | Text.H1("DateRangeInput")
             | Text.H2("Size Examples")
@@ -93,6 +104,8 @@ public class DateRangeInputApp : SampleBase
             | variantsGrid
             | Text.H2("Start/End Placeholders")
             | startEndPlaceholderExample
+            | Text.H2("Min/Max Constraints")
+            | minMaxExample
             | Text.H2("Data Binding")
             | dataBindingGrid
             | Text.H2("Events")

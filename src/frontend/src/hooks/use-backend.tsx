@@ -48,6 +48,7 @@ type SetAuthCookiesMessage = {
   cookieJarId: string;
   reloadPage: boolean;
   triggerMachineReload: boolean;
+  triggerMachineBrokeredRefresh: boolean;
 };
 
 type HttpTunnelRequestMessage = {
@@ -302,6 +303,32 @@ function applyUpdateMessage(
   return newTree;
 }
 
+async function refreshAuthFromCookies(
+  connectionId: string | null
+): Promise<void> {
+  try {
+    const response = await fetch(`${getIvyHost()}/ivy/auth/refresh-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Connection-Id': connectionId ?? '',
+        'X-Machine-Id': getMachineId(),
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      logger.error('Failed to refresh auth from cookies, reloading page', {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      window.location.reload();
+    }
+  } catch (error) {
+    logger.error('Error refreshing auth from cookies, reloading page', error);
+    window.location.reload();
+  }
+}
+
 export const useBackend = (
   appId: string | null,
   appArgs: string | null,
@@ -460,6 +487,8 @@ export const useBackend = (
             cookieJarId: message.cookieJarId,
             connectionId: currentConnectionId ?? null,
             triggerMachineReload: message.triggerMachineReload,
+            triggerMachineBrokeredRefresh:
+              message.triggerMachineBrokeredRefresh,
           }),
           credentials: 'include',
         }
@@ -674,10 +703,24 @@ export const useBackend = (
       });
     }
 
+    // Check if this is an OAuth login redirect
+    const pageParams = new URLSearchParams(window.location.search);
+    const oauthLogin = pageParams.get('oauthLogin');
+
+    // Build SignalR connection URL
+    let signalRUrl = `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ''}&appArgs=${appArgs ?? ''}&machineId=${machineId}&parentId=${parentId ?? ''}&chrome=${latestChromeRef.current}`;
+    if (oauthLogin) {
+      signalRUrl += `&oauthLogin=${oauthLogin}`;
+      // Clean up the URL by removing the oauthLogin parameter
+      pageParams.delete('oauthLogin');
+      const newUrl = pageParams.toString()
+        ? `${window.location.pathname}?${pageParams.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl(
-        `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ''}&appArgs=${appArgs ?? ''}&machineId=${machineId}&parentId=${parentId ?? ''}&chrome=${latestChromeRef.current}`
-      )
+      .withUrl(signalRUrl)
       .withAutomaticReconnect()
       .build();
 
@@ -843,6 +886,11 @@ export const useBackend = (
             window.location.reload();
           });
 
+          connection.on('RefreshAuthFromCookies', () => {
+            logger.debug(`[${connection.connectionId}] RefreshAuthFromCookies`);
+            refreshAuthFromCookies(connection.connectionId);
+          });
+
           connection.on('HttpRequest', message => {
             logger.debug(`[${connection.connectionId}] HttpRequest`, {
               requestId: message.requestId,
@@ -939,10 +987,10 @@ export const useBackend = (
 
   const eventHandler: WidgetEventHandlerType = useCallback(
     (eventName, widgetId, args) => {
-      console.debug('[Event] Sending:', eventName, widgetId, args);
+      logger.info('[Event] Sending:', { eventName, widgetId, args });
       logger.debug(`[${connectionId}] Event: ${eventName}`, { widgetId, args });
       if (!connection) {
-        logger.warn('No SignalR connection available for event', {
+        logger.warn('[Event] No SignalR connection available for event:', {
           eventName,
           widgetId,
         });
@@ -951,11 +999,14 @@ export const useBackend = (
       connection
         .invoke('Event', eventName, widgetId, args)
         .then(() => {
-          console.debug('[Event] Invoke succeeded:', eventName, widgetId);
+          logger.debug('[Event] Invoke succeeded:', { eventName, widgetId });
         })
         .catch(err => {
-          console.error('[Event] Invoke failed:', eventName, widgetId, err);
-          logger.error('SignalR Error when sending event:', err);
+          logger.error('[Event] Invoke failed:', {
+            eventName,
+            widgetId,
+            error: err,
+          });
         });
     },
     [connection, connectionId]
