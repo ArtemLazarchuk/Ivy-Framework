@@ -20,11 +20,7 @@ The Ivy Framework now includes a robust foundation for secrets management throug
 
 ### IHaveSecrets Interface
 
-The `IHaveSecrets` interface is the foundation of Ivy's secrets management system. Any class that requires secrets should implement this interface:
-
 ```csharp
-namespace Ivy;
-
 public interface IHaveSecrets
 {
     Secret[] GetSecrets();
@@ -36,7 +32,7 @@ public interface IHaveSecrets
 The `Secret` record represents a required secret configuration:
 
 ```csharp
-public sealed record Secret(string Key, string? Preset = null);
+public sealed record Secret(string Key, string? Preset = null, bool Optional = false);
 ```
 
 | Parameter | Description |

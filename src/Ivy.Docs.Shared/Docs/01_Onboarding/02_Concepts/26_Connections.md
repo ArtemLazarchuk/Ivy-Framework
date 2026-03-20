@@ -36,8 +36,6 @@ Connections implement the `IConnection` interface, which provides a standardized
 ## The IConnection Interface
 
 ```csharp
-namespace Ivy;
-
 public interface IConnection
 {
     string GetContext(string connectionPath);
