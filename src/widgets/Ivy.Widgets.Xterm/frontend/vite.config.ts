@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
+  lint: {"options":{"typeAware":true,"typeCheck":true}},
   plugins: [
     react({
       // Use classic JSX transform (React.createElement) instead of automatic (jsx-runtime)

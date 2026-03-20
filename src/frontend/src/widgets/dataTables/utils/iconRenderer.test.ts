@@ -26,9 +26,9 @@ class MockImage {
 
 // Setup globals for Node environment
 beforeAll(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
   global.Image = MockImage as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
   global.HTMLImageElement = MockImage as any;
 });
 
@@ -70,11 +70,11 @@ describe('iconRenderer', () => {
     });
 
     it('should return false for non-string values', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
       expect(isValidIconName(null as any)).toBe(false);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
       expect(isValidIconName(undefined as any)).toBe(false);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
       expect(isValidIconName(123 as any)).toBe(false);
     });
   });

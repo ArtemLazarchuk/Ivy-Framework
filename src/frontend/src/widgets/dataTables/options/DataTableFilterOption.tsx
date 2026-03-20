@@ -228,7 +228,7 @@ export const DataTableFilterOption: React.FC<{
 
         if (autocompleteInDOM || dropdownState.stateRef.current) {
           // Mark this event so bubble phase knows to ignore it
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // oxlint-disable-next-line @typescript-eslint/no-explicit-any
           (event.nativeEvent as any).__skipFilterTrigger = true;
         }
       }
@@ -247,7 +247,7 @@ export const DataTableFilterOption: React.FC<{
         (event.metaKey || event.ctrlKey || !event.shiftKey)
       ) {
         // Check if capture phase marked this to skip
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // oxlint-disable-next-line @typescript-eslint/no-explicit-any
         if ((event.nativeEvent as any).__skipFilterTrigger) {
           return;
         }

@@ -4,15 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vp dev",
     "build": "tsc -b && node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "preview": "vite preview",
+    "lint": "vp lint .",
+    "lint:fix": "vp lint . --fix",
+    "format": "vp fmt .",
+    "format:check": "vp fmt --check .",
+    "preview": "vp preview",
     "prepare": "cd .. && husky frontend/.husky",
-    "test": "vitest",
+    "test": "vp test",
     "e2e": "playwright test",
     "e2e:docs": "playwright test e2e/docs",
     "e2e:samples": "playwright test e2e/samples"
@@ -107,7 +107,6 @@
     "@types/wicg-file-system-access": "^2023.10.7",
     "@vitejs/plugin-react-swc": "4.2.0",
     "canvas-confetti": "1.9.4",
-    "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-react-hooks": "7.0.1",
@@ -116,20 +115,20 @@
     "happy-dom": "^20.0.10",
     "husky": "9.1.7",
     "lint-staged": "16.2.6",
-    "prettier": "3.6.2",
     "tailwindcss": "4.1.16",
     "typescript": "~5.9.3",
     "typescript-eslint": "8.46.3",
-    "vite": "7.1.12",
-    "vitest": "4.0.6"
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest",
+    "vite-plus": "latest"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "vp lint --fix",
+      "vp fmt"
     ],
     "*.{json,css,md,html}": [
-      "prettier --write"
+      "vp fmt"
     ],
     "*.cs": [
       "dotnet format"
@@ -143,6 +142,9 @@
     "rollup": ">=4.59.0",
     "remark-mermaid-plugin": {
       "mermaid": "11.12.1"
-    }
-  }
+    },
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  },
+  "packageManager": "npm@11.12.0"
 }

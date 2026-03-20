@@ -200,10 +200,10 @@ const generateScatterSeries = (
           label: { show: true, position: 'end' as const },
           lineStyle: {
             type: 'dashed' as const,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // oxlint-disable-next-line @typescript-eslint/no-explicit-any
             width: (referenceLines[0] as any)?.strokeWidth ?? 1,
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // oxlint-disable-next-line @typescript-eslint/no-explicit-any
           data: referenceLines.map((line: any) => {
             if (line.x != null && line.y == null) {
               return { xAxis: line.x, name: line.label };
@@ -225,7 +225,7 @@ const generateScatterSeries = (
     referenceAreas && referenceAreas.length > 0
       ? {
           silent: true,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // oxlint-disable-next-line @typescript-eslint/no-explicit-any
           data: referenceAreas.map((area: any) => [
             { xAxis: area.x1, yAxis: area.y1, name: area.label },
             { xAxis: area.x2, yAxis: area.y2 },

@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+/* oxlint-disable react-refresh/only-export-components */
 import React, { Suspense } from 'react';
 import { WidgetNode, CallSite } from '@/types/widgets';
 import { widgetMap } from '@/widgets/widgetMap';

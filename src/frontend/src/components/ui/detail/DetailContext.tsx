@@ -5,7 +5,7 @@ import { Densities } from '@/types/density';
 
 type DetailContextValue = VariantProps<typeof detailValueSizeVariant>;
 
-// eslint-disable-next-line react-refresh/only-export-components
+// oxlint-disable-next-line react-refresh/only-export-components
 export const DetailContext = createContext<DetailContextValue>({
   density: Densities.Medium,
 });

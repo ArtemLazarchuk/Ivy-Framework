@@ -65,9 +65,9 @@ if (typeof window !== 'undefined') {
   // Initialize on first load
   initializeDeveloperOptions();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).toggleDeveloperLogging = toggleDeveloperLogging;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).getDeveloperOptions = getCurrentDeveloperOptions;
 }
 

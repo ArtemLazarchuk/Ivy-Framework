@@ -156,7 +156,7 @@ export interface MarkLine {
   label?: {
     show?: boolean;
     position?: 'start' | 'middle' | 'end';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line @typescript-eslint/no-explicit-any
     formatter?: string | ((params: any) => string);
     color?: string;
     fontSize?: number;
@@ -226,7 +226,7 @@ export interface MarkArea {
   label?: {
     show?: boolean;
     position?: LabelPosition;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line @typescript-eslint/no-explicit-any
     formatter?: string | ((params: any) => string);
     color?: string;
     fontSize?: number;

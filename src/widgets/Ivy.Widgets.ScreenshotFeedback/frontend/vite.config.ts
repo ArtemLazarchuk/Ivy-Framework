@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
+  lint: {"options":{"typeAware":true,"typeCheck":true}},
   plugins: [
     react({
       jsxRuntime: 'classic',

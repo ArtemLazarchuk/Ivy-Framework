@@ -24,7 +24,7 @@ export function useTabManagement(
       tabWidgets
         .map(tab => getTabProps(tab)?.id)
         .filter((id): id is string => id !== undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [] // Only run on mount
   );
 

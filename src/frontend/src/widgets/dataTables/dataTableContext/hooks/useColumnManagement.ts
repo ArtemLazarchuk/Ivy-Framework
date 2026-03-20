@@ -39,7 +39,7 @@ export const useColumnManagement = ({
       // Same structure, just update metadata without resetting order
       setColumns(columnsProp);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [columnsProp]);
 
   // Reset column widths when connection changes

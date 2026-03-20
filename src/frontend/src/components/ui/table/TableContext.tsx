@@ -5,7 +5,7 @@ import { Densities } from '@/types/density';
 
 type TableContextValue = VariantProps<typeof tableCellSizeVariant>;
 
-// eslint-disable-next-line react-refresh/only-export-components
+// oxlint-disable-next-line react-refresh/only-export-components
 export const TableContext = createContext<TableContextValue>({
   density: Densities.Medium,
 });

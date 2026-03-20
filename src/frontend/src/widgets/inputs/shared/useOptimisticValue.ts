@@ -21,7 +21,7 @@ export function useOptimisticValue<T>(
     if (!isActive && !eq(serverValue, localValue)) {
       queueMicrotask(() => setLocalValue(serverValue));
     }
-  }, [serverValue, isActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [serverValue, isActive]); // oxlint-disable-line react-hooks/exhaustive-deps
 
   return [localValue, setLocalValue];
 }
