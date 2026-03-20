@@ -92,6 +92,7 @@ Buttons with URLs support [right-click actions](../../01_Onboarding/02_Concepts/
             .Icon(Icons.ExternalLink, Align.Right)
         | new Button("Link Style").Link()
             .Url("https://github.com/Ivy-Interactive/Ivy-Framework")
+```
 
 ## Keyboard Shortcuts
 
