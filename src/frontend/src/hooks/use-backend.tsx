@@ -48,6 +48,7 @@ type SetAuthCookiesMessage = {
   cookieJarId: string;
   reloadPage: boolean;
   triggerMachineReload: boolean;
+  triggerMachineBrokeredRefresh: boolean;
 };
 
 type HttpTunnelRequestMessage = {
@@ -302,6 +303,32 @@ function applyUpdateMessage(
   return newTree;
 }
 
+async function refreshAuthFromCookies(
+  connectionId: string | null
+): Promise<void> {
+  try {
+    const response = await fetch(`${getIvyHost()}/ivy/auth/refresh-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Connection-Id': connectionId ?? '',
+        'X-Machine-Id': getMachineId(),
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      logger.error('Failed to refresh auth from cookies, reloading page', {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      window.location.reload();
+    }
+  } catch (error) {
+    logger.error('Error refreshing auth from cookies, reloading page', error);
+    window.location.reload();
+  }
+}
+
 export const useBackend = (
   appId: string | null,
   appArgs: string | null,
@@ -460,6 +487,8 @@ export const useBackend = (
             cookieJarId: message.cookieJarId,
             connectionId: currentConnectionId ?? null,
             triggerMachineReload: message.triggerMachineReload,
+            triggerMachineBrokeredRefresh:
+              message.triggerMachineBrokeredRefresh,
           }),
           credentials: 'include',
         }
@@ -674,10 +703,24 @@ export const useBackend = (
       });
     }
 
+    // Check if this is an OAuth login redirect
+    const pageParams = new URLSearchParams(window.location.search);
+    const oauthLogin = pageParams.get('oauthLogin');
+
+    // Build SignalR connection URL
+    let signalRUrl = `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ''}&appArgs=${appArgs ?? ''}&machineId=${machineId}&parentId=${parentId ?? ''}&chrome=${latestChromeRef.current}`;
+    if (oauthLogin) {
+      signalRUrl += `&oauthLogin=${oauthLogin}`;
+      // Clean up the URL by removing the oauthLogin parameter
+      pageParams.delete('oauthLogin');
+      const newUrl = pageParams.toString()
+        ? `${window.location.pathname}?${pageParams.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl(
-        `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ''}&appArgs=${appArgs ?? ''}&machineId=${machineId}&parentId=${parentId ?? ''}&chrome=${latestChromeRef.current}`
-      )
+      .withUrl(signalRUrl)
       .withAutomaticReconnect()
       .build();
 
@@ -841,6 +884,11 @@ export const useBackend = (
           connection.on('ReloadPage', () => {
             logger.debug(`[${connection.connectionId}] ReloadPage`);
             window.location.reload();
+          });
+
+          connection.on('RefreshAuthFromCookies', () => {
+            logger.debug(`[${connection.connectionId}] RefreshAuthFromCookies`);
+            refreshAuthFromCookies(connection.connectionId);
           });
 
           connection.on('HttpRequest', message => {
