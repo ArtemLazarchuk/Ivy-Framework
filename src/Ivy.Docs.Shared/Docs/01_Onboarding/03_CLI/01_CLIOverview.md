@@ -89,6 +89,7 @@ See [Program](../02_Concepts/01_Program.md) for the entry point, [Apps](../02_Co
 
 - Use `ivy --help` for general help
 - Use `ivy [command] --help` for command-specific help
+- Use `ivy cli explain` for a complete structural breakdown of all available CLI commands
 - Use `ivy docs` to open documentation
 - Use `ivy samples` to see example projects
 
