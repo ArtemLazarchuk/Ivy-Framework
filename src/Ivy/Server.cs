@@ -13,6 +13,7 @@ using Ivy.Themes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http; //do not remove - used in RELEASE
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +58,7 @@ public record ServerArgs
     public bool FindAvailablePort { get; set; } = false;
 #endif
     public string? Host { get; set; } = null;
+    public string? PathBase { get; set; } = null;
 
     /// <summary>
     /// True when the process is running a CLI-only command (--describe, --describe-connection, --test-connection)
@@ -689,7 +691,7 @@ public class Server
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole();
 
-        builder.Logging.SetMinimumLevel(!_args.Verbose ? LogLevel.Warning : LogLevel.Debug);
+        builder.Logging.SetMinimumLevel(!_args.Verbose ? LogLevel.Warning : LogLevel.Information);
 
         // Suppress hosting startup errors when not verbose (we handle IOException with a friendly message)
         if (!_args.Verbose)
@@ -741,6 +743,23 @@ public class Server
 
         var logger = _args.Verbose ? app.Services.GetRequiredService<ILogger<Server>>() : new NullLogger<Server>();
 
+        // Configure ForwardedHeaders middleware to process X-Forwarded-* headers from reverse proxies
+        var forwardedHeadersOptions = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                | ForwardedHeaders.XForwardedProto
+                | ForwardedHeaders.XForwardedHost
+                | ForwardedHeaders.XForwardedPrefix,
+        };
+        forwardedHeadersOptions.KnownIPNetworks.Clear();
+        forwardedHeadersOptions.KnownProxies.Clear();
+        app.UseForwardedHeaders(forwardedHeadersOptions);
+
+        if (!string.IsNullOrEmpty(_args.PathBase))
+        {
+            Console.WriteLine($"Using base path: {_args.PathBase}");
+            app.UsePathBase(_args.PathBase);
+        }
 
         app.UseRouting(); // First routing pass - match explicit routes (gRPC, controllers)
         app.UsePathToAppId(); // Rewrite path to appId if no endpoint matched
@@ -1007,12 +1026,32 @@ public static class WebApplicationExtensions
         );
         var resourceName = $"{assembly.GetName().Name}.index.html";
         app.MapGet("/", async context =>
+            await ServeIndexHtml(context, app, serverArgs, assembly, resourceName));
+
+        // SPA fallback: serve index.html for any path not matched by other routes
+        // (enables client-side routing for /sign-in, /foo/bar/sign-in, etc.)
+        app.MapFallback(async context =>
+            await ServeIndexHtml(context, app, serverArgs, assembly, resourceName));
+
+        app.MapGet("/manifest.json", () =>
         {
-            var version = assembly.GetName().Version?.ToString();
-            if (!string.IsNullOrEmpty(version))
-            {
-                context.Response.Headers["ivy-version"] = version;
-            }
+            var manifest = app.Services.GetService<ManifestOptions>();
+            if (manifest == null) return Results.NotFound();
+            return Results.Json(manifest.ToManifest());
+        });
+
+        app.UseStaticFiles(GetStaticFileOptions("", embeddedProvider, assembly));
+
+        return app;
+    }
+
+    private static async Task ServeIndexHtml(HttpContext context, WebApplication app, ServerArgs serverArgs, Assembly assembly, string resourceName)
+    {
+        var version = assembly.GetName().Version?.ToString();
+        if (!string.IsNullOrEmpty(version))
+        {
+            context.Response.Headers["ivy-version"] = version;
+        }
 
             // Determine HTTP status code based on app routing
             var server = app.Services.GetRequiredService<Server>();
@@ -1032,7 +1071,8 @@ public static class WebApplicationExtensions
                     .Use<TitleFilter>()
                     .Use<ThemeFilter>()
                     .Use<ManifestFilter>()
-                    .Use<OpenGraphFilter>();
+                    .Use<OpenGraphFilter>()
+                    .Use<PathBaseFilter>();
 
                 foreach (var filter in server.GetCustomFilters())
                     pipeline.Use(filter);
@@ -1059,18 +1099,6 @@ public static class WebApplicationExtensions
                 context.Response.ContentType = "text/plain";
                 await context.Response.WriteAsync($"Error: {resourceName} not found.");
             }
-        });
-
-        app.MapGet("/manifest.json", () =>
-        {
-            var manifest = app.Services.GetService<ManifestOptions>();
-            if (manifest == null) return Results.NotFound();
-            return Results.Json(manifest.ToManifest());
-        });
-
-        app.UseStaticFiles(GetStaticFileOptions("", embeddedProvider, assembly));
-
-        return app;
     }
 
     public static WebApplication UseAssets(this WebApplication app, ServerArgs args, ILogger<Server> logger,

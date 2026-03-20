@@ -60,10 +60,14 @@ public class AuthController() : Controller
         var host = HttpContext.Request.Host.Value ?? throw new InvalidOperationException("Host not found in request");
         var callback = WebhookEndpoint.CreateAuthCallback(callbackId, scheme, host);
 
+        logger.LogInformation("OAuth callback construction - Scheme={Scheme}, Host={Host}, FinalUrl={CallbackUrl}",
+            scheme, host, callback.GetUri());
+
         try
         {
             // Get the OAuth URI and redirect to it
             var uri = await authService.GetOAuthUriAsync(option, callback, HttpContext.RequestAborted);
+            logger.LogInformation("OAuth redirect URI: {RedirectUri}", uri);
             return Redirect(uri.ToString());
         }
         catch (Exception ex)

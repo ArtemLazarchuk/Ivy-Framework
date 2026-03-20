@@ -1,10 +1,16 @@
 import React from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import routingConstants from "../routing-constants.json" assert { type: "json" };
+import routingConstants from "../routing-constants.json";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function getIvyPathBase(): string | null {
+  const meta = document.querySelector('meta[name="ivy-path-base"]');
+  const content = meta?.getAttribute("content");
+  return content ? (content.startsWith("/") ? content : "/" + content) : null;
 }
 
 export function getAppId(): string | null {
@@ -19,7 +25,7 @@ export function getAppId(): string | null {
   const pathBase = getIvyPathBase(); // e.g. "/foo/bar"
   let pathname = window.location.pathname;
   if (pathBase && pathname.startsWith(pathBase)) {
-    pathname = pathname.slice(pathBase.length) || '/';
+    pathname = pathname.slice(pathBase.length) || "/";
   }
 
   const path = pathname.toLowerCase();

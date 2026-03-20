@@ -6,7 +6,7 @@ namespace Ivy;
 
 public class AppContext
 {
-    internal AppContext(string connectionId, string machineId, string appId, string? navigationAppId, string? argsJson, string scheme, string host)
+    internal AppContext(string connectionId, string machineId, string appId, string? navigationAppId, string? argsJson, string scheme, string host, string? pathBase = null)
     {
         MachineId = machineId;
         AppId = appId;
@@ -15,11 +15,14 @@ public class AppContext
         ConnectionId = connectionId;
         Scheme = scheme;
         Host = host;
+        PathBase = pathBase;
     }
 
     public string Scheme { get; set; }
 
     public string Host { get; set; }
+
+    public string? PathBase { get; set; }
 
     /// <summary>
     /// Gets the base URL of the application (scheme + host).
