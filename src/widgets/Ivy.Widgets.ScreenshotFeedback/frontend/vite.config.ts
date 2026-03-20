@@ -8,7 +8,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
-  lint: { options: { typeCheck: false } },
   plugins: [
     react(),
   ],

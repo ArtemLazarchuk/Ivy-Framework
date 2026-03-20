@@ -9,7 +9,6 @@ const __dirname = dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  lint: { options: { typeCheck: false } },
   plugins: [
     react(),
   ],
