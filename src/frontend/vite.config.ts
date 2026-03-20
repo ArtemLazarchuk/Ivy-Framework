@@ -56,7 +56,8 @@ const injectMeta = (mode: string): Plugin => {
   };
 };
 
-export default defineConfig(({ mode }) => ({
+const mode = process.env.NODE_ENV || 'development';
+export default defineConfig({
   lint: {
     "plugins": [
       "oxc",
@@ -261,10 +262,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  esbuild: {
-    drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
-    legalComments: "none",
-  },
+  oxc: {},
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -292,4 +290,4 @@ export default defineConfig(({ mode }) => ({
     exclude: ["**/e2e/**", "**/node_modules/**", "**/dist/**"],
     environment: "happy-dom",
   },
-}));
+});
