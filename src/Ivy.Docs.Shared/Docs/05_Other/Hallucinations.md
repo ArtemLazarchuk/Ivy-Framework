@@ -356,6 +356,33 @@ items.ToTable()
 a9ee3993-1cfb-4cba-9322-80a60b56c8d2
 cab4c6bb-be1f-4fef-9d96-96c54e5f88ff
 
+## Details() — empty constructor instead of passing items
+
+**Hallucinated API:**
+```csharp
+new Details()
+    | new Detail("Country Code", result.CountryCode, false)
+    | new Detail("VAT Number", result.VatNumber, false)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
+
+**Correct API:**
+```csharp
+new Details(new[] {
+    new Detail("Country Code", result.CountryCode, false),
+    new Detail("VAT Number", result.VatNumber, false)
+})
+// or use the builder pattern:
+result.ToDetails()
+```
+
+`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
+b6beb60d-478d-409e-b10d-7913ae911e85
+
 ## LayoutView.MaxWidth() — non-existent method
 
 **Hallucinated API:**
@@ -1650,32 +1677,6 @@ state.ToForm()
 **Found In:**
 5d2202d2-9d6b-4198-9922-c3763534aca5
 
-## Details() — empty constructor instead of passing items
-
-**Hallucinated API:**
-```csharp
-new Details()
-    | new Detail("Country Code", result.CountryCode, false)
-    | new Detail("VAT Number", result.VatNumber, false)
-```
-
-**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
-
-**Correct API:**
-```csharp
-new Details(new[] {
-    new Detail("Country Code", result.CountryCode, false),
-    new Detail("VAT Number", result.VatNumber, false)
-})
-// or use the builder pattern:
-result.ToDetails()
-```
-
-`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
-
-**Found In:**
-857de09c-ab87-49a5-aac4-394f7d0aa207
-
 ## DataTable.RowActions() — Tree extension called on DataTable widget
 
 **Hallucinated API:**
@@ -1765,6 +1766,54 @@ There are no `Ivy.Apps` or `Ivy.Shared` namespaces. All Ivy widgets, hooks, and 
 
 **Found In:**
 a55e08b9-f212-49ef-97b9-d352b7b4beb8
+
+## ToDataTable() on List\<T\> — wrong receiver type
+
+**Hallucinated API:**
+```csharp
+var items = await db.Categories.ToListAsync();
+items.ToDataTable()
+```
+
+**Error:** `CS1061: 'List<Category>' does not contain a definition for 'ToDataTable'`
+
+**Correct API:**
+```csharp
+// ToDataTable() is an extension on IQueryable<T>, not List<T>:
+db.Categories.ToDataTable()
+
+// Or use ToTable() for in-memory collections:
+items.ToTable()
+```
+
+`ToDataTable()` is defined on `IQueryable<T>` (via `DataTableBuilder`), not on `List<T>` or `IEnumerable<T>`. The agent often materializes a query to a List first (e.g., via `ToListAsync()`), then tries to call `ToDataTable()` on the result. Pass the `IQueryable<T>` directly to `ToDataTable()` without materializing. For in-memory collections, use `.ToTable()` instead.
+
+**Found In:**
+9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestFilesApp.cs and CategoriesApp.cs)
+
+## await void OnSubmit callback — incorrect async pattern
+
+**Hallucinated API:**
+```csharp
+state.ToForm().OnSubmit(async form => {
+    await db.SaveChangesAsync(); // CS4008: Cannot await 'void'
+})
+```
+
+**Error:** `CS4008: Cannot await 'void'`
+
+**Correct API:**
+```csharp
+state.ToForm().OnSubmit(async form => {
+    await db.SaveChangesAsync();
+    // Ensure the callback signature returns Task, not void
+})
+```
+
+The agent sometimes uses `await` on a method that returns `void` inside a form `OnSubmit` callback. This happens when the callback is inferred as `Action<T>` (returning void) rather than `Func<T, Task>`. Ensure the lambda is recognized as async Task-returning by the compiler. If the `OnSubmit` overload expects `Func<T, ValueTask>`, ensure the return type matches.
+
+**Found In:**
+9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestsApp.cs)
 
 ## TextInput.Grow() — Box-only extension called on TextInput
 
@@ -1870,53 +1919,29 @@ state.ToForm().OnSubmit(async form => { ... })
 
 `OnSubmit` is a fluent extension method that chains after `ToForm()`, not a constructor parameter. The same pattern applies to other form event handlers like `OnChange`.
 
-## ToDataTable() on List\<T\> — wrong receiver type
+## UseEffect fires on initial render — it does not
 
-**Hallucinated API:**
+**Hallucinated behavior:**
+The agent assumes `UseEffect` with a state dependency fires on the initial render (like React's `useEffect`), so it initializes state as empty and relies on the effect to populate it:
+
 ```csharp
-var items = await db.Categories.ToListAsync();
-items.ToDataTable()
+// Agent writes this expecting the effect to run immediately:
+var count = UseState(10);
+var items = UseState(() => new List<User>());
+UseEffect(() => { items.Set(GenerateUsers(count.Value)); }, count);
+// Result: table is empty on first load
 ```
 
-**Error:** `CS1061: 'List<Category>' does not contain a definition for 'ToDataTable'`
+**Correct pattern:**
+`UseEffect` with state dependencies only fires when the dependency **changes**, not on the first render. Initialize state with data directly:
 
-**Correct API:**
 ```csharp
-// ToDataTable() is an extension on IQueryable<T>, not List<T>:
-db.Categories.ToDataTable()
-
-// Or use ToTable() for in-memory collections:
-items.ToTable()
+var count = UseState(10);
+var items = UseState(() => GenerateUsers(count.Value));
+UseEffect(() => { items.Set(GenerateUsers(count.Value)); }, count);
 ```
 
-`ToDataTable()` is defined on `IQueryable<T>` (via `DataTableBuilder`), not on `List<T>` or `IEnumerable<T>`. The agent often materializes a query to a List first (e.g., via `ToListAsync()`), then tries to call `ToDataTable()` on the result. Pass the `IQueryable<T>` directly to `ToDataTable()` without materializing. For in-memory collections, use `.ToTable()` instead.
-
-**Found In:**
-9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestFilesApp.cs and CategoriesApp.cs)
-
-## await void OnSubmit callback — incorrect async pattern
-
-**Hallucinated API:**
-```csharp
-state.ToForm().OnSubmit(async form => {
-    await db.SaveChangesAsync(); // CS4008: Cannot await 'void'
-})
-```
-
-**Error:** `CS4008: Cannot await 'void'`
-
-**Correct API:**
-```csharp
-state.ToForm().OnSubmit(async form => {
-    await db.SaveChangesAsync();
-    // Ensure the callback signature returns Task, not void
-})
-```
-
-The agent sometimes uses `await` on a method that returns `void` inside a form `OnSubmit` callback. This happens when the callback is inferred as `Action<T>` (returning void) rather than `Func<T, Task>`. Ensure the lambda is recognized as async Task-returning by the compiler. If the `OnSubmit` overload expects `Func<T, ValueTask>`, ensure the return type matches.
-
-**Found In:**
-9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestsApp.cs)
+This is a behavioral difference from React's `useEffect`, which fires on mount and on dependency changes. Ivy's `UseEffect` with state triggers uses `AfterChange` semantics only.
 
 ## IRef\<T\> — now supported
 
