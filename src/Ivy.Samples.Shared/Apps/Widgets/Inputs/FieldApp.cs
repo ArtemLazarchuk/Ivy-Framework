@@ -104,11 +104,11 @@ public class FieldApp : SampleBase
                     | Text.H3("OnFocus/OnBlur")
                     | eventsState.ToTextInput()
                         .Placeholder("Click in, then click away")
+                        .OnFocus(_ => eventsOnFocusLabel.Set("Focus Event Triggered"))
+                        .OnBlur(_ => eventsOnBlurLabel.Set("Blur Event Triggered"))
                         .WithField()
                         .Label("Focusable field")
                         .Description("Use mouse click or tab to trigger events")
-                        .OnFocus(_ => eventsOnFocusLabel.Set("Focus Event Triggered"))
-                        .OnBlur(_ => eventsOnBlurLabel.Set("Blur Event Triggered"))
                     | (eventsOnFocusLabel.Value != ""
                         ? Callout.Success(eventsOnFocusLabel.Value)
                         : Callout.Info("Focus the field to see OnFocus"))

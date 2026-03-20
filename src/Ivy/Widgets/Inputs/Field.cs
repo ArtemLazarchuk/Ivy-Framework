@@ -1,5 +1,4 @@
 using Ivy.Core;
-using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
 namespace Ivy;
@@ -57,39 +56,6 @@ public record Field : WidgetBase<Field>
 
 public static class FieldExtensions
 {
-    private static Field WithInputChild(this Field field, IAnyInput input)
-    {
-        var result = new Field(
-            input,
-            field.Label,
-            field.Description,
-            field.Required,
-            field.Help,
-            field.Density ?? Ivy.Density.Medium
-        )
-        {
-            LabelPosition = field.LabelPosition,
-            Width = field.Width,
-            Height = field.Height,
-            AspectRatio = field.AspectRatio,
-            TestId = field.TestId,
-            Key = field.Key,
-            Path = field.Path,
-            CallSite = field.CallSite
-        };
-
-        return result;
-    }
-
-    private static IAnyInput GetInputChild(this Field field)
-    {
-        if (field.Children is { Length: > 0 } && field.Children[0] is IAnyInput input)
-            return input;
-
-        throw new InvalidOperationException(
-            $"Field '{field.GetType().FullName}' does not contain an input child.");
-    }
-
     public static Field Label(this Field field, string label) => field with { Label = label };
 
     public static Field Description(this Field field, string description) => field with { Description = description };
@@ -101,41 +67,4 @@ public static class FieldExtensions
     public static Field LabelPosition(this Field field, LabelPosition position) => field with { LabelPosition = position };
 
     public static Field WithField(this IAnyInput input) => new Field(input);
-
-    public static Field OnBlur(this Field field, Func<Event<IAnyInput>, ValueTask> onBlur)
-    {
-        var input = field.GetInputChild().OnBlur(onBlur);
-        return field.WithInputChild(input);
-    }
-
-    public static Field OnBlur(this Field field, Action<Event<IAnyInput>> onBlur)
-    {
-        var input = field.GetInputChild().OnBlur(onBlur);
-        return field.WithInputChild(input);
-    }
-
-    public static Field OnBlur(this Field field, Action onBlur)
-    {
-        var input = field.GetInputChild().OnBlur(onBlur);
-        return field.WithInputChild(input);
-    }
-
-    public static Field OnFocus(this Field field, Func<Event<IAnyInput>, ValueTask> onFocus)
-    {
-        var input = field.GetInputChild().OnFocus(onFocus);
-        return field.WithInputChild(input);
-    }
-
-    public static Field OnFocus(this Field field, Action<Event<IAnyInput>> onFocus)
-    {
-        var input = field.GetInputChild().OnFocus(onFocus);
-        return field.WithInputChild(input);
-    }
-
-    public static Field OnFocus(this Field field, Action onFocus)
-    {
-        var input = field.GetInputChild().OnFocus(onFocus);
-        return field.WithInputChild(input);
-    }
 }
-
