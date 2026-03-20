@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-oxc";
 import { resolve } from "path";
 
 import { fileURLToPath } from "url";
@@ -24,7 +24,7 @@ export default defineConfig({
       fileName: () => "Ivy_Widgets_ScreenshotFeedback.js",
       name: "Ivy_Widgets_ScreenshotFeedback",
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: ["react", "react-dom"],
       output: {
         globals: {

@@ -1,6 +1,6 @@
 import path from "path";
 import { defineConfig, type Plugin } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react-oxc";
 import tailwindcss from "@tailwindcss/vite";
 
 import { fileURLToPath } from "url";
@@ -85,7 +85,7 @@ export default defineConfig({
     assetsDir: "assets",
     cssCodeSplit: true,
     sourcemap: false,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: path.resolve(__dirname, "index.html"),
       },

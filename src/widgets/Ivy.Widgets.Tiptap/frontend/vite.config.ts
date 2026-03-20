@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-oxc";
 import { resolve } from "path";
 
 import { fileURLToPath } from "url";
@@ -32,7 +32,7 @@ export default defineConfig({
       // Global variable name for the library (must match C# class name)
       name: "Ivy_Widgets_Tiptap",
     },
-    rollupOptions: {
+    rolldownOptions: {
       // Externalize React - the host app provides these via globals
       external: ["react", "react-dom"],
       output: {

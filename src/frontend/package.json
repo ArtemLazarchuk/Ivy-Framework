@@ -105,7 +105,6 @@
     "@types/react-dom": "19.2.2",
     "@types/react-syntax-highlighter": "15.5.13",
     "@types/wicg-file-system-access": "^2023.10.7",
-    "@vitejs/plugin-react-swc": "4.2.0",
     "canvas-confetti": "1.9.4",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
@@ -120,7 +119,8 @@
     "typescript-eslint": "8.46.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest",
+    "@vitejs/plugin-react-oxc": "latest"
   },
   "overrides": {
     "@swc/helpers": "0.5.17",
