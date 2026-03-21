@@ -48,10 +48,13 @@ export function useKanbanData(
   widgetNodeChildren?: WidgetNodeChild[],
 ): ExtractedKanbanData {
   return React.useMemo(() => {
-    if (widgetNodeChildren && widgetNodeChildren.length > 0) {
+    const kanbanChildren = (widgetNodeChildren || []).filter(
+      c => c.type === 'Ivy.KanbanCard'
+    );
+    if (kanbanChildren.length > 0) {
       const extractedCards: CardData[] = [];
 
-      widgetNodeChildren.forEach((widgetNode, index) => {
+      kanbanChildren.forEach((widgetNode, index) => {
         if (widgetNode.type === "Ivy.KanbanCard") {
           const cardId = widgetNode.props.cardId as string | undefined;
           const priority = widgetNode.props.priority as number | undefined;
