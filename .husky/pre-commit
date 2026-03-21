@@ -1,24 +1,5 @@
 #!/bin/sh
 
-echo "Formatting staged C# files..."
-STAGED_CS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.cs$')
-
-if [ -n "$STAGED_CS" ]; then
-    for file in $STAGED_CS; do
-        dir=$(dirname "$file")
-        # Walk up the tree to find the nearest .csproj
-        while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
-            if ls "$dir"/*.csproj 1> /dev/null 2>&1; then
-                echo "Formatting $file in project $dir..."
-                dotnet format "$dir" --include "$file"
-                git add "$file"
-                break
-            fi
-            dir=$(dirname "$dir")
-        done
-    done
-fi
-
 echo "Running Vite+ linter and formatter..."
 cd src/frontend
 pnpm exec lint-staged
