@@ -4,7 +4,19 @@
 
 ## Development
 
-The frontend uses **Vite+** (`vp`). For daily development, you can use the Vite+ CLI directly:
+**Important Package Manager Note**: This ecosystem strictly uses `pnpm`. Running the legacy `npm install` command is deliberately blocked via a `preinstall` routine.
+
+**For Full-Stack / .NET Developers:**
+If you are simply cloning the repository and running `dotnet build` (or opening the solution in an IDE like visual studio or Rider), **you do not need to install anything manually**. We've engineered the MSBuild MSBuild targets to natively bootstrap `pnpm` safely over the network via standard `npx` routines. This completely automates the frontend installation and compilation pipeline seamlessly without requiring manual intervention.
+
+**For Standalone Frontend Development:**
+If you want to explicitly work on the frontend in isolation (using HMR for widgets), you must manually run:
+
+```bash
+pnpm i
+```
+
+After installing the packages, you can use the native Vite+ CLI:
 
 ```bash
 vp dev
