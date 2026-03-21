@@ -62,6 +62,9 @@ importers:
       '@ivy-interactive/ivy-design-system':
         specifier: 1.1.18
         version: 1.1.18
+      '@lezer/highlight':
+        specifier: 1.2.3
+        version: 1.2.3
       '@microsoft/signalr':
         specifier: 9.0.6
         version: 9.0.6
