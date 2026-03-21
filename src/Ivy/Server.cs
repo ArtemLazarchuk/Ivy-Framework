@@ -38,6 +38,7 @@ public record ServerArgs
     public string? TestConnection { get; set; } = null;
     public string? MetaTitle { get; set; } = null;
     public string? MetaDescription { get; set; } = null;
+    public string? MetaGitHubUrl { get; set; } = null;
     public Assembly? AssetAssembly { get; set; } = null;
     public bool EnableDevTools { get; set; } = false;
 #if DEBUG
@@ -397,6 +398,12 @@ public class Server
     public Server SetMetaDescription(string description)
     {
         _args.MetaDescription = description;
+        return this;
+    }
+
+    public Server SetMetaGitHubUrl(string url)
+    {
+        _args.MetaGitHubUrl = url;
         return this;
     }
 
@@ -1011,6 +1018,7 @@ public static class WebApplicationExtensions
                     .Use<LicenseFilter>()
                     .Use<DevToolsFilter>()
                     .Use<MetaDescriptionFilter>()
+                    .Use<MetaGitHubUrlFilter>()
                     .Use<TitleFilter>()
                     .Use<ThemeFilter>()
                     .Use<ManifestFilter>();
