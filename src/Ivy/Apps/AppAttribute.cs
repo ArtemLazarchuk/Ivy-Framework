@@ -8,6 +8,8 @@ public class AppAttribute(
     string? title = null,
     Icons icon = Icons.None,
     string? description = null,
+
+
     string[]? group = null!,
     bool isVisible = true,
     int order = 0,
