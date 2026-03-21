@@ -237,6 +237,8 @@ public class Server
             return provider;
         });
 
+        DiscoverAndRegisterOAuthTokenHandlers();
+
         AddApp(new AppDescriptor
         {
             Id = AppIds.Auth,
@@ -247,6 +249,89 @@ public class Server
         });
         AuthProviderType = typeof(T);
         return this;
+    }
+
+    public Server RegisterAuthTokenHandler<T>(string provider) where T : class, IAuthTokenHandler
+    {
+        Services.AddKeyedSingleton<IAuthTokenHandler, T>(provider);
+        return this;
+    }
+
+    private void DiscoverAndRegisterOAuthTokenHandlers()
+    {
+        try
+        {
+            // Load all "Ivy.Auth.*" assemblies eagerly to ensure their handlers are registered in the DI container
+            var entryAssembly = Assembly.GetEntryAssembly();
+            if (entryAssembly?.Location != null)
+            {
+                var assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
+                if (assemblyDirectory != null)
+                {
+                    var authAssemblyFiles = Directory.GetFiles(assemblyDirectory, "Ivy.Auth.*.dll");
+
+                    foreach (var assemblyFile in authAssemblyFiles)
+                    {
+                        try
+                        {
+                            Assembly.LoadFrom(assemblyFile);
+                        }
+                        catch
+                        {
+                            // Continue if we can't load an assembly
+                        }
+                    }
+                }
+            }
+
+            // Now get all loaded assemblies
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblies)
+            {
+                try
+                {
+                    // Skip system assemblies for performance
+                    var assemblyName = assembly.GetName().Name ?? "";
+                    if (assemblyName.StartsWith("System.") ||
+                        assemblyName.StartsWith("Microsoft.") ||
+                        assemblyName == "netstandard" ||
+                        assemblyName == "mscorlib")
+                    {
+                        continue;
+                    }
+
+                    // Find all types with OAuthTokenHandlerAttribute
+                    var handlerTypes = assembly.GetTypes()
+                        .Where(t => t.IsClass && !t.IsAbstract && typeof(IAuthTokenHandler).IsAssignableFrom(t))
+                        .Where(t => t.GetCustomAttribute<OAuthTokenHandlerAttribute>() != null)
+                        .ToList();
+
+                    foreach (var handlerType in handlerTypes)
+                    {
+                        var attribute = handlerType.GetCustomAttribute<OAuthTokenHandlerAttribute>();
+                        if (attribute == null)
+                            continue;
+
+                        try
+                        {
+                            Services.AddKeyedSingleton(typeof(IAuthTokenHandler), attribute.Provider, handlerType);
+                        }
+                        catch
+                        {
+                            // Continue if we can't register a handler
+                        }
+                    }
+                }
+                catch
+                {
+                    // Continue loading types from an assembly fails
+                }
+            }
+        }
+        catch
+        {
+            // Continue if discovery completely fails, just continue with no handlers
+        }
     }
 
     public Server UseDefaultApp(Type appType)
