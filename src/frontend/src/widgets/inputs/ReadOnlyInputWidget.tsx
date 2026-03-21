@@ -14,8 +14,7 @@ export const ReadOnlyInputWidget: React.FC<ReadOnlyInputWidgetProps> = ({
 }) => {
   return (
     <div key={id} className="text-body text-muted-foreground flex flex-row items-center w-full">
-      <div className="flex-1">
-        {value != null && value !== "" ? String(value) : "-"}</div>
+      <div className="flex-1">{value != null && value !== "" ? String(value) : "-"}</div>
       {showCopyButton && <CopyToClipboardButton textToCopy={String(value || "")} label="" />}
     </div>
   );

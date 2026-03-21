@@ -11,7 +11,7 @@
     "format": "vp fmt .",
     "format:check": "vp fmt --check .",
     "preview": "vp preview",
-    "prepare": "cd .. && husky frontend/.husky",
+    "prepare": "cd ../.. && husky src/frontend/.husky",
     "test": "vp test",
     "e2e": "playwright test",
     "e2e:docs": "playwright test e2e/docs",
