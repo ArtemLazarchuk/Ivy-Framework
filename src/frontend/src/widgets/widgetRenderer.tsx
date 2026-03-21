@@ -27,21 +27,18 @@ const processSlots = (
   children: WidgetNode[],
   scaleForChildren: Densities | undefined,
 ): Record<string, React.ReactNode[]> => {
-  return children.reduce<Record<string, React.ReactNode[]>>(
-    (acc, child: WidgetNode) => {
-      if (child.type === "Ivy.Slot") {
-        const slotName = child.props.name as string;
-        acc[slotName] = (child.children || []).map((slotChild: WidgetNode) =>
-          renderWidgetTree(slotChild, scaleForChildren),
-        );
-      } else {
-        acc.default = acc.default || [];
-        acc.default.push(renderWidgetTree(child, scaleForChildren));
-      }
-      return acc;
-    },
-    {},
-  );
+  return children.reduce<Record<string, React.ReactNode[]>>((acc, child: WidgetNode) => {
+    if (child.type === "Ivy.Slot") {
+      const slotName = child.props.name as string;
+      acc[slotName] = (child.children || []).map((slotChild: WidgetNode) =>
+        renderWidgetTree(slotChild, scaleForChildren),
+      );
+    } else {
+      acc.default = acc.default || [];
+      acc.default.push(renderWidgetTree(child, scaleForChildren));
+    }
+    return acc;
+  }, {});
 };
 
 const registerCallSite = (node: WidgetNode) => {

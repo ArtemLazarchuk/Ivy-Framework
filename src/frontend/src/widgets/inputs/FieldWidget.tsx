@@ -32,7 +32,7 @@ export const FieldWidget: React.FC<FieldWidgetProps> = ({
   const [inputId, setInputId] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
-    const el = childrenRef.current?.querySelector('input, select, textarea');
+    const el = childrenRef.current?.querySelector("input, select, textarea");
     if (el?.id) setInputId(el.id);
   }, [children]);
 

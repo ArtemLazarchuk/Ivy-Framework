@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import IvyLogo from "./IvyLogo";
 
 function toGitHubUrl(value: string): string {
-  if (value.startsWith('http')) return value;
+  if (value.startsWith("http")) return value;
   return `https://github.com/${value}`;
 }
 
@@ -11,9 +11,9 @@ export default function MadeWithIvy() {
   const [isHovered, setIsHovered] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
   const [gitHubUrl] = useState<string | null>(() => {
-    if (typeof document === 'undefined') return null;
+    if (typeof document === "undefined") return null;
     const meta = document.querySelector('meta[name="github-url"]');
-    return meta?.getAttribute('content') || null;
+    return meta?.getAttribute("content") || null;
   });
 
   useEffect(() => {
@@ -31,16 +31,16 @@ export default function MadeWithIvy() {
 
   const linkUrl = gitHubUrl
     ? toGitHubUrl(gitHubUrl)
-    : 'https://github.com/Ivy-Interactive/Ivy-Framework';
+    : "https://github.com/Ivy-Interactive/Ivy-Framework";
 
   const handleClick = () => {
-    window.open(linkUrl, '_blank');
+    window.open(linkUrl, "_blank");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      window.open(linkUrl, '_blank');
+      window.open(linkUrl, "_blank");
     }
   };
 

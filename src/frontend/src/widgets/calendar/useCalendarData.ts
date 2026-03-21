@@ -8,7 +8,7 @@ export function useCalendarData(
 ): CalendarEvent[] {
   return React.useMemo(() => {
     const calendarEventChildren = (widgetNodeChildren || []).filter(
-      c => c.type === 'Ivy.CalendarEvent'
+      (c) => c.type === "Ivy.CalendarEvent",
     );
     if (calendarEventChildren.length === 0) {
       return [];

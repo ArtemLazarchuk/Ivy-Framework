@@ -48,9 +48,7 @@ export function useKanbanData(
   widgetNodeChildren?: WidgetNodeChild[],
 ): ExtractedKanbanData {
   return React.useMemo(() => {
-    const kanbanChildren = (widgetNodeChildren || []).filter(
-      c => c.type === 'Ivy.KanbanCard'
-    );
+    const kanbanChildren = (widgetNodeChildren || []).filter((c) => c.type === "Ivy.KanbanCard");
     if (kanbanChildren.length > 0) {
       const extractedCards: CardData[] = [];
 
