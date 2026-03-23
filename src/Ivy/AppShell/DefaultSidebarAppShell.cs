@@ -54,7 +54,7 @@ public class DefaultSidebarAppShell(AppShellSettings settings) : ViewBase
             var app = appRepository.GetAppOrDefault(appId);
             if (app.Title is { } title)
             {
-                client.SetTitle(title, serverArgs.MetaTitle);
+                client.SetTitle(title, serverArgs.Metadata.Title);
             }
         }
 
@@ -319,7 +319,7 @@ public class DefaultSidebarAppShell(AppShellSettings settings) : ViewBase
                 else
                 {
                     // Reset to default title when all tabs are closed
-                    client.SetTitle(serverArgs.MetaTitle);
+                    client.SetTitle(serverArgs.Metadata.Title);
 
                     client.Redirect("/");
                     sidebarOpen.Set(true);

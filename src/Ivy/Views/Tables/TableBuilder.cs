@@ -106,9 +106,11 @@ public class TableBuilder<TModel> : ViewBase, IStateless
     {
         var type = typeof(TModel);
 
-        // Skip scaffolding for dictionary types - columns will be created dynamically via Header()/Add()
         if (typeof(IDictionary).IsAssignableFrom(type))
+        {
+            ScaffoldDictionaryColumns();
             return;
+        }
 
         var fields = type
             .GetFields()
@@ -152,6 +154,43 @@ public class TableBuilder<TModel> : ViewBase, IStateless
             var column = new TableBuilderColumn(field.Name, order++, cellBuilder, cellAlignment, field.FieldInfo, field.PropertyInfo, removed, cellBuilder, removed, cellAlignment);
             column.Width = CalculateSmartDefaultWidth(column);
             _columns[field.Name] = column;
+        }
+    }
+
+    private void ScaffoldDictionaryColumns()
+    {
+        var first = _records.FirstOrDefault();
+        if (first == null) return;
+
+        int order = 0;
+        var builder = _builderFactory.Default();
+
+        if (first is IDictionary<string, object> dictObj)
+        {
+            foreach (var key in dictObj.Keys)
+            {
+                var column = new TableBuilderColumn(key, order++, builder, Ivy.Align.Left, null!, null, false, builder, false, Ivy.Align.Left);
+                column.Width = CalculateSmartDefaultWidth(column);
+                _columns[key] = column;
+            }
+        }
+        else if (first is IDictionary<string, string> dictStr)
+        {
+            foreach (var key in dictStr.Keys)
+            {
+                var column = new TableBuilderColumn(key, order++, builder, Ivy.Align.Left, null!, null, false, builder, false, Ivy.Align.Left);
+                column.Width = CalculateSmartDefaultWidth(column);
+                _columns[key] = column;
+            }
+        }
+        else if (first is IDictionary dict)
+        {
+            foreach (var key in dict.Keys.Cast<object>().Select(k => k.ToString()!))
+            {
+                var column = new TableBuilderColumn(key, order++, builder, Ivy.Align.Left, null!, null, false, builder, false, Ivy.Align.Left);
+                column.Width = CalculateSmartDefaultWidth(column);
+                _columns[key] = column;
+            }
         }
     }
 

@@ -4,9 +4,9 @@ public class MetaGitHubUrlFilter : IHtmlFilter
 {
     public string Process(HtmlPipelineContext context, string html)
     {
-        if (!string.IsNullOrEmpty(context.ServerArgs.MetaGitHubUrl))
+        if (!string.IsNullOrEmpty(context.ServerArgs.Metadata.GitHubUrl))
         {
-            var metaTag = $"<meta name=\"github-url\" content=\"{context.ServerArgs.MetaGitHubUrl}\" />";
+            var metaTag = $"<meta name=\"github-url\" content=\"{context.ServerArgs.Metadata.GitHubUrl}\" />";
             html = html.Replace("</head>", $"  {metaTag}\n</head>");
         }
 

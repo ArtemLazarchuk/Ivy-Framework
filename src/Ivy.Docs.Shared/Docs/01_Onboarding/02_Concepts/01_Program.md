@@ -60,9 +60,14 @@ var server = new Server(new ServerArgs
 | `Browse` | `bool` | `false` | Automatically open browser on startup |
 | `Silent` | `bool` | `false` | Suppress startup messages |
 | `DefaultAppId` | `string?` | `null` | Set the default app to load |
-| `MetaTitle` | `string?` | `null` | HTML meta title |
-| `MetaDescription` | `string?` | `null` | HTML meta description |
-| `MetaGitHubUrl` | `string?` | `null` | GitHub repository URL meta tag |
+| `Metadata.Title` | `string?` | `null` | HTML meta title |
+| `Metadata.Description` | `string?` | `null` | HTML meta description |
+| `Metadata.GitHubUrl` | `string?` | `null` | GitHub repository URL meta tag |
+| `Metadata.OgImage` | `string?` | `null` (auto from GitHub URL) | Open Graph image URL. Auto-generated from `Metadata.GitHubUrl` + title when not set. |
+| `Metadata.OgSiteName` | `string?` | `null` (auto from assembly) | Site name for `og:site_name`. Auto-derived from entry assembly name when not set. |
+| `Metadata.OgType` | `string?` | `"website"` | Open Graph type |
+| `Metadata.OgLocale` | `string?` | `"en_US"` | Open Graph locale |
+| `Metadata.TwitterCard` | `string?` | `"summary_large_image"` | Twitter card type |
 
 ## Adding Applications
 

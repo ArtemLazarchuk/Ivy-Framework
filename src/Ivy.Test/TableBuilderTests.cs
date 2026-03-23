@@ -125,12 +125,29 @@ public class TableBuilderTests
     }
 
     [Fact]
-    public void DictionaryModel_Scaffold_SkipsDictionaryProperties()
+    public void DictionaryModel_AutoScaffolds_ColumnsFromKeys()
     {
         var data = new List<Dictionary<string, string>>
         {
-            new() { ["Name"] = "Alice" }
+            new() { ["Name"] = "Alice", ["Age"] = "30" },
+            new() { ["Name"] = "Bob",   ["Age"] = "25" }
         };
+
+        var builder = new TableBuilder<Dictionary<string, string>>(data);
+
+        var columnsField = typeof(TableBuilder<Dictionary<string, string>>)
+            .GetField("_columns", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var columns = (System.Collections.IDictionary)columnsField!.GetValue(builder)!;
+
+        Assert.Equal(2, columns.Count);
+        Assert.True(columns.Contains("Name"));
+        Assert.True(columns.Contains("Age"));
+    }
+
+    [Fact]
+    public void DictionaryModel_AutoScaffolds_EmptyCollection_NoColumns()
+    {
+        var data = new List<Dictionary<string, string>>();
 
         var builder = new TableBuilder<Dictionary<string, string>>(data);
 

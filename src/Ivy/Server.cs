@@ -23,6 +23,18 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ivy;
 
+public record ServerMetadata
+{
+    public string? Title { get; set; } = null;
+    public string? Description { get; set; } = null;
+    public string? GitHubUrl { get; set; } = null;
+    public string? OgImage { get; set; } = null;
+    public string? OgSiteName { get; set; } = null;
+    public string? OgType { get; set; } = "website";
+    public string? OgLocale { get; set; } = "en_US";
+    public string? TwitterCard { get; set; } = "summary_large_image";
+}
+
 public record ServerArgs
 {
     public const int DefaultPort = 5010;
@@ -36,9 +48,7 @@ public record ServerArgs
     public bool Describe { get; set; } = false;
     public string? DescribeConnection { get; set; } = null;
     public string? TestConnection { get; set; } = null;
-    public string? MetaTitle { get; set; } = null;
-    public string? MetaDescription { get; set; } = null;
-    public string? MetaGitHubUrl { get; set; } = null;
+    public ServerMetadata Metadata { get; set; } = new();
     public Assembly? AssetAssembly { get; set; } = null;
     public bool EnableDevTools { get; set; } = false;
 #if DEBUG
@@ -391,19 +401,19 @@ public class Server
 
     public Server SetMetaTitle(string title)
     {
-        _args.MetaTitle = title;
+        _args.Metadata.Title = title;
         return this;
     }
 
     public Server SetMetaDescription(string description)
     {
-        _args.MetaDescription = description;
+        _args.Metadata.Description = description;
         return this;
     }
 
     public Server SetMetaGitHubUrl(string url)
     {
-        _args.MetaGitHubUrl = url;
+        _args.Metadata.GitHubUrl = url;
         return this;
     }
 
@@ -1021,7 +1031,8 @@ public static class WebApplicationExtensions
                     .Use<MetaGitHubUrlFilter>()
                     .Use<TitleFilter>()
                     .Use<ThemeFilter>()
-                    .Use<ManifestFilter>();
+                    .Use<ManifestFilter>()
+                    .Use<OpenGraphFilter>();
 
                 foreach (var filter in server.GetCustomFilters())
                     pipeline.Use(filter);

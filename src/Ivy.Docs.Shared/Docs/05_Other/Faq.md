@@ -1,3 +1,6 @@
+---
+hidden: true
+---
 # Faq
 
 ## How do I read CSV data or load external data in Ivy?
@@ -5,6 +8,7 @@
 Ivy apps are standard C# applications, so you can use any .NET approach to load data:
 
 **Embedded CSV data (hardcoded):**
+
 ```csharp
 // Define your data as C# records/classes and initialize inline
 var data = new[] {
@@ -14,6 +18,7 @@ var data = new[] {
 ```
 
 **Read from a CSV file using CsvHelper (NuGet package):**
+
 ```csharp
 // Add NuGet package: CsvHelper
 using CsvHelper;
@@ -25,6 +30,7 @@ var records = csv.GetRecords<WeatherRecord>().ToList();
 ```
 
 **Fetch data from a URL at runtime:**
+
 ```csharp
 var http = new HttpClient();
 var csvText = await http.GetStringAsync("https://example.com/data.csv");
@@ -101,11 +107,13 @@ Then access it via `UseService<MyService>()` in your app. Do NOT use `services.A
 ## When should I use UseDefaultApp vs UseAppShell in Program.cs?
 
 **UseDefaultApp** is for single-app projects where you want to skip the sidebar and go directly to the app:
+
 ```csharp
 server.UseDefaultApp(typeof(MyApp));
 ```
 
 **UseAppShell** is for multi-app projects where users need sidebar navigation between apps:
+
 ```csharp
 server.UseAppShell(new AppShellSettings().DefaultApp<MyApp>().UseTabs(preventDuplicates: true));
 ```
