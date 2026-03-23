@@ -14,6 +14,9 @@ export interface DateTimeInputWidgetProps {
   invalid?: string;
   format?: string;
   firstDayOfWeek?: WeekDay | string;
+  min?: string;
+  max?: string;
+  step?: string;
   density?: Densities;
   "data-testid"?: string;
 }
@@ -27,6 +30,9 @@ export interface BaseVariantProps {
   invalid?: string;
   format?: string;
   firstDayOfWeek?: WeekDay;
+  min?: string;
+  max?: string;
+  step?: string;
   density?: Densities;
   "data-testid"?: string;
 }

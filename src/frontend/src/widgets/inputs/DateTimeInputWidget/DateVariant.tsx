@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,12 +25,21 @@ export const DateVariant: React.FC<DateVariantProps> = ({
   onDateChange,
   format: formatProp,
   firstDayOfWeek,
+  min,
+  max,
   density = Densities.Medium,
   "data-testid": dataTestId,
 }) => {
   const [open, setOpen] = useState(false);
   const date = value ? new Date(value) : undefined;
   const showClear = nullable && !disabled && value != null && value !== "";
+
+  const disabledDays = useMemo(() => {
+    const matchers: Array<{ before: Date } | { after: Date }> = [];
+    if (min) matchers.push({ before: new Date(min) });
+    if (max) matchers.push({ after: new Date(max) });
+    return matchers;
+  }, [min, max]);
 
   const handleClear = (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -81,6 +90,7 @@ export const DateVariant: React.FC<DateVariantProps> = ({
             mode="single"
             selected={date}
             onSelect={handleSelect}
+            disabled={disabledDays.length > 0 ? disabledDays : undefined}
             initialFocus
             weekStartsOn={firstDayOfWeek}
             density={density}

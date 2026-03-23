@@ -27,11 +27,16 @@ export const YearVariant: React.FC<YearVariantProps> = ({
   invalid,
   onDateChange,
   format: formatProp,
+  min,
+  max,
   density = Densities.Medium,
   "data-testid": dataTestId,
 }) => {
   const [open, setOpen] = useState(false);
   const date = useMemo(() => (value ? new Date(value) : undefined), [value]);
+
+  const minDate = useMemo(() => (min ? new Date(min) : undefined), [min]);
+  const maxDate = useMemo(() => (max ? new Date(max) : undefined), [max]);
 
   const [decadeStart, setDecadeStart] = useState(() =>
     getDecadeStart(date ? date.getFullYear() : new Date().getFullYear()),
@@ -67,6 +72,12 @@ export const YearVariant: React.FC<YearVariantProps> = ({
 
   const selectedYear = date?.getFullYear();
   const currentYear = new Date().getFullYear();
+
+  const isYearDisabled = (year: number) => {
+    if (minDate && year < minDate.getFullYear()) return true;
+    if (maxDate && year > maxDate.getFullYear()) return true;
+    return false;
+  };
 
   return (
     <div className="relative w-full select-none">
@@ -124,11 +135,13 @@ export const YearVariant: React.FC<YearVariantProps> = ({
             <div className="grid grid-cols-4 gap-1">
               {years.map((year) => {
                 const isOutside = year < decadeStart || year > decadeStart + 9;
+                const yearDisabled = isYearDisabled(year);
                 return (
                   <Button
                     key={year}
                     variant="ghost"
                     size="sm"
+                    disabled={yearDisabled}
                     className={cn(
                       "h-9 w-full text-sm font-normal",
                       isOutside && "text-muted-foreground",
@@ -137,6 +150,7 @@ export const YearVariant: React.FC<YearVariantProps> = ({
                       year !== selectedYear &&
                         year === currentYear &&
                         "bg-accent text-accent-foreground",
+                      yearDisabled && "opacity-50 cursor-not-allowed",
                     )}
                     onClick={() => handleYearSelect(year)}
                   >

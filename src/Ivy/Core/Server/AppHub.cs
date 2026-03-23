@@ -150,9 +150,9 @@ public class AppHub(
                 }
             }
 
-            if (routeResult.AppDescriptor.Title is { } title && routeResult.AppId != AppIds.Chrome && parentId == null)
+            if (routeResult.AppDescriptor.Title is { } title && routeResult.AppId != AppIds.AppShell && parentId == null)
             {
-                clientProvider.SetTitle(title, server.Args.MetaTitle);
+                clientProvider.SetTitle(title, server.Args.Metadata.Title);
             }
 
             appServices.AddSingleton(routeResult.AppRepository);
@@ -199,9 +199,9 @@ public class AppHub(
                 clientProvider.SetRootAppId(routeResult.AppId);
                 bool isNotFoundPage = routeResult.AppDescriptor.Id == AppIds.ErrorNotFound;
 
-                if (routeResult.AppId != AppIds.Chrome && !isNotFoundPage)
+                if (routeResult.AppId != AppIds.AppShell && !isNotFoundPage)
                 {
-                    var navigateArgs = new NavigateArgs(routeResult.AppId, Chrome: routeResult.ShowChrome);
+                    var navigateArgs = new NavigateArgs(routeResult.AppId, AppShell: routeResult.ShowAppShell);
                     clientProvider.Redirect(navigateArgs.GetUrl(), replaceHistory: true);
                 }
             }
@@ -267,7 +267,7 @@ public class AppHub(
                 }, cancellationToken: connectionAborted);
             }
 
-            if (server.AuthProviderType != null && routeResult.AppId != AppIds.Auth)
+            if (server.AuthProviderType != null && routeResult.AppId != AppIds.Auth && routeResult.AppId != AppIds.AppShell)
             {
                 _ = Task.Run(() => AuthRefreshLoopAsync(connectionId, connectionAborted), connectionAborted);
 
@@ -721,10 +721,10 @@ public class AppHub(
 
     public Task Event(string eventName, string widgetId, JsonArray? args)
     {
-        logger.LogWarning("Event RECEIVED: {EventName} {WidgetId} ConnectionId={ConnectionId}", eventName, widgetId, Context.ConnectionId);
+        logger.LogDebug("Event: {EventName} {WidgetId} ConnectionId={ConnectionId}", eventName, widgetId, Context.ConnectionId);
         if (!sessionStore.Sessions.TryGetValue(Context.ConnectionId, out var appSession))
         {
-            logger.LogWarning("Event: {EventName} {WidgetId} [AppSession Not Found]", eventName, widgetId);
+            logger.LogDebug("Event: {EventName} {WidgetId} [AppSession Not Found] ConnectionId={ConnectionId}", eventName, widgetId, Context.ConnectionId);
             return Task.CompletedTask;
         }
 
@@ -765,23 +765,23 @@ public class AppHub(
     {
         logger.LogInformation("Navigate: {ConnectionId} to [{AppId}] with tab ID {TabId}", Context.ConnectionId, appId, state?.TabId);
 
-        // Find the Chrome session for this connection
+        // Find the AppShell session for this connection
         if (!sessionStore.Sessions.TryGetValue(Context.ConnectionId, out var appSession))
         {
             logger.LogWarning("Navigate: {ConnectionId} [{AppId}] [AppSession not found]", Context.ConnectionId, appId);
             return;
         }
 
-        var chromeSession = sessionStore.FindChrome(appSession);
-        if (chromeSession == null)
+        var appShellSession = sessionStore.FindAppShell(appSession);
+        if (appShellSession == null)
         {
-            logger.LogWarning("Navigate: {ConnectionId} [{AppId}] [Chrome session not found]", Context.ConnectionId, appId);
+            logger.LogWarning("Navigate: {ConnectionId} [{AppId}] [AppShell session not found]", Context.ConnectionId, appId);
             return;
         }
 
         try
         {
-            var navigateSignal = (NavigateSignal)chromeSession.Signals.GetOrAdd(
+            var navigateSignal = (NavigateSignal)appShellSession.Signals.GetOrAdd(
                 typeof(NavigateSignal),
                 _ => new NavigateSignal()
             );
