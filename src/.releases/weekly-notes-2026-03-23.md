@@ -37,9 +37,9 @@ server
 
 **Property mappings:**
 
-- `ServerArgs.MetaTitle` → `ServerArgs.Metadata.Title`
-- `ServerArgs.MetaDescription` → `ServerArgs.Metadata.Description`
-- `ServerArgs.MetaGitHubUrl` → `ServerArgs.Metadata.GitHubUrl`
+- `ServerArgs.MetaTitle` to `ServerArgs.Metadata.Title`
+- `ServerArgs.MetaDescription` to `ServerArgs.Metadata.Description`
+- `ServerArgs.MetaGitHubUrl` to `ServerArgs.Metadata.GitHubUrl`
 
 The fluent methods (`SetMetaTitle()`, `SetMetaDescription()`, `SetMetaGitHubUrl()`) continue to work unchanged, so if you're using those, no migration is needed.
 
@@ -61,9 +61,9 @@ IAppShell appShell = ...;
 
 **What to update in your code:**
 
-- `UseChrome()` → `UseAppShell()`
-- `IChrome` → `IAppShell`
-- `DefaultSidebarChrome` → `DefaultSidebarAppShell`
+- `UseChrome()` to `UseAppShell()`
+- `IChrome` to `IAppShell`
+- `DefaultSidebarChrome` to `DefaultSidebarAppShell`
 - Any custom Chrome classes should be renamed to AppShell
 - Documentation and comments referencing "Chrome"
 
@@ -540,167 +540,23 @@ Query fetch failures are now logged at Warning level instead of Debug, making th
 
 Previously, these errors were only visible when debug logging was enabled. Now you'll see them immediately, making debugging much faster.
 
-**Note**: The `MetricView` constructor parameter `useMetricData` has been renamed to `UseMetricData` (PascalCase) for C# naming consistency. Update your code if using named parameters: `useMetricData:` → `UseMetricData:`.
+**Note**: The `MetricView` constructor parameter `useMetricData` has been renamed to `UseMetricData` (PascalCase) for C# naming consistency. Update your code if using named parameters: `useMetricData:` to `UseMetricData:`.
 
 ## Bug Fixes
 
-### SplitPascalCase Acronym Handling
-
-Fixed `StringHelper.SplitPascalCase()` to properly handle acronyms followed by words. Previously, inputs like `"UIDesign"` would not be split correctly and would display as "UIDesign" instead of "UI Design". The regex pattern now uses a lookahead to detect acronym boundaries, correctly splitting strings like:
-
-- `"UIDesign"` → "UI Design"
-- `"APIClient"` → "API Client"
-- `"QATesting"` → "QA Testing"
-- `"HTMLParser"` → "HTML Parser"
-
-This improves readability throughout the framework, particularly affecting Kanban column headers, enum descriptions, and any other UI text that relies on PascalCase splitting for humanization.
-
-### Multiselect Component
-
-Fixed a visual bug where the Multiselect dropdown would shift position when opened if an overflow badge was visible. The component now properly resets its scroll position when focused, ensuring the dropdown appears in the correct location.
-
-### SmartSearch Component
-
-Fixed scroll overflow issues in the SmartSearch dialog. The search input is now pinned at the top of the dialog and remains visible while scrolling through search results, improving usability when browsing large result sets.
-
-### DataTable AI Features
-
-Fixed a crash in `DataTableBuilder` when AI chat features (`IChatClient`) are not registered in dependency injection. The component now properly uses `TryUseService<IChatClient>()` to gracefully handle scenarios where AI services are optional or not configured, preventing `InvalidOperationException` errors during table initialization.
-
-### AppShell Components with Optional Authentication
-
-Fixed a crash in `DefaultSidebarAppShell` (used by `UseAppShell()`) when `IAuthService` is not registered. The component now uses `TryUseService<IAuthService>()` to gracefully handle scenarios where authentication is not configured, allowing the AppShell sidebar to render properly without requiring auth setup.
-
-### Input Widgets Setting Default Values
-
-Fixed an issue where calling `.Set()` with a default value (like `0`, `false`, empty string, or `null`) on input widgets would not properly update the client. The framework's serializer was skipping properties that matched their type's default value, causing the UI to not reflect the programmatic change. This affected all input widgets including `NumberInput`, `BoolInput`, `TextInput`, `DateTimeInput`, `ColorInput`, `FileInput`, and others. The Value property on all input widgets now uses `AlwaysSerialize = true` to ensure default values are always sent to the client.
-
-### UseQuery Revalidate Method
-
-Fixed an issue in the `UseQuery` hook where calling `Revalidate()` could surface `OperationCanceledException` errors to users and show stale error states. The revalidate function now properly:
-
-- Cancels any in-flight requests before starting a new one
-- Resets the fetch state to trigger a fresh data load
-- Clears previous errors and shows the loading skeleton while revalidating
-
-This ensures a smoother experience when manually refreshing query data, with proper loading indicators instead of error flashes.
-
-### App Attribute Documentation
-
-Fixed incorrect documentation in AGENTS.md that showed `path:` as the parameter name for the `[App]` attribute. The correct parameter name is `group:`. This error was causing developers to write code that wouldn't compile (CS0655 error). The documentation now correctly shows:
-
-```csharp
-[App(title: "Customers", icon: Icons.Rocket, group: new[] { "CRM" })]
-public class CustomersApp : ViewBase
-```
-
-### Object Array Rendering
-
-Fixed an issue where returning `object[]` from `Build()` methods was incorrectly converted to a Table instead of a Fragment. This was happening because `DefaultContentBuilder.Format()` matched `object[]` as `IEnumerable` and automatically rendered it as a table, which broke Sheet overlay rendering and other scenarios where multiple elements need to preserve their individual rendering behavior. The framework now properly converts `object[]` to a `Fragment`, ensuring each child element renders correctly.
-
-```csharp
-// This now works correctly - each element renders as expected
-public override object Build()
-{
-    return new object[]
-    {
-        new Sheet(...),
-        new Box(...),
-        new TextBlock(...)
-    };
-}
-```
-
-### DataTable with Positional Records
-
-Fixed a crash when using `ToDataTable()` with positional records that lack a parameterless constructor. Positional records like `record Foo(int Id, string Name)` only have a primary constructor, which was causing an `ArgumentNullException` in the internal field removal logic. The framework now properly detects when a parameterless constructor is unavailable and uses the primary constructor with default values instead.
-
-```csharp
-// This now works without crashing
-public record Person(int Id, string Name, string Email);
-
-var query = dbContext.People.AsQueryable();
-var dataTable = query.ToDataTable(); // Previously threw ArgumentNullException
-```
-
-### DataTable Concurrent DbContext Access
-
-Fixed crashes and errors when using `DataTable` with Entity Framework Core `IQueryable` sources. The issue occurred because EF Core's `DbContext` is not thread-safe, and gRPC queries running on separate threads could cause concurrent access violations. The framework now serializes count and data queries per `DbContext` instance using semaphore synchronization, preventing concurrent access while still allowing different `DbContext` instances to execute queries in parallel.
-
-Additionally, empty state handling has been optimized - the empty view is now rendered on the frontend when no rows are returned, avoiding an extra synchronous `.Count()` query during the render cycle.
-
-### UseTrigger with Nullable Types
-
-Fixed an issue in the `UseTrigger<T>` hook where null values couldn't be used as valid trigger values for nullable types. Previously, a null guard `triggerValue.Value != null` prevented the factory from executing when `T` is nullable and `null` is a meaningful value (e.g., `int?` where `null` might represent "create new"). The hook now uses a `hasTriggered` ref to track whether the callback was invoked, allowing `null` to be a valid trigger value.
-
-```csharp
-// This now works correctly with nullable types
-var (triggerView, showTrigger) = UseTrigger((IState<bool> isOpen, int? id) =>
-    new FooView(isOpen, id));
-
-// Can now trigger with null as a valid value
-new Button("Create New", () => showTrigger(null));
-```
-
-### Chart Series Labels with Where+Sum Pattern
-
-Fixed an issue where chart series all showed the same label when using the `.Where().Sum()` pattern for aggregations. The framework now automatically extracts the filter value from `.Where()` clauses and uses it as the series name, providing much more meaningful chart labels.
-
-```csharp
-// Previously, both series would be labeled "Amount" (confusing!)
-// Now they're automatically labeled "Capital Call" and "Management Fee"
-var chartData = new[]
-{
-    cashFlows.Where(f => f.FlowType == "Capital Call").Sum(f => f.Amount),
-    cashFlows.Where(f => f.FlowType == "management fee").Sum(f => f.Amount),
-    cashFlows.Where(f => f.FlowType == "Distribution").Sum(f => f.Amount)
-};
-
-var chart = chartData.ToBarChart();
-// Series names are now: "Capital Call", "Management Fee", "Distribution"
-```
-
-The feature also automatically applies title casing to filter values, so `"management fee"` becomes "Management Fee" for better presentation. This makes charts with categorical breakdowns much more readable without requiring manual label configuration.
-
-### Auto-Scroll with Streaming Content
-
-Fixed auto-scroll behavior to properly trigger when streaming content is added dynamically. The `useAutoScroll` hook now observes both the scroll container and its content wrapper, ensuring that streaming AI responses (like those rendered with `RichTextMarkdownParser`) automatically scroll to the bottom as new content arrives. This is particularly useful for AI chat interfaces where markdown is rendered progressively as the assistant types.
-
-### Button Keyboard Shortcuts
-
-Fixed keyboard shortcut handling in buttons to prevent shortcuts from triggering while typing in input fields. Previously, keyboard shortcuts would fire even when the user had focus in an `<input>`, `<textarea>`, or contentEditable element, causing unwanted actions while typing.
-
-Additionally, keyboard shortcuts now work properly with URL buttons (previously only action buttons supported shortcuts). The shortcut handler now correctly handles all URL types including download links and mailto links, and respects the button's target setting for opening links in new tabs.
-
-```csharp
-// Shortcuts now work on URL buttons too
-Layout.Horizontal().Gap(8)
-    | new Button("Search", _ => client.Toast("Searching..."))
-        .Primary()
-        .ShortcutKey("Ctrl+K")
-    | new Button("GitHub")
-        .Url("https://github.com/Ivy-Interactive/Ivy-Framework")
-        .ShortcutKey("Ctrl+G")  // Now works correctly!
-```
-
-This fix ensures keyboard shortcuts enhance productivity without interfering with normal text input.
-
-## Infrastructure Updates
-
-### Microsoft.Extensions.AI Upgraded to Stable Release
-
-Upgraded `Microsoft.Extensions.AI` and related AI packages from preview versions (10.1.1-preview) to stable release (10.4.1). This improves stability and production-readiness for AI-powered features in the framework, including AI chat integration, filter generation, and EF Query agents.
-
-**Updated packages:**
-
-- `Microsoft.Extensions.AI` → 10.4.1 (stable)
-- `Microsoft.Extensions.AI.Abstractions` → 10.4.1 (stable)
-- `Microsoft.Extensions.AI.OpenAI` → 10.4.1 (stable)
-- Various `Microsoft.Extensions.*` packages → 10.0.5
-- Entity Framework Core packages → 10.0.5
-
-This update also includes improvements from the broader .NET ecosystem, including bug fixes and performance enhancements in the extension libraries and EF Core.
-
-### External Widget Discovery with Prefix Assembly Names
-
-Fixed a bug in external widget discovery where widget assemblies would fail to load if their name was a prefix of the host assembly name. For example, if you had a widget assembly named `PDF.Viewer.dll` and your host application was named `PDF.Viewer.Samples.dll`, the widget assembly would be incorrectly skipped during scanning. The framework now uses exact assembly name comparison instead of substring matching, ensuring all external widget assemblies are discovered correctly regardless of naming patterns.
+- **SplitPascalCase**: `StringHelper.SplitPascalCase()` handles acronyms followed by words (e.g. `UIDesign` to "UI Design", `APIClient` to "API Client") via a lookahead in the regex; improves Kanban headers, enum descriptions, and other humanized PascalCase text.
+- **Multiselect**: Dropdown no longer shifts when opened with an overflow badge visible; scroll position resets on focus so the menu anchors correctly.
+- **SmartSearch**: Search input stays pinned at the top; scroll overflow fixed so large result lists remain usable.
+- **DataTable (AI)**: `DataTableBuilder` uses `TryUseService<IChatClient>()`—no crash when `IChatClient` is not registered in DI.
+- **AppShell**: `DefaultSidebarAppShell` (`UseAppShell()`) uses `TryUseService<IAuthService>()`—sidebar renders when auth is not configured.
+- **Input widgets**: Value properties use `AlwaysSerialize = true` so `.Set()` with defaults (`0`, `false`, `""`, `null`) updates the client (serializer no longer omits default-valued properties).
+- **UseQuery**: `Revalidate()` cancels in-flight fetches, clears errors, and shows loading—avoids surfacing `OperationCanceledException` and stale error UI.
+- **AGENTS.md**: `[App]` docs corrected (`path:` to `group:`) to match the attribute and avoid CS0655.
+- **object[] / Build()**: `object[]` from `Build()` becomes a `Fragment`, not a table from `IEnumerable` handling—fixes Sheet overlays and multi-root layouts.
+- **DataTable / positional records**: `ToDataTable()` with positional records without a parameterless ctor uses the primary ctor with defaults—no `ArgumentNullException` in field removal.
+- **DataTable / EF Core**: Count and data queries for the same `DbContext` are serialized with a semaphore (thread-safe with gRPC); empty state renders on the client without an extra `.Count()`.
+- **UseTrigger**: Nullable trigger values can be `null` meaningfully—a `hasTriggered` ref replaces the old null guard that blocked `showTrigger(null)`.
+- **Charts (Where + Sum)**: Series labels derive from `.Where()` filter values with title casing instead of repeating a generic measure name for `.Where().Sum()` chains.
+- **useAutoScroll**: Observes the scroll container and content wrapper so streaming markdown/AI content keeps the view pinned to the bottom.
+- **Button shortcuts**: Ignored while focus is in inputs/contentEditable; URL/download/mailto buttons support shortcuts and respect link `target`.
+- **External widget discovery**: Exact assembly name comparison replaces substring matching—e.g. `PDF.Viewer.dll` is no longer skipped when the host is `PDF.Viewer.Samples.dll`.
