@@ -162,6 +162,19 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
     [id, disabled, effectiveUrl, eventHandler],
   );
 
+  const hasUrl = !!(effectiveUrl && !disabled);
+
+  // Validate and sanitize URL to prevent open redirect vulnerabilities
+  const urlResult = hasUrl ? getUrl(effectiveUrl!) : null;
+  const validatedHref = urlResult?.isValid ? urlResult.url : null;
+  const isInvalidUrl = urlResult && !urlResult.isValid;
+
+  // Check if URL is a download link (starts with /ivy/download/)
+  const isDownloadUrl = effectiveUrl?.startsWith("/ivy/download/") ?? false;
+
+  // Check if URL is a mailto link (should not open in new tab)
+  const isMailto = validatedHref ? isMailtoUrl(validatedHref) : false;
+
   useEffect(() => {
     if (!shortcutKey || disabled) return;
 
@@ -169,6 +182,15 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
     if (!shortcutObj) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      const eventTarget = event.target as HTMLElement;
+      if (
+        eventTarget.tagName === "INPUT" ||
+        eventTarget.tagName === "TEXTAREA" ||
+        eventTarget.isContentEditable
+      ) {
+        return; // Don't intercept shortcuts while typing
+      }
+
       const modifierMatch =
         (shortcutObj.meta && event.metaKey) ||
         (shortcutObj.ctrl && event.ctrlKey) ||
@@ -184,6 +206,14 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
         event.preventDefault();
         if (!effectiveUrl) {
           eventHandler("OnClick", id, []);
+        } else if (validatedHref) {
+          if (isDownloadUrl || isMailto) {
+            window.location.href = validatedHref;
+          } else if (target === "Blank") {
+            window.open(validatedHref, "_blank", "noopener,noreferrer");
+          } else {
+            window.location.href = validatedHref;
+          }
         }
       }
     };
@@ -195,18 +225,6 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
   }, [shortcutKey, disabled, id, effectiveUrl, eventHandler]);
 
   const hasChildren = !!children;
-  const hasUrl = !!(effectiveUrl && !disabled);
-
-  // Validate and sanitize URL to prevent open redirect vulnerabilities
-  const urlResult = effectiveUrl && !disabled ? getUrl(effectiveUrl) : null;
-  const validatedHref = urlResult?.isValid ? urlResult.url : null;
-  const isInvalidUrl = urlResult && !urlResult.isValid;
-
-  // Check if URL is a download link (starts with /ivy/download/)
-  const isDownloadUrl = effectiveUrl?.startsWith("/ivy/download/") ?? false;
-
-  // Check if URL is a mailto link (should not open in new tab)
-  const isMailto = validatedHref ? isMailtoUrl(validatedHref) : false;
 
   // Show error message for invalid URLs (standardized error handling)
   if (isInvalidUrl) {

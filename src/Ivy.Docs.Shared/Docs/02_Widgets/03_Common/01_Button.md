@@ -163,6 +163,7 @@ The `ShortcutKey` method allows you to associate a keyboard shortcut (like `Ctrl
 Layout.Horizontal().Gap(8)
     | new Button("Search", _ => client.Toast("Searching...")).Primary().ShortcutKey("Ctrl+K")
     | new Button("Save", _ => client.Toast("Saved!")).Secondary().ShortcutKey("Ctrl+S")
+    | new Button("GitHub").Url("https://github.com/Ivy-Interactive/Ivy-Framework").ShortcutKey("Ctrl+G")
 ```
 
 The shortcut listener is registered globally on the window, so the button doesn't need to be focused to trigger the action.
