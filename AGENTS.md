@@ -37,7 +37,7 @@ public class CustomersApp : ViewBase
 - `title` is optional — if omitted, it is derived from the class name (e.g. `CustomersApp` → "Customers").
 - `icon` uses the `Icons` enum — these are Lucide icons in PascalCase (e.g. `Icons.Link`, `Icons.Settings`, `Icons.Rocket`).
 - `group` groups the app in the navigation sidebar (e.g. `group: new[] { "Apps" }`).
-- There is no `chrome` parameter. Chrome is configured in `Program.cs` via `server.UseDefaultApp(typeof(MyApp))`.
+- There is no `chrome` parameter. Chrome is configured in `Program.cs` via `server.UseDefaultApp(typeof(MyApp))`. Always ensure `server.AddAppsFromAssembly()` is called before `UseDefaultApp` — without it, `[App]`-attributed classes are not registered and the server throws at runtime.
 - Use **lowercase** parameter names (`icon:`, `group:`), NOT PascalCase property names (`Icon =`, `Group =`) — PascalCase causes CS0655.
 
 An app is built into a tree of widgets. This is what's rendered to the screen.
