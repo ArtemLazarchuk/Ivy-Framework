@@ -2,6 +2,7 @@
 
 Known cases where the agent hallucinated Ivy Framework APIs. Use this as a reference when debugging build errors in agent sessions.
 
+
 ## Badge.Color(Colors.X) — non-existent fluent method
 
 **Hallucinated API:**
@@ -30,6 +31,11 @@ Available `BadgeVariant` values: `Primary`, `Destructive`, `Secondary`, `Outline
 ce144de9-0688-490a-bef6-b2766e323154
 642d3167-790d-48c4-a381-bfab78f928cc
 857de09c-ab87-49a5-aac4-394f7d0aa207
+86908281-cc6f-4973-a9c7-1c0186c013d2
+0c7c0b33-a500-45c2-911b-b33ca1f9662e
+6c834561-6c01-424b-b8fb-a4a473c1c86a
+c9185561-51f5-4c76-ae5b-7448f5a68a0f
+8b576f86-85cc-43b8-97e2-358bae83464a
 
 ## AppAttribute.path — renamed to group
 
@@ -49,30 +55,9 @@ The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it
 
 **Found In:**
 Ivy-Framework#2612
-
-**Found In:**
+55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
+fd5baba6-72aa-4d28-ac10-72e1be86e494
 (multiple sessions — agent uses old API names from training data)
-
-## ToastVariant — non-existent enum
-
-**Hallucinated API:**
-```csharp
-client.Toast("Error!", ToastVariant.Destructive)
-```
-
-**Error:** `The name 'ToastVariant' does not exist in the current context`
-
-**Correct API:**
-```csharp
-client.Toast("Success message");       // neutral toast
-client.Toast("Done!", "Title");        // with title
-client.Error("Something went wrong."); // error toast
-```
-
-`ToastVariant` does not exist. The `IClientProvider.Toast()` method takes `(string message)` or `(string message, string title)`. For error toasts, use `client.Error(message)` instead.
-
-**Found In:**
-d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-tasks)
 
 ## DateTimeVariant — wrong enum name
 
@@ -155,27 +140,83 @@ Valid `BorderRadius` values: `None`, `Rounded`, `Full`. The agent hallucinates T
 8a776329-6dc7-474f-aa4d-c8b4da753a25 (BorderRadius.Large)
 4e59e443-3579-4df9-af4b-765b7b7d61c8 (BorderRadius.Small — via IvyMcp hallucination)
 
-## SelectInputBase.Options() — chained options method
+## Callout constructor — wrong constructor + invented enum / wrong argument order
 
 **Hallucinated API:**
 ```csharp
-defaultBehavior.ToSelectInput().Options(["Refused", "Allowed", "Ignored"])
+// Variant 1: Invented enum (CalloutType does not exist)
+new Callout("No to-do items.", CalloutType.Info)
+
+// Variant 2: Correct enum but wrong argument position (CalloutVariant as 2nd arg instead of 3rd)
+new Callout("Warning!", CalloutVariant.Destructive)
 ```
 
-**Error:** `'SelectInputBase' does not contain a definition for 'Options'`
+**Error:** `The type or namespace 'CalloutType' could not be found` (variant 1) or `CS1503: Argument 2: cannot convert from 'Ivy.CalloutVariant' to 'string?'` (variant 2)
 
 **Correct API:**
 ```csharp
-defaultBehavior.ToSelectInput(new[] { "Refused", "Allowed", "Ignored" }.ToOptions())
+// Preferred: static factory methods
+Callout.Info("No to-do items.")
+
+// Constructor: (description, title, variant, icon) — title is the 2nd parameter, not variant
+new Callout("Warning!", "Title", CalloutVariant.Destructive, Icons.AlertTriangle)
 ```
 
-Options are passed as `IEnumerable<IAnyOption>` to `ToSelectInput(options)`, not chained via a `.Options()` method. Use the `.ToOptions()` extension method on a string array to convert to the correct type.
+`Callout` uses static factory methods: `Callout.Info()`, `Callout.Warning()`, `Callout.Error()`, `Callout.Success()`. The `CalloutType` enum does not exist. When using the constructor directly, the parameter order is `(description, title, variant, icon)` — agents frequently put `CalloutVariant` as the 2nd argument where `title` (string) should be.
 
 **Found In:**
-4eb1799f-39b2-4325-a0bd-37b769a33432
-30c1b273-c528-4496-b194-c98e0ffeaa23
+bd5f45ac-569d-4be8-8ef8-882451e608a1
+0c7c0b33-a500-45c2-911b-b33ca1f9662e
+cdf77a72-658e-45df-9bdb-9bf7c79100b2
 
-https://github.com/Ivy-Interactive/Ivy-Framework/issues/2271
+## Details() — empty constructor instead of passing items
+
+**Hallucinated API:**
+```csharp
+new Details()
+    | new Detail("Country Code", result.CountryCode, false)
+    | new Detail("VAT Number", result.VatNumber, false)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
+
+**Correct API:**
+```csharp
+new Details(new[] {
+    new Detail("Country Code", result.CountryCode, false),
+    new Detail("VAT Number", result.VatNumber, false)
+})
+// or use the builder pattern:
+result.ToDetails()
+```
+
+`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
+b6beb60d-478d-409e-b10d-7913ae911e85
+fd5baba6-72aa-4d28-ac10-72e1be86e494
+
+## AppAttribute.path old parameter name
+
+**Hallucinated API:**
+```csharp
+[App("Dashboard", path: ["Dashboards"])]
+```
+
+**Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
+
+**Correct API:**
+```csharp
+[App("Dashboard", group: ["Dashboards"])]
+```
+
+The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
+
+**Found In:**
+875efaff-8eb2-4604-b3aa-a2b5799df88c
+a55e08b9-f212-49ef-97b9-d352b7b4beb8
+798044de-edee-4bf9-85f1-291513fc076c
 
 ## Button("text", Icons.X) — icon as constructor argument
 
@@ -196,6 +237,89 @@ The `Button` constructor signature is `Button(string label, Func<Event<Button>, 
 **Found In:**
 f20dced8-1689-4289-a2d8-ee67136eb6ce
 7a9aadf3-097e-448d-8d5c-bc86152710a6
+5ba11e91-7b05-49e1-8a0f-5ea01235b192
+
+## TreeRowActionClickEventArgs on DataTable — wrong event args type
+
+**Hallucinated API:**
+```csharp
+table.OnRowAction(e => {
+    var tag = ((TreeRowActionClickEventArgs)e).Tag;
+    var id = ((TreeRowActionClickEventArgs)e).Id;
+});
+```
+
+**Error:** `CS1061: 'TreeRowActionClickEventArgs' does not contain a definition for 'Tag'/'Id'`
+
+**Correct API:**
+```csharp
+table.OnRowAction(e => {
+    var tag = e.Value.Tag;  // RowActionClickEventArgs.Tag
+    var id = e.Value.Id;    // RowActionClickEventArgs.Id
+});
+```
+
+DataTable's `OnRowAction` uses `Event<DataTable, RowActionClickEventArgs>`, not `TreeRowActionClickEventArgs`. Access properties via `e.Value.Tag` and `e.Value.Id`. The agent conflated `TreeRowActionClickEventArgs` (for `Tree` widget) with `RowActionClickEventArgs` (for `DataTable`).
+
+**Found In:**
+30c1b273-c528-4496-b194-c98e0ffeaa23
+9d8f5446-43c4-44a2-b6ce-3caeff413407
+16d32bb9-34f3-4b14-adf9-83f802350032
+
+## ToDataTable() on List\<T\> or T[] — wrong receiver type
+
+**Hallucinated API:**
+```csharp
+var items = await db.Categories.ToListAsync();
+items.ToDataTable()
+
+// Also seen with arrays:
+var rows = query.Select(...).ToArray();
+rows.ToDataTable()
+```
+
+**Error:** `CS1061: 'List<Category>' does not contain a definition for 'ToDataTable'` / `CS1061: 'TestFileRow[]' does not contain a definition for 'ToDataTable'`
+
+**Correct API:**
+```csharp
+// ToDataTable() is an extension on IQueryable<T>, not List<T> or T[]:
+db.Categories.ToDataTable()
+
+// Or use ToTable() for in-memory collections:
+items.ToTable()
+```
+
+`ToDataTable()` is defined on `IQueryable<T>` (via `DataTableBuilder`), not on `List<T>`, `T[]`, or `IEnumerable<T>`. The agent often materializes a query to a List or array first, then tries to call `ToDataTable()` on the result. Pass the `IQueryable<T>` directly to `ToDataTable()` without materializing. For in-memory collections, use `.ToTable()` instead.
+
+**Found In:**
+9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestFilesApp.cs and CategoriesApp.cs)
+8b576f86-85cc-43b8-97e2-358bae83464a
+16d32bb9-34f3-4b14-adf9-83f802350032
+
+## Toast() — standalone function call instead of IClientProvider method
+
+**Hallucinated API:**
+```csharp
+Toast("Clocked in successfully");
+Toast("Employee saved!");
+```
+
+**Error:** `CS0103: The name 'Toast' does not exist in the current context`
+
+**Correct API:**
+```csharp
+var client = UseService<IClientProvider>();
+client.Toast("Clocked in successfully");
+client.Toast("Employee saved!", "Success");  // with title
+client.Error("Something went wrong.");       // error toast
+```
+
+`Toast` is an extension method on `IClientProvider`, not a standalone/global function. The agent must first resolve the client via `UseService<IClientProvider>()`.
+
+**Found In:**
+8b576f86-85cc-43b8-97e2-358bae83464a
+a8076804-1223-469e-a689-2af23d259566
+5ba11e91-7b05-49e1-8a0f-5ea01235b192
 
 ## UseAlert().ShowInfo() — wrong API usage
 
@@ -290,52 +414,6 @@ Text.H1("$0.00").Center()
 **Found In:**
 713546f7-32fb-4961-ab78-def91e7c010d, 5d2202d2-9d6b-4198-9922-c3763534aca5
 
-## AppAttribute.path old parameter name
-
-**Hallucinated API:**
-```csharp
-[App("Dashboard", path: ["Dashboards"])]
-```
-
-**Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
-
-**Correct API:**
-```csharp
-[App("Dashboard", group: ["Dashboards"])]
-```
-
-The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
-
-**Found In:**
-875efaff-8eb2-4604-b3aa-a2b5799df88c
-a55e08b9-f212-49ef-97b9-d352b7b4beb8
-
-## TreeRowActionClickEventArgs on DataTable — wrong event args type
-
-**Hallucinated API:**
-```csharp
-table.OnRowAction(e => {
-    var tag = ((TreeRowActionClickEventArgs)e).Tag;
-    var id = ((TreeRowActionClickEventArgs)e).Id;
-});
-```
-
-**Error:** `CS1061: 'TreeRowActionClickEventArgs' does not contain a definition for 'Tag'/'Id'`
-
-**Correct API:**
-```csharp
-table.OnRowAction(e => {
-    var tag = e.Value.Tag;  // RowActionClickEventArgs.Tag
-    var id = e.Value.Id;    // RowActionClickEventArgs.Id
-});
-```
-
-DataTable's `OnRowAction` uses `Event<DataTable, RowActionClickEventArgs>`, not `TreeRowActionClickEventArgs`. Access properties via `e.Value.Tag` and `e.Value.Id`. The agent conflated `TreeRowActionClickEventArgs` (for `Tree` widget) with `RowActionClickEventArgs` (for `DataTable`).
-
-**Found In:**
-30c1b273-c528-4496-b194-c98e0ffeaa23
-9d8f5446-43c4-44a2-b6ce-3caeff413407
-
 ## Table\<T\> — non-generic type used with type arguments
 
 **Hallucinated API:**
@@ -355,6 +433,101 @@ items.ToTable()
 **Found In:**
 a9ee3993-1cfb-4cba-9322-80a60b56c8d2
 cab4c6bb-be1f-4fef-9d96-96c54e5f88ff
+
+## Box.Opacity() — property used as method call
+
+**Hallucinated API:**
+```csharp
+new Box(content).Opacity(0.3f)
+```
+
+**Error:** `CS1955: Non-invocable member 'Box.Opacity' cannot be used like a method.`
+
+**Correct API:**
+```csharp
+// Use object initializer or with-expression:
+new Box(content) { Opacity = 0.3f }
+
+// Or use the Background extension which accepts an opacity parameter:
+new Box(content).Background(Colors.Muted, 0.3f)
+```
+
+`Box.Opacity` is a property (`float?`), not a method. There is no `.Opacity()` extension method on `Box`. Use object initializer syntax or the `Background(Colors, float)` extension which sets both background color and opacity. This is the same CS1955 pattern as the `Image.ObjectFit("cover")` hallucination — the agent treats a settable property as a fluent method.
+
+**Found In:**
+15313dc3-1c7d-4af9-8998-8338a837d5fb
+
+**Found In:**
+7c547408-00b3-47e1-976e-59c9357c1e74
+
+## WithMargin(top: 4) — Named parameters don't exist
+
+**Hallucinated API:**
+```csharp
+widget.WithMargin(top: 4)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'left' of 'LayoutExtensions.WithMargin(object, int, int, int, int)'`
+
+**Correct API:**
+```csharp
+// WithMargin has three overloads, all with positional parameters:
+widget.WithMargin(4)            // uniform margin
+widget.WithMargin(4, 2)         // horizontal, vertical
+widget.WithMargin(0, 4, 0, 0)   // left, top, right, bottom
+```
+
+**Found In:**
+2e18b175-94ec-459c-94a5-8f28b81ecfdc
+6c834561-6c01-424b-b8fb-a4a473c1c86a
+
+## TextInputBase.Lines() — non-existent multi-line property
+
+**Hallucinated API:**
+```csharp
+var text = UseState("");
+text.ToTextInput().Lines(8)
+```
+
+**Error:** `CS1061: 'TextInputBase' does not contain a definition for 'Lines'`
+
+**Correct API:**
+```csharp
+var text = UseState("");
+text.ToTextareaInput()
+// or equivalently:
+text.ToTextInput().Multiline()
+```
+
+There is no `.Lines()` method. Use `ToTextareaInput()` or `ToTextInput().Multiline()` for multi-line text input. The textarea height can be controlled via `.Height()` on the widget.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
+edd92ecc-6378-440a-b9cf-bb8e1cb29de9
+
+## Button onClick — wrong callback signature (method group)
+
+**Hallucinated API:**
+```csharp
+async Task GenerateEmbedding() { ... }
+new Button("Generate Embedding", GenerateEmbedding)
+```
+
+**Error:** `Argument 2: cannot convert from 'method group' to 'System.Func<Ivy.Event<Ivy.Button>, System.Threading.Tasks.ValueTask>?'`
+
+**Correct API:**
+```csharp
+async ValueTask GenerateEmbedding(Event<Button> e) { ... }
+new Button("Generate Embedding", GenerateEmbedding)
+
+// Or inline:
+new Button("Generate", async (e) => { await DoWork(); })
+```
+
+The `Button` onClick parameter is `Func<Event<Button>, ValueTask>?`. The callback must: (1) accept `Event<Button>` as parameter, (2) return `ValueTask` (not `Task` or `void`). A method group with wrong signature (e.g., `async Task Foo()`) will fail with CS1503.
+
+**Found In:**
+55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
 
 ## LayoutView.MaxWidth() — non-existent method
 
@@ -393,25 +566,6 @@ Layout.Horizontal(Align.SpaceBetween)
 
 **Found In:**
 f6d6e841-9a14-4475-9fa5-0791be30e578
-
-## Callout constructor — wrong constructor + invented enum
-
-**Hallucinated API:**
-```csharp
-new Callout("No to-do items.", CalloutType.Info)
-```
-
-**Error:** `The typeound`
-
-**Correct API:**
-```csharp
-Callout.Info("No to-do items.")
-```
-
-`Callout` uses static factory methods: `Callout.Info()`, `Callout.Warning()`, `Callout.Error()`, `Callout.Success()`. The `CalloutType` enum does not exist.
-
-**Found In:**
-bd5f45ac-569d-4be8-8ef8-882451e608a1
 
 ## Callout.Destructive() — fluent method on constructor instance
 
@@ -829,30 +983,6 @@ Text.Block(frequencyText).Small().Muted()
 **Found In:**
 ce144de9-0688-490a-bef6-b2766e323154
 
-## Text.Secondary("text") — non-existent static factory
-
-**Hallucinated API:**
-```csharp
-Text.Secondary("some text")
-```
-
-**Error:** `CS1501: No overload for method 'Secondary' takes 1 arguments`
-
-**Correct API:**
-```csharp
-// Use Text.Muted() for secondary/muted appearance:
-Text.Muted("some text")
-// Or use Text.P() with .Muted() chained:
-Text.P("some text").Muted()
-// Or use Text.P() with Colors.Secondary color:
-Text.P("some text").Color(Colors.Secondary)
-```
-
-`Text.Secondary()` does not exist as a static factory method. The static factories on `Text` are: `H1`, `H2`, `H3`, `H4`, `H5`, `H6`, `P`, `Inline`, `Block`, `Blockquote`, `Monospaced`, `Lead`, `Label`, `Muted`, `Strong`, `Bold`, `Danger`, `Warning`, `Success`, `Code`, `Markdown`, `Json`, `Xml`, `Html`, `Latex`, `Display`, `Literal`, `Rich`. The agent likely confused `Secondary` from `ButtonVariant.Secondary` / `Button.Secondary()` or `BadgeVariant.Secondary` / `Badge.Secondary()` with the `Text` API. `.Secondary()` is a fluent method on `Button` and `Badge`, not on `Text`.
-
-**Found In:**
-(session not yet recorded)
-
 ## Box.BorderRadius(int) — wrong argument type
 
 **Hallucinated API:**
@@ -1021,6 +1151,25 @@ var refreshToken = UseRefreshToken();
 **Found In:**
 84faf65a-c7df-4b5a-888b-4c49255c50ab (traces 004, 005, 006)
 
+## Image.ObjectFit("cover") — property used as method call
+
+**Hallucinated API:**
+```csharp
+new Image(url).ObjectFit("cover")
+```
+
+**Error:** `CS1955: Non-invocable member 'Image.ObjectFit' cannot be used like a method.`
+
+**Correct API:**
+```csharp
+new Image(url) { ObjectFit = ImageFit.Cover }
+```
+
+`Image.ObjectFit` is a property of type `ImageFit?`, not a method. Use object initializer syntax with the `ImageFit` enum (`Cover`, `Contain`, `Fill`, `None`, `ScaleDown`). The agent confused property-setter syntax with a fluent method call, and used a string argument instead of the `ImageFit` enum.
+
+**Found In:**
+86908281-cc6f-4973-a9c7-1c0186c013d2
+
 ## DataTable\<T\> — non-generic type used with type arguments
 
 **Hallucinated API:**
@@ -1100,106 +1249,6 @@ new Box(language.ToSelectInput(options)).Width(Size.Px(200))
 ### Found In
 852f6bec-756c-48f8-93da-ad426af73fab
 
-## TextBuilder.Padding() — non-existent method
-
-**Hallucinated API:**
-```csharp
-Text.Block(content).Padding(16)
-Text.P(content).Padding(4)
-```
-
-**Error:** `CS1929: 'TextBuilder' does not contain a definition for 'Padding'`
-
-**Correct API:**
-```csharp
-// Wrap text in a Box for padding:
-new Box(Text.Block(content)).Padding(16)
-
-// Or wrap in a layout:
-Layout.Vertical().Padding(16)
-    | Text.Block(content)
-```
-
-`TextBuilder` does not have `.Padding()`. Padding is available on container widgets (`Box`, `LayoutView`, `TabView`, `GridView`). To add padding around text, wrap it in a `Box` or layout. This is a variant of the `TextBuilder.AlignCenter()` and `TextBuilder.Style()` hallucinations — the agent applies container-level styling to text elements.
-
-**Found In:**
-7c547408-00b3-47e1-976e-59c9357c1e74
-
-## FileUploadStatus.Completed — non-existent enum value
-
-**Hallucinated API:**
-```csharp
-if (upload.Status == FileUploadStatus.Completed)
-```
-
-**Error:** `'FileUploadStatus' does not contain a definition for 'Completed'`
-
-**Correct API:**
-```csharp
-if (upload.Status == FileUploadStatus.Finished)
-```
-
-`FileUploadStatus` values are: `Pending`, `Aborted`, `Loading`, `Failed`, `Finished`. There is no `Completed` value. **Auto-fixed:** The refactoring service automatically rewrites `FileUploadStatus.Completed` → `FileUploadStatus.Finished`.
-
-**Found In:**
-(session not yet recorded)
-
-## UseDownload — ambiguous overload between sync and async
-
-**Hallucinated API:**
-```csharp
-UseDownload(() => bytes, "file.txt", "text/plain")
-```
-
-**Error:** `CS0121: The call is ambiguous between 'ViewBase.UseDownload(Func<byte[]>, string, string)' and 'ViewBase.UseDownload(Func<Task<byte[]>>, string, string)'`
-
-**Correct API:**
-```csharp
-// For sync: explicitly type the delegate
-UseDownload((Func<byte[]>)(() => bytes), "file.txt", "text/plain")
-
-// Or use a named method:
-byte[] GetBytes() => bytes;
-UseDownload(GetBytes, "file.txt", "text/plain")
-```
-
-When using `UseDownload` with a lambda, you must explicitly cast to `Func<byte[]>` or `Func<Task<byte[]>>` to avoid ambiguity.
-
-**Found In:**
-(session not yet recorded)
-
-## Server.OnReady / Server.OnStartup — non-existent lifecycle callbacks
-
-**Hallucinated API:**
-```csharp
-server.OnReady(() => { /* seed data */ });
-server.OnStartup(() => { /* initialize */ });
-```
-
-**Error:** `CS1061: 'Server' does not contain a definition for 'OnReady'`
-
-**Correct API:**
-```csharp
-// Seed data via the context factory pattern:
-var connection = server.UseConnection<MyDbContext>(options =>
-    options.ContextFactory = () =>
-    {
-        var ctx = new MyDbContext();
-        ctx.Database.EnsureCreated();
-        SeedData(ctx);
-        return ctx;
-    });
-
-// Or resolve services directly in Program.cs:
-var myService = server.Services.GetRequiredService<IMyService>();
-myService.Initialize();
-```
-
-The `Server` class does not have `OnReady`, `OnStartup`, or similar lifecycle callback methods. To run initialization code (e.g., database seeding), use the connection's context factory pattern — seed data in the factory's `CreateContext` method or use `server.Services` to resolve and call services directly in `Program.cs`.
-
-**Found In:**
-(session not yet recorded)
-
 ## MetricCard — non-existent class name
 
 **Hallucinated API:**
@@ -1239,32 +1288,6 @@ return Disposable.Create(() => timer?.Dispose());
 
 **Found In:**
 fb184b5b-8254-4a1f-b8f2-ab8e8657fdbc
-
-## Fragment.Empty — non-existent static member
-
-**Hallucinated API:**
-```csharp
-return Fragment.Empty;
-```
-
-**Error:** `'Fragment' does not contain a definition for 'Empty'`
-
-**Correct API:**
-```csharp
-// Use ViewBase.Empty:
-return ViewBase.Empty;
-
-// Or return an empty Fragment:
-return new Fragment();
-
-// Or just return null:
-return null;
-```
-
-`Fragment` does not have an `Empty` static member. To return nothing from a view, use `ViewBase.Empty`, `new Fragment()`, or `null`.
-
-**Found In:**
-(session not yet recorded)
 
 ## Button.Visible() / Widget.Visible() — removed conditional rendering method
 
@@ -1396,28 +1419,28 @@ The method is `ToTextareaInput()`, not `ToTextArea()`. Alternatively use `ToText
 **Found In:**
 19ec33cf-3e86-409e-806c-babf0d20730f
 
-## TextInputBase.Lines() — non-existent multi-line property
+## new TextInput() — parameterless constructor doesn't exist
 
 **Hallucinated API:**
 ```csharp
-var text = UseState("");
-text.ToTextInput().Lines(8)
+var output = new TextInput();
+output.Disabled()
 ```
 
-**Error:** `CS1061: 'TextInputBase' does not contain a definition for 'Lines'`
+**Error:** `CS1729: 'TextInput' does not contain a constructor that takes 0 arguments`
 
 **Correct API:**
 ```csharp
-var text = UseState("");
-text.ToTextareaInput()
-// or equivalently:
-text.ToTextInput().Multiline()
+var output = UseState("");
+output.ToTextInput()
+// or for textarea:
+output.ToTextareaInput()
 ```
 
-There is no `.Lines()` method. Use `ToTextareaInput()` or `ToTextInput().Multiline()` for multi-line text input. The textarea height can be controlled via `.Height()` on the widget.
+TextInput has no public parameterless constructor. All input widgets are created via `IState<T>.ToXxxInput()` extension methods, not via `new`.
 
 **Found In:**
-857de09c-ab87-49a5-aac4-394f7d0aa207
+edd92ecc-6378-440a-b9cf-bb8e1cb29de9
 
 ## IState\<T\>.ToSelect() — incorrect select method name
 
@@ -1587,26 +1610,6 @@ Layout.Vertical().Margin(0, 4, 0, 0) | widget
 **Found In:**
 2e18b175-94ec-459c-94a5-8f28b81ecfdc
 
-## WithMargin(top: 4) — Named parameters don't exist
-
-**Hallucinated API:**
-```csharp
-widget.WithMargin(top: 4)
-```
-
-**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'left' of 'LayoutExtensions.WithMargin(object, int, int, int, int)'`
-
-**Correct API:**
-```csharp
-// WithMargin has three overloads, all with positional parameters:
-widget.WithMargin(4)            // uniform margin
-widget.WithMargin(4, 2)         // horizontal, vertical
-widget.WithMargin(0, 4, 0, 0)   // left, top, right, bottom
-```
-
-**Found In:**
-2e18b175-94ec-459c-94a5-8f28b81ecfdc
-
 ## Margin(new Thickness(...)) — Margin takes int, not Thickness
 
 **Hallucinated API:**
@@ -1649,32 +1652,6 @@ state.ToForm()
 
 **Found In:**
 5d2202d2-9d6b-4198-9922-c3763534aca5
-
-## Details() — empty constructor instead of passing items
-
-**Hallucinated API:**
-```csharp
-new Details()
-    | new Detail("Country Code", result.CountryCode, false)
-    | new Detail("VAT Number", result.VatNumber, false)
-```
-
-**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
-
-**Correct API:**
-```csharp
-new Details(new[] {
-    new Detail("Country Code", result.CountryCode, false),
-    new Detail("VAT Number", result.VatNumber, false)
-})
-// or use the builder pattern:
-result.ToDetails()
-```
-
-`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
-
-**Found In:**
-857de09c-ab87-49a5-aac4-394f7d0aa207
 
 ## DataTable.RowActions() — Tree extension called on DataTable widget
 
@@ -1766,6 +1743,329 @@ There are no `Ivy.Apps` or `Ivy.Shared` namespaces. All Ivy widgets, hooks, and 
 **Found In:**
 a55e08b9-f212-49ef-97b9-d352b7b4beb8
 
+## await void OnSubmit callback — incorrect async pattern
+
+**Hallucinated API:**
+```csharp
+state.ToForm().OnSubmit(async form => {
+    await db.SaveChangesAsync(); // CS4008: Cannot await 'void'
+})
+```
+
+**Error:** `CS4008: Cannot await 'void'`
+
+**Correct API:**
+```csharp
+state.ToForm().OnSubmit(async form => {
+    await db.SaveChangesAsync();
+    // Ensure the callback signature returns Task, not void
+})
+```
+
+The agent sometimes uses `await` on a method that returns `void` inside a form `OnSubmit` callback. This happens when the callback is inferred as `Action<T>` (returning void) rather than `Func<T, Task>`. Ensure the lambda is recognized as async Task-returning by the compiler. If the `OnSubmit` overload expects `Func<T, ValueTask>`, ensure the return type matches.
+
+**Found In:**
+9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestsApp.cs)
+
+## TabsLayout(params Tab[]) — simplified constructor doesn't exist
+
+**Hallucinated API:**
+```csharp
+new TabsLayout(
+    new Tab("Markets", new MarketsView()),
+    new Tab("Chart", new ChartView()),
+    new Tab("Portfolio", new PortfolioView())
+)
+```
+
+**Error:** `CS1729: 'TabsLayout' does not contain a constructor that takes 1 arguments`
+
+**Correct API:**
+```csharp
+new TabsLayout(
+    onSelect: null, onClose: null, onRefresh: null, onReorder: null, selectedIndex: null,
+    new Tab("Markets", new MarketsView()),
+    new Tab("Chart", new ChartView()),
+    new Tab("Portfolio", new PortfolioView())
+)
+```
+
+`TabsLayout` has no simplified `(params Tab[])` constructor. The public constructor requires 5 positional parameters before the `params Tab[]`: `onSelect`, `onClose`, `onRefresh`, `onReorder`, `selectedIndex`. Pass `null` for all event handlers and selectedIndex when only tabs are needed. The agent tried to skip these parameters, causing repeated build failures (5 times in a single session).
+
+**Found In:**
+3d2cdc9c-aad3-410e-a1e4-7c007529077a
+
+## Text.Secondary("text") — non-existent static factory
+
+**Hallucinated API:**
+```csharp
+Text.Secondary("some text")
+```
+
+**Error:** `CS1501: No overload for method 'Secondary' takes 1 arguments`
+
+**Correct API:**
+```csharp
+// Use Text.Muted() for secondary/muted appearance:
+Text.Muted("some text")
+// Or use Text.P() with .Muted() chained:
+Text.P("some text").Muted()
+// Or use Text.P() with Colors.Secondary color:
+Text.P("some text").Color(Colors.Secondary)
+```
+
+`Text.Secondary()` does not exist as a static factory method. The static factories on `Text` are: `H1`, `H2`, `H3`, `H4`, `H5`, `H6`, `P`, `Inline`, `Block`, `Blockquote`, `Monospaced`, `Lead`, `Label`, `Muted`, `Strong`, `Bold`, `Danger`, `Warning`, `Success`, `Code`, `Markdown`, `Json`, `Xml`, `Html`, `Latex`, `Display`, `Literal`, `Rich`. The agent likely confused `Secondary` from `ButtonVariant.Secondary` / `Button.Secondary()` or `BadgeVariant.Secondary` / `Badge.Secondary()` with the `Text` API. `.Secondary()` is a fluent method on `Button` and `Badge`, not on `Text`.
+
+**Found In:**
+(session not yet recorded)
+
+## FileUploadStatus.Completed — non-existent enum value
+
+**Hallucinated API:**
+```csharp
+if (upload.Status == FileUploadStatus.Completed)
+```
+
+**Error:** `'FileUploadStatus' does not contain a definition for 'Completed'`
+
+**Correct API:**
+```csharp
+if (upload.Status == FileUploadStatus.Finished)
+```
+
+`FileUploadStatus` values are: `Pending`, `Aborted`, `Loading`, `Failed`, `Finished`. There is no `Completed` value. **Auto-fixed:** The refactoring service automatically rewrites `FileUploadStatus.Completed` → `FileUploadStatus.Finished`.
+
+**Found In:**
+(session not yet recorded)
+
+## UseDownload — ambiguous overload between sync and async
+
+**Hallucinated API:**
+```csharp
+UseDownload(() => bytes, "file.txt", "text/plain")
+```
+
+**Error:** `CS0121: The call is ambiguous between 'ViewBase.UseDownload(Func<byte[]>, string, string)' and 'ViewBase.UseDownload(Func<Task<byte[]>>, string, string)'`
+
+**Correct API:**
+```csharp
+// For sync: explicitly type the delegate
+UseDownload((Func<byte[]>)(() => bytes), "file.txt", "text/plain")
+
+// Or use a named method:
+byte[] GetBytes() => bytes;
+UseDownload(GetBytes, "file.txt", "text/plain")
+```
+
+When using `UseDownload` with a lambda, you must explicitly cast to `Func<byte[]>` or `Func<Task<byte[]>>` to avoid ambiguity.
+
+**Found In:**
+(session not yet recorded)
+
+## Server.OnReady / Server.OnStartup — non-existent lifecycle callbacks
+
+**Hallucinated API:**
+```csharp
+server.OnReady(() => { /* seed data */ });
+server.OnStartup(() => { /* initialize */ });
+```
+
+**Error:** `CS1061: 'Server' does not contain a definition for 'OnReady'`
+
+**Correct API:**
+```csharp
+// Seed data via the context factory pattern:
+var connection = server.UseConnection<MyDbContext>(options =>
+    options.ContextFactory = () =>
+    {
+        var ctx = new MyDbContext();
+        ctx.Database.EnsureCreated();
+        SeedData(ctx);
+        return ctx;
+    });
+
+// Or resolve services directly in Program.cs:
+var myService = server.Services.GetRequiredService<IMyService>();
+myService.Initialize();
+```
+
+The `Server` class does not have `OnReady`, `OnStartup`, or similar lifecycle callback methods. To run initialization code (e.g., database seeding), use the connection's context factory pattern — seed data in the factory's `CreateContext` method or use `server.Services` to resolve and call services directly in `Program.cs`.
+
+**Found In:**
+(session not yet recorded)
+
+## Fragment.Empty — non-existent static member
+
+**Hallucinated API:**
+```csharp
+return Fragment.Empty;
+```
+
+**Error:** `'Fragment' does not contain a definition for 'Empty'`
+
+**Correct API:**
+```csharp
+// Use ViewBase.Empty:
+return ViewBase.Empty;
+
+// Or return an empty Fragment:
+return new Fragment();
+
+// Or just return null:
+return null;
+```
+
+`Fragment` does not have an `Empty` static member. To return nothing from a view, use `ViewBase.Empty`, `new Fragment()`, or `null`.
+
+**Found In:**
+(session not yet recorded)
+
+## Field.Invalid() — extension method called on wrong type
+
+**Hallucinated API:**
+```csharp
+stat.ToNumberInput().WithField().Label("Strength").Invalid("Over budget")
+```
+
+**Error:** `CS1929: 'Field' does not contain a definition for 'Invalid' and the best extension method overload 'BoolInputExtensions.Invalid(BoolInputBase, string?)' requires a receiver of type 'Ivy.BoolInputBase'`
+
+**Correct API:**
+```csharp
+// Call .Invalid() on the input BEFORE wrapping in a Field:
+stat.ToNumberInput().Invalid("Over budget").WithField().Label("Strength")
+
+// Or conditionally:
+stat.ToNumberInput().Invalid(overBudget ? "Over budget" : null).WithField().Label("Strength")
+```
+
+`.Invalid()` is an extension method on input base types (`NumberInputBase`, `TextInputBase`, etc.), not on `Field`. When using the `.WithField()` fluent chain, `.Invalid()` must be called on the input before `.WithField()` converts it to a `Field`. The agent confused the fluent chain ordering.
+
+**Found In:**
+8111879a-ebe9-48d0-bd8e-936becb133ee
+
+## NumberInput without generic type argument
+
+**Hallucinated API:**
+```csharp
+(NumberInput)input
+// or referencing NumberInput as a non-generic type
+```
+
+**Error:** `CS0305: Using the generic type 'NumberInput<TNumber>' requires 1 type arguments`
+
+**Correct API:**
+```csharp
+// Use the fluent builder pattern — no need to reference the type directly:
+intState.ToNumberInput()
+
+// If you must reference the type, include the type parameter:
+NumberInput<int>
+```
+
+`NumberInput<TNumber>` is a generic type and cannot be referenced without its type argument. In practice, use `.ToNumberInput()` on an `IState<int>` (or other numeric type) and chain fluent methods. There is rarely a need to reference the `NumberInput<T>` type directly.
+
+**Found In:**
+8111879a-ebe9-48d0-bd8e-936becb133ee
+
+## TextBuilder.Icon() — extension method receiver mismatch
+
+**Hallucinated API:**
+```csharp
+Text.H3("Task Hub").Icon(Icons.KanbanSquare)
+```
+
+**Error:** `CS1929: 'TextBuilder' does not contain a definition for 'Icon' and the best extension method overload 'MenuItemExtensions.Icon(MenuItem, Icons)' requires a receiver of type 'Ivy.MenuItem'`
+
+**Correct API:**
+```csharp
+// Icon() is only available on MenuItem, not on TextBuilder.
+// To show an icon next to text, use a layout:
+new Horizontal(new Icon(Icons.KanbanSquare), Text.H3("Task Hub"))
+```
+
+The agent assumed `.Icon()` was a chainable method on `TextBuilder`, but `Icon()` is an extension method that only applies to `MenuItem`. The `ReplaceInvalidIcons` refactoring rule caught and fixed the invalid icon name, but not the wrong receiver type.
+
+**Found In:**
+c1f8feae-b342-4bf1-a18c-9b88ee8d6d17
+
+## Expandable constructor — missing content parameter
+
+**Hallucinated API:**
+```csharp
+new Expandable("Section Title")
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'content' of 'Expandable.Expandable(object, object)'`
+
+**Correct API:**
+```csharp
+// Expandable requires both title and content:
+new Expandable("Section Title", contentWidget)
+```
+
+The `Expandable` constructor requires two arguments: `(object title, object content)`. The agent called it with only the title, omitting the content parameter. IvyQuestion answers sometimes show simplified signatures.
+
+**Found In:**
+6c834561-6c01-424b-b8fb-a4a473c1c86a
+
+## TableBuilder.Header(selector, label, builder) — 3-argument overload doesn't exist
+
+**Hallucinated API:**
+```csharp
+.Header(e => e.Status, "Status", b => b.Func<string>(s => new Badge(s).Success()))
+```
+
+**Error:** `CS1501: No overload for method 'Header' takes 3 arguments`
+
+**Correct API:**
+```csharp
+// Header takes 2 arguments (selector, label). For custom rendering, chain .Builder():
+.Header(e => e.Status, "Status").Builder(b => b.Func<Employee, string>(e => new Badge(e.Status).Success()))
+```
+
+`TableBuilder.Header()` only accepts 2 parameters: the property selector and the column label. To customize column rendering, chain `.Builder()` after `.Header()`.
+
+**Found In:**
+8b576f86-85cc-43b8-97e2-358bae83464a
+
+## IBuilderFactory\<T\>.Custom() — non-existent method
+
+**Hallucinated API:**
+```csharp
+b.Custom<double>(hours => new Text($"{hours:F1}h"))
+```
+
+**Error:** `CS1061: 'IBuilderFactory<PayrollRow>' does not contain a definition for 'Custom'`
+
+**Correct API:**
+```csharp
+b.Func<PayrollRow, double>(row => new Text($"{row.TotalHours:F1}h"))
+```
+
+`IBuilderFactory<T>` does not have a `.Custom()` method. Use `.Func<TModel, TIn>(...)` instead, which requires both the model type and the input type as generic parameters.
+
+**Found In:**
+8b576f86-85cc-43b8-97e2-358bae83464a
+
+## Align used where TextAlignment expected — type confusion
+
+**Hallucinated API:**
+```csharp
+Text.H1("0").Align(Align.Right)  // passing Ivy.Align instead of Ivy.TextAlignment
+```
+
+**Error:** `CS1503: Argument 1: cannot convert from 'Ivy.Align' to 'Ivy.TextAlignment'`
+
+**Correct API:**
+```csharp
+Text.H1("0").Align(TextAlignment.Right)
+```
+
+`Align` (layout alignment for positioning elements) and `TextAlignment` (text alignment within a text block) are two different enums. `Align` has values like `TopLeft`, `Center`, `Stretch`, etc. `TextAlignment` has values `Left`, `Center`, `Right`, `Justify`. Methods accepting text alignment require `TextAlignment`, not `Align`.
+
+**Found In:**
+2739aa95-7d5b-481b-a456-af895e6268df
+
 ## TextInput.Grow() — Box-only extension called on TextInput
 
 **Hallucinated API:**
@@ -1784,26 +2084,6 @@ query.ToTextInput().Width(Size.Grow())
 
 **Found In:**
 7a9aadf3
-
-## HandleSubmit / Handle* — renamed event handler methods
-
-**Hallucinated API:**
-```csharp
-input.ToTextInput().HandleSubmit(() => Save())
-button.HandleClick(() => DoSomething())
-input.HandleBlur(() => Validate())
-```
-
-**Error:** `does not contain a definition for 'HandleSubmit'` (or `HandleClick`, `HandleBlur`, etc.)
-
-**Correct API:**
-```csharp
-input.ToTextInput().OnSubmit(() => Save())
-button.OnClick(() => DoSomething())
-input.OnBlur(() => Validate())
-```
-
-All `Handle*` event handler extension methods were renamed to `On*` in v1.2.17 (Ivy-Framework#2459, #2510): `HandleClick` → `OnClick`, `HandleSubmit` → `OnSubmit`, `HandleChange` → `OnChange`, `HandleSelect` → `OnSelect`, `HandleClose` → `OnClose`, `HandleBlur` → `OnBlur`, `HandleRowAction` → `OnRowAction`, `HandleCardMove` → `OnCardMove`, `HandleExpand` → `OnExpand`, `HandleCollapse` → `OnCollapse`, `HandlePageChange` → `OnPageChange`, `HandleUpload` → `OnUpload`, `HandleDownload` → `OnDownload`. **Auto-fixed:** The refactoring service automatically rewrites all `Handle*` calls to `On*`.
 
 ## Align.End / Align.Start — CSS-inspired enum values
 
@@ -1829,6 +2109,98 @@ The agent draws from CSS `justify-content: flex-end` / `align-items: flex-end` t
 
 **Found In:**
 DecisionMatrixApp.cs (two occurrences of `Align.End`)
+
+## Separator() — constructor invoked without `new`
+
+**Hallucinated API:**
+```csharp
+Layout.Vertical()
+    | Separator()
+```
+
+**Error:** `CS1955: Non-invocable member 'Separator' cannot be used like a method.`
+
+**Correct API:**
+```csharp
+Layout.Vertical()
+    | new Separator()
+```
+
+`Separator` is a record type that requires `new` to instantiate. Unlike `Text.H2()` or `Layout.Vertical()` which are static factory methods, `Separator` is a simple widget created via its constructor. Other widgets that require `new` include `Button`, `Badge`, `Card`, `Callout`, etc.
+
+**Found In:**
+8efafe51-b4f4-40fd-b757-00c3f977e0a0
+
+## Server.BuildAsync() / Server.ServiceProvider — non-existent public API
+
+**Hallucinated API:**
+```csharp
+var app = await server.BuildAsync();
+await using var scope = app.ServiceProvider.CreateAsyncScope();
+// or:
+server.ServiceProvider
+```
+
+**Error:** `CS1061: 'Server' does not contain a definition for 'BuildAsync'` / `CS1061: 'Server' does not contain a definition for 'ServiceProvider'`
+
+**Correct API:**
+```csharp
+// Use UseWebApplication to access the DI container:
+server.UseWebApplication(app =>
+{
+    using var scope = app.Services.CreateScope();
+    var service = scope.ServiceProvider.GetRequiredService<MyService>();
+    // ... initialization code ...
+});
+await server.RunAsync();
+```
+
+`Server` does not have `BuildAsync()` or a public `ServiceProvider` property. `ServiceProvider` exists but is `internal`. To run initialization code before the server starts, use `server.UseWebApplication(Action<WebApplication>)` which gives access to the `WebApplication` instance (and its `.Services` property) during startup. The agent confused ASP.NET Core's `WebApplicationBuilder.Build()` pattern with Ivy's `Server` API.
+
+**Found In:**
+70f88d4c-298a-421b-8bd1-f7fc697c911e
+
+## TextBuilder.Padding() — non-existent method
+
+**Hallucinated API:**
+```csharp
+Text.Block(content).Padding(16)
+Text.P(content).Padding(4)
+```
+
+**Error:** `CS1929: 'TextBuilder' does not contain a definition for 'Padding'`
+
+**Correct API:**
+```csharp
+// Wrap text in a Box for padding:
+new Box(Text.Block(content)).Padding(16)
+
+// Or wrap in a layout:
+Layout.Vertical().Padding(16)
+    | Text.Block(content)
+```
+
+`TextBuilder` does not have `.Padding()`. Padding is available on container widgets (`Box`, `LayoutView`, `TabView`, `GridView`). To add padding around text, wrap it in a `Box` or layout. This is a variant of the `TextBuilder.AlignCenter()` and `TextBuilder.Style()` hallucinations — the agent applies container-level styling to text elements.
+
+## HandleSubmit / Handle* — renamed event handler methods
+
+**Hallucinated API:**
+```csharp
+input.ToTextInput().HandleSubmit(() => Save())
+button.HandleClick(() => DoSomething())
+input.HandleBlur(() => Validate())
+```
+
+**Error:** `does not contain a definition for 'HandleSubmit'` (or `HandleClick`, `HandleBlur`, etc.)
+
+**Correct API:**
+```csharp
+input.ToTextInput().OnSubmit(() => Save())
+button.OnClick(() => DoSomething())
+input.OnBlur(() => Validate())
+```
+
+All `Handle*` event handler extension methods were renamed to `On*` in v1.2.17 (Ivy-Framework#2459, #2510): `HandleClick` → `OnClick`, `HandleSubmit` → `OnSubmit`, `HandleChange` → `OnChange`, `HandleSelect` → `OnSelect`, `HandleClose` → `OnClose`, `HandleBlur` → `OnBlur`, `HandleRowAction` → `OnRowAction`, `HandleCardMove` → `OnCardMove`, `HandleExpand` → `OnExpand`, `HandleCollapse` → `OnCollapse`, `HandlePageChange` → `OnPageChange`, `HandleUpload` → `OnUpload`, `HandleDownload` → `OnDownload`. **Auto-fixed:** The refactoring service automatically rewrites all `Handle*` calls to `On*`.
 
 ## Server Configuration
 
@@ -1870,53 +2242,71 @@ state.ToForm().OnSubmit(async form => { ... })
 
 `OnSubmit` is a fluent extension method that chains after `ToForm()`, not a constructor parameter. The same pattern applies to other form event handlers like `OnChange`.
 
-## ToDataTable() on List\<T\> — wrong receiver type
+## UseEffect fires on initial render — it does not
+
+**Hallucinated behavior:**
+The agent assumes `UseEffect` with a state dependency fires on the initial render (like React's `useEffect`), so it initializes state as empty and relies on the effect to populate it:
+```csharp
+// Agent writes this expecting the effect to run immediately:
+var count = UseState(10);
+var items = UseState(() => new List<User>());
+UseEffect(() => { items.Set(GenerateUsers(count.Value)); }, count);
+// Result: table is empty on first load
+```
+
+**Correct pattern:**
+`UseEffect` with state dependencies only fires when the dependency **changes**, not on the first render. Initialize state with data directly:
+
+```csharp
+var count = UseState(10);
+var items = UseState(() => GenerateUsers(count.Value));
+UseEffect(() => { items.Set(GenerateUsers(count.Value)); }, count);
+```
+
+This is a behavioral difference from React's `useEffect`, which fires on mount and on dependency changes. Ivy's `UseEffect` with state triggers uses `AfterChange` semantics only.
+
+## ToastVariant — non-existent enum — now supported
 
 **Hallucinated API:**
 ```csharp
-var items = await db.Categories.ToListAsync();
-items.ToDataTable()
+client.Toast("Error!", ToastVariant.Destructive)
 ```
 
-**Error:** `CS1061: 'List<Category>' does not contain a definition for 'ToDataTable'`
+**Error:** `The name 'ToastVariant' does not exist in the current context`
 
 **Correct API:**
 ```csharp
-// ToDataTable() is an extension on IQueryable<T>, not List<T>:
-db.Categories.ToDataTable()
-
-// Or use ToTable() for in-memory collections:
-items.ToTable()
+client.Toast("Success message");       // neutral toast
+client.Toast("Done!", "Title");        // with title
+client.Error("Something went wrong."); // error toast
 ```
 
-`ToDataTable()` is defined on `IQueryable<T>` (via `DataTableBuilder`), not on `List<T>` or `IEnumerable<T>`. The agent often materializes a query to a List first (e.g., via `ToListAsync()`), then tries to call `ToDataTable()` on the result. Pass the `IQueryable<T>` directly to `ToDataTable()` without materializing. For in-memory collections, use `.ToTable()` instead.
+`ToastVariant` does not exist. The `IClientProvider.Toast()` method takes `(string message)` or `(string message, string title)`. For error toasts, use `client.Error(message)` instead.
 
 **Found In:**
-9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestFilesApp.cs and CategoriesApp.cs)
+d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-tasks)
 
-## await void OnSubmit callback — incorrect async pattern
+## SelectInputBase.Options() — chained options method — now supported
 
 **Hallucinated API:**
 ```csharp
-state.ToForm().OnSubmit(async form => {
-    await db.SaveChangesAsync(); // CS4008: Cannot await 'void'
-})
+defaultBehavior.ToSelectInput().Options(["Refused", "Allowed", "Ignored"])
 ```
 
-**Error:** `CS4008: Cannot await 'void'`
+**Error:** `'SelectInputBase' does not contain a definition for 'Options'`
 
 **Correct API:**
 ```csharp
-state.ToForm().OnSubmit(async form => {
-    await db.SaveChangesAsync();
-    // Ensure the callback signature returns Task, not void
-})
+defaultBehavior.ToSelectInput(new[] { "Refused", "Allowed", "Ignored" }.ToOptions())
 ```
 
-The agent sometimes uses `await` on a method that returns `void` inside a form `OnSubmit` callback. This happens when the callback is inferred as `Action<T>` (returning void) rather than `Func<T, Task>`. Ensure the lambda is recognized as async Task-returning by the compiler. If the `OnSubmit` overload expects `Func<T, ValueTask>`, ensure the return type matches.
+Options are passed as `IEnumerable<IAnyOption>` to `ToSelectInput(options)`, not chained via a `.Options()` method. Use the `.ToOptions()` extension method on a string array to convert to the correct type.
 
 **Found In:**
-9d8f5446-43c4-44a2-b6ce-3caeff413407 (TestsApp.cs)
+4eb1799f-39b2-4325-a0bd-37b769a33432
+30c1b273-c528-4496-b194-c98e0ffeaa23
+
+https://github.com/Ivy-Interactive/Ivy-Framework/issues/2271
 
 ## IRef\<T\> — now supported
 
