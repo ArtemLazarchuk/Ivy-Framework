@@ -1,17 +1,21 @@
+---
+hidden: true
+---
 # Ivy Framework Hallucinations
 
 Known cases where the agent hallucinated Ivy Framework APIs. Use this as a reference when debugging build errors in agent sessions.
 
-
 ## Badge.Color(Colors.X) — non-existent fluent method
 
 **Hallucinated API:**
+
 ```csharp
 new Badge(match.Value).Color(Colors.Green)
 new Badge("No match").Color(Colors.Red)
 ```
 
 **Correct API:**
+
 ```csharp
 // Via constructor variant parameter:
 new Badge(match.Value, BadgeVariant.Success)
@@ -40,6 +44,7 @@ c9185561-51f5-4c76-ae5b-7448f5a68a0f
 ## AppAttribute.path — renamed to group
 
 **Hallucinated API:**
+
 ```csharp
 [App(path: ["Tests"])]
 ```
@@ -47,6 +52,7 @@ c9185561-51f5-4c76-ae5b-7448f5a68a0f
 **Error:** `'AppAttribute' does not contain a definition for 'path'`
 
 **Correct API:**
+
 ```csharp
 [App(group: ["Tests"])]
 ```
@@ -62,6 +68,7 @@ fd5baba6-72aa-4d28-ac10-72e1be86e494
 ## DateTimeVariant — wrong enum name
 
 **Hallucinated API:**
+
 ```csharp
 date.ToDateTimeInput().Variant(DateTimeVariant.Date)
 ```
@@ -69,6 +76,7 @@ date.ToDateTimeInput().Variant(DateTimeVariant.Date)
 **Error:** `The name 'DateTimeVariant' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 date.ToDateInput()
 // or:
@@ -83,6 +91,7 @@ d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-t
 ## InputBase.Label() — AxisExtensions method used on input
 
 **Hallucinated API:**
+
 ```csharp
 // NumberInputBase
 stockAdjustment.ToNumberInput().Label("Adjustment amount")
@@ -94,6 +103,7 @@ dateState.ToDateInput().Label("Birthdate")
 **Error:** `The type 'Ivy.NumberInputBase' cannot be used as type parameter 'T' in the generic type or method 'AxisExtensions.Label<T>(T, string)'` (same CS0311 error for `DateTimeInputBase`, `TextInputBase`, `SelectInputBase`, `BoolInputBase`, etc.)
 
 **Correct API:**
+
 ```csharp
 // Use .WithField().Label() to wrap the input in a labeled field:
 stockAdjustment.ToNumberInput().WithField().Label("Adjustment amount")
@@ -118,6 +128,7 @@ f20dced8-1689-4289-a2d8-ee67136eb6ce
 ## BorderRadius.Medium — non-existent enum value
 
 **Hallucinated API:**
+
 ```csharp
 BorderRadius.Medium
 BorderRadius.Large
@@ -127,6 +138,7 @@ BorderRadius.Small
 **Error:** `'BorderRadius' does not contain a definition for 'Medium'`
 
 **Correct API:**
+
 ```csharp
 BorderRadius.None     // no rounding
 BorderRadius.Rounded  // standard rounded corners
@@ -143,6 +155,7 @@ Valid `BorderRadius` values: `None`, `Rounded`, `Full`. The agent hallucinates T
 ## Callout constructor — wrong constructor + invented enum / wrong argument order
 
 **Hallucinated API:**
+
 ```csharp
 // Variant 1: Invented enum (CalloutType does not exist)
 new Callout("No to-do items.", CalloutType.Info)
@@ -154,6 +167,7 @@ new Callout("Warning!", CalloutVariant.Destructive)
 **Error:** `The type or namespace 'CalloutType' could not be found` (variant 1) or `CS1503: Argument 2: cannot convert from 'Ivy.CalloutVariant' to 'string?'` (variant 2)
 
 **Correct API:**
+
 ```csharp
 // Preferred: static factory methods
 Callout.Info("No to-do items.")
@@ -172,6 +186,7 @@ cdf77a72-658e-45df-9bdb-9bf7c79100b2
 ## Details() — empty constructor instead of passing items
 
 **Hallucinated API:**
+
 ```csharp
 new Details()
     | new Detail("Country Code", result.CountryCode, false)
@@ -181,6 +196,7 @@ new Details()
 **Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
 
 **Correct API:**
+
 ```csharp
 new Details(new[] {
     new Detail("Country Code", result.CountryCode, false),
@@ -200,6 +216,7 @@ fd5baba6-72aa-4d28-ac10-72e1be86e494
 ## AppAttribute.path old parameter name
 
 **Hallucinated API:**
+
 ```csharp
 [App("Dashboard", path: ["Dashboards"])]
 ```
@@ -207,6 +224,7 @@ fd5baba6-72aa-4d28-ac10-72e1be86e494
 **Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
 
 **Correct API:**
+
 ```csharp
 [App("Dashboard", group: ["Dashboards"])]
 ```
@@ -221,6 +239,7 @@ a55e08b9-f212-49ef-97b9-d352b7b4beb8
 ## Button("text", Icons.X) — icon as constructor argument
 
 **Hallucinated API:**
+
 ```csharp
 new Button("Add Item", Icons.Plus)
 ```
@@ -228,6 +247,7 @@ new Button("Add Item", Icons.Plus)
 **Error:** `Argument 2: cannot convert from 'Ivy.Icons' to 'System.Func<Ivy.Event<Ivy.Button>, System.Threading.Tasks.ValueTask>?'`
 
 **Correct API:**
+
 ```csharp
 new Button("Add Item").Icon(Icons.Plus)
 ```
@@ -242,6 +262,7 @@ f20dced8-1689-4289-a2d8-ee67136eb6ce
 ## TreeRowActionClickEventArgs on DataTable — wrong event args type
 
 **Hallucinated API:**
+
 ```csharp
 table.OnRowAction(e => {
     var tag = ((TreeRowActionClickEventArgs)e).Tag;
@@ -252,6 +273,7 @@ table.OnRowAction(e => {
 **Error:** `CS1061: 'TreeRowActionClickEventArgs' does not contain a definition for 'Tag'/'Id'`
 
 **Correct API:**
+
 ```csharp
 table.OnRowAction(e => {
     var tag = e.Value.Tag;  // RowActionClickEventArgs.Tag
@@ -269,6 +291,7 @@ DataTable's `OnRowAction` uses `Event<DataTable, RowActionClickEventArgs>`, not 
 ## ToDataTable() on List\<T\> or T[] — wrong receiver type
 
 **Hallucinated API:**
+
 ```csharp
 var items = await db.Categories.ToListAsync();
 items.ToDataTable()
@@ -281,6 +304,7 @@ rows.ToDataTable()
 **Error:** `CS1061: 'List<Category>' does not contain a definition for 'ToDataTable'` / `CS1061: 'TestFileRow[]' does not contain a definition for 'ToDataTable'`
 
 **Correct API:**
+
 ```csharp
 // ToDataTable() is an extension on IQueryable<T>, not List<T> or T[]:
 db.Categories.ToDataTable()
@@ -299,6 +323,7 @@ items.ToTable()
 ## Toast() — standalone function call instead of IClientProvider method
 
 **Hallucinated API:**
+
 ```csharp
 Toast("Clocked in successfully");
 Toast("Employee saved!");
@@ -307,6 +332,7 @@ Toast("Employee saved!");
 **Error:** `CS0103: The name 'Toast' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 var client = UseService<IClientProvider>();
 client.Toast("Clocked in successfully");
@@ -324,6 +350,7 @@ a8076804-1223-469e-a689-2af23d259566
 ## UseAlert().ShowInfo() — wrong API usage
 
 **Hallucinated API:**
+
 ```csharp
 var alert = UseAlert();
 alert.ShowInfo("title", "message");
@@ -332,6 +359,7 @@ alert.ShowInfo("title", "message");
 **Error:** `'(IView? alertView, ShowAlertDelegate showAlert)' does not contain a definition for 'ShowInfo'`
 
 **Correct API:**
+
 ```csharp
 var (alertView, showAlert) = UseAlert();
 showAlert("message", result => { }, "title", AlertButtonSet.Ok);
@@ -346,17 +374,20 @@ c06ba6f6-2583-4fcc-81dc-f8da652471c6
 ## AppAttribute — PascalCase properties and invented parameters
 
 **Hallucinated API:**
+
 ```csharp
 [App(Icon = Icons.Bot, Group = "Apps", Chrome = UseDefaultAppChrome)]
 [App(Icon = Icons.Waves)]
 ```
 
 **Errors:**
+
 - `CS0655: 'Icon' is not a valid named attribute argument` — PascalCase property used instead of constructor parameter
 - `CS0246: The type or namespace name 'Group' could not be found` — parameter doesn't exist
 - `CS0246: The type or namespace name 'Chrome' could not be found` — parameter doesn't exist
 
 **Correct API:**
+
 ```csharp
 [App(icon: Icons.Bot, group: new[] { "Apps" })]
 ```
@@ -374,6 +405,7 @@ d6a5f377-bc84-404d-acca-71164d3754d4
 ## TextBuilder.Style() — non-existent styling method
 
 **Hallucinated API:**
+
 ```csharp
 Text.P("🐶").Style("font-size: 48px")
 ```
@@ -381,6 +413,7 @@ Text.P("🐶").Style("font-size: 48px")
 **Error:** `'TextBuilder' does not contain a definition for 'Style'`
 
 **Correct API:**
+
 ```csharp
 Text.P("🐶").Large()
 Text.P("text").Medium()
@@ -397,6 +430,7 @@ Also hallucinated: `Text.Code(expr).FontSize(24)` — CS1929: `.FontSize()` is a
 ## TextBuilder.AlignCenter() / .Centered() — use .Center()
 
 **Hallucinated API:**
+
 ```csharp
 Text.H1("$0.00").AlignCenter()
 Text.H1("title").Centered()
@@ -405,6 +439,7 @@ Text.H1("title").Centered()
 **Error:** `CS1061: 'TextBuilder' does not contain a definition for 'AlignCenter'` / `'Centered'`
 
 **Correct API:**
+
 ```csharp
 Text.H1("$0.00").Center()
 ```
@@ -417,6 +452,7 @@ Text.H1("$0.00").Center()
 ## Table\<T\> — non-generic type used with type arguments
 
 **Hallucinated API:**
+
 ```csharp
 new Table<MyRecord>(items)
 ```
@@ -424,6 +460,7 @@ new Table<MyRecord>(items)
 **Error:** `The non-generic type 'Table' cannot be used with type arguments`
 
 **Correct API:**
+
 ```csharp
 items.ToTable()
 ```
@@ -437,6 +474,7 @@ cab4c6bb-be1f-4fef-9d96-96c54e5f88ff
 ## Box.Opacity() — property used as method call
 
 **Hallucinated API:**
+
 ```csharp
 new Box(content).Opacity(0.3f)
 ```
@@ -444,6 +482,7 @@ new Box(content).Opacity(0.3f)
 **Error:** `CS1955: Non-invocable member 'Box.Opacity' cannot be used like a method.`
 
 **Correct API:**
+
 ```csharp
 // Use object initializer or with-expression:
 new Box(content) { Opacity = 0.3f }
@@ -463,6 +502,7 @@ new Box(content).Background(Colors.Muted, 0.3f)
 ## WithMargin(top: 4) — Named parameters don't exist
 
 **Hallucinated API:**
+
 ```csharp
 widget.WithMargin(top: 4)
 ```
@@ -470,6 +510,7 @@ widget.WithMargin(top: 4)
 **Error:** `CS7036: There is no argument given that corresponds to the required parameter 'left' of 'LayoutExtensions.WithMargin(object, int, int, int, int)'`
 
 **Correct API:**
+
 ```csharp
 // WithMargin has three overloads, all with positional parameters:
 widget.WithMargin(4)            // uniform margin
@@ -484,6 +525,7 @@ widget.WithMargin(0, 4, 0, 0)   // left, top, right, bottom
 ## TextInputBase.Lines() — non-existent multi-line property
 
 **Hallucinated API:**
+
 ```csharp
 var text = UseState("");
 text.ToTextInput().Lines(8)
@@ -492,6 +534,7 @@ text.ToTextInput().Lines(8)
 **Error:** `CS1061: 'TextInputBase' does not contain a definition for 'Lines'`
 
 **Correct API:**
+
 ```csharp
 var text = UseState("");
 text.ToTextareaInput()
@@ -508,6 +551,7 @@ edd92ecc-6378-440a-b9cf-bb8e1cb29de9
 ## Button onClick — wrong callback signature (method group)
 
 **Hallucinated API:**
+
 ```csharp
 async Task GenerateEmbedding() { ... }
 new Button("Generate Embedding", GenerateEmbedding)
@@ -516,6 +560,7 @@ new Button("Generate Embedding", GenerateEmbedding)
 **Error:** `Argument 2: cannot convert from 'method group' to 'System.Func<Ivy.Event<Ivy.Button>, System.Threading.Tasks.ValueTask>?'`
 
 **Correct API:**
+
 ```csharp
 async ValueTask GenerateEmbedding(Event<Button> e) { ... }
 new Button("Generate Embedding", GenerateEmbedding)
@@ -532,6 +577,7 @@ The `Button` onClick parameter is `Func<Event<Button>, ValueTask>?`. The callbac
 ## LayoutView.MaxWidth() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 Layout.Vertical().MaxWidth(Size.Lg)
 ```
@@ -539,6 +585,7 @@ Layout.Vertical().MaxWidth(Size.Lg)
 **Error:** `'LayoutView' does not contain a definition for 'MaxWidth'`
 
 **Correct API:**
+
 ```csharp
 Layout.Vertical().Width(Size.Lg)
 ```
@@ -551,6 +598,7 @@ a9ee3993-1cfb-4cba-9322-80a60b56c8d2
 ## LayoutView.SpaceBetween() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 Layout.Horizontal().SpaceBetween()
 ```
@@ -558,6 +606,7 @@ Layout.Horizontal().SpaceBetween()
 **Error:** `'LayoutView' does not contain a definition for 'SpaceBetween'` (CS1061)
 
 **Correct API:**
+
 ```csharp
 Layout.Horizontal(Align.SpaceBetween)
 ```
@@ -570,6 +619,7 @@ f6d6e841-9a14-4475-9fa5-0791be30e578
 ## Callout.Destructive() — fluent method on constructor instance
 
 **Hallucinated API:**
+
 ```csharp
 new Callout("Error message").Destructive()
 ```
@@ -577,6 +627,7 @@ new Callout("Error message").Destructive()
 **Error:** `'Callout' does not contain a definition for 'Destructive'`
 
 **Correct API:**
+
 ```csharp
 Callout.Error("Error message")
 ```
@@ -589,6 +640,7 @@ d9116efb-830e-484a-a258-fc3193769158
 ## TextInputBase.OnEnter() — invented fluent method
 
 **Hallucinated API:**
+
 ```csharp
 newItemText.ToTextInput().Placeholder("Add a new to-do...").OnEnter(AddTodo)
 ```
@@ -597,6 +649,7 @@ newItemText.ToTextInput().Placeholder("Add a new to-do...").OnEnter(AddTodo)
 
 **Correct API:**
 `.OnEnter()` does not exist on `TextInput`. Use `OnSubmit()` to handle enter-key submission:
+
 ```csharp
 text.ToTextInput().OnSubmit(() => DoSomething())
 ```
@@ -607,6 +660,7 @@ bd5f45ac-569d-4be8-8ef8-882451e608a1
 ## TextInputVariants — old plural enum name
 
 **Hallucinated API:**
+
 ```csharp
 new TextInput(text.Value, e => text.Set(e.Value)).Variant(TextInputVariants.Textarea)
 ```
@@ -614,6 +668,7 @@ new TextInput(text.Value, e => text.Set(e.Value)).Variant(TextInputVariants.Text
 **Error:** `The name 'TextInputVariants' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 text.ToTextInput().Variant(TextInputVariant.Textarea)
 ```
@@ -626,6 +681,7 @@ The enum is `TextInputVariant` (singular), not `TextInputVariants` (plural). All
 ## SelectInputVariants — old plural enum name
 
 **Hallucinated API:**
+
 ```csharp
 state.ToSelectInput().Variant(SelectInputVariants.Toggle)
 ```
@@ -633,6 +689,7 @@ state.ToSelectInput().Variant(SelectInputVariants.Toggle)
 **Error:** `The name 'SelectInputVariants' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 state.ToSelectInput().Variant(SelectInputVariant.Toggle)
 ```
@@ -645,6 +702,7 @@ a55e08b9-f212-49ef-97b9-d352b7b4beb8
 ## Event<T,E>.Data — non-existent property
 
 **Hallucinated API:**
+
 ```csharp
 args.Data.Id
 args.Data.Tag
@@ -653,6 +711,7 @@ args.Data.Tag
 **Error:** `'Event<DataTable, RowActionClickEventArgs>' does not contain a definition for 'Data'`
 
 **Correct API:**
+
 ```csharp
 args.Value.Id
 args.Value.Tag
@@ -666,6 +725,7 @@ f20dced8-1689-4289-a2d8-ee67136eb6ce
 ## UseState\<T?\>(null) — ambiguous overload call
 
 **Hallucinated API:**
+
 ```csharp
 var selectedItem = UseState<InventoryItem?>(null);
 ```
@@ -673,6 +733,7 @@ var selectedItem = UseState<InventoryItem?>(null);
 **Error:** `The call is ambiguous between 'ViewBase.UseState<T>(T?, bool)' and 'ViewBase.UseState<T>(Func<T>, bool)'`
 
 **Correct API:**
+
 ```csharp
 // Best: omit the null argument — the default is already null:
 var selectedItem = UseState<InventoryItem?>();
@@ -692,6 +753,7 @@ f20dced8-1689-4289-a2d8-ee67136eb6ce
 ## Tab.Content() — non-existent fluent method
 
 **Hallucinated API:**
+
 ```csharp
 new Tab("Customer Info").Content(
     Layout.Vertical() | ...
@@ -701,6 +763,7 @@ new Tab("Customer Info").Content(
 **Error:** `'Tab' does not contain a definition for 'Content' and the best extension method overload 'ButtonExtensions.Content(Button, object)' requires a receiver of type 'Ivy.Button'`
 
 **Correct API:**
+
 ```csharp
 new Tab("Customer Info", Layout.Vertical() | ...)
 ```
@@ -715,6 +778,7 @@ new Tab("Customer Info", Layout.Vertical() | ...)
 ## Layout.Tabs() | Tab — pipe operator on TabView
 
 **Hallucinated API:**
+
 ```csharp
 Layout.Tabs()
     | customerInfoTab
@@ -724,6 +788,7 @@ Layout.Tabs()
 **Error:** `Operator '|' cannot be applied to operands of type 'TabView' and 'Tab'`
 
 **Correct API:**
+
 ```csharp
 Layout.Tabs(customerInfoTab, yourInfoTab)
 ```
@@ -736,6 +801,7 @@ The `|` pipe operator works on `LayoutView` (for composing children) but does NO
 ## FormBuilder.Header() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 entity.ToForm()
     .Header("Edit Fund")
@@ -745,6 +811,7 @@ entity.ToForm()
 **Error:** `'FormBuilder<T>' does not contain a definition for 'Header'`
 
 **Correct API:**
+
 ```csharp
 entity.ToForm()
     .Field(f => f.Name)
@@ -759,6 +826,7 @@ d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002, 003)
 ## Callout.Color(Colors.X) — non-existent fluent method
 
 **Hallucinated API:**
+
 ```csharp
 new Callout("Error message").Color(Colors.Destructive)
 ```
@@ -766,6 +834,7 @@ new Callout("Error message").Color(Colors.Destructive)
 **Error:** `'Callout' does not contain a definition for 'Color' and the best extension method overload 'LabelExtensions.Color(Label, Colors)' requires a receiver of type 'Ivy.Label'`
 
 **Correct API:**
+
 ```csharp
 Callout.Error("Error message")
 Callout.Warning("Warning message")
@@ -781,6 +850,7 @@ Callout.Success("Success message")
 ## Spacer(int) constructor — non-existent constructor overload
 
 **Hallucinated API:**
+
 ```csharp
 new Spacer(6)
 new Spacer(2)
@@ -790,6 +860,7 @@ new Spacer(4)
 **Error:** `'Spacer' does not contain a constructor that takes 1 arguments`
 
 **Correct API:**
+
 ```csharp
 new Spacer().Height(Size.Units(6))
 // or
@@ -804,6 +875,7 @@ Spacer has only a parameterless constructor. Use fluent `.Height()` or `.Width()
 ## Button.Color(Colors.X) — non-existent fluent method
 
 **Hallucinated API:**
+
 ```csharp
 new Button(label).Color(colors[i])
 ```
@@ -819,6 +891,7 @@ Button doesn't have `.Color()`. Use `.Variant(ButtonVariant.X)` or fluent shortc
 ## Size.Flex() — non-existent static method
 
 **Hallucinated API:**
+
 ```csharp
 new Spacer().Width(Size.Flex())
 .Height(Size.Flex())
@@ -827,6 +900,7 @@ new Spacer().Width(Size.Flex())
 **Error:** `'Size' does not contain a definition for 'Flex'`
 
 **Correct API:**
+
 ```csharp
 new Spacer().Width(Size.Grow())
 ```
@@ -839,6 +913,7 @@ The agent confused CSS flexbox terminology with Ivy's API.
 ## RefreshToken.Version — non-existent property
 
 **Hallucinated API:**
+
 ```csharp
 refreshToken.Version
 ```
@@ -856,6 +931,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002-005, 008-009)
 ## QueryResult\<T\>.Data — wrong property name
 
 **Hallucinated API:**
+
 ```csharp
 queryResult.Data
 ```
@@ -873,6 +949,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002, 004)
 ## QueryResult\<T\>.IsLoading — wrong property name
 
 **Hallucinated API:**
+
 ```csharp
 queryResult.IsLoading
 ```
@@ -888,6 +965,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002, 004)
 ## QueryMutator.Trigger() / .IsLoading / .Error — non-existent properties
 
 **Hallucinated API:**
+
 ```csharp
 var mutation = UseMutation(key);
 mutation.Trigger();    // doesn't exist
@@ -901,6 +979,7 @@ mutation.Error         // doesn't exist
 `QueryMutator` only has `Revalidate` (Action) and `Invalidate` (Action). `QueryMutator<T>` adds `Mutate` (MutateDelegate<T>). For loading state and error, use `QueryResult<T>` from `UseQuery()`, which has `.Loading`, `.Error`, and `.Value`.
 
 For async operations triggered by a button click, use the button's async `OnClick` handler directly:
+
 ```csharp
 new Button("Validate", async () => {
     result = await service.ValidateAsync(input);
@@ -915,6 +994,7 @@ Source: `D:\Repos\_Ivy\Ivy-Framework\src\Ivy\Hooks\UseQuery.cs`
 ## ListItem.Description / ListItem.Meta / ListItem.Actions — non-existent members
 
 **Hallucinated API:**
+
 ```csharp
 ListItem.Description("text")
 ListItem.Meta("text")
@@ -934,6 +1014,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 008, 009)
 ## Size.Sm — non-existent member
 
 **Hallucinated API:**
+
 ```csharp
 Size.Sm
 ```
@@ -949,6 +1030,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 008, 009)
 ## String literal as Icons? — wrong type
 
 **Hallucinated API:**
+
 ```csharp
 // Using string literals like "edit", "delete", "trash" where Icons? is expected
 new RowAction("Edit", icon: "edit")
@@ -965,6 +1047,7 @@ a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002, 003, 005, 008)
 ## Text.Small("text") — static factory confusion
 
 **Hallucinated API:**
+
 ```csharp
 Text.Small(frequencyText).Muted()
 ```
@@ -972,6 +1055,7 @@ Text.Small(frequencyText).Muted()
 **Error:** `No overload for method 'Small' takes 1 arguments`
 
 **Correct API:**
+
 ```csharp
 Text.P(frequencyText).Small().Muted()
 // or
@@ -986,6 +1070,7 @@ ce144de9-0688-490a-bef6-b2766e323154
 ## Box.BorderRadius(int) — wrong argument type
 
 **Hallucinated API:**
+
 ```csharp
 new Box(content).BorderRadius(8)
 ```
@@ -993,6 +1078,7 @@ new Box(content).BorderRadius(8)
 **Error:** `'Box' does not contain a definition for 'BorderRadius'` (CS1929 — no extension matches `Box.BorderRadius(int)`)
 
 **Correct API:**
+
 ```csharp
 new Box(content).BorderRadius(BorderRadius.Rounded)
 ```
@@ -1005,6 +1091,7 @@ ce144de9-0688-490a-bef6-b2766e323154
 ## GridView.Background() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 Layout.Grid(items).Columns(8).Gap(1).Background(Colors.Slate)
 ```
@@ -1012,6 +1099,7 @@ Layout.Grid(items).Columns(8).Gap(1).Background(Colors.Slate)
 **Error:** `'GridView' does not contain a definition for 'Background'`
 
 **Correct API:**
+
 ```csharp
 new Box(
     Layout.Grid(items).Columns(8).Gap(1)
@@ -1026,6 +1114,7 @@ new Box(
 ## GridView.AddChildren() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 var grid = new GridView();
 grid.AddChildren(widget1, widget2);
@@ -1034,6 +1123,7 @@ grid.AddChildren(widget1, widget2);
 **Error:** `CS1061: 'GridView' does not contain a definition for 'AddChildren'`
 
 **Correct API:**
+
 ```csharp
 // Use the .Children() extension to replace children:
 new GridView(columns: 8).Children(widget1, widget2);
@@ -1050,6 +1140,7 @@ new GridView(columns: 8, children: new[] { widget1, widget2 });
 ## OnClick() on non-clickable widgets — extension method receiver mismatch
 
 **Hallucinated API:**
+
 ```csharp
 myCustomView.OnClick(e => ...)
 new LayoutView().OnClick(e => ...)
@@ -1058,6 +1149,7 @@ new LayoutView().OnClick(e => ...)
 **Error:** `CS1929: 'MyView' does not contain a definition for 'OnClick' and the best extension method overload requires a receiver of type 'Card'/'Button'/'Badge'`
 
 **Correct API:**
+
 ```csharp
 // OnClick is only available on specific widgets: Card, Button, Badge, Image, Box
 // For custom click handling, wrap in a Box or use a Button:
@@ -1072,6 +1164,7 @@ new Card(myCustomView).OnClick(e => ...)
 ## Size.Pixels() — wrong method name
 
 **Hallucinated API:**
+
 ```csharp
 Size.Pixels(280)
 ```
@@ -1079,6 +1172,7 @@ Size.Pixels(280)
 **Error:** `'Size' does not contain a definition for 'Pixels'`
 
 **Correct API:**
+
 ```csharp
 Size.Px(280)
 ```
@@ -1091,6 +1185,7 @@ The method is `Size.Px()`, not `Size.Pixels()`. The agent expanded the abbreviat
 ## string.ToCodeInput() — wrong receiver type
 
 **Hallucinated API:**
+
 ```csharp
 responseBody.Value.ToCodeInput().Language(Languages.Json)
 responseHeaders.Value.ToCodeInput().Language(Languages.Text)
@@ -1099,6 +1194,7 @@ responseHeaders.Value.ToCodeInput().Language(Languages.Text)
 **Error:** `'string' does not contain a definition for 'ToCodeInput' and the best extension method overload 'CodeInputExtensions.ToCodeInput(IAnyState, ...)' requires a receiver of type 'Ivy.IAnyState'`
 
 **Correct API:**
+
 ```csharp
 // For read-only display of code, use CodeBlock:
 new CodeBlock(stringValue, Languages.Json)
@@ -1116,6 +1212,7 @@ editableState.ToCodeInput().Language(Languages.Json)
 ## State\<T\> — non-existent type
 
 **Hallucinated API:**
+
 ```csharp
 private State<List<Player>> _players;
 ```
@@ -1123,6 +1220,7 @@ private State<List<Player>> _players;
 **Error:** `The type or namespace name 'State<>' could not be found`
 
 **Correct API:**
+
 ```csharp
 var players = UseState(new List<Player>());
 ```
@@ -1135,6 +1233,7 @@ var players = UseState(new List<Player>());
 ## IRefreshToken — non-existent interface
 
 **Hallucinated API:**
+
 ```csharp
 private readonly IRefreshToken _refreshToken;
 ```
@@ -1142,6 +1241,7 @@ private readonly IRefreshToken _refreshToken;
 **Error:** `The type or namespace name 'IRefreshToken' could not be found`
 
 **Correct API:**
+
 ```csharp
 var refreshToken = UseRefreshToken();
 ```
@@ -1154,6 +1254,7 @@ var refreshToken = UseRefreshToken();
 ## Image.ObjectFit("cover") — property used as method call
 
 **Hallucinated API:**
+
 ```csharp
 new Image(url).ObjectFit("cover")
 ```
@@ -1161,6 +1262,7 @@ new Image(url).ObjectFit("cover")
 **Error:** `CS1955: Non-invocable member 'Image.ObjectFit' cannot be used like a method.`
 
 **Correct API:**
+
 ```csharp
 new Image(url) { ObjectFit = ImageFit.Cover }
 ```
@@ -1173,6 +1275,7 @@ new Image(url) { ObjectFit = ImageFit.Cover }
 ## DataTable\<T\> — non-generic type used with type arguments
 
 **Hallucinated API:**
+
 ```csharp
 new DataTable<Player>(players)
 ```
@@ -1180,6 +1283,7 @@ new DataTable<Player>(players)
 **Error:** `The non-generic type 'DataTable' cannot be used with type arguments`
 
 **Correct API:**
+
 ```csharp
 players.ToDataTable()
 ```
@@ -1192,6 +1296,7 @@ players.ToDataTable()
 ## Shrink(int) — method takes no arguments
 
 **Hallucinated API:**
+
 ```csharp
 Text.P("vs").Shrink(1)
 ```
@@ -1199,6 +1304,7 @@ Text.P("vs").Shrink(1)
 **Error:** `No overload for method 'Shrink' takes 1 arguments`
 
 **Correct API:**
+
 ```csharp
 Text.P("vs").Shrink()
 ```
@@ -1211,6 +1317,7 @@ Text.P("vs").Shrink()
 ## Card.Padding() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 new Card(content).Padding(20)
 ```
@@ -1218,6 +1325,7 @@ new Card(content).Padding(20)
 **Error:** `'Card' does not contain a definition for 'Padding'`
 
 **Correct API:**
+
 ```csharp
 new Box(content).Padding(20)
 ```
@@ -1230,6 +1338,7 @@ new Box(content).Padding(20)
 ## SelectInput<T>.Width() — generic constraint mismatch
 
 **Hallucinated API:**
+
 ```csharp
 language.ToSelectInput(options).Width(Size.Px(200))
 ```
@@ -1237,6 +1346,7 @@ language.ToSelectInput(options).Width(Size.Px(200))
 **Error:** `CS0311: The type 'Ivy.SelectInput<string>' cannot be used as type parameter 'T' in the generic type or method 'WidgetBaseExtensions.Width<T>(T, Size?)'`
 
 **Correct API:**
+
 ```csharp
 // Cast to SelectInputBase first:
 (SelectInputBase)language.ToSelectInput(options).Width(Size.Px(200))
@@ -1247,11 +1357,13 @@ new Box(language.ToSelectInput(options)).Width(Size.Px(200))
 `SelectInput<T>` inherits from `SelectInputBase : WidgetBase<SelectInputBase>`, not `WidgetBase<SelectInput<T>>`. The `Width<T>()` extension requires `T : WidgetBase<T>`, which `SelectInput<T>` doesn't satisfy.
 
 ### Found In
+
 852f6bec-756c-48f8-93da-ad426af73fab
 
 ## MetricCard — non-existent class name
 
 **Hallucinated API:**
+
 ```csharp
 new MetricCard("Title", "Value", Icons.Activity)
 ```
@@ -1259,6 +1371,7 @@ new MetricCard("Title", "Value", Icons.Activity)
 **Error:** `CS0246: The type or namespace name 'MetricCard' could not be found`
 
 **Correct API:**
+
 ```csharp
 new MetricView("Title", "Value", icon: Icons.Activity)
 ```
@@ -1271,6 +1384,7 @@ c008af27-1cb1-4ab3-b41a-36aa711c6a41
 ## Disposable.Create() — missing using statement
 
 **Hallucinated usage (missing using):**
+
 ```csharp
 return Disposable.Create(() => timer?.Dispose());
 ```
@@ -1278,6 +1392,7 @@ return Disposable.Create(() => timer?.Dispose());
 **Error:** `CS0103: The name 'Disposable' does not exist in the current context`
 
 **Fix:** Add the using statement — the package IS available as a transitive dependency:
+
 ```csharp
 using System.Reactive.Disposables;
 
@@ -1292,6 +1407,7 @@ fb184b5b-8254-4a1f-b8f2-ab8e8657fdbc
 ## Button.Visible() / Widget.Visible() — removed conditional rendering method
 
 **Hallucinated API:**
+
 ```csharp
 new Button("Reset").Visible(hasDate)
 ```
@@ -1299,6 +1415,7 @@ new Button("Reset").Visible(hasDate)
 **Error:** `'Button' does not contain a definition for 'Visible'` (CS1061)
 
 **Correct API:**
+
 ```csharp
 // Use a simple if statement for conditional rendering:
 if (hasDate)
@@ -1316,6 +1433,7 @@ The `.Visible()` extension method was removed from `WidgetBase` (commit f869df30
 ## Card.Secondary() — Badge extension used on Card
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Secondary()
 ```
@@ -1323,6 +1441,7 @@ new Card(...).Secondary()
 **Error:** `CS1929: 'Card' does not contain a definition for 'Secondary' and the best extension method overload 'BadgeExtensions.Secondary(Badge)' requires a receiver of type 'Ivy.Badge'`
 
 **Correct API:**
+
 ```csharp
 // Cards don't have variants. To style card content, style the children:
 new Card(new Text("Content").Secondary())
@@ -1336,6 +1455,7 @@ ab38eba1-af47-4003-905b-4fe9cea8ba4f
 ## Card.Child — Non-existent property
 
 **Hallucinated API:**
+
 ```csharp
 Card.Child(content)
 // or
@@ -1345,6 +1465,7 @@ new Card { Child = content }
 **Error:** `CS0117: 'Card' does not contain a definition for 'Child'`
 
 **Correct API:**
+
 ```csharp
 // Use the constructor, pipe operator, or .Content():
 new Card(content)
@@ -1358,6 +1479,7 @@ new Card().Content(content)
 ## Card.Background() — Box extension used on Card
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Background(Colors.Gray100)
 ```
@@ -1365,6 +1487,7 @@ new Card(...).Background(Colors.Gray100)
 **Error:** `CS1929: 'Card' does not contain a definition for 'Background' and the best extension method overload 'BoxExtensions.Background(Box, Colors)' requires a receiver of type 'Ivy.Box'`
 
 **Correct API:**
+
 ```csharp
 // Wrap in a Box for background color:
 new Box(new Card(content)).Background(Colors.Gray100)
@@ -1380,6 +1503,7 @@ ab38eba1-af47-4003-905b-4fe9cea8ba4f
 ## Button.ColSpan() — non-existent grid span method
 
 **Hallucinated API:**
+
 ```csharp
 new Button("=").ColSpan(2)
 ```
@@ -1387,6 +1511,7 @@ new Button("=").ColSpan(2)
 **Error:** `CS1061: 'Button' does not contain a definition for 'ColSpan'`
 
 **Correct API:**
+
 ```csharp
 // Grid column spanning is not set on child widgets.
 // Use GridLayout column definitions to control spans,
@@ -1399,6 +1524,7 @@ ab38eba1-af47-4003-905b-4fe9cea8ba4f
 ## IState\<T\>.ToTextArea() — incorrect textarea method name
 
 **Hallucinated API:**
+
 ```csharp
 var text = UseState("");
 text.ToTextArea()
@@ -1407,6 +1533,7 @@ text.ToTextArea()
 **Error:** `CS1061: 'IState<string>' does not contain a definition for 'ToTextArea'`
 
 **Correct API:**
+
 ```csharp
 var text = UseState("");
 text.ToTextareaInput()
@@ -1422,6 +1549,7 @@ The method is `ToTextareaInput()`, not `ToTextArea()`. Alternatively use `ToText
 ## new TextInput() — parameterless constructor doesn't exist
 
 **Hallucinated API:**
+
 ```csharp
 var output = new TextInput();
 output.Disabled()
@@ -1430,6 +1558,7 @@ output.Disabled()
 **Error:** `CS1729: 'TextInput' does not contain a constructor that takes 0 arguments`
 
 **Correct API:**
+
 ```csharp
 var output = UseState("");
 output.ToTextInput()
@@ -1445,6 +1574,7 @@ edd92ecc-6378-440a-b9cf-bb8e1cb29de9
 ## IState\<T\>.ToSelect() — incorrect select method name
 
 **Hallucinated API:**
+
 ```csharp
 var format = UseState("Option1");
 format.ToSelect(options)
@@ -1453,6 +1583,7 @@ format.ToSelect(options)
 **Error:** `CS1061: 'IState<string>' does not contain a definition for 'ToSelect'`
 
 **Correct API:**
+
 ```csharp
 var format = UseState("Option1");
 format.ToSelectInput(new[] { "Option1", "Option2" }.ToOptions())
@@ -1466,6 +1597,7 @@ The method is `ToSelectInput()`, not `ToSelect()`. Options are passed as `IEnume
 ## Card.When() — non-existent conditional rendering method
 
 **Hallucinated API:**
+
 ```csharp
 new Card(outputText).When(hasOutput)
 ```
@@ -1473,6 +1605,7 @@ new Card(outputText).When(hasOutput)
 **Error:** `CS1061: 'Card' does not contain a definition for 'When'`
 
 **Correct API:**
+
 ```csharp
 // Use standard C# control flow for conditional rendering:
 if (hasOutput)
@@ -1489,6 +1622,7 @@ There is no `.When()` method on any widget. Ivy uses standard C# `if` statements
 ## Card.Style() / Card.ClassName() / Card.WithStyle() — non-existent CSS methods
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Style("background: green")
 new Card(...).ClassName("my-class")
@@ -1498,6 +1632,7 @@ new Card(...).WithStyle(new { Background = "green" })
 **Error:** `CS1061: 'Card' does not contain a definition for 'Style'/'ClassName'/'WithStyle'`
 
 **Correct API:**
+
 ```csharp
 // Cards don't support direct CSS styling. To add a colored background, wrap in a Box:
 new Box(new Card(content)).Background(Colors.Green)
@@ -1511,6 +1646,7 @@ new Box(content).Background(Colors.Green).Padding(20).Rounded()
 ## Card.Border() — Box extension used on Card
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Border(1)
 ```
@@ -1518,6 +1654,7 @@ new Card(...).Border(1)
 **Error:** `CS1929: 'Card' does not contain a definition for 'Border'`
 
 **Correct API:**
+
 ```csharp
 // Cards have a built-in border. For custom borders, wrap in a Box:
 new Box(new Card(content)).Border(1)
@@ -1529,6 +1666,7 @@ new Box(new Card(content)).Border(1)
 ## Card.Color() — non-existent method on Card
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Color(Colors.Green)
 ```
@@ -1536,6 +1674,7 @@ new Card(...).Color(Colors.Green)
 **Error:** `CS1061: 'Card' does not contain a definition for 'Color'`
 
 **Correct API:**
+
 ```csharp
 // Cards don't have a Color method. Use Box for colored containers:
 new Box(content).Background(Colors.Green)
@@ -1547,6 +1686,7 @@ new Box(content).Background(Colors.Green)
 ## Card.Align() — non-existent method on Card
 
 **Hallucinated API:**
+
 ```csharp
 new Card(...).Align(Align.Center)
 ```
@@ -1554,6 +1694,7 @@ new Card(...).Align(Align.Center)
 **Error:** `CS1929: 'Card' does not contain a definition for 'Align'`
 
 **Correct API:**
+
 ```csharp
 // Use a Layout to control alignment of card content:
 Layout.Vertical(Align.Center) | new Card(content)
@@ -1565,6 +1706,7 @@ Layout.Vertical(Align.Center) | new Card(content)
 ## Nested Layout | operator without parentheses
 
 **Hallucinated pattern:**
+
 ```csharp
 Layout.Vertical()
     | Layout.Horizontal().Gap(4)
@@ -1576,6 +1718,7 @@ Layout.Vertical()
 **Problem:** C# evaluates `|` left-to-right. Without parentheses, `child1` and `child2` are added to the outer `Vertical` layout, not the inner `Horizontal`. The indentation is misleading — C# ignores indentation.
 
 **Correct pattern:**
+
 ```csharp
 Layout.Vertical()
     | (Layout.Horizontal().Gap(4)
@@ -1592,6 +1735,7 @@ Always wrap nested layouts in parentheses `(Layout.Horizontal() | child1 | child
 ## Edge — Non-existent margin edge enum
 
 **Hallucinated API:**
+
 ```csharp
 widget.Margin(Edge.Top, 4)
 ```
@@ -1599,6 +1743,7 @@ widget.Margin(Edge.Top, 4)
 **Error:** `CS0103: The name 'Edge' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 // Use WithMargin with positional int parameters (left, top, right, bottom):
 widget.WithMargin(0, 4, 0, 0) // top margin of 4
@@ -1613,6 +1758,7 @@ Layout.Vertical().Margin(0, 4, 0, 0) | widget
 ## Margin(new Thickness(...)) — Margin takes int, not Thickness
 
 **Hallucinated API:**
+
 ```csharp
 layout.Margin(new Thickness(0, 4, 0, 0))
 ```
@@ -1620,6 +1766,7 @@ layout.Margin(new Thickness(0, 4, 0, 0))
 **Error:** `CS1503: Argument 1: cannot convert from 'Ivy.Thickness' to 'int'`
 
 **Correct API:**
+
 ```csharp
 // Margin() takes int parameters directly:
 layout.Margin(4)              // uniform
@@ -1633,6 +1780,7 @@ layout.Margin(0, 4, 0, 0)    // left, top, right, bottom
 ## Form() — internal constructor
 
 **Hallucinated API:**
+
 ```csharp
 new Form()
 new Form(children)
@@ -1641,6 +1789,7 @@ new Form(children)
 **Error:** `CS1729: 'Form' does not contain a constructor that takes 0 arguments`
 
 **Correct API:**
+
 ```csharp
 // Forms are created from state objects:
 state.ToForm()
@@ -1656,6 +1805,7 @@ state.ToForm()
 ## DataTable.RowActions() — Tree extension called on DataTable widget
 
 **Hallucinated API:**
+
 ```csharp
 var table = new DataTable(connection, null, null, columns, config);
 table.RowActions(MenuItem.Default("Adjust Stock", tag: "adjust"), MenuItem.Default("Edit", tag: "edit"));
@@ -1664,6 +1814,7 @@ table.RowActions(MenuItem.Default("Adjust Stock", tag: "adjust"), MenuItem.Defau
 **Error:** `CS1929: 'DataTable' does not contain a definition for 'RowActions' and the best extension method overload 'TreeWidgetExtensions.RowActions(Tree, params MenuItem[])' requires a receiver of type 'Ivy.Tree'`
 
 **Correct API:**
+
 ```csharp
 // Via DataTableBuilder (preferred):
 items.ToDataTable()
@@ -1682,6 +1833,7 @@ new DataTable(connection, null, null, columns, config) { RowActions = new[] { Me
 ## DataTableColumn without ColType — missing required member
 
 **Hallucinated API:**
+
 ```csharp
 new DataTableColumn { Header = "Name", Field = "Name" }
 ```
@@ -1689,6 +1841,7 @@ new DataTableColumn { Header = "Name", Field = "Name" }
 **Error:** `CS9035: Required member 'DataTableColumn.ColType' must be set in the object initializer or attribute constructor.`
 
 **Correct API:**
+
 ```csharp
 new DataTableColumn { Header = "Name", Field = "Name", ColType = ColType.String }
 ```
@@ -1701,6 +1854,7 @@ new DataTableColumn { Header = "Name", Field = "Name", ColType = ColType.String 
 ## DataTable constructor — missing required width parameter
 
 **Hallucinated API:**
+
 ```csharp
 new DataTable(connection, columns: columns, options: config)
 ```
@@ -1708,6 +1862,7 @@ new DataTable(connection, columns: columns, options: config)
 **Error:** `CS7036: There is no argument given that corresponds to the required parameter 'width' of 'DataTable.DataTable(DataTableConnection, Size?, Size?, DataTableColumn[], DataTableConfig)'`
 
 **Correct API:**
+
 ```csharp
 // Preferred: use the builder pattern
 query.ToDataTable()
@@ -1726,6 +1881,7 @@ The `DataTable` public constructor requires all 5 positional parameters: `(DataT
 ## using Ivy.Apps / using Ivy.Shared — non-existent namespaces
 
 **Hallucinated API:**
+
 ```csharp
 using Ivy.Apps;
 using Ivy.Shared;
@@ -1734,6 +1890,7 @@ using Ivy.Shared;
 **Error:** `The type or namespace name 'Apps' does not exist in the namespace 'Ivy'` / `The type or namespace name 'Shared' does not exist in the namespace 'Ivy'`
 
 **Correct API:**
+
 ```csharp
 using Ivy;
 ```
@@ -1746,6 +1903,7 @@ a55e08b9-f212-49ef-97b9-d352b7b4beb8
 ## await void OnSubmit callback — incorrect async pattern
 
 **Hallucinated API:**
+
 ```csharp
 state.ToForm().OnSubmit(async form => {
     await db.SaveChangesAsync(); // CS4008: Cannot await 'void'
@@ -1755,6 +1913,7 @@ state.ToForm().OnSubmit(async form => {
 **Error:** `CS4008: Cannot await 'void'`
 
 **Correct API:**
+
 ```csharp
 state.ToForm().OnSubmit(async form => {
     await db.SaveChangesAsync();
@@ -1770,6 +1929,7 @@ The agent sometimes uses `await` on a method that returns `void` inside a form `
 ## TabsLayout(params Tab[]) — simplified constructor doesn't exist
 
 **Hallucinated API:**
+
 ```csharp
 new TabsLayout(
     new Tab("Markets", new MarketsView()),
@@ -1781,6 +1941,7 @@ new TabsLayout(
 **Error:** `CS1729: 'TabsLayout' does not contain a constructor that takes 1 arguments`
 
 **Correct API:**
+
 ```csharp
 new TabsLayout(
     onSelect: null, onClose: null, onRefresh: null, onReorder: null, selectedIndex: null,
@@ -1798,6 +1959,7 @@ new TabsLayout(
 ## Text.Secondary("text") — non-existent static factory
 
 **Hallucinated API:**
+
 ```csharp
 Text.Secondary("some text")
 ```
@@ -1805,6 +1967,7 @@ Text.Secondary("some text")
 **Error:** `CS1501: No overload for method 'Secondary' takes 1 arguments`
 
 **Correct API:**
+
 ```csharp
 // Use Text.Muted() for secondary/muted appearance:
 Text.Muted("some text")
@@ -1822,6 +1985,7 @@ Text.P("some text").Color(Colors.Secondary)
 ## FileUploadStatus.Completed — non-existent enum value
 
 **Hallucinated API:**
+
 ```csharp
 if (upload.Status == FileUploadStatus.Completed)
 ```
@@ -1829,6 +1993,7 @@ if (upload.Status == FileUploadStatus.Completed)
 **Error:** `'FileUploadStatus' does not contain a definition for 'Completed'`
 
 **Correct API:**
+
 ```csharp
 if (upload.Status == FileUploadStatus.Finished)
 ```
@@ -1841,6 +2006,7 @@ if (upload.Status == FileUploadStatus.Finished)
 ## UseDownload — ambiguous overload between sync and async
 
 **Hallucinated API:**
+
 ```csharp
 UseDownload(() => bytes, "file.txt", "text/plain")
 ```
@@ -1848,6 +2014,7 @@ UseDownload(() => bytes, "file.txt", "text/plain")
 **Error:** `CS0121: The call is ambiguous between 'ViewBase.UseDownload(Func<byte[]>, string, string)' and 'ViewBase.UseDownload(Func<Task<byte[]>>, string, string)'`
 
 **Correct API:**
+
 ```csharp
 // For sync: explicitly type the delegate
 UseDownload((Func<byte[]>)(() => bytes), "file.txt", "text/plain")
@@ -1865,6 +2032,7 @@ When using `UseDownload` with a lambda, you must explicitly cast to `Func<byte[]
 ## Server.OnReady / Server.OnStartup — non-existent lifecycle callbacks
 
 **Hallucinated API:**
+
 ```csharp
 server.OnReady(() => { /* seed data */ });
 server.OnStartup(() => { /* initialize */ });
@@ -1873,6 +2041,7 @@ server.OnStartup(() => { /* initialize */ });
 **Error:** `CS1061: 'Server' does not contain a definition for 'OnReady'`
 
 **Correct API:**
+
 ```csharp
 // Seed data via the context factory pattern:
 var connection = server.UseConnection<MyDbContext>(options =>
@@ -1897,6 +2066,7 @@ The `Server` class does not have `OnReady`, `OnStartup`, or similar lifecycle ca
 ## Fragment.Empty — non-existent static member
 
 **Hallucinated API:**
+
 ```csharp
 return Fragment.Empty;
 ```
@@ -1904,6 +2074,7 @@ return Fragment.Empty;
 **Error:** `'Fragment' does not contain a definition for 'Empty'`
 
 **Correct API:**
+
 ```csharp
 // Use ViewBase.Empty:
 return ViewBase.Empty;
@@ -1923,6 +2094,7 @@ return null;
 ## Field.Invalid() — extension method called on wrong type
 
 **Hallucinated API:**
+
 ```csharp
 stat.ToNumberInput().WithField().Label("Strength").Invalid("Over budget")
 ```
@@ -1930,6 +2102,7 @@ stat.ToNumberInput().WithField().Label("Strength").Invalid("Over budget")
 **Error:** `CS1929: 'Field' does not contain a definition for 'Invalid' and the best extension method overload 'BoolInputExtensions.Invalid(BoolInputBase, string?)' requires a receiver of type 'Ivy.BoolInputBase'`
 
 **Correct API:**
+
 ```csharp
 // Call .Invalid() on the input BEFORE wrapping in a Field:
 stat.ToNumberInput().Invalid("Over budget").WithField().Label("Strength")
@@ -1946,6 +2119,7 @@ stat.ToNumberInput().Invalid(overBudget ? "Over budget" : null).WithField().Labe
 ## NumberInput without generic type argument
 
 **Hallucinated API:**
+
 ```csharp
 (NumberInput)input
 // or referencing NumberInput as a non-generic type
@@ -1954,6 +2128,7 @@ stat.ToNumberInput().Invalid(overBudget ? "Over budget" : null).WithField().Labe
 **Error:** `CS0305: Using the generic type 'NumberInput<TNumber>' requires 1 type arguments`
 
 **Correct API:**
+
 ```csharp
 // Use the fluent builder pattern — no need to reference the type directly:
 intState.ToNumberInput()
@@ -1970,6 +2145,7 @@ NumberInput<int>
 ## TextBuilder.Icon() — extension method receiver mismatch
 
 **Hallucinated API:**
+
 ```csharp
 Text.H3("Task Hub").Icon(Icons.KanbanSquare)
 ```
@@ -1977,6 +2153,7 @@ Text.H3("Task Hub").Icon(Icons.KanbanSquare)
 **Error:** `CS1929: 'TextBuilder' does not contain a definition for 'Icon' and the best extension method overload 'MenuItemExtensions.Icon(MenuItem, Icons)' requires a receiver of type 'Ivy.MenuItem'`
 
 **Correct API:**
+
 ```csharp
 // Icon() is only available on MenuItem, not on TextBuilder.
 // To show an icon next to text, use a layout:
@@ -1991,6 +2168,7 @@ c1f8feae-b342-4bf1-a18c-9b88ee8d6d17
 ## Expandable constructor — missing content parameter
 
 **Hallucinated API:**
+
 ```csharp
 new Expandable("Section Title")
 ```
@@ -1998,6 +2176,7 @@ new Expandable("Section Title")
 **Error:** `CS7036: There is no argument given that corresponds to the required parameter 'content' of 'Expandable.Expandable(object, object)'`
 
 **Correct API:**
+
 ```csharp
 // Expandable requires both title and content:
 new Expandable("Section Title", contentWidget)
@@ -2011,6 +2190,7 @@ The `Expandable` constructor requires two arguments: `(object title, object cont
 ## TableBuilder.Header(selector, label, builder) — 3-argument overload doesn't exist
 
 **Hallucinated API:**
+
 ```csharp
 .Header(e => e.Status, "Status", b => b.Func<string>(s => new Badge(s).Success()))
 ```
@@ -2018,6 +2198,7 @@ The `Expandable` constructor requires two arguments: `(object title, object cont
 **Error:** `CS1501: No overload for method 'Header' takes 3 arguments`
 
 **Correct API:**
+
 ```csharp
 // Header takes 2 arguments (selector, label). For custom rendering, chain .Builder():
 .Header(e => e.Status, "Status").Builder(b => b.Func<Employee, string>(e => new Badge(e.Status).Success()))
@@ -2031,6 +2212,7 @@ The `Expandable` constructor requires two arguments: `(object title, object cont
 ## IBuilderFactory\<T\>.Custom() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 b.Custom<double>(hours => new Text($"{hours:F1}h"))
 ```
@@ -2038,6 +2220,7 @@ b.Custom<double>(hours => new Text($"{hours:F1}h"))
 **Error:** `CS1061: 'IBuilderFactory<PayrollRow>' does not contain a definition for 'Custom'`
 
 **Correct API:**
+
 ```csharp
 b.Func<PayrollRow, double>(row => new Text($"{row.TotalHours:F1}h"))
 ```
@@ -2050,6 +2233,7 @@ b.Func<PayrollRow, double>(row => new Text($"{row.TotalHours:F1}h"))
 ## Align used where TextAlignment expected — type confusion
 
 **Hallucinated API:**
+
 ```csharp
 Text.H1("0").Align(Align.Right)  // passing Ivy.Align instead of Ivy.TextAlignment
 ```
@@ -2057,6 +2241,7 @@ Text.H1("0").Align(Align.Right)  // passing Ivy.Align instead of Ivy.TextAlignme
 **Error:** `CS1503: Argument 1: cannot convert from 'Ivy.Align' to 'Ivy.TextAlignment'`
 
 **Correct API:**
+
 ```csharp
 Text.H1("0").Align(TextAlignment.Right)
 ```
@@ -2069,6 +2254,7 @@ Text.H1("0").Align(TextAlignment.Right)
 ## TextInput.Grow() — Box-only extension called on TextInput
 
 **Hallucinated API:**
+
 ```csharp
 new TextInput(query).Grow()
 ```
@@ -2076,6 +2262,7 @@ new TextInput(query).Grow()
 **Error:** `CS1929: 'TextInput' does not contain a definition for 'Grow'`
 
 **Correct API:**
+
 ```csharp
 query.ToTextInput().Width(Size.Grow())
 ```
@@ -2088,6 +2275,7 @@ query.ToTextInput().Width(Size.Grow())
 ## Align.End / Align.Start — CSS-inspired enum values
 
 **Hallucinated API:**
+
 ```csharp
 Align.End
 Align.Start
@@ -2098,6 +2286,7 @@ Align.FlexStart
 **Error:** `'Align' does not contain a definition for 'End'` (CS0117)
 
 **Correct API:**
+
 ```csharp
 Align.Right   // instead of Align.End or Align.FlexEnd
 Align.Left    // instead of Align.Start or Align.FlexStart
@@ -2113,6 +2302,7 @@ DecisionMatrixApp.cs (two occurrences of `Align.End`)
 ## Separator() — constructor invoked without `new`
 
 **Hallucinated API:**
+
 ```csharp
 Layout.Vertical()
     | Separator()
@@ -2121,6 +2311,7 @@ Layout.Vertical()
 **Error:** `CS1955: Non-invocable member 'Separator' cannot be used like a method.`
 
 **Correct API:**
+
 ```csharp
 Layout.Vertical()
     | new Separator()
@@ -2134,6 +2325,7 @@ Layout.Vertical()
 ## Server.BuildAsync() / Server.ServiceProvider — non-existent public API
 
 **Hallucinated API:**
+
 ```csharp
 var app = await server.BuildAsync();
 await using var scope = app.ServiceProvider.CreateAsyncScope();
@@ -2144,6 +2336,7 @@ server.ServiceProvider
 **Error:** `CS1061: 'Server' does not contain a definition for 'BuildAsync'` / `CS1061: 'Server' does not contain a definition for 'ServiceProvider'`
 
 **Correct API:**
+
 ```csharp
 // Use UseWebApplication to access the DI container:
 server.UseWebApplication(app =>
@@ -2163,6 +2356,7 @@ await server.RunAsync();
 ## TextBuilder.Padding() — non-existent method
 
 **Hallucinated API:**
+
 ```csharp
 Text.Block(content).Padding(16)
 Text.P(content).Padding(4)
@@ -2171,6 +2365,7 @@ Text.P(content).Padding(4)
 **Error:** `CS1929: 'TextBuilder' does not contain a definition for 'Padding'`
 
 **Correct API:**
+
 ```csharp
 // Wrap text in a Box for padding:
 new Box(Text.Block(content)).Padding(16)
@@ -2185,6 +2380,7 @@ Layout.Vertical().Padding(16)
 ## HandleSubmit / Handle* — renamed event handler methods
 
 **Hallucinated API:**
+
 ```csharp
 input.ToTextInput().HandleSubmit(() => Save())
 button.HandleClick(() => DoSomething())
@@ -2194,6 +2390,7 @@ input.HandleBlur(() => Validate())
 **Error:** `does not contain a definition for 'HandleSubmit'` (or `HandleClick`, `HandleBlur`, etc.)
 
 **Correct API:**
+
 ```csharp
 input.ToTextInput().OnSubmit(() => Save())
 button.OnClick(() => DoSomething())
@@ -2215,11 +2412,13 @@ All `Handle*` event handler extension methods were renamed to `On*` in v1.2.17 (
 LLMs sometimes use `UseService<IBladeService>()` to obtain the blade service. This is incorrect — `IBladeService` is a **context** service provided by `UseBlades()`, not a DI-registered service. Using `UseService` returns `null`, causing `NullReferenceException` at runtime.
 
 **Wrong:**
+
 ```csharp
 var bladeService = UseService<IBladeService>(); // Returns null!
 ```
 
 **Correct:**
+
 ```csharp
 var bladeService = UseContext<IBladeService>();
 ```
@@ -2229,6 +2428,7 @@ var bladeService = UseContext<IBladeService>();
 ## ToForm(OnSubmit: ...) — OnSubmit is an extension method, not a parameter
 
 **Hallucinated API:**
+
 ```csharp
 state.ToForm(OnSubmit: async form => { ... })
 ```
@@ -2236,6 +2436,7 @@ state.ToForm(OnSubmit: async form => { ... })
 **Error:** `CS1739: The best overload for 'ToForm' does not have a parameter named 'OnSubmit'`
 
 **Correct API:**
+
 ```csharp
 state.ToForm().OnSubmit(async form => { ... })
 ```
@@ -2246,6 +2447,7 @@ state.ToForm().OnSubmit(async form => { ... })
 
 **Hallucinated behavior:**
 The agent assumes `UseEffect` with a state dependency fires on the initial render (like React's `useEffect`), so it initializes state as empty and relies on the effect to populate it:
+
 ```csharp
 // Agent writes this expecting the effect to run immediately:
 var count = UseState(10);
@@ -2268,6 +2470,7 @@ This is a behavioral difference from React's `useEffect`, which fires on mount a
 ## ToastVariant — non-existent enum — now supported
 
 **Hallucinated API:**
+
 ```csharp
 client.Toast("Error!", ToastVariant.Destructive)
 ```
@@ -2275,6 +2478,7 @@ client.Toast("Error!", ToastVariant.Destructive)
 **Error:** `The name 'ToastVariant' does not exist in the current context`
 
 **Correct API:**
+
 ```csharp
 client.Toast("Success message");       // neutral toast
 client.Toast("Done!", "Title");        // with title
@@ -2289,6 +2493,7 @@ d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-t
 ## SelectInputBase.Options() — chained options method — now supported
 
 **Hallucinated API:**
+
 ```csharp
 defaultBehavior.ToSelectInput().Options(["Refused", "Allowed", "Ignored"])
 ```
@@ -2296,6 +2501,7 @@ defaultBehavior.ToSelectInput().Options(["Refused", "Allowed", "Ignored"])
 **Error:** `'SelectInputBase' does not contain a definition for 'Options'`
 
 **Correct API:**
+
 ```csharp
 defaultBehavior.ToSelectInput(new[] { "Refused", "Allowed", "Ignored" }.ToOptions())
 ```
@@ -2306,7 +2512,7 @@ Options are passed as `IEnumerable<IAnyOption>` to `ToSelectInput(options)`, not
 4eb1799f-39b2-4325-a0bd-37b769a33432
 30c1b273-c528-4496-b194-c98e0ffeaa23
 
-https://github.com/Ivy-Interactive/Ivy-Framework/issues/2271
+<https://github.com/Ivy-Interactive/Ivy-Framework/issues/2271>
 
 ## IRef\<T\> — now supported
 
