@@ -20,7 +20,11 @@ export const DialogWidget: React.FC<DialogWidgetProps> = ({ id, children, width 
 
   return (
     <Dialog open={true} onOpenChange={() => eventHandler("OnClose", id, [])}>
-      <DialogContent style={styles} className={cn(isVisible && "alert-animate-enter")}>
+      <DialogContent
+        style={styles}
+        className={cn(isVisible && "alert-animate-enter")}
+        aria-describedby={undefined}
+      >
         {children}
       </DialogContent>
     </Dialog>
