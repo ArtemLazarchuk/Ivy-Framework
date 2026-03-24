@@ -140,7 +140,6 @@ sampleUsers.ToDataTable()
 
 Add contextual actions to each row using `RowActions()` and handle them via `OnRowAction()`. Actions are rendered as icons or [buttons](../03_Common/01_Button.md) that appear when hovering over a row. Row actions support both simple menu items and nested [dropdown menus](../03_Common/11_DropDownMenu.md).
 
-
 1. **Define actions with a tag** – Each `MenuItem` must have a **tag** (set via `.Tag(value)`) so the handler can tell which action was clicked. Use the fluent API: `MenuItem.Default(Icons.Pencil).Tag(YourEnum.Edit)` or `.Tag("edit")` for strings. Without a tag, the handler cannot distinguish actions.
 
 2. **Single handler** – There is one `OnRowAction()` handler for all row actions. Inside it you must **identify the action from the tag** and branch (e.g. edit vs delete). If you don't branch on the tag, every click runs the same logic and edit/delete will not behave differently.
@@ -562,6 +561,7 @@ When should I use DataTable instead of Table?
 <Body>
 
 **Use DataTable when:**
+
 - ✅ You have a data collection to display (IQueryable, IEnumerable)
 - ✅ You need sorting, filtering, or search functionality
 - ✅ You're working with large datasets (100+ rows)
@@ -570,6 +570,7 @@ When should I use DataTable instead of Table?
 - ✅ You're converting from data grid libraries (AG Grid, React Table, Handsontable)
 
 **Use Table when:**
+
 - ✅ You need a simple layout table without interactivity
 - ✅ You're displaying a small amount of static data (<20 rows)
 - ✅ You need manual control over individual cells (TableCell, TableRow)
@@ -660,9 +661,37 @@ var mutation = this.UseMutation(async () => {
 ```
 
 **Note**: There is NO generic `UseMutation<TInput, TOutput>` or `MutationOptions<,>`. The method signature is:
+
 ```csharp
 UseMutation(Func<Task> mutation, QueryOptions? options = null)
 ```
+
+</Body>
+</Details>
+
+<Details>
+<Summary>
+How does UseRefreshToken work with DataTable?
+</Summary>
+<Body>
+
+To programmatically refresh a `DataTable`, use the `UseRefreshToken` hook to create a token and pass it to the `DataTable` using the `.RefreshToken()` method. When you call `token.Refresh()`, the table will reload its data from the source.
+
+```csharp
+public override object? Build()
+{
+    var refreshToken = UseRefreshToken();
+    var data = GetData().AsQueryable();
+
+    return Layout.Vertical()
+        | new Button("Refresh Data", _ => refreshToken.Refresh())
+        | data.ToDataTable()
+            .RefreshToken(refreshToken)
+            .Height(Size.Units(100));
+}
+```
+
+This is particularly useful after performing CRUD operations in dialogs or blades to ensure the table shows the most recent data.
 
 </Body>
 </Details>
@@ -674,6 +703,7 @@ What options are available for QueryOptions?
 <Body>
 
 The `QueryOptions` type has these properties:
+
 - `RefreshInterval` — polling frequency
 - `LifetimeType` — controls when query is disposed
 - `Tags` — for invalidation
