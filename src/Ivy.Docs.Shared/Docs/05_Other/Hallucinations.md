@@ -41,6 +41,30 @@ ce144de9-0688-490a-bef6-b2766e323154
 c9185561-51f5-4c76-ae5b-7448f5a68a0f
 8b576f86-85cc-43b8-97e2-358bae83464a
 
+## AppAttribute.path — renamed to group
+
+**Hallucinated API:**
+
+```csharp
+[App(path: ["Tests"])]
+```
+
+**Error:** `'AppAttribute' does not contain a definition for 'path'`
+
+**Correct API:**
+
+```csharp
+[App(group: ["Tests"])]
+```
+
+The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it defines the organizational group/folder in the sidebar, not a URL path. This applies to both the `[App]` attribute and the `AppDescriptor` class (`Path` property → `Group` property). (Note: This was part of a broader refactoring to rename "Chrome" to "AppShell").
+
+**Found In:**
+Ivy-Framework#2612
+55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
+fd5baba6-72aa-4d28-ac10-72e1be86e494
+(multiple sessions — agent uses old API names from training data)
+
 ## Callout constructor — wrong constructor + invented enum / wrong argument order
 
 **Hallucinated API:**
@@ -72,53 +96,6 @@ bd5f45ac-569d-4be8-8ef8-882451e608a1
 0c7c0b33-a500-45c2-911b-b33ca1f9662e
 cdf77a72-658e-45df-9bdb-9bf7c79100b2
 4874e3a3-c6d8-4be5-b1b3-bc4209408343
-
-## AppAttribute.path — renamed to group
-
-**Hallucinated API:**
-
-```csharp
-[App(path: ["Tests"])]
-```
-
-**Error:** `'AppAttribute' does not contain a definition for 'path'`
-
-**Correct API:**
-
-```csharp
-[App(group: ["Tests"])]
-```
-
-The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it defines the organizational group/folder in the sidebar, not a URL path. This applies to both the `[App]` attribute and the `AppDescriptor` class (`Path` property → `Group` property). (Note: This was part of a broader refactoring to rename "Chrome" to "AppShell").
-
-**Found In:**
-Ivy-Framework#2612
-55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
-fd5baba6-72aa-4d28-ac10-72e1be86e494
-(multiple sessions — agent uses old API names from training data)
-
-## DateTimeVariant — wrong enum name
-
-**Hallucinated API:**
-
-```csharp
-date.ToDateTimeInput().Variant(DateTimeVariant.Date)
-```
-
-**Error:** `The name 'DateTimeVariant' does not exist in the current context`
-
-**Correct API:**
-
-```csharp
-date.ToDateInput()
-// or:
-date.ToDateTimeInput().Variant(DateTimeInputVariant.Date)
-```
-
-The enum is `DateTimeInputVariant` (singular), not `DateTimeVariant` (missing "Input") or `DateTimeInputVariants` (old plural name). All input variant enums were renamed from plural to singular in Ivy-Framework#2546. Values: `DateTime`, `Date`, `Time`, `Month`, `Week`. **Auto-fixed:** The refactoring service automatically rewrites both `DateTimeVariant` and `DateTimeInputVariants` to `DateTimeInputVariant`.
-
-**Found In:**
-d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-tasks)
 
 ## InputBase.Label() — AxisExtensions method used on input
 
@@ -156,6 +133,7 @@ state.ToForm().Label(m => m.Amount, "Adjustment amount")
 f20dced8-1689-4289-a2d8-ee67136eb6ce
 2e91e9c7-9c03-4b86-a9d2-c0417bcf715f
 7a9aadf3-097e-448d-8d5c-bc86152710a6
+f07bc643-b0d7-4a23-a4c8-f4e488285e98
 
 ## BorderRadius.Medium — non-existent enum value
 
@@ -182,30 +160,8 @@ Valid `BorderRadius` values: `None`, `Rounded`, `Full`. The agent hallucinates T
 **Found In:**
 050136ca-9275-4e1d-9740-e393b544c1b5
 8a776329-6dc7-474f-aa4d-c8b4da753a25 (BorderRadius.Large)
+23d45c4a-fb43-4d9c-b00b-d245b5a63b05 (BorderRadius.Large)
 4e59e443-3579-4df9-af4b-765b7b7d61c8 (BorderRadius.Small — via IvyMcp hallucination)
-
-## AppAttribute.path old parameter name
-
-**Hallucinated API:**
-
-```csharp
-[App("Dashboard", path: ["Dashboards"])]
-```
-
-**Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
-
-**Correct API:**
-
-```csharp
-[App("Dashboard", group: ["Dashboards"])]
-```
-
-The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
-
-**Found In:**
-875efaff-8eb2-4604-b3aa-a2b5799df88c
-a55e08b9-f212-49ef-97b9-d352b7b4beb8
-798044de-edee-4bf9-85f1-291513fc076c
 
 ## Button("text", Icons.X) — icon as constructor argument
 
@@ -229,6 +185,112 @@ The `Button` constructor signature is `Button(string label, Func<Event<Button>, 
 f20dced8-1689-4289-a2d8-ee67136eb6ce
 7a9aadf3-097e-448d-8d5c-bc86152710a6
 5ba11e91-7b05-49e1-8a0f-5ea01235b192
+f07bc643-b0d7-4a23-a4c8-f4e488285e98
+
+## Button onClick — wrong callback signature (method group)
+
+**Hallucinated API:**
+
+```csharp
+async Task GenerateEmbedding() { ... }
+new Button("Generate Embedding", GenerateEmbedding)
+```
+
+**Error:** `Argument 2: cannot convert from 'method group' to 'System.Func<Ivy.Event<Ivy.Button>, System.Threading.Tasks.ValueTask>?'`
+
+**Correct API:**
+
+```csharp
+async ValueTask GenerateEmbedding(Event<Button> e) { ... }
+new Button("Generate Embedding", GenerateEmbedding)
+
+// Or inline:
+new Button("Generate", async (e) => { await DoWork(); })
+```
+
+The `Button` onClick parameter is `Func<Event<Button>, ValueTask>?`. The callback must: (1) accept `Event<Button>` as parameter, (2) return `ValueTask` (not `Task` or `void`). A method group with wrong signature (e.g., `async Task Foo()`) will fail with CS1503.
+
+**Found In:**
+55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
+6ee57156-8185-4cdd-97b1-fdb53b45383a
+4874e3a3-c6d8-4be5-b1b3-bc4209408343
+bedc0ee6-b915-45b0-ab3a-433e2ac5ff4a
+
+## DateTimeVariant — wrong enum name
+
+**Hallucinated API:**
+
+```csharp
+date.ToDateTimeInput().Variant(DateTimeVariant.Date)
+```
+
+**Error:** `The name 'DateTimeVariant' does not exist in the current context`
+
+**Correct API:**
+
+```csharp
+date.ToDateInput()
+// or:
+date.ToDateTimeInput().Variant(DateTimeInputVariant.Date)
+```
+
+The enum is `DateTimeInputVariant` (singular), not `DateTimeVariant` (missing "Input") or `DateTimeInputVariants` (old plural name). All input variant enums were renamed from plural to singular in Ivy-Framework#2546. Values: `DateTime`, `Date`, `Time`, `Month`, `Week`. **Auto-fixed:** The refactoring service automatically rewrites both `DateTimeVariant` and `DateTimeInputVariants` to `DateTimeInputVariant`.
+
+**Found In:**
+d90474ac-78b9-48c7-8317-3860ff36b9dd (sub-tasks 002–006, appeared in ALL sub-tasks)
+
+## Details() — empty constructor instead of passing items
+
+**Hallucinated API:**
+
+```csharp
+new Details()
+    | new Detail("Country Code", result.CountryCode, false)
+    | new Detail("VAT Number", result.VatNumber, false)
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'items' of 'Details.Details(IEnumerable<Detail>)'`
+
+**Correct API:**
+
+```csharp
+new Details(new[] {
+    new Detail("Country Code", result.CountryCode, false),
+    new Detail("VAT Number", result.VatNumber, false)
+})
+// or use the builder pattern:
+result.ToDetails()
+```
+
+`Details` requires an `IEnumerable<Detail>` in its constructor. There is no parameterless public constructor, and the pipe operator `|` does not work on `Details` to add children. Use the collection constructor or the `.ToDetails()` builder pattern on a model.
+
+**Found In:**
+857de09c-ab87-49a5-aac4-394f7d0aa207
+b6beb60d-478d-409e-b10d-7913ae911e85
+fd5baba6-72aa-4d28-ac10-72e1be86e494
+
+## AppAttribute.path old parameter name
+
+**Hallucinated API:**
+
+```csharp
+[App("Dashboard", path: ["Dashboards"])]
+```
+
+**Error:** 'AppAttribute' does not contain a constructor that takes... / does not have a parameter named 'path'
+
+**Correct API:**
+
+```csharp
+[App("Dashboard", group: ["Dashboards"])]
+```
+
+The path: parameter on AppAttribute was renamed to group: (Ivy-Framework#2587) because it is used to specify a group/category name in the sidebar. Agents trained on older data might still use path:. **Auto-fixed:** The refactoring service automatically rewrites path: to group: in [App] attributes.
+
+**Found In:**
+875efaff-8eb2-4604-b3aa-a2b5799df88c
+a55e08b9-f212-49ef-97b9-d352b7b4beb8
+798044de-edee-4bf9-85f1-291513fc076c
 
 ## TreeRowActionClickEventArgs on DataTable — wrong event args type
 
@@ -318,33 +380,50 @@ client.Error("Something went wrong.");       // error toast
 a8076804-1223-469e-a689-2af23d259566
 5ba11e91-7b05-49e1-8a0f-5ea01235b192
 
-## Button onClick — wrong callback signature (method group)
+## LayoutView.MaxWidth() — non-existent method
 
 **Hallucinated API:**
 
 ```csharp
-async Task GenerateEmbedding() { ... }
-new Button("Generate Embedding", GenerateEmbedding)
+Layout.Vertical().MaxWidth(Size.Lg)
 ```
 
-**Error:** `Argument 2: cannot convert from 'method group' to 'System.Func<Ivy.Event<Ivy.Button>, System.Threading.Tasks.ValueTask>?'`
+**Error:** `'LayoutView' does not contain a definition for 'MaxWidth'`
 
 **Correct API:**
 
 ```csharp
-async ValueTask GenerateEmbedding(Event<Button> e) { ... }
-new Button("Generate Embedding", GenerateEmbedding)
-
-// Or inline:
-new Button("Generate", async (e) => { await DoWork(); })
+Layout.Vertical().Width(Size.Lg)
 ```
 
-The `Button` onClick parameter is `Func<Event<Button>, ValueTask>?`. The callback must: (1) accept `Event<Button>` as parameter, (2) return `ValueTask` (not `Task` or `void`). A method group with wrong signature (e.g., `async Task Foo()`) will fail with CS1503.
+`LayoutView` does not have a `.MaxWidth()` method. Use `.Width(Size)` instead.
 
 **Found In:**
-55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
-6ee57156-8185-4cdd-97b1-fdb53b45383a
-4874e3a3-c6d8-4be5-b1b3-bc4209408343
+a9ee3993-1cfb-4cba-9322-80a60b56c8d2
+9f10ed3d-11bc-40ba-903a-f446ff496f21
+b321412b-3b6c-4b50-b027-bc323db8fe98
+
+## Button.WithIcon() — non-existent fluent method
+
+**Hallucinated API:**
+
+```csharp
+new Button("Share Link").WithIcon(Icons.Share)
+```
+
+**Error:** `'Button' does not contain a definition for 'WithIcon'`
+
+**Correct API:**
+
+```csharp
+new Button("Share Link").Icon(Icons.Share)
+```
+
+The fluent method is `.Icon(Icons.X)`, not `.WithIcon(Icons.X)`. The agent likely confused this with naming patterns from other UI frameworks or assumed a more verbose method name.
+
+**Found In:**
+8b93fae2-c7ce-4890-b0c0-43310c65dd00
+310e1e6a-facb-4caf-87b9-4f1422b51abc
 
 ## UseAlert().ShowInfo() — wrong API usage
 
@@ -547,26 +626,183 @@ There is no `.Lines()` method. Use `ToTextareaInput()` or `ToTextInput().Multili
 857de09c-ab87-49a5-aac4-394f7d0aa207
 edd92ecc-6378-440a-b9cf-bb8e1cb29de9
 
-## LayoutView.MaxWidth() — non-existent method
+## RefreshToken.Value — non-existent property
 
 **Hallucinated API:**
 
 ```csharp
-Layout.Vertical().MaxWidth(Size.Lg)
+refreshToken.Value
 ```
 
-**Error:** `'LayoutView' does not contain a definition for 'MaxWidth'`
+**Error:** `'RefreshToken' does not contain a definition for 'Value'`
+
+**Correct API:**
+`RefreshToken` has these members: `Token` (Guid), `ReturnValue` (object?), `IsRefreshed` (bool), `Refresh()`, `ToTrigger()`. There is no `Value` property. Pass `refreshToken` directly as a dependency to `UseQuery`, or use `refreshToken.Token` if you need a changing value.
+
+Source: `D:\Repos\_Ivy\Ivy-Framework\src\Ivy\Hooks\UseRefreshToken.cs`
+
+**Found In:**
+a224c9f6-94b2-4b9f-9d5c-6a9ba67d5b3b (traces 002-005, 008-009)
+f713bd0e-71ec-4f0d-8383-1d27712d71a8
+
+## FileUpload\<T\>.Data — wrong property name
+
+**Hallucinated API:**
+
+```csharp
+var pdfData = fileState.Value.Data;  // fileState is IState<FileUpload<byte[]>?>
+if (upload.Data != null) { ... }
+```
+
+**Error:** `CS1061: 'FileUpload<byte[]>' does not contain a definition for 'Data'`
 
 **Correct API:**
 
 ```csharp
-Layout.Vertical().Width(Size.Lg)
+var pdfData = fileState.Value.Content;  // Use .Content property
+if (upload.Content != null) { ... }
 ```
 
-`LayoutView` does not have a `.MaxWidth()` method. Use `.Width(Size)` instead.
+`FileUpload<T>` stores file content in the `.Content` property (of type `T?`), not `.Data`. Other properties include: `FileName` (string?), `MimeType` (string?), `Size` (long?), `Status` (FileUploadStatus). The agent likely confused this with `QueryResult<T>.Value` (another commonly hallucinated property name, documented above as `QueryResult<T>.Data`).
 
 **Found In:**
-a9ee3993-1cfb-4cba-9322-80a60b56c8d2
+5862b5bd-65bd-41ce-ad07-02bd86897dc9
+9f10ed3d-11bc-40ba-903a-f446ff496f21
+
+## Fragment.ForEach() — non-existent method
+
+**Hallucinated API:**
+
+```csharp
+new Fragment().ForEach(favorites, fact => new Card(...))
+// or
+Fragment.ForEach(items, item => ...)
+```
+
+**Error:** `CS0117: 'Fragment' does not contain a definition for 'ForEach'`
+
+**Correct API:**
+
+```csharp
+// Use Select and pass to Fragment constructor:
+new Fragment(favorites.Select(fact => new Card(...)).ToArray())
+
+// Or use yield return in a foreach loop:
+foreach (var fact in favorites)
+    yield return new Card(...);
+```
+
+`Fragment` constructor takes `params object?[] children`. To render a collection, use `.Select()` to transform items and pass the array to Fragment, or use `yield return` in a loop within `Build()`.
+
+**Found In:**
+c496d3d8-c090-44b5-9551-4cdf3b0aca06
+4f66c0f1-5fc5-44aa-b62a-f3592bfec1dc
+
+## TextInputBase.Icon() — wrong receiver type
+
+**Hallucinated API:**
+
+```csharp
+searchState.ToTextInput().Icon(Icons.Search)
+```
+
+**Error:** `CS1929: 'TextInputBase' does not contain a definition for 'Icon' and the best extension method overload 'MenuItemExtensions.Icon(MenuItem, Icons)' requires a receiver of type 'Ivy.MenuItem'`
+
+**Correct API:**
+
+```csharp
+// Use .Prefix() or .Suffix() to add icons to text inputs:
+searchState.ToTextInput().Prefix(Icons.Search)
+searchState.ToTextInput().Suffix(Icons.ArrowRight)
+```
+
+`.Icon()` is a method for `Button` and `MenuItem`, not for input widgets like `TextInputBase`. Use `.Prefix(Icons)` or `.Suffix(Icons)` to add icons to text inputs.
+
+**Found In:**
+c496d3d8-c090-44b5-9551-4cdf3b0aca06
+f713bd0e-71ec-4f0d-8383-1d27712d71a8
+
+## FileInput.MaxFiles(n) on single-file state — runtime error
+
+**Hallucinated API:**
+
+```csharp
+var fileState = UseState<FileUpload<byte[]>?>();
+fileState.ToFileInput(uploadContext, ...)
+    .Accept("application/pdf,.pdf")
+    .MaxFileSize(FileSize.FromMegabytes(50))
+    .MaxFiles(1);  // ❌ Invalid for single-file state
+```
+
+**Error:** `InvalidOperationException: MaxFiles can only be set on a multi-file input (IEnumerable). Use a collection state type for multiple files.`
+
+**Correct API:**
+
+```csharp
+// Single-file upload: DO NOT use MaxFiles (it's implicit)
+var fileState = UseState<FileUpload<byte[]>?>();
+fileState.ToFileInput(uploadContext, ...)
+    .Accept("application/pdf,.pdf")
+    .MaxFileSize(FileSize.FromMegabytes(50));
+
+// Multi-file upload: Use collection state + MaxFiles
+var filesState = UseState<ImmutableArray<FileUpload<byte[]>>>();
+filesState.ToFileInput(uploadContext, ...)
+    .Accept("application/pdf,.pdf")
+    .MaxFileSize(FileSize.FromMegabytes(50))
+    .MaxFiles(5);  // ✅ Valid for collection state
+```
+
+`.MaxFiles(n)` is only valid when the state type is a collection (`IEnumerable`, `List`, `ImmutableArray`, etc.). For single-file uploads using `UseState<FileUpload<T>?>()`, the `.MaxFiles(1)` call is redundant and invalid because the state type already enforces single-file behavior.
+
+**Found In:**
+d7b08ad1-178f-4949-9dcd-b19c13ef03f6
+
+## Button.Prefix() — input extension used on Button
+
+**Hallucinated API:**
+
+```csharp
+new Button("Encrypt & Share").Prefix(Icons.Lock)
+new Button("Copy Link").Prefix(Icons.Copy)
+```
+
+**Error:** `CS1929: 'Button' does not contain a definition for 'Prefix' and the best extension method overload 'NumberInputExtensions.Prefix(NumberInputBase, string)' requires a receiver of type 'Ivy.NumberInputBase'`
+
+**Correct API:**
+
+```csharp
+new Button("Encrypt & Share").Icon(Icons.Lock)
+new Button("Copy Link").Icon(Icons.Copy)
+```
+
+`.Prefix()` is an extension method for input widgets (`TextInputBase`, `NumberInputBase`, etc.) to add prefix text or icons. For buttons, use `.Icon(Icons.X)` to add an icon. The agent confused the input API with the button API.
+
+**Found In:**
+f4ddc3b8-f901-455d-9317-316d3567c0a7
+
+## showAlert without callback — skipping required parameter
+
+**Hallucinated API:**
+
+```csharp
+var (alertView, showAlert) = UseAlert();
+showAlert("Please enter a title for the task.", title: "Validation Error");
+```
+
+**Error:** `CS7036: There is no argument given that corresponds to the required parameter 'callback' of 'ShowAlertDelegate'`
+
+**Correct API:**
+
+```csharp
+var (alertView, showAlert) = UseAlert();
+showAlert("Please enter a title for the task.", result => { }, "Validation Error", AlertButtonSet.Ok);
+```
+
+The `ShowAlertDelegate` signature is `void showAlert(string message, Action<AlertResult> callback, string? title = null, AlertButtonSet buttonSet = AlertButtonSet.Ok)`. The `callback` parameter is **required** and cannot be skipped, even when you want to use named parameters for `title`. Always provide a callback (use empty lambda `result => { }` if no action needed).
+
+**Found In:**
+3a5265cc-e8af-413a-b450-ab3b1fd6d350
 
 ## LayoutView.SpaceBetween() — non-existent method
 
@@ -883,6 +1119,27 @@ The agent confused CSS flexbox terminology with Ivy's API.
 **Found In:**
 276d383f-696e-4d67-bc6e-14502c59734b
 
+## TextInputBase.Password() — non-existent fluent method
+
+**Hallucinated API:**
+
+```csharp
+state.ToTextInput().Password()
+```
+
+**Error:** `'TextInputBase' does not contain a definition for 'Password'`
+
+**Correct API:**
+
+```csharp
+state.ToTextInput().Variant(TextInputVariant.Password)
+```
+
+Use `.Variant(TextInputVariant.Password)` to create a password input field. The agent often invents a `.Password()` fluent shortcut similar to `.Multiline()` for textareas.
+
+**Found In:**
+f713bd0e-71ec-4f0d-8383-1d27712d71a8
+
 ## RefreshToken.Version — non-existent property
 
 **Hallucinated API:**
@@ -1109,6 +1366,27 @@ new GridView(columns: 8, children: new[] { widget1, widget2 });
 
 **Found In:**
 5c9cfb70-c9f5-4642-8de6-480be8f5ee85
+
+## Layout.Grid().Columns(string) — wrong argument type
+
+**Hallucinated API:**
+
+```csharp
+Layout.Grid().Columns("1fr 2fr 1fr")
+```
+
+**Error:** `CS1503: Argument 1: cannot convert from 'string' to 'int'`
+
+**Correct API:**
+
+```csharp
+Layout.Grid().Columns(3)
+```
+
+`Layout.Grid().Columns()` expects an integer (number of columns), not a CSS grid template string. The agent confuses Ivy's grid API with CSS Grid's `grid-template-columns` property.
+
+**Found In:**
+f713bd0e-71ec-4f0d-8383-1d27712d71a8
 
 ## OnClick() on non-clickable widgets — extension method receiver mismatch
 
@@ -1493,6 +1771,27 @@ new Button("=").ColSpan(2)
 
 **Found In:**
 ab38eba1-af47-4003-905b-4fe9cea8ba4f
+
+## TextInputBase.ReadOnly() — non-existent method, use .Disabled()
+
+**Hallucinated API:**
+
+```csharp
+output.ToTextareaInput().ReadOnly()
+```
+
+**Error:** `CS1061: 'TextInputBase' does not contain a definition for 'ReadOnly'`
+
+**Correct API:**
+
+```csharp
+output.ToTextareaInput().Disabled()
+```
+
+`TextInputBase` does not have a `.ReadOnly()` method. Use `.Disabled()` to make an input read-only (non-editable). The agent likely confused this with HTML's `readonly` attribute or other UI frameworks that use `ReadOnly` as a method/property name.
+
+**Found In:**
+0eae6375-dea4-497a-97bb-357eb77ece78
 
 ## IState\<T\>.ToTextArea() — incorrect textarea method name
 
@@ -2224,54 +2523,6 @@ Text.H1("0").Align(TextAlignment.Right)
 **Found In:**
 2739aa95-7d5b-481b-a456-af895e6268df
 
-## TextInput.Grow() — Box-only extension called on TextInput
-
-**Hallucinated API:**
-
-```csharp
-new TextInput(query).Grow()
-```
-
-**Error:** `CS1929: 'TextInput' does not contain a definition for 'Grow'`
-
-**Correct API:**
-
-```csharp
-query.ToTextInput().Width(Size.Grow())
-```
-
-`Grow()` was originally defined only as a `Box`-specific extension method in `Box.cs`. It is not available on `TextInput` or other widget types. Use `.Width(Size.Grow())` directly, or note that `Grow()` has since been promoted to a generic `WidgetBase<T>` extension and is now available on all widgets.
-
-**Found In:**
-7a9aadf3
-
-## Align.End / Align.Start — CSS-inspired enum values
-
-**Hallucinated API:**
-
-```csharp
-Align.End
-Align.Start
-Align.FlexEnd
-Align.FlexStart
-```
-
-**Error:** `'Align' does not contain a definition for 'End'` (CS0117)
-
-**Correct API:**
-
-```csharp
-Align.Right   // instead of Align.End or Align.FlexEnd
-Align.Left    // instead of Align.Start or Align.FlexStart
-```
-
-Valid `Align` values: `TopLeft`, `TopRight`, `TopCenter`, `BottomLeft`, `BottomRight`, `BottomCenter`, `Left`, `Right`, `Center`, `Stretch`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly`.
-
-The agent draws from CSS `justify-content: flex-end` / `align-items: flex-end` terminology. **Auto-fixed:** The refactoring service automatically rewrites `Align.End` → `Align.Right`, `Align.Start` → `Align.Left`, etc.
-
-**Found In:**
-DecisionMatrixApp.cs (two occurrences of `Align.End`)
-
 ## Separator() — constructor invoked without `new`
 
 **Hallucinated API:**
@@ -2325,6 +2576,100 @@ await server.RunAsync();
 
 **Found In:**
 70f88d4c-298a-421b-8bd1-f7fc697c911e
+
+## [Parameter] attribute — non-existent attribute for passing props to child views
+
+**Hallucinated API:**
+
+```csharp
+public class SplitResultItem : ViewBase
+{
+    [Parameter]
+    private readonly byte[] _pdfData;
+
+    [Parameter]
+    private readonly string _fileName;
+
+    public override object? Build() { ... }
+}
+```
+
+**Error:** `CS0246: The type or namespace name 'ParameterAttribute' could not be found (are you missing a using directive or an assembly reference?)`
+
+**Correct API:**
+
+```csharp
+// Use constructor parameters to pass data to child views:
+public class SplitResultItem : ViewBase
+{
+    private readonly byte[] _pdfData;
+    private readonly string _fileName;
+
+    public SplitResultItem(byte[] pdfData, string fileName)
+    {
+        _pdfData = pdfData;
+        _fileName = fileName;
+    }
+
+    public override object? Build() { ... }
+}
+
+// Instantiate with constructor:
+new SplitResultItem(pdfData, fileName)
+```
+
+The `[Parameter]` attribute does not exist in Ivy. The agent likely confused Ivy with Blazor, which uses `[Parameter]` for component parameters. In Ivy, child views receive data through constructor parameters, just like any C# class. Store constructor arguments as readonly fields and use them in the `Build()` method.
+
+**Found In:**
+4ae8e5f9-663b-4a34-9f84-9b6f7a1048c5
+
+## TextInput.Grow() — Box-only extension called on TextInput
+
+**Hallucinated API:**
+
+```csharp
+new TextInput(query).Grow()
+```
+
+**Error:** `CS1929: 'TextInput' does not contain a definition for 'Grow'`
+
+**Correct API:**
+
+```csharp
+query.ToTextInput().Width(Size.Grow())
+```
+
+`Grow()` was originally defined only as a `Box`-specific extension method in `Box.cs`. It is not available on `TextInput` or other widget types. Use `.Width(Size.Grow())` directly, or note that `Grow()` has since been promoted to a generic `WidgetBase<T>` extension and is now available on all widgets.
+
+**Found In:**
+7a9aadf3
+
+## Align.End / Align.Start — CSS-inspired enum values
+
+**Hallucinated API:**
+
+```csharp
+Align.End
+Align.Start
+Align.FlexEnd
+Align.FlexStart
+```
+
+**Error:** `'Align' does not contain a definition for 'End'` (CS0117)
+
+**Correct API:**
+
+```csharp
+Align.Right   // instead of Align.End or Align.FlexEnd
+Align.Left    // instead of Align.Start or Align.FlexStart
+```
+
+Valid `Align` values: `TopLeft`, `TopRight`, `TopCenter`, `BottomLeft`, `BottomRight`, `BottomCenter`, `Left`, `Right`, `Center`, `Stretch`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly`.
+
+The agent draws from CSS `justify-content: flex-end` / `align-items: flex-end` terminology. **Auto-fixed:** The refactoring service automatically rewrites `Align.End` → `Align.Right`, `Align.Start` → `Align.Left`, etc.
+
+**Found In:**
+DecisionMatrixApp.cs (two occurrences of `Align.End`)
 
 ## TextBuilder.Padding() — non-existent method
 
