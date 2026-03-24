@@ -36,17 +36,7 @@ The constraints are enforced both in the calendar/picker UI and in manual input,
 Added `Opacity()` and `BorderOpacity()` fluent extension methods to the `Box` widget, allowing you to set opacity independently without needing to also specify a color.
 
 ```csharp
-// Set background opacity without changing the background color
-var box = new Box()
-    .Background(Colors.Blue)
-    .Opacity(0.5f); // 50% opacity
-
-// Set border opacity independently
-var box = new Box()
-    .BorderColor(Colors.Red)
-    .BorderOpacity(0.75f); // 75% opacity
-
-// Or combine them in one fluent chain
+// Set background opacity and border opacity independently
 var box = new Box()
     .Background(Colors.Green)
     .Opacity(0.8f)
@@ -84,13 +74,9 @@ The shadow hover variant applies `hover:shadow-lg` on hover and `active:shadow-m
 Added `ShortcutKey()` method to the Button widget, allowing you to associate keyboard shortcuts with button actions. The shortcut listener is registered globally on the window, so buttons don't need to be focused to trigger their actions.
 
 ```csharp
-Layout.Horizontal().Gap(8)
-    | new Button("Search", _ => client.Toast("Searching..."))
-        .Primary()
-        .ShortcutKey("Ctrl+K")
-    | new Button("Save", _ => client.Toast("Saved!"))
-        .Secondary()
-        .ShortcutKey("Ctrl+S")
+var button = new Button("Save", _ => client.Toast("Saved!"))
+    .Secondary()
+    .ShortcutKey("Ctrl+S")
 ```
 
 This is particularly useful for creating keyboard-driven interfaces and improving productivity for power users who prefer keyboard navigation. The shortcuts work anywhere in your app, regardless of focus state.
@@ -188,51 +174,11 @@ Added `Color` property to the `Badge` widget, allowing you to customize badge co
 
 ```csharp
 // Use the fluent Color() method
-var badge = new Badge("New")
-    .Color(Colors.Green);
-
-// Or set via constructor
-var badge = new Badge("Error", color: Colors.Red);
-
-// Combine with variant for more control
 var badge = new Badge("Warning", BadgeVariant.Outline)
     .Color(Colors.Yellow);
 ```
 
 The Color property works alongside the existing `BadgeVariant` options, giving you full control over badge appearance. When set, the color overrides the default variant styling with your custom color choice.
-
-### UseCallback Hook for Memoizing Callbacks
-
-Added `UseCallback()` hook as cleaner syntactic sugar over `UseMemo` for memoizing callback functions. This creates stable delegate references that only change when dependencies change, which is particularly useful for preventing unnecessary re-renders and for stable `UseEffect` dependencies.
-
-```csharp
-// Using UseCallback (recommended - cleaner syntax)
-var onSubmit = UseCallback((string value) => Save(value), dependency);
-
-// Equivalent using UseMemo (more verbose)
-var onSubmit = UseMemo(() => (Action<string>)(value => Save(value)), dependency);
-
-// Action with no parameters
-var handleClick = UseCallback(() => DoSomething(), dependency);
-
-// Func with return value
-var computeValue = UseCallback((int x) => x * 2, multiplier.Value);
-
-// Multiple parameters
-var handleUpdate = UseCallback((string name, int age) => Update(name, age), userData.Value);
-```
-
-The hook provides overloads for common delegate patterns (`Action`, `Action<T>`, `Func<T>`, `Func<T, TResult>`, etc.) and is especially useful when:
-
-- Passing callbacks to child components that check reference equality
-- Using callbacks as `UseEffect` dependencies
-- Creating event handlers with minimal dependencies
-
-```csharp
-// Good: Separate callbacks with minimal dependencies
-var handleDataAction = UseCallback(() => DoSomethingWithData(data.Value), data.Value);
-var handleFilterAction = UseCallback(() => ApplyFilter(filter.Value), filter.Value);
-```
 
 ### UseMemo Auto-Unwraps IState Dependencies
 
@@ -280,13 +226,6 @@ Added the ability to set a default `LabelPosition` for all fields in a form via 
 
 ```csharp
 // Set default label position for all fields in the form
-var form = new FormBuilder<UserModel>(userState)
-    .LabelPosition(LabelPosition.Left)  // All labels on the left
-    .Field(m => m.FirstName)
-    .Field(m => m.LastName)
-    .Field(m => m.Email);
-
-// Override label position for specific fields
 var form = new FormBuilder<UserModel>(userState)
     .LabelPosition(LabelPosition.Left)  // Default for all fields
     .Field(m => m.FirstName)
@@ -375,17 +314,10 @@ This is particularly powerful for building chat UIs with AI assistants - your ma
 Added subtitle/caption track support to the `VideoPlayer` widget. You can now serve `.srt` or `.vtt` subtitle files alongside your videos using the new `Subtitles()` fluent API method. The player supports multiple subtitle tracks for different languages, allowing users to choose their preferred language from the video controls.
 
 ```csharp
-// Single subtitle track
-var player = new VideoPlayer("https://example.com/video.mp4")
-    .Subtitles("https://example.com/subtitles_en.vtt", "English");
-
 // Multiple subtitle tracks for different languages
 var player = new VideoPlayer("https://example.com/video.mp4")
     .Subtitles("https://example.com/subtitles_en.vtt", "English")
-    .Subtitles("https://example.com/subtitles_es.vtt", "Spanish")
-    .Subtitles("https://example.com/subtitles_fr.vtt", "French");
-
-// The first track is set as default
+    .Subtitles("https://example.com/subtitles_es.vtt", "Spanish");
 ```
 
 The frontend automatically renders HTML5 `<track>` elements with proper CORS configuration (`crossOrigin="anonymous"`), ensuring subtitles load correctly from external sources. Users can toggle subtitles and switch between languages using the browser's native video controls.
@@ -413,8 +345,8 @@ var kanban = tasks.ToKanban()
     .GroupBy(t => t.Status)
     .ColumnHeader(status => status switch
     {
-        TaskStatus.InProgress => "🔄 In Progress",
-        TaskStatus.Completed => "✅ Done",
+        TaskStatus.InProgress => "In Progress",
+        TaskStatus.Completed => "Done",
         _ => status.GetDescription()
     });
 ```
