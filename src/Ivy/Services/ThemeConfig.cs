@@ -28,7 +28,7 @@ public class Theme
         Name = "Default",
         Colors = ThemeColorScheme.Default,
         FontFamily = "Geist",
-        FontSize = "16px",
+        FontSize = "20px",
         BorderRadiusBoxes = IvyFrameworkBorderRadiusTokens.BorderRadius.Md,
         BorderRadiusFields = IvyFrameworkBorderRadiusTokens.BorderRadius.Md,
         BorderRadiusSelectors = IvyFrameworkBorderRadiusTokens.BorderRadius.Md
