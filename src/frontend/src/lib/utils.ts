@@ -7,10 +7,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getIvyPathBase(): string | null {
-  const meta = document.querySelector('meta[name="ivy-path-base"]');
-  const content = meta?.getAttribute("content");
-  return content ? (content.startsWith("/") ? content : "/" + content) : null;
+export function getIvyPathBase(): string {
+  return document.querySelector('meta[name="ivy-path-base"]')?.getAttribute("content") ?? "";
 }
 
 export function getAppId(): string | null {
@@ -230,7 +228,7 @@ export function getIvyHost(): string {
       if (url.protocol === "https:" || url.protocol === "http:") {
         const metaOrigin = url.origin;
         if (isAllowedIvyHost(metaOrigin)) {
-          return metaOrigin;
+          return metaOrigin + getIvyPathBase();
         }
       }
     } catch {
@@ -238,7 +236,7 @@ export function getIvyHost(): string {
     }
   }
 
-  return window.location.origin;
+  return window.location.origin + getIvyPathBase();
 }
 
 export function camelCase(titleCase: unknown): unknown {
