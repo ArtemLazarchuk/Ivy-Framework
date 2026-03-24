@@ -14,7 +14,8 @@ public class DateTimeInputApp : SampleBase
                 new Tab("Data Binding", new DateTimeInputDataBinding()),
                 new Tab("Placeholders", new DateTimeInputPlaceholderSamples()),
                 new Tab("First Day of Week", new DateTimeInputFirstDayOfWeekSamples()),
-                new Tab("Min / Max / Step", new DateTimeInputConstraintSamples())
+                new Tab("Min / Max / Step", new DateTimeInputConstraintSamples()),
+                new Tab("Events", new DateTimeInputEventSamples())
             ).Variant(TabsVariant.Content);
     }
 }
@@ -34,144 +35,6 @@ public class DateTimeInputVariantSamples : ViewBase
         var disabledDateState = UseState(DateTime.Now);
         var nullableTimeState = UseState<TimeOnly?>(() => null);
 
-<<<<<<< HEAD
-        // FirstDayOfWeek states
-        var mondayFirstDate = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var mondayFirstRange = UseState<(DateOnly, DateOnly)>((DateOnly.FromDateTime(DateTime.Now.AddDays(-7)), DateOnly.FromDateTime(DateTime.Now)));
-
-        // Events states
-        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var onBlurLabel = UseState("");
-        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
-        var onFocusLabel = UseState("");
-
-        // Size examples
-        var sizeExamplesGrid = Layout.Grid().Columns(7)
-            | Text.Monospaced("Size")
-            | Text.Monospaced("Date Input")
-            | Text.Monospaced("DateTime Input")
-            | Text.Monospaced("Time Input")
-            | Text.Monospaced("Month Input")
-            | Text.Monospaced("Week Input")
-            | Text.Monospaced("Year Input")
-
-            | Text.Monospaced("Small")
-            | dateState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Date)
-                .Small()
-                .Placeholder("Small date")
-                .TestId("datetime-input-date-small")
-            | dateTimeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.DateTime)
-                .Small()
-                .Placeholder("Small datetime")
-                .TestId("datetime-input-datetime-small")
-            | timeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Time)
-                .Small()
-                .Placeholder("Small time")
-                .TestId("datetime-input-time-small")
-            | monthState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Month)
-                .Small()
-                .Placeholder("Small month")
-                .TestId("datetime-input-month-small")
-            | weekState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Week)
-                .Small()
-                .Placeholder("Small week")
-                .TestId("datetime-input-week-small")
-            | yearState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Year)
-                .Small()
-                .Placeholder("Small year")
-                .TestId("datetime-input-year-small")
-
-            | Text.Monospaced("Medium")
-            | dateState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Date)
-                .Medium()
-                .Placeholder("Medium date")
-                .TestId("datetime-input-date-medium")
-            | dateTimeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.DateTime)
-                .Medium()
-                .Placeholder("Medium datetime")
-                .TestId("datetime-input-datetime-medium")
-            | timeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Time)
-                .Medium()
-                .Placeholder("Medium time")
-                .TestId("datetime-input-time-medium")
-            | monthState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Month)
-                .Medium()
-                .Placeholder("Medium month")
-                .TestId("datetime-input-month-medium")
-            | weekState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Week)
-                .Medium()
-                .Placeholder("Medium week")
-                .TestId("datetime-input-week-medium")
-            | yearState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Year)
-                .Medium()
-                .Placeholder("Medium year")
-                .TestId("datetime-input-year-medium")
-
-            | Text.Monospaced("Large")
-            | dateState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Date)
-                .Large()
-                .Placeholder("Large date")
-                .TestId("datetime-input-date-large")
-            | dateTimeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.DateTime)
-                .Large()
-                .Placeholder("Large datetime")
-                .TestId("datetime-input-datetime-large")
-            | timeState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Time)
-                .Large()
-                .Placeholder("Large time")
-                .TestId("datetime-input-time-large")
-            | monthState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Month)
-                .Large()
-                .Placeholder("Large month")
-                .TestId("datetime-input-month-large")
-            | weekState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Week)
-                .Large()
-                .Placeholder("Large week")
-                .TestId("datetime-input-week-large")
-            | yearState
-                .ToDateTimeInput()
-                .Variant(DateTimeInputVariant.Year)
-                .Large()
-                .Placeholder("Large year")
-                .TestId("datetime-input-year-large");
-
-        // Variants grid
-=======
->>>>>>> main
         var variantsGrid = Layout.Grid().Columns(6)
             | null!
             | Text.Monospaced("Normal")
@@ -720,72 +583,6 @@ public class DateTimeInputPlaceholderSamples : ViewBase
                 .Placeholder("Fiscal year")
                 .TestId("datetime-input-placeholder-year");
 
-<<<<<<< HEAD
-        var firstDayOfWeekGrid = Layout.Grid().Columns(2)
-            | Text.Monospaced("Monday-first DateInput")
-            | mondayFirstDate
-                .ToDateInput()
-                .FirstDayOfWeek(DayOfWeek.Monday)
-                .TestId("datetime-input-monday-first")
-            | Text.Monospaced("Monday-first DateRangeInput")
-            | mondayFirstRange
-                .ToDateRangeInput()
-                .FirstDayOfWeek(DayOfWeek.Monday)
-                .TestId("daterange-input-monday-first");
-
-        // Events section
-        var eventsGrid = Layout.Vertical().Gap(4)
-            | new Card(
-                Layout.Vertical().Gap(2)
-                    | Text.P("The blur event fires when the date input loses focus.").Small()
-                    | onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
-                    | (onBlurLabel.Value != ""
-                        ? Callout.Success(onBlurLabel.Value)
-                        : Callout.Info("Interact then click away to see blur events"))
-            ).Title("OnBlur Handler")
-            | new Card(
-                Layout.Vertical().Gap(2)
-                    | Text.P("The focus event fires when you click on or tab into the date input.").Small()
-                    | onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
-                    | (onFocusLabel.Value != ""
-                        ? Callout.Success(onFocusLabel.Value)
-                        : Callout.Info("Click or tab into the input to see focus events"))
-            ).Title("OnFocus Handler");
-
-        // Current values section
-        var currentValues = Layout.Vertical()
-            | Text.H3("Current Values")
-            | Text.Block($"Date: {dateState.Value:yyyy-MM-dd}")
-            | Text.Block($"DateTime: {dateTimeState.Value:yyyy-MM-dd HH:mm:ss}")
-            | Text.Block($"Time: {timeState.Value:HH:mm:ss}")
-            | Text.Block($"Month: {monthState.Value:yyyy-MM}")
-            | Text.Block($"Week: {weekState.Value:yyyy-'W'ww}")
-            | Text.Block($"Year: {yearState.Value:yyyy}")
-            | Text.Block($"Nullable DateTime: {nullableDateState.Value?.ToString("yyyy-MM-dd HH:mm:ss") ?? "null"}")
-            | Text.Block($"DateOnly: {dateOnlyState.Value:yyyy-MM-dd}")
-            | Text.Block($"TimeOnly: {timeOnlyState.Value:HH:mm:ss}")
-            | Text.Block($"string: {stringState.Value}")
-            | Text.Block($"Nullable DateOnly: {nullableDateOnlyState.Value?.ToString("yyyy-MM-dd") ?? "null"}")
-            | Text.Block($"Nullable TimeOnly: {nullableTimeState.Value?.ToString("HH:mm:ss") ?? "null"}")
-            | Text.Block($"DateTimeOffset: {dateTimeOffsetState.Value:yyyy-MM-dd HH:mm:ss zzz}")
-            | Text.Block($"Nullable DateTimeOffset: {nullableDateTimeOffsetState.Value?.ToString("yyyy-MM-dd HH:mm:ss zzz") ?? "null"}");
-
-        return Layout.Vertical()
-            | Text.H1("DateTime Input")
-            | Text.H2("Size Examples")
-            | sizeExamplesGrid
-            | Text.H2("Variants")
-            | variantsGrid
-            | Text.H2("Data Binding")
-            | dataBindingGrid
-            | Text.H2("Placeholder Examples")
-            | placeholderExamplesGrid
-            | Text.H2("FirstDayOfWeek")
-            | firstDayOfWeekGrid
-            | Text.H2("Events")
-            | eventsGrid
-            | currentValues;
-=======
         return Layout.Vertical()
             | Text.H2("Placeholders")
             | Text.P("Placeholder copy per variant.")
@@ -996,6 +793,39 @@ public class DateTimeInputConstraintSamples : ViewBase
             | Text.P("Range and stepping constraints across date, time, and calendar variants.")
             | constraintsGrid
             | sampleValues;
->>>>>>> main
+    }
+}
+
+public class DateTimeInputEventSamples : ViewBase
+{
+    public override object? Build()
+    {
+        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onBlurLabel = UseState("");
+        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onFocusLabel = UseState("");
+
+        var eventsGrid = Layout.Vertical().Gap(4)
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The blur event fires when the date input loses focus.").Small()
+                    | onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                    | (onBlurLabel.Value != ""
+                        ? Callout.Success(onBlurLabel.Value)
+                        : Callout.Info("Interact then click away to see blur events"))
+            ).Title("OnBlur Handler")
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The focus event fires when you click on or tab into the date input.").Small()
+                    | onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                    | (onFocusLabel.Value != ""
+                        ? Callout.Success(onFocusLabel.Value)
+                        : Callout.Info("Click or tab into the input to see focus events"))
+            ).Title("OnFocus Handler");
+
+        return Layout.Vertical()
+            | Text.H2("Events")
+            | Text.P("OnFocus and OnBlur event handlers.")
+            | eventsGrid;
     }
 }
