@@ -37,7 +37,7 @@ public class AppRouter(global::Ivy.Server server)
 
     private static bool GetAppShell(HttpContext httpContext)
     {
-        if (httpContext.Request.Query.TryGetValue("appshell", out var appShellParam))
+        if (httpContext.Request.Query.TryGetValue("shell", out var appShellParam))
         {
             return !appShellParam.ToString().Equals("false", StringComparison.OrdinalIgnoreCase);
         }

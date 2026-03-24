@@ -678,7 +678,7 @@ export const useBackend = (
     const oauthLogin = pageParams.get("oauthLogin");
 
     // Build SignalR connection URL
-    let signalRUrl = `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ""}&appArgs=${appArgs ?? ""}&machineId=${machineId}&parentId=${parentId ?? ""}&appshell=${latestAppShellRef.current}`;
+    let signalRUrl = `${getIvyHost()}/ivy/messages?appId=${latestAppIdRef.current ?? ""}&appArgs=${appArgs ?? ""}&machineId=${machineId}&parentId=${parentId ?? ""}&shell=${latestAppShellRef.current}`;
     if (oauthLogin) {
       signalRUrl += `&oauthLogin=${oauthLogin}`;
       // Clean up the URL by removing the oauthLogin parameter
