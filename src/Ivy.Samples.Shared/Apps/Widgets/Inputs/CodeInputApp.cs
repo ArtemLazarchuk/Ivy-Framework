@@ -249,7 +249,7 @@ public class CodeInputApp : SampleBase
                ).Title("Code Example").Description("Testing copy button visibility with card background")
                | socialMediaLinks
                | Text.H2("Events")
-               | (Layout.Vertical().Gap(4)
+               | (Layout.Vertical()
                    | new Card(
                        Layout.Vertical().Gap(2)
                            | Text.P("The blur event fires when the code input loses focus.").Small()

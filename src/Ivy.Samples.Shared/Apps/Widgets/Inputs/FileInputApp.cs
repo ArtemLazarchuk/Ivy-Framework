@@ -318,7 +318,7 @@ public class FileInputEventHandlersExample : ViewBase
                        files.Set(list => list.Where(f => f.Id != fileId).ToImmutableArray());
                        cancelCount.Set(cancelCount.Value + 1);
                    })
-               | Layout.Vertical().Gap(4)
+               | Layout.Vertical()
                    | new Card(
                        Layout.Vertical().Gap(2)
                            | Text.P("The blur event fires when you close the file dialog or click away from the input.").Small()
@@ -359,7 +359,7 @@ public class FileInputIntegrationExample : ViewBase
         return Layout.Vertical()
                | Text.H2("Integration")
                | Text.P("Examples of integrating file inputs with forms and dialogs.")
-               | Layout.Vertical().Gap(4)
+               | Layout.Vertical()
                    | Text.H3("Form Integration")
                    | new SizingExample()
                    | Text.H3("Dialog Integration")
@@ -379,7 +379,7 @@ public class SizingExample : ViewBase
 
         return Layout.Vertical()
             | new Card(
-                Layout.Vertical().Gap(4)
+                Layout.Vertical()
                 | Layout.Vertical().Gap(2)
                     | Text.Label("Profile Photo *")
                     | new ProfilePhotoUpload(profilePhoto)

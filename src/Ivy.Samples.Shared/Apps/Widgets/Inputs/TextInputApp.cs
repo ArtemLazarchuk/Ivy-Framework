@@ -98,7 +98,7 @@ public class TextInputApp : SampleBase
                    onChangedState.ToTextInput(),
                    onChangeLabel
                 )
-               | (Layout.Vertical().Gap(4)
+               | (Layout.Vertical()
                    | new Card(
                        Layout.Vertical().Gap(2)
                            | Text.P("The blur event fires when the text input loses focus.").Small()

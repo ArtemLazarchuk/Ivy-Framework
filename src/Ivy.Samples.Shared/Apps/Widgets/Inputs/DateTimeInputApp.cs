@@ -805,7 +805,7 @@ public class DateTimeInputEventSamples : ViewBase
         var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
         var onFocusLabel = UseState("");
 
-        var eventsGrid = Layout.Vertical().Gap(4)
+        var eventsGrid = Layout.Vertical()
             | new Card(
                 Layout.Vertical().Gap(2)
                     | Text.P("The blur event fires when the date input loses focus.").Small()

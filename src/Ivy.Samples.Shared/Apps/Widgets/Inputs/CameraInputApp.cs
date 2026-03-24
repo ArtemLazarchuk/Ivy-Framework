@@ -16,7 +16,7 @@ public class CameraInputApp() : SampleBase
                | Text.H1("Camera Input")
                | Text.P("Demonstrates the CameraInput widget for capturing photos from the user's webcam/camera.")
                | Text.H2("Examples")
-               | (Layout.Horizontal().Gap(4)
+               | (Layout.Horizontal()
                     | new Card(new CameraInputBasic()).Title("Basic")
                     | new Card(new CameraInputEvents()).Title("OnFocus / OnBlur")
                     | new Card(new CameraInputDisabledState()).Title("Disabled State"))
@@ -85,7 +85,7 @@ public class CameraInputDisabledState : ViewBase
             defaultContentType: "image/png"
         );
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P("Demonstrates the CameraInput widget in a disabled state. The camera cannot be activated.")
                | new CameraInput(dummyUpload.Value, "Take a photo", disabled: true);
     }
@@ -115,7 +115,7 @@ public class CameraInputEvents : ViewBase
             lastEvent.Set("OnBlur");
         }
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P("Focus the camera input (Tab / click), then blur it to trigger events.")
                | new CameraInput(dummyUpload.Value, "Take a photo")
                    .OnFocus(onFocus)

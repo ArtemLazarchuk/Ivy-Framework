@@ -100,7 +100,7 @@ public class AsyncSelectInputApp : SampleBase
             | guidStateInvalid.ToAsyncSelectInput(QueryCategories, LookupCategory, placeholder: "Select Category (Invalid)")
                 .Invalid("Category selection is invalid")
             | Text.H2("Events")
-            | (Layout.Vertical().Gap(4)
+            | (Layout.Vertical()
                 | new Card(
                     Layout.Vertical().Gap(2)
                         | Text.P("The blur event fires when the input loses focus.").Small()

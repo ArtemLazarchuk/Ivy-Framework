@@ -267,7 +267,7 @@ public class NumberRangeInputApp : SampleBase
                 },
                 Text.Monospaced(onChangeLabel.Value.Length > 0 ? onChangeLabel.Value : "Move the sliders")
             )
-            | (Layout.Vertical().Gap(4)
+            | (Layout.Vertical()
                 | new Card(
                     Layout.Vertical().Gap(2)
                         | Text.P("The blur event fires when either of the range sliders loses focus.").Small()

@@ -93,7 +93,7 @@ public class SignatureInputEvents : ViewBase
         var onFocusState = UseState<byte[]?>(() => null);
         var onFocusLabel = UseState("");
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
             | new Card(
                 Layout.Vertical().Gap(2)
                     | Text.P("The blur event fires when the signature pad loses focus.").Small()

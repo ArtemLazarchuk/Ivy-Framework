@@ -18,7 +18,7 @@ public class AudioInputApp() : SampleBase
                | Text.H1("Audio Input")
                | Text.P("Demonstrates the AudioInput widget for capturing audio input. This widget is for recording audio, not playing it. The recorder interface is theme-aware and adapts to light/dark themes.")
                | Text.H2("Upload Examples")
-               | (Layout.Horizontal().Gap(4)
+               | (Layout.Horizontal()
                     | new Card(new AudioInputBasic()).Title("Basic")
                     | new Card(new AudioInputChunkedUpload()).Title("Chunked Upload")
                     | new Card(new AudioInputDisabledState()).Title("Disabled State")
@@ -74,7 +74,7 @@ public class AudioInputBasic : ViewBase
             }
         }, audioFile);
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P("Basic AudioInput example. Records audio and uploads the complete recording when you stop.")
                | new AudioInput(upload.Value, "Start recording", "Recording audio...")
                | (audioFile.Value != null
@@ -108,7 +108,7 @@ public class AudioInputChunkedUpload : ViewBase
             }
         }, audioFile);
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P("Records audio and uploads in 2-second chunks while recording. Each chunk is accumulated into a single file.")
                | new AudioInput(upload.Value, "Start chunked recording", "Recording (uploading every 2s)...")
                    .ChunkInterval(2000)
@@ -141,7 +141,7 @@ public class AudioInputSampleRate : ViewBase
         if (_sampleRate.HasValue)
             input = input.SampleRate(_sampleRate.Value);
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P(_sampleRate.HasValue
                    ? $"Records at {_sampleRate} Hz (e.g. for speech or high-fidelity)."
                    : "Uses the browser's default sample rate (typically 48 kHz).")
@@ -162,7 +162,7 @@ public class AudioInputDisabledState : ViewBase
             defaultContentType: "audio/webm"
         );
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
                | Text.P("Demonstrates the AudioInput widget in a disabled state. The recorder is non-interactive and cannot be used for recording.")
                | new AudioInput(dummyUpload.Value, "Start recording", "Recording audio...", disabled: true);
     }
@@ -174,7 +174,7 @@ public class AudioInputEvents(UploadContext upload) : ViewBase
         var onBlurLabel = UseState("");
         var onFocusLabel = UseState("");
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
             | new Card(
                 Layout.Vertical().Gap(2)
                     | Text.P("The blur event fires when the audio input loses focus.").Small()

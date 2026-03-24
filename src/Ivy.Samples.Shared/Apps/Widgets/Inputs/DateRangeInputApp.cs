@@ -109,7 +109,7 @@ public class DateRangeInputApp : SampleBase
             | Text.H2("Data Binding")
             | dataBindingGrid
             | Text.H2("Events")
-            | (Layout.Vertical().Gap(4)
+            | (Layout.Vertical()
                 | new Card(
                     Layout.Vertical().Gap(2)
                         | Text.P("The blur event fires when the input loses focus.").Small()

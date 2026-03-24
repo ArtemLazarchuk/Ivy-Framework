@@ -224,7 +224,7 @@ public class NumberInputApp : SampleBase
                    onChangedState.ToNumberInput(),
                    onChangeLabel
                )
-               | (Layout.Vertical().Gap(4)
+               | (Layout.Vertical()
                    | new Card(
                        Layout.Vertical().Gap(2)
                            | Text.P("The blur event fires when the number input loses focus.").Small()

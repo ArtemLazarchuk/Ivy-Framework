@@ -56,7 +56,7 @@ public class SelectInputEventsExample : ViewBase
         var onFocusState = UseState("Allowed");
         var onFocusLabel = UseState("");
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical()
             | Text.H3("Events")
             | new Card(
                 Layout.Vertical().Gap(2)
