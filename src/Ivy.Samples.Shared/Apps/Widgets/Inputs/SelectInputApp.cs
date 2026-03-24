@@ -1,5 +1,3 @@
-#pragma warning disable IVYHOOK001
-
 using System.ComponentModel;
 
 namespace Ivy.Samples.Shared.Apps.Widgets.Inputs;
@@ -117,6 +115,11 @@ public class SelectInputVariantsExample : ViewBase
         var nullableColorArrayState = UseState<Colors[]?>(() => null);
         var iconsState = UseState<string>("bold");
         var nullableIconsState = UseState<string?>();
+
+        var colorStateSelect = UseState<Colors[]>([]);
+        var colorStateList = UseState<Colors[]>([]);
+        var colorStateToggle = UseState<Colors[]>([]);
+
         var colorOptions = typeof(Colors).ToOptions();
 
         return Layout.Vertical()
@@ -164,14 +167,11 @@ public class SelectInputVariantsExample : ViewBase
                     | nullableIconsState.ToSelectInput(IconOptions).Variant(SelectInputVariant.Toggle)
                     | nullableIconsState.ToSelectInput(IconOptions).Variant(SelectInputVariant.Toggle).Invalid("Invalid"))
             | Text.H3("Multi-Select Variants")
-            | CreateMultiSelectVariants();
+            | CreateMultiSelectVariants(colorStateSelect, colorStateList, colorStateToggle);
     }
 
-    private object CreateMultiSelectVariants()
+    private object CreateMultiSelectVariants(IState<Colors[]> colorStateSelect, IState<Colors[]> colorStateList, IState<Colors[]> colorStateToggle)
     {
-        var colorStateSelect = UseState<Colors[]>([]);
-        var colorStateList = UseState<Colors[]>([]);
-        var colorStateToggle = UseState<Colors[]>([]);
         var colorOptions = typeof(Colors).ToOptions();
 
         return Layout.Vertical().Gap(6)
@@ -285,10 +285,8 @@ public class SelectInputAdvancedExample : ViewBase
         [Description("snake_case")] SnakeCase,
     }
 
-    private object CreateNullableTestSection()
+    private object CreateNullableTestSection(IState<Colors?> nullableColorState, IState<Colors> nonNullableColorState)
     {
-        var nullableColorState = UseState((Colors?)null);
-        var nonNullableColorState = UseState(Colors.Red);
         var colorOptions = typeof(Colors).ToOptions();
 
         var nullableGrid = Layout.Grid().Columns(4)
@@ -312,11 +310,9 @@ public class SelectInputAdvancedExample : ViewBase
             | nullableGrid;
     }
 
-    private object CreateLabelValueEdgeCasesSection()
+    private object CreateLabelValueEdgeCasesSection(IState<DatabaseNamingConvention> singleSelectState, IState<DatabaseNamingConvention[]> multiSelectState)
     {
         var namingConventionOptions = typeof(DatabaseNamingConvention).ToOptions();
-        var singleSelectState = UseState(DatabaseNamingConvention.PascalCase);
-        var multiSelectState = UseState<DatabaseNamingConvention[]>([DatabaseNamingConvention.PascalCase, DatabaseNamingConvention.SnakeCase]);
 
         var edgeCasesGrid = Layout.Grid().Columns(4)
             | Text.Monospaced("Type")
@@ -342,9 +338,17 @@ public class SelectInputAdvancedExample : ViewBase
 
     public override object? Build()
     {
+        var nullableColorState = UseState((Colors?)null);
+        var nonNullableColorState = UseState(Colors.Red);
+
+        var singleSelectState = UseState(DatabaseNamingConvention.PascalCase);
+        var multiSelectState = UseState<DatabaseNamingConvention[]>([DatabaseNamingConvention.PascalCase, DatabaseNamingConvention.SnakeCase]);
+
+        var namingConventionOptions = typeof(DatabaseNamingConvention).ToOptions();
+
         return Layout.Vertical()
-            | CreateNullableTestSection()
-            | CreateLabelValueEdgeCasesSection();
+            | CreateNullableTestSection(nullableColorState, nonNullableColorState)
+            | CreateLabelValueEdgeCasesSection(singleSelectState, multiSelectState);
     }
 }
 
@@ -524,5 +528,3 @@ public class SelectInputRadioExample : ViewBase
                         .WithField().Label("Notification frequency"));
     }
 }
-
-#pragma warning restore IVYHOOK001
