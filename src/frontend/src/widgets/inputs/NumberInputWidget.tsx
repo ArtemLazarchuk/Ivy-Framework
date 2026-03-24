@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { useOptimisticValue } from "./shared/useOptimisticValue";
 import { useEventHandler, EventHandler } from "@/components/event-handler";
 import NumberInput from "@/components/NumberInput";
@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import { inputStyles, getWidth } from "@/lib/styles";
 import { InvalidIcon } from "@/components/InvalidIcon";
 import { X } from "lucide-react";
-import React from "react";
 import { Densities } from "@/types/density";
 import { xIconVariant } from "@/components/ui/input/text-input-variant";
 import Icon from "@/components/Icon";
+import { formatBytes } from "@/lib/formatters";
 
 interface Affix {
   icon?: string;
@@ -38,6 +38,11 @@ const formatStyleMap = {
   Decimal: "decimal",
   Currency: "currency",
   Percent: "percent",
+  Compact: "compact",
+  Scientific: "scientific",
+  Engineering: "engineering",
+  Accounting: "accounting",
+  Bytes: "bytes",
 } as const;
 
 type FormatStyle = keyof typeof formatStyleMap;
@@ -127,24 +132,26 @@ const SliderVariant = memo(
     disabled = false,
     invalid,
     currency,
+    formatStyle,
     density = Densities.Medium,
     onValueChange,
     "data-testid": dataTestId,
   }: NumberInputBaseProps) => {
-    // Local state for live feedback (optional, fallback to prop value)
-    const [localValue, setLocalValue] = React.useState<number | null>(value);
+    const isBytesFormat = formatStyle === "Bytes";
 
-    React.useEffect(() => {
-      setLocalValue(value);
-    }, [value]);
+    // Maintains local state for quick slider updates, syncs when value changes from outside
+    const [localValue, setLocalValue] = useOptimisticValue(value, false);
 
     // Only update local state on drag
-    const handleSliderChange = useCallback((values: number[]) => {
-      const newValue = values[0];
-      if (typeof newValue === "number") {
-        setLocalValue(newValue);
-      }
-    }, []);
+    const handleSliderChange = useCallback(
+      (values: number[]) => {
+        const newValue = values[0];
+        if (typeof newValue === "number") {
+          setLocalValue(newValue);
+        }
+      },
+      [setLocalValue],
+    );
 
     // Only call onValueChange (eventHandler) when drag ends
     const handleSliderCommit = useCallback(
@@ -160,6 +167,15 @@ const SliderVariant = memo(
     // For slider, we need a numeric value - use 0 as fallback for null
     const sliderValue = localValue ?? 0;
 
+    const formattedMin = useMemo(
+      () => (isBytesFormat ? formatBytes(min, 0) : min),
+      [min, isBytesFormat],
+    );
+    const formattedMax = useMemo(
+      () => (isBytesFormat ? formatBytes(max, 0) : max),
+      [max, isBytesFormat],
+    );
+
     return (
       <div className="relative w-full flex-1 flex flex-col gap-1 pt-6 pb-2 my-auto justify-center">
         <Slider
@@ -169,6 +185,7 @@ const SliderVariant = memo(
           value={[sliderValue]}
           disabled={disabled}
           currency={currency}
+          isBytesFormat={isBytesFormat}
           density={density}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
@@ -184,8 +201,8 @@ const SliderVariant = memo(
         >
           {min !== undefined && max !== undefined && (
             <>
-              <span>{min}</span>
-              <span>{max}</span>
+              <span>{formattedMin}</span>
+              <span>{formattedMax}</span>
             </>
           )}
         </span>
@@ -221,17 +238,38 @@ const NumberVariant = memo(
     noGrouping,
     "data-testid": dataTestId,
   }: NumberInputBaseProps) => {
-    const formatConfig = useMemo(
-      () => ({
-        style: formatStyleMap[formatStyle],
+    const isBytesFormat = formatStyle === "Bytes";
+
+    const formatConfig = useMemo(() => {
+      const config: Intl.NumberFormatOptions = {
         minimumFractionDigits: 0,
         maximumFractionDigits: precision,
         useGrouping: !(noGrouping ?? false),
-        notation: "standard" as const,
-        currency: currency || undefined,
-      }),
-      [currency, formatStyle, precision, noGrouping],
-    );
+      };
+
+      if (formatStyle === "Compact") {
+        config.notation = "compact";
+        config.compactDisplay = "short";
+      } else if (formatStyle === "Scientific") {
+        config.notation = "scientific";
+      } else if (formatStyle === "Engineering") {
+        config.notation = "engineering";
+      } else if (formatStyle === "Accounting") {
+        config.style = "currency";
+        config.currencySign = "accounting";
+        config.currency = currency || "USD";
+      } else if (formatStyle === "Bytes") {
+        config.style = "decimal";
+      } else {
+        config.style = formatStyleMap[formatStyle] as Intl.NumberFormatOptions["style"];
+        config.notation = "standard";
+        if (formatStyle === "Currency") {
+          config.currency = currency || "USD";
+        }
+      }
+
+      return config;
+    }, [currency, formatStyle, precision, noGrouping]);
 
     const handleNumberChange = useCallback(
       (newValue: number | null) => {
@@ -268,6 +306,7 @@ const NumberVariant = memo(
             max={max}
             step={step}
             format={formatConfig}
+            isBytesFormat={isBytesFormat}
             placeholder={placeholder}
             value={value ?? (nullable ? null : 0)}
             disabled={disabled}
@@ -361,9 +400,15 @@ export const NumberInputWidget = memo(
     );
 
     return (
-      <div style={{ ...getWidth(width) }}>
+      <div className="w-full flex-1" style={{ ...getWidth(width) }}>
         {variant === "Slider" ? (
-          <SliderVariant id={id} {...props} value={localValue} onValueChange={handleChange} />
+          <SliderVariant
+            id={id}
+            {...props}
+            formatStyle={formatStyle}
+            value={localValue}
+            onValueChange={handleChange}
+          />
         ) : (
           <NumberVariant
             id={id}
