@@ -11,7 +11,6 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/comp
 import Icon from "@/components/Icon";
 import { X, Search, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { useOptimisticValue } from "./shared/useOptimisticValue";
 import { logger } from "@/lib/logger";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle";
 import { Slider } from "@/components/ui/slider";
@@ -19,7 +18,7 @@ import { Densities } from "@/types/density";
 import { cva } from "class-variance-authority";
 import { xIconVariant } from "@/components/ui/input/text-input-variant";
 
-import { NullableSelectValue, Option, SelectInputWidgetProps } from "./select-types";
+import { Option, SelectInputWidgetProps } from "./select-types";
 import { convertValuesToOriginalType, useSelectValueHandler } from "./select-utils";
 import { SelectMultiVariant } from "./SelectMultiVariant";
 import { SelectSingleVariant } from "./SelectSingleVariant";
@@ -114,9 +113,20 @@ const ToggleOptionItem: React.FC<{
       <TooltipProvider key={option.value}>
         <Tooltip>
           <TooltipTrigger asChild>{toggleItem}</TooltipTrigger>
-          <TooltipContent className="bg-popover text-popover-foreground shadow-md">
+          <TooltipContent>
             <div className="max-w-xs sm:max-w-sm">{invalid}</div>
           </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  if (option.tooltip) {
+    return (
+      <TooltipProvider key={option.value}>
+        <Tooltip>
+          <TooltipTrigger asChild>{toggleItem}</TooltipTrigger>
+          <TooltipContent>{option.tooltip}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
     );
@@ -408,29 +418,64 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
                       isOptionDisabled && "opacity-50 cursor-not-allowed",
                     )}
                   />
-                  <Label
-                    htmlFor={`${id}-${option.value}`}
-                    className={cn(
-                      "cursor-pointer leading-none flex items-center gap-2",
-                      selectTextVariant[density],
-                      stringValue === option.value.toString() && invalid
-                        ? inputStyles.invalidInput
-                        : undefined,
-                      isOptionDisabled && "opacity-50 cursor-not-allowed",
-                    )}
-                  >
-                    {option.icon && <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />}
-                    {option.description ? (
-                      <div className="flex flex-col">
-                        <span>{option.label}</span>
-                        <span className="text-xs text-muted-foreground mt-0.5 font-normal">
-                          {option.description}
-                        </span>
-                      </div>
-                    ) : (
-                      option.label
-                    )}
-                  </Label>
+                  {option.tooltip ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label
+                            htmlFor={`${id}-${option.value}`}
+                            className={cn(
+                              "cursor-pointer leading-none flex items-center gap-2",
+                              selectTextVariant[density],
+                              stringValue === option.value.toString() && invalid
+                                ? inputStyles.invalidInput
+                                : undefined,
+                              isOptionDisabled && "opacity-50 cursor-not-allowed",
+                            )}
+                          >
+                            {option.icon && (
+                              <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            {option.description ? (
+                              <div className="flex flex-col">
+                                <span>{option.label}</span>
+                                <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                                  {option.description}
+                                </span>
+                              </div>
+                            ) : (
+                              option.label
+                            )}
+                          </Label>
+                        </TooltipTrigger>
+                        <TooltipContent>{option.tooltip}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Label
+                      htmlFor={`${id}-${option.value}`}
+                      className={cn(
+                        "cursor-pointer leading-none flex items-center gap-2",
+                        selectTextVariant[density],
+                        stringValue === option.value.toString() && invalid
+                          ? inputStyles.invalidInput
+                          : undefined,
+                        isOptionDisabled && "opacity-50 cursor-not-allowed",
+                      )}
+                    >
+                      {option.icon && <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />}
+                      {option.description ? (
+                        <div className="flex flex-col">
+                          <span>{option.label}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                            {option.description}
+                          </span>
+                        </div>
+                      ) : (
+                        option.label
+                      )}
+                    </Label>
+                  )}
                 </div>
               );
             })}
@@ -669,27 +714,62 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
                         )}
                       />
                     )}
-                    <Label
-                      htmlFor={`${id}-${option.value}`}
-                      className={cn(
-                        "flex-1 cursor-pointer flex items-center gap-2",
-                        selectTextVariant[density],
-                        isInvalid ? inputStyles.invalidInput : undefined,
-                        isDisabled && !isSelected ? "opacity-50" : undefined,
-                      )}
-                    >
-                      {option.icon && <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />}
-                      {option.description ? (
-                        <div className="flex flex-col">
-                          <span>{option.label}</span>
-                          <span className="text-xs text-muted-foreground mt-0.5 font-normal">
-                            {option.description}
-                          </span>
-                        </div>
-                      ) : (
-                        option.label
-                      )}
-                    </Label>
+                    {option.tooltip ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label
+                              htmlFor={`${id}-${option.value}`}
+                              className={cn(
+                                "flex-1 cursor-pointer flex items-center gap-2",
+                                selectTextVariant[density],
+                                isInvalid ? inputStyles.invalidInput : undefined,
+                                isDisabled && !isSelected ? "opacity-50" : undefined,
+                              )}
+                            >
+                              {option.icon && (
+                                <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                              )}
+                              {option.description ? (
+                                <div className="flex flex-col">
+                                  <span>{option.label}</span>
+                                  <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                                    {option.description}
+                                  </span>
+                                </div>
+                              ) : (
+                                option.label
+                              )}
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent>{option.tooltip}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Label
+                        htmlFor={`${id}-${option.value}`}
+                        className={cn(
+                          "flex-1 cursor-pointer flex items-center gap-2",
+                          selectTextVariant[density],
+                          isInvalid ? inputStyles.invalidInput : undefined,
+                          isDisabled && !isSelected ? "opacity-50" : undefined,
+                        )}
+                      >
+                        {option.icon && (
+                          <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                        )}
+                        {option.description ? (
+                          <div className="flex flex-col">
+                            <span>{option.label}</span>
+                            <span className="text-xs text-muted-foreground mt-0.5 font-normal">
+                              {option.description}
+                            </span>
+                          </div>
+                        ) : (
+                          option.label
+                        )}
+                      </Label>
+                    )}
                   </div>
                 );
               })}
@@ -828,7 +908,7 @@ const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: EventHand
           value={[sliderValue]}
           disabled={disabled}
           density={density}
-          tooltipValue={currentLabel}
+          tooltipValue={validOptions[sliderValue]?.tooltip || currentLabel}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
           className={cn(invalid && inputStyles.invalidInput)}
@@ -875,39 +955,13 @@ const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: EventHand
   );
 };
 
-const selectValueEqual = (a: NullableSelectValue, b: NullableSelectValue): boolean => {
-  if (a === b) return true;
-  if (a == null || b == null) return a == b;
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false;
-    return a.every((v, i) => v === b[i]);
-  }
-  return String(a) === String(b);
-};
-
 export const SelectInputWidget: React.FC<SelectInputWidgetProps> = (props) => {
   const eventHandler = useEventHandler();
 
   // Normalize undefined to null when nullable
-  const serverValue = props.nullable && props.value === undefined ? null : props.value;
-
-  const [localValue, setLocalValue] = useOptimisticValue(serverValue, false, selectValueEqual);
-
-  // Wrap eventHandler to intercept OnChange and apply optimistic update
-  const optimisticEventHandler: EventHandler = useCallback(
-    (event: string, id: string, args: unknown[]) => {
-      if (event === "OnChange") {
-        const newValue = args[0] as NullableSelectValue;
-        setLocalValue(newValue as NullableSelectValue & undefined);
-      }
-      eventHandler(event, id, args);
-    },
-    [eventHandler, setLocalValue],
-  );
-
   const normalizedProps = {
     ...props,
-    value: localValue,
+    value: props.nullable && props.value === undefined ? null : props.value,
     density: props.density ?? Densities.Medium,
     variant: props.variant ?? "Select",
     separator: props.separator ?? ";",
@@ -924,24 +978,24 @@ export const SelectInputWidget: React.FC<SelectInputWidgetProps> = (props) => {
   switch (normalizedProps.variant) {
     case "List":
       return normalizedProps.selectMany ? (
-        <CheckboxVariant {...normalizedProps} eventHandler={optimisticEventHandler} />
+        <CheckboxVariant {...normalizedProps} eventHandler={eventHandler} />
       ) : (
-        <RadioVariant {...normalizedProps} eventHandler={optimisticEventHandler} />
+        <RadioVariant {...normalizedProps} eventHandler={eventHandler} />
       );
     case "Radio":
-      return <RadioVariant {...normalizedProps} eventHandler={optimisticEventHandler} />;
+      return <RadioVariant {...normalizedProps} eventHandler={eventHandler} />;
     case "Toggle":
-      return <ToggleVariant {...normalizedProps} eventHandler={optimisticEventHandler} />;
+      return <ToggleVariant {...normalizedProps} eventHandler={eventHandler} />;
     case "Slider":
       return (
         <SliderVariant
           key={normalizedProps.value?.toString() ?? "null"}
           {...normalizedProps}
-          eventHandler={optimisticEventHandler}
+          eventHandler={eventHandler}
         />
       );
     default:
-      return <SelectVariant {...normalizedProps} eventHandler={optimisticEventHandler} />;
+      return <SelectVariant {...normalizedProps} eventHandler={eventHandler} />;
   }
 };
 

@@ -14,6 +14,7 @@ public class SelectInputApp : SampleBase
             new Tab("Radio", new SelectInputRadioExample()),
             new Tab("Slider", new SelectInputSliderExample()),
             new Tab("Disabled Options", new SelectInputDisabledOptionsExample()),
+            new Tab("Tooltips", new SelectInputTooltipsExample()),
             new Tab("Nullable & Edge Cases", new SelectInputAdvancedExample()),
             new Tab("Advanced Props", new SelectInputAdvancedPropsExample()),
             new Tab("Ghost", new SelectInputGhostExample()),
@@ -270,6 +271,41 @@ public class SelectInputDisabledOptionsExample : ViewBase
                 | (Layout.Vertical().Gap(2)
                     | Text.Monospaced("Toggle Variant")
                     | colorState.ToSelectInput(colorOptions)
+                        .Variant(SelectInputVariant.Toggle));
+    }
+}
+
+public class SelectInputTooltipsExample : ViewBase
+{
+    public override object? Build()
+    {
+        var cacheStrategy = UseState("lru");
+        var cacheStrategyMulti = UseState<string[]>([]);
+
+        var cacheOptions = new IAnyOption[]
+        {
+            new Option<string>("LRU", "lru", tooltip: "Least Recently Used — evicts the oldest accessed entry first"),
+            new Option<string>("LFU", "lfu", tooltip: "Least Frequently Used — evicts the least accessed entry first"),
+            new Option<string>("FIFO", "fifo", tooltip: "First In, First Out — evicts entries in insertion order"),
+            new Option<string>("Write-Through", "write-through", tooltip: "Writes to cache and backing store simultaneously"),
+            new Option<string>("Write-Back", "write-back", tooltip: "Writes to cache first, syncs to backing store later").Disabled(),
+        };
+
+        return Layout.Vertical()
+            | Text.H3("Option Tooltips")
+            | Text.P("Hover over options to see contextual help tooltips. Tooltips work across all variants.")
+            | Layout.Grid().Columns(3).Gap(6)
+                | (Layout.Vertical().Gap(2)
+                    | Text.Monospaced("Select Variant")
+                    | cacheStrategy.ToSelectInput(cacheOptions)
+                        .Placeholder("Select a cache strategy..."))
+                | (Layout.Vertical().Gap(2)
+                    | Text.Monospaced("List Variant")
+                    | cacheStrategyMulti.ToSelectInput(cacheOptions)
+                        .Variant(SelectInputVariant.List))
+                | (Layout.Vertical().Gap(2)
+                    | Text.Monospaced("Toggle Variant")
+                    | cacheStrategyMulti.ToSelectInput(cacheOptions)
                         .Variant(SelectInputVariant.Toggle));
     }
 }

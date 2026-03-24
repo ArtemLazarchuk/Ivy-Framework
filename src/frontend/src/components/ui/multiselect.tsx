@@ -3,6 +3,7 @@ import { X, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 import { Densities } from "@/types/density";
@@ -44,6 +45,7 @@ export interface Option {
   label: string;
   value: string;
   disable?: boolean;
+  tooltip?: string;
 }
 
 interface MultipleSelectorProps {
@@ -413,14 +415,37 @@ const MultipleSelector = React.forwardRef<
                       )}
                       disabled={option.disable}
                     >
-                      <span>{option.label}</span>
-                      {selected && (
-                        <X
-                          className={cn(
-                            xIconVariant({ density }),
-                            "text-muted-foreground hover:text-foreground",
+                      {option.tooltip ? (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{option.label}</span>
+                                {selected && (
+                                  <X
+                                    className={cn(
+                                      xIconVariant({ density }),
+                                      "text-muted-foreground hover:text-foreground",
+                                    )}
+                                  />
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>{option.tooltip}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <>
+                          <span>{option.label}</span>
+                          {selected && (
+                            <X
+                              className={cn(
+                                xIconVariant({ density }),
+                                "text-muted-foreground hover:text-foreground",
+                              )}
+                            />
                           )}
-                        />
+                        </>
                       )}
                     </CommandItem>
                   );

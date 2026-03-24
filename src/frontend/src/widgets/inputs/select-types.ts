@@ -10,6 +10,7 @@ export interface Option {
   group?: string;
   icon?: string;
   disabled?: boolean;
+  tooltip?: string;
 }
 
 export interface SelectInputWidgetProps {
