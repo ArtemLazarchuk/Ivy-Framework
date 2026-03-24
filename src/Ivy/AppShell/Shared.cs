@@ -108,7 +108,7 @@ public record NavigateArgs(string? AppId, object? AppArgs = null, string? TabId 
 
         if (!this.AppShell)
         {
-            queryParams.Add("appshell=false");
+            queryParams.Add("shell=false");
         }
 
         if (queryParams.Any())

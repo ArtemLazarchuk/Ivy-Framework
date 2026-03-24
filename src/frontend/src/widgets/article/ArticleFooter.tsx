@@ -1,7 +1,7 @@
 import { InternalLink } from "@/types/widgets";
 import { Github } from "lucide-react";
 import React from "react";
-import { convertAppUrlToPath, getAppShellParam } from "@/lib/utils";
+import { convertAppUrlToPath, getShellParam } from "@/lib/utils";
 
 interface ArticleFooterProps {
   id: string;
@@ -20,7 +20,7 @@ export const ArticleFooter: React.FC<ArticleFooterProps> = ({
 }) => {
   const handleLinkClick = (appId: string, event: React.MouseEvent<HTMLAnchorElement>) => {
     // When appShell is disabled, use browser navigation
-    if (!getAppShellParam()) {
+    if (!getShellParam()) {
       return;
     }
 
