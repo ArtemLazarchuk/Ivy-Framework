@@ -64,6 +64,7 @@ const injectMeta = (mode: string): Plugin => {
 
 const mode = process.env.NODE_ENV || "development";
 export default defineConfig({
+  base: "./",
   lint: { options: { typeCheck: false } },
   plugins: [react(), tailwindcss(), injectMeta(mode)] as Plugin[],
   server: {
