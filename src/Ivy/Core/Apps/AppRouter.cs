@@ -132,7 +132,7 @@ public class AppRouter(global::Ivy.Server server)
 
             if (appId == AppIds.AppShell && (parentId != null || !appShell))
             {
-                appId = appShellDefaultAppId;
+                appId = appShellDefaultAppId ?? GetFirstVisibleAppId();
             }
             else if (appShell && navigationAppId == null)
             {
@@ -248,5 +248,15 @@ public class AppRouter(global::Ivy.Server server)
             return appShellView.Settings.DefaultAppId;
         }
         return null;
+    }
+
+    private string? GetFirstVisibleAppId()
+    {
+        return server.AppRepository.All()
+            .Where(app => app.IsVisible && !AppIds.ShouldNotBeAutoDefaultApps.Contains(app.Id))
+            .OrderBy(app => app.Order)
+            .ThenBy(app => app.Title)
+            .Select(app => app.Id)
+            .FirstOrDefault();
     }
 }
