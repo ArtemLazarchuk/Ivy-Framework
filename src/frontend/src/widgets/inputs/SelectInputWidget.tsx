@@ -113,7 +113,7 @@ const ToggleOptionItem: React.FC<{
       <TooltipProvider key={option.value}>
         <Tooltip>
           <TooltipTrigger asChild>{toggleItem}</TooltipTrigger>
-          <TooltipContent className="bg-popover text-popover-foreground shadow-md">
+          <TooltipContent>
             <div className="max-w-xs sm:max-w-sm">{invalid}</div>
           </TooltipContent>
         </Tooltip>
@@ -908,7 +908,7 @@ const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: EventHand
           value={[sliderValue]}
           disabled={disabled}
           density={density}
-          tooltipValue={currentLabel}
+          tooltipValue={validOptions[sliderValue]?.tooltip || currentLabel}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
           className={cn(invalid && inputStyles.invalidInput)}

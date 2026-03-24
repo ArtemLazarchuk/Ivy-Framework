@@ -187,12 +187,28 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
                         density={density}
                         disabled={disabled || loading || option.disabled}
                       >
-                        <div className="flex items-center gap-2" title={option.tooltip}>
-                          {option.icon && (
-                            <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
-                          )}
-                          {option.label}
-                        </div>
+                        {option.tooltip ? (
+                          <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2">
+                                  {option.icon && (
+                                    <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                                  )}
+                                  {option.label}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>{option.tooltip}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            {option.icon && (
+                              <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            {option.label}
+                          </div>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectGroup>

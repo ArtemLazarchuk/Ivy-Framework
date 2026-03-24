@@ -51,6 +51,7 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
     return validOptions.map((option) => ({
       label: option.label || option.value.toString(),
       value: option.value.toString(),
+      tooltip: option.tooltip,
       disable:
         disabled ||
         loading ||
