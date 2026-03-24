@@ -7,6 +7,7 @@ The "Chrome" concept has been renamed to "AppShell" to avoid confusion with the 
 ## What Changed
 
 ### Backend (C#)
+
 - Namespace `Ivy.Chrome` renamed to `Ivy.AppShell`.
 - Class `ChromeSettings` renamed to `AppShellSettings`.
 - Class `DefaultSidebarChrome` renamed to `DefaultSidebarAppShell`.
@@ -15,6 +16,7 @@ The "Chrome" concept has been renamed to "AppShell" to avoid confusion with the 
 - Project `StudioChrome` renamed to `StudioAppShell`.
 
 ### Frontend (TypeScript)
+
 - Query parameter `?chrome=true|false` renamed to `?appshell=true|false`.
 - Utility function `getChromeParam()` renamed to `getAppShellParam()`.
 
@@ -58,6 +60,9 @@ const isAppShell = getAppShellParam();
 Run a full build of both backend and frontend:
 
 ```bash
+vp build
+```
+
+```bash
 dotnet build
-pnpm run build
 ```
