@@ -688,8 +688,9 @@ export const typography: Record<string, string> = {
   block: "flex items-center min-w-0",
 
   // Lists
-  ul: "list-disc ml-6",
-  ol: "list-decimal ml-6",
+  ul: "list-disc ml-6 space-y-1.5",
+  ol: "list-decimal ml-6 space-y-1.5",
+  li: "",
 
   // Links
   a: "text-primary underline underline-offset-[3px] brightness-90 hover:brightness-100",
