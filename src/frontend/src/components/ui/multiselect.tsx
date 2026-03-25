@@ -64,6 +64,8 @@ interface MultipleSelectorProps {
   density?: Densities;
   maxVisibleBadges?: number;
   ghost?: boolean;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const MultipleSelector = React.forwardRef<
@@ -85,6 +87,8 @@ const MultipleSelector = React.forwardRef<
       density = Densities.Medium,
       maxVisibleBadges,
       ghost = false,
+      onBlur,
+      onFocus,
     },
     ref,
   ) => {
@@ -340,19 +344,21 @@ const MultipleSelector = React.forwardRef<
                 ref={inputRef}
                 value={inputValue}
                 onValueChange={setInputValue}
-                onBlur={() => {
+                onBlur={(e) => {
                   setOpen(false);
                   if (containerRef.current) {
                     containerRef.current.scrollLeft = 0;
                   }
+                  onBlur?.(e);
                 }}
-                onFocus={() => {
+                onFocus={(e) => {
                   setOpen(true);
                   requestAnimationFrame(() => {
                     if (containerRef.current) {
                       containerRef.current.scrollLeft = 0;
                     }
                   });
+                  onFocus?.(e);
                 }}
                 placeholder={
                   hidePlaceholderWhenSelected && value.length > 0 ? undefined : placeholder

@@ -9,6 +9,7 @@ import { xIconVariant } from "@/components/ui/input/text-input-variant";
 import { SelectInputWidgetProps, Option } from "./select-types";
 import { convertValuesToOriginalType } from "./select-utils";
 import { getWidth } from "@/lib/styles";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
   id,
@@ -16,7 +17,7 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
   value,
   disabled = false,
   invalid,
-  options = [],
+  options = EMPTY_ARRAY,
   eventHandler,
   selectMany = true,
   maxSelections,
@@ -26,6 +27,7 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
   density,
   "data-testid": dataTestId,
   width,
+  events = EMPTY_ARRAY,
 }) => {
   const validOptions = options.filter(
     (option) => option.value != null && option.value.toString().trim() !== "",
@@ -103,6 +105,14 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
     [minSelections, selectedValues.length, value, validOptions, selectMany, eventHandler, id],
   );
 
+  const handleBlur = () => {
+    if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+  };
+
+  const handleFocus = () => {
+    if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+  };
+
   const styles = getWidth(width);
 
   return (
@@ -119,6 +129,8 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
           hidePlaceholderWhenSelected
           density={density}
           ghost={ghost}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
           data-testid={dataTestId}
         />
         {(selectedMultiSelectOptions.length > 0 && !disabled) || invalid || loading ? (

@@ -11,6 +11,7 @@ import { Densities } from "@/types/density";
 import { xIconVariant } from "@/components/ui/input/text-input-variant";
 import Icon from "@/components/Icon";
 import { formatBytes } from "@/lib/formatters";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 interface Affix {
   icon?: string;
@@ -75,6 +76,8 @@ interface NumberInputBaseProps {
   invalid?: string;
   nullable?: boolean;
   onValueChange: (value: number | null) => void;
+  onBlur?: (e: React.FocusEvent) => void;
+  onFocus?: (e: React.FocusEvent) => void;
   currency?: string | undefined;
   "data-testid"?: string;
   // Add type information for validation
@@ -83,6 +86,7 @@ interface NumberInputBaseProps {
   prefix?: Affix;
   suffix?: Affix;
   noGrouping?: boolean;
+  events?: string[];
 }
 
 interface NumberInputWidgetProps extends Omit<NumberInputBaseProps, "onValueChange"> {
@@ -135,6 +139,8 @@ const SliderVariant = memo(
     formatStyle,
     density = Densities.Medium,
     onValueChange,
+    onBlur,
+    onFocus,
     "data-testid": dataTestId,
   }: NumberInputBaseProps) => {
     const isBytesFormat = formatStyle === "Bytes";
@@ -189,6 +195,8 @@ const SliderVariant = memo(
           density={density}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
+          onBlur={onBlur}
+          onFocus={onFocus}
           className={cn(invalid && inputStyles.invalidInput)}
           data-testid={dataTestId}
         />
@@ -231,6 +239,8 @@ const NumberVariant = memo(
     invalid,
     nullable = false,
     onValueChange,
+    onBlur,
+    onFocus,
     currency,
     density = Densities.Medium,
     prefix,
@@ -312,6 +322,8 @@ const NumberVariant = memo(
             disabled={disabled}
             density={density}
             onChange={handleNumberChange}
+            onBlur={onBlur}
+            onFocus={onFocus}
             className={cn(
               "border-0 shadow-none",
               invalid && inputStyles.invalidInput,
@@ -363,6 +375,7 @@ export const NumberInputWidget = memo(
     formatStyle = "Decimal",
     nullable = false,
     width,
+    events = EMPTY_ARRAY,
     ...props
   }: NumberInputWidgetProps) => {
     const eventHandler = useEventHandler() as EventHandler;
@@ -371,6 +384,14 @@ export const NumberInputWidget = memo(
     const normalizedValue = nullable && props.value === undefined ? null : props.value;
 
     const [localValue, setLocalValue] = useOptimisticValue(normalizedValue, false);
+
+    const handleBlur = useCallback(() => {
+      if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+    }, [eventHandler, id, events]);
+
+    const handleFocus = useCallback(() => {
+      if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+    }, [eventHandler, id, events]);
 
     const handleChange = useCallback(
       (newValue: number | null) => {
@@ -408,6 +429,8 @@ export const NumberInputWidget = memo(
             formatStyle={formatStyle}
             value={localValue}
             onValueChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
           />
         ) : (
           <NumberVariant
@@ -417,6 +440,8 @@ export const NumberInputWidget = memo(
             value={localValue}
             nullable={nullable}
             onValueChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
           />
         )}
       </div>

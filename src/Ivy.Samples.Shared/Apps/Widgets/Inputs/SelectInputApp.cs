@@ -7,8 +7,11 @@ public class SelectInputApp : SampleBase
 {
     protected override object? BuildSample()
     {
-        return Layout.Tabs(
+        return Layout.Vertical()
+            | Text.H1("Select Input")
+            | Layout.Tabs(
             new Tab("Basic", new SelectInputBasicExample()),
+            new Tab("Events", new SelectInputEventsExample()),
             new Tab("Sizes", new SelectInputSizesExample()),
             new Tab("Variants", new SelectInputVariantsExample()),
             new Tab("Radio", new SelectInputRadioExample()),
@@ -19,7 +22,8 @@ public class SelectInputApp : SampleBase
             new Tab("Advanced Props", new SelectInputAdvancedPropsExample()),
             new Tab("Ghost", new SelectInputGhostExample()),
             new Tab("Descriptions", new SelectInputDescriptionsExample())
-        ).Variant(TabsVariant.Content);
+        ).Variant(TabsVariant.Content)
+        ;
     }
 }
 
@@ -40,6 +44,36 @@ public class SelectInputBasicExample : ViewBase
                     .Placeholder("Select notification types...")
                     .WithField()
                     .Label("Notification types");
+    }
+}
+
+public class SelectInputEventsExample : ViewBase
+{
+    public override object? Build()
+    {
+        var onBlurState = UseState("Allowed");
+        var onBlurLabel = UseState("");
+        var onFocusState = UseState("Allowed");
+        var onFocusLabel = UseState("");
+
+        return Layout.Vertical()
+            | Text.H3("Events")
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The blur event fires when the input loses focus.").Small()
+                    | (onBlurLabel.Value != ""
+                        ? Callout.Success(onBlurLabel.Value)
+                        : Callout.Info("Interact then click away to see blur events"))
+                    | onBlurState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+            ).Title("OnBlur Handler")
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The focus event fires when you click on or tab into the input. Feedback is shown above the control so the open menu does not cover it.").Small()
+                    | (onFocusLabel.Value != ""
+                        ? Callout.Success(onFocusLabel.Value)
+                        : Callout.Info("Click or tab into the input to see focus events"))
+                    | onFocusState.ToSelectInput(["Refused", "Allowed", "Ignored"]).OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+            ).Title("OnFocus Handler");
     }
 }
 

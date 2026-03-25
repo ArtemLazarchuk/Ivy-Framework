@@ -153,6 +153,7 @@ const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
   loading = false,
   ghost = false,
   density = Densities.Medium,
+  events = EMPTY_ARRAY,
   "data-testid": dataTestId,
   width,
 }) => {
@@ -229,6 +230,16 @@ const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
           "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
       )}
       style={styles}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+        }
+      }}
     >
       <div className="flex items-center gap-2">
         <div className="flex-1">
@@ -358,6 +369,7 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
   nullable = false,
   ghost = false,
   density = Densities.Medium,
+  events = EMPTY_ARRAY,
   "data-testid": dataTestId,
   width,
 }) => {
@@ -388,6 +400,16 @@ const RadioVariant: React.FC<SelectInputWidgetProps> = ({
           "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
       )}
       style={styles}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+        }
+      }}
     >
       <div className="flex items-center gap-4">
         <div className="flex-1">
@@ -525,6 +547,7 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
   loading = false,
   ghost = false,
   density = Densities.Medium,
+  events = EMPTY_ARRAY,
   "data-testid": dataTestId,
   width,
 }) => {
@@ -630,6 +653,16 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
           "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
       )}
       style={styles}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+        }
+      }}
     >
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -836,6 +869,7 @@ const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: EventHand
   density = Densities.Medium,
   "data-testid": dataTestId,
   width,
+  events = EMPTY_ARRAY,
 }) => {
   if (selectMany) {
     logger.warn(
@@ -896,9 +930,23 @@ const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: EventHand
       className={cn(
         "relative w-full flex-1 flex flex-col gap-1 pt-6 pb-2 my-auto justify-center",
         ghost && "border-transparent shadow-none",
+        disabled && "opacity-50 cursor-not-allowed",
       )}
       style={width ? getWidth(width) : undefined}
       data-testid={dataTestId}
+      onBlur={(e) => {
+        if (disabled) return;
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+        }
+      }}
+      onFocus={(e) => {
+        if (disabled) return;
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+        }
+      }}
+      tabIndex={disabled ? -1 : 0}
     >
       <div className="relative">
         <Slider

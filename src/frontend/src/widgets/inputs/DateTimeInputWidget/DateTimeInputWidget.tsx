@@ -17,6 +17,7 @@ import { TimeVariant } from "./TimeVariant";
 import { MonthVariant } from "./MonthVariant";
 import { WeekVariant } from "./WeekVariant";
 import { YearVariant } from "./YearVariant";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 const VariantComponents: Record<
   VariantType,
@@ -60,6 +61,7 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
   max,
   step,
   density = Densities.Medium,
+  events = EMPTY_ARRAY,
   "data-testid": dataTestId,
 }) => {
   const eventHandler = useEventHandler();
@@ -111,23 +113,38 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
 
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);
 
+  const handleFocusChange = useCallback(
+    (focused: boolean) => {
+      if (disabled) return;
+      if (focused) {
+        if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+      } else {
+        if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+      }
+    },
+    [disabled, events, eventHandler, id],
+  );
+
   return (
-    <VariantComponent
-      id={id}
-      value={localValue}
-      placeholder={placeholder}
-      disabled={disabled}
-      nullable={nullable}
-      invalid={invalid}
-      format={formatProp}
-      firstDayOfWeek={firstDayOfWeek}
-      min={min}
-      max={max}
-      step={step}
-      density={density}
-      onDateChange={handleDateChange}
-      onTimeChange={handleTimeChange}
-      data-testid={dataTestId}
-    />
+    <div className="relative w-full">
+      <VariantComponent
+        id={id}
+        value={localValue}
+        placeholder={placeholder}
+        disabled={disabled}
+        nullable={nullable}
+        invalid={invalid}
+        format={formatProp}
+        firstDayOfWeek={firstDayOfWeek}
+        min={min}
+        max={max}
+        step={step}
+        density={density}
+        onDateChange={handleDateChange}
+        onTimeChange={handleTimeChange}
+        onFocusChange={handleFocusChange}
+        data-testid={dataTestId}
+      />
+    </div>
   );
 };

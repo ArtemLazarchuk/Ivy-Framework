@@ -14,7 +14,8 @@ public class DateTimeInputApp : SampleBase
                 new Tab("Data Binding", new DateTimeInputDataBinding()),
                 new Tab("Placeholders", new DateTimeInputPlaceholderSamples()),
                 new Tab("First Day of Week", new DateTimeInputFirstDayOfWeekSamples()),
-                new Tab("Min / Max / Step", new DateTimeInputConstraintSamples())
+                new Tab("Min / Max / Step", new DateTimeInputConstraintSamples()),
+                new Tab("Events", new DateTimeInputEventSamples())
             ).Variant(TabsVariant.Content);
     }
 }
@@ -792,5 +793,39 @@ public class DateTimeInputConstraintSamples : ViewBase
             | Text.P("Range and stepping constraints across date, time, and calendar variants.")
             | constraintsGrid
             | sampleValues;
+    }
+}
+
+public class DateTimeInputEventSamples : ViewBase
+{
+    public override object? Build()
+    {
+        var onBlurDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onBlurLabel = UseState("");
+        var onFocusDateState = UseState(DateOnly.FromDateTime(DateTime.Now));
+        var onFocusLabel = UseState("");
+
+        var eventsGrid = Layout.Vertical()
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The blur event fires when the date input loses focus.").Small()
+                    | onBlurDateState.ToDateInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
+                    | (onBlurLabel.Value != ""
+                        ? Callout.Success(onBlurLabel.Value)
+                        : Callout.Info("Interact then click away to see blur events"))
+            ).Title("OnBlur Handler")
+            | new Card(
+                Layout.Vertical().Gap(2)
+                    | Text.P("The focus event fires when you click on or tab into the date input.").Small()
+                    | onFocusDateState.ToDateInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
+                    | (onFocusLabel.Value != ""
+                        ? Callout.Success(onFocusLabel.Value)
+                        : Callout.Info("Click or tab into the input to see focus events"))
+            ).Title("OnFocus Handler");
+
+        return Layout.Vertical()
+            | Text.H2("Events")
+            | Text.P("OnFocus and OnBlur event handlers.")
+            | eventsGrid;
     }
 }

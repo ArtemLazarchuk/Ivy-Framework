@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { Densities } from "@/types/density";
 import Icon from "@/components/Icon";
 import { formatBytes } from "@/lib/formatters";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 interface Affix {
   icon?: string;
@@ -189,7 +190,7 @@ export const NumberRangeInputWidget = memo(
     noGrouping,
     targetType,
     density = Densities.Medium,
-    events,
+    events = EMPTY_ARRAY,
     "data-testid": dataTestId,
   }: NumberRangeInputWidgetProps) => {
     const eventHandler = useEventHandler() as EventHandler;
@@ -293,7 +294,25 @@ export const NumberRangeInputWidget = memo(
     const suffixContent = renderAffix(suffix);
 
     return (
-      <div className="relative w-full flex-1">
+      <div
+        className={cn(
+          "relative w-full px-3 py-2",
+          disabled && "opacity-50 cursor-not-allowed",
+          invalid && inputStyles.invalidInput,
+        )}
+        onBlur={(e) => {
+          if (disabled) return;
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+          }
+        }}
+        onFocus={(e) => {
+          if (disabled) return;
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+          }
+        }}
+      >
         {/* Prefix/Suffix labels */}
         {(prefixContent || suffixContent) && (
           <div className="flex items-center justify-between mb-2">
