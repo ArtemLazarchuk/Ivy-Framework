@@ -72,7 +72,9 @@ export const SheetWidget: React.FC<SheetWidgetProps> = ({
       >
         <SheetHeader className={cn("p-4 pb-0", !title && !description && "sr-only")}>
           <SheetTitle className={cn(!title && "sr-only")}>{title || "Sheet"}</SheetTitle>
-          {description && <SheetDescription>{description}</SheetDescription>}
+          <SheetDescription className={cn(!description && "sr-only")}>
+            {description || "Sheet content"}
+          </SheetDescription>
         </SheetHeader>
         <div className="flex-1 pb-4 pt-1 pl-4 pr-4 mt-4 overflow-y-auto">{slots.Content}</div>
       </SheetContent>
