@@ -70,6 +70,7 @@ public class Server
     public IReadOnlySet<string> ReservedPaths => _reservedPaths;
     public string? DefaultAppId { get; private set; }
     public AppRepository AppRepository { get; } = new();
+    public NavigationBeaconRegistry NavigationBeaconRegistry { get; } = new();
     public IServiceCollection Services { get; } = new ServiceCollection();
     public IConfiguration Configuration { get; private set; } = ServerUtils.GetConfiguration();
     public Type? AuthProviderType { get; private set; } = null;
@@ -604,6 +605,21 @@ public class Server
         // Initialize external widget registry by scanning loaded assemblies
         ExternalWidgetRegistry.Instance.Initialize();
 
+        // Register navigation beacons from all loaded assemblies
+        var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic && a.GetLoadableTypes().Any());
+        foreach (var assembly in loadedAssemblies)
+        {
+            try
+            {
+                AppHelpers.RegisterBeacons(assembly, NavigationBeaconRegistry);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARNING] Failed to register beacons from {assembly.GetName().Name}: {ex.Message}");
+            }
+        }
+
         // Ensure sufficient ThreadPool workers to avoid heartbeat warnings under bursty loads
         try
         {
@@ -660,6 +676,9 @@ public class Server
         {
             Services.AddSingleton<IThemeService, ThemeService>();
         }
+
+        // Register NavigationBeaconRegistry as a singleton service
+        builder.Services.AddSingleton<INavigationBeaconRegistry>(NavigationBeaconRegistry);
 
         // Register all services from this server's Services collection
         foreach (var service in Services)
@@ -1069,7 +1088,40 @@ public static class WebApplicationExtensions
         });
 
 
+        // In local development, prefer serving from the physical disk for faster updates and easier debugging
+#if DEBUG
+        try
+        {
+            var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "src", "frontend", "dist");
+            if (!Directory.Exists(physicalPath))
+            {
+                // Try cases where we are already in src or running from a sample project subfolder
+                physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "frontend", "dist");
+            }
+            if (!Directory.Exists(physicalPath))
+            {
+                physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "frontend", "dist");
+            }
+
+            if (Directory.Exists(physicalPath))
+            {
+                Console.WriteLine($"[DEBUG] Serving frontend assets from physical path: {Path.GetFullPath(physicalPath)}");
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetFullPath(physicalPath)),
+                    RequestPath = ""
+                });
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Frontend physical path NOT FOUND: {Path.GetFullPath(physicalPath)} (CWD: {Directory.GetCurrentDirectory()})");
+            }
+        }
+        catch { /* fallback to embedded resources */ }
+#endif
+
         app.UseStaticFiles(GetStaticFileOptions("", embeddedProvider, assembly));
+
 
         return app;
     }
