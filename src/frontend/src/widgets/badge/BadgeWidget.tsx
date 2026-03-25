@@ -100,7 +100,7 @@ export const BadgeWidget: React.FC<BadgeWidgetProps> = ({
       density={density.toLowerCase() as "small" | "medium" | "large"}
       style={color ? colorStyles : undefined}
       className={cn(
-        "w-min whitespace-nowrap gap-1",
+        "whitespace-nowrap gap-1",
         hasIcon &&
           title &&
           iconPosition === "Left" &&
