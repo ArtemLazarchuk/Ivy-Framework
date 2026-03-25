@@ -141,3 +141,26 @@ Text.P(status.GetDescription()) // "Not Started"
 ```
 
 `GetDescription()` reads the `[Description]` attribute if present, otherwise splits PascalCase automatically (e.g., `NotStarted` → `"Not Started"`).
+
+## How do I handle loading and error states in my app?
+
+Use `UseQuery` with proper loading and error handling instead of showing plain "Loading..." text:
+
+```csharp
+var query = UseQuery("key", async ct => await FetchData(ct));
+
+if (query.Loading)
+    return Skeleton.Card(); // Visual placeholder matching your layout
+
+if (query.Error is { } error)
+    return Layout.Vertical()
+        | Callout.Error($"Failed to load: {error.Message}")
+        | new Button("Retry", _ => query.Mutator.Revalidate());
+
+return new Card(query.Value);
+```
+
+**Key points:**
+- Use `Skeleton` placeholders (`Skeleton.Card()`, `Skeleton.Text()`, `Skeleton.Feed()`, `Skeleton.DataTable()`, `Skeleton.Form()`) instead of plain text for loading states
+- Always check `query.Error` and show a `Callout.Error(...)` with a retry action
+- For auth-dependent flows, provide a fallback (e.g., "Back to Login" button) so users are not stuck on an indefinite loading screen
