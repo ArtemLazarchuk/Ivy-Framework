@@ -3,6 +3,7 @@ import { X, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 import { Densities } from "@/types/density";
@@ -44,6 +45,7 @@ export interface Option {
   label: string;
   value: string;
   disable?: boolean;
+  tooltip?: string;
 }
 
 interface MultipleSelectorProps {
@@ -62,6 +64,8 @@ interface MultipleSelectorProps {
   density?: Densities;
   maxVisibleBadges?: number;
   ghost?: boolean;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const MultipleSelector = React.forwardRef<
@@ -83,6 +87,8 @@ const MultipleSelector = React.forwardRef<
       density = Densities.Medium,
       maxVisibleBadges,
       ghost = false,
+      onBlur,
+      onFocus,
     },
     ref,
   ) => {
@@ -107,6 +113,17 @@ const MultipleSelector = React.forwardRef<
         });
       } else {
         setOpenUpward(false);
+      }
+    }, [open]);
+
+    React.useEffect(() => {
+      if (open && dropdownRef.current) {
+        requestAnimationFrame(() => {
+          const scrollableElement = dropdownRef.current?.querySelector("[cmdk-group]");
+          if (scrollableElement) {
+            scrollableElement.scrollTop = 0;
+          }
+        });
       }
     }, [open]);
 
@@ -327,19 +344,21 @@ const MultipleSelector = React.forwardRef<
                 ref={inputRef}
                 value={inputValue}
                 onValueChange={setInputValue}
-                onBlur={() => {
+                onBlur={(e) => {
                   setOpen(false);
                   if (containerRef.current) {
                     containerRef.current.scrollLeft = 0;
                   }
+                  onBlur?.(e);
                 }}
-                onFocus={() => {
+                onFocus={(e) => {
                   setOpen(true);
                   requestAnimationFrame(() => {
                     if (containerRef.current) {
                       containerRef.current.scrollLeft = 0;
                     }
                   });
+                  onFocus?.(e);
                 }}
                 placeholder={
                   hidePlaceholderWhenSelected && value.length > 0 ? undefined : placeholder
@@ -413,14 +432,37 @@ const MultipleSelector = React.forwardRef<
                       )}
                       disabled={option.disable}
                     >
-                      <span>{option.label}</span>
-                      {selected && (
-                        <X
-                          className={cn(
-                            xIconVariant({ density }),
-                            "text-muted-foreground hover:text-foreground",
+                      {option.tooltip ? (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{option.label}</span>
+                                {selected && (
+                                  <X
+                                    className={cn(
+                                      xIconVariant({ density }),
+                                      "text-muted-foreground hover:text-foreground",
+                                    )}
+                                  />
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>{option.tooltip}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <>
+                          <span>{option.label}</span>
+                          {selected && (
+                            <X
+                              className={cn(
+                                xIconVariant({ density }),
+                                "text-muted-foreground hover:text-foreground",
+                              )}
+                            />
                           )}
-                        />
+                        </>
                       )}
                     </CommandItem>
                   );

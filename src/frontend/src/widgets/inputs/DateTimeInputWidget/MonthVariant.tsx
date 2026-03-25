@@ -29,9 +29,18 @@ export const MonthVariant: React.FC<MonthVariantProps> = ({
   max,
   density = Densities.Medium,
   "data-testid": dataTestId,
+  onFocusChange,
 }) => {
   const [open, setOpen] = useState(false);
   const date = useMemo(() => (value ? new Date(value) : undefined), [value]);
+
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen);
+      onFocusChange?.(newOpen);
+    },
+    [onFocusChange],
+  );
 
   const minDate = useMemo(() => (min ? new Date(min) : undefined), [min]);
   const maxDate = useMemo(() => (max ? new Date(max) : undefined), [max]);
@@ -76,7 +85,7 @@ export const MonthVariant: React.FC<MonthVariantProps> = ({
 
   return (
     <div className="relative w-full select-none">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             disabled={disabled}
@@ -91,6 +100,12 @@ export const MonthVariant: React.FC<MonthVariantProps> = ({
               showClear && invalid ? "pr-16" : showClear || invalid ? "pr-8" : "",
             )}
             data-testid={dataTestId}
+            onFocus={() => {
+              if (!open) onFocusChange?.(true);
+            }}
+            onBlur={() => {
+              if (!open) onFocusChange?.(false);
+            }}
           >
             <CalendarIcon className={cn("mr-2 shrink-0", dateTimeInputIconVariant({ density }))} />
             <span

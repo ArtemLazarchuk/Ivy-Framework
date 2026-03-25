@@ -70,9 +70,9 @@ export function getParentId(): string | null {
   return urlParams.get("parentId");
 }
 
-export function getAppShellParam(): boolean {
+export function getShellParam(): boolean {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get("appshell")?.toLowerCase() !== "false";
+  return urlParams.get("shell")?.toLowerCase() !== "false";
 }
 
 export function wrapAppContent(content: React.ReactNode): React.ReactNode {
@@ -81,10 +81,10 @@ export function wrapAppContent(content: React.ReactNode): React.ReactNode {
 
 /**
  * Converts an app:// URL to a regular browser path.
- * Preserves query parameters from the current URL (especially appshell=false) when in appshell=false mode.
+ * Preserves query parameters from the current URL (especially shell=false) when in shell=false mode.
  *
  * @param appUrl - The app:// URL to convert (e.g., "app://MyApp" or "app://MyApp?param=value")
- * @returns The converted path (e.g., "/MyApp" or "/MyApp?param=value&appshell=false")
+ * @returns The converted path (e.g., "/MyApp" or "/MyApp?param=value&shell=false")
  */
 /**
  * Extracts the content after the app:// protocol prefix using regex.
@@ -108,15 +108,15 @@ export function convertAppUrlToPath(appUrl: string): string {
   const pathBase = getIvyPathBase(); // e.g. "/foo/bar"
   let path = pathBase ? `${pathBase}/${appPath}` : `/${appPath}`;
 
-  // Preserve appshell=false if we're currently in appshell=false mode
-  const isAppShellFalse = !getAppShellParam();
+  // Preserve shell=false if we're currently in shell=false mode
+  const isShellFalse = !getShellParam();
   const queryParams = new URLSearchParams(existingQueryString || "");
 
-  if (isAppShellFalse && !queryParams.has("appshell")) {
-    queryParams.set("appshell", "false");
+  if (isShellFalse && !queryParams.has("shell")) {
+    queryParams.set("shell", "false");
   }
 
-  // Combine existing query params with appshell param
+  // Combine existing query params with shell param
   const finalQueryString = queryParams.toString();
   if (finalQueryString) {
     path += `?${finalQueryString}`;

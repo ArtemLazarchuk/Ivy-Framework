@@ -37,7 +37,7 @@ public class AppRouter(global::Ivy.Server server)
 
     private static bool GetAppShell(HttpContext httpContext)
     {
-        if (httpContext.Request.Query.TryGetValue("appshell", out var appShellParam))
+        if (httpContext.Request.Query.TryGetValue("shell", out var appShellParam))
         {
             return !appShellParam.ToString().Equals("false", StringComparison.OrdinalIgnoreCase);
         }
@@ -132,7 +132,7 @@ public class AppRouter(global::Ivy.Server server)
 
             if (appId == AppIds.AppShell && (parentId != null || !appShell))
             {
-                appId = appShellDefaultAppId;
+                appId = appShellDefaultAppId ?? GetFirstVisibleAppId();
             }
             else if (appShell && navigationAppId == null)
             {
@@ -190,8 +190,7 @@ public class AppRouter(global::Ivy.Server server)
                     appDescriptor,
                     scopedRepository,
                     appShell,
-                    (int)HttpStatusCode.NotFound,
-                    notFoundArgs
+                    null
                 );
             }
         }
@@ -248,5 +247,15 @@ public class AppRouter(global::Ivy.Server server)
             return appShellView.Settings.DefaultAppId;
         }
         return null;
+    }
+
+    private string? GetFirstVisibleAppId()
+    {
+        return server.AppRepository.All()
+            .Where(app => app.IsVisible && !AppIds.ShouldNotBeAutoDefaultApps.Contains(app.Id))
+            .OrderBy(app => app.Order)
+            .ThenBy(app => app.Title)
+            .Select(app => app.Id)
+            .FirstOrDefault();
     }
 }

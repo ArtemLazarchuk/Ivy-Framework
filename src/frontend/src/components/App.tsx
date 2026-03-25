@@ -9,7 +9,7 @@ import { DevTools } from "./DevTools";
 import {
   getAppArgs,
   getAppId,
-  getAppShellParam,
+  getShellParam,
   getParentId,
   wrapAppContent,
   isDevToolsEnabled,
@@ -24,7 +24,7 @@ export function App() {
   const appId = getAppId();
   const appArgs = getAppArgs();
   const parentId = getParentId();
-  const appShell = getAppShellParam();
+  const appShell = getShellParam();
 
   const { connection, widgetTree, eventHandler, subscribeToStream, disconnected } = useBackend(
     appId,
@@ -40,7 +40,7 @@ export function App() {
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      const appShell = getAppShellParam();
+      const appShell = getShellParam();
       if (appShell) {
         const newAppId = getAppId();
         connection?.invoke("Navigate", newAppId, event.state).catch((err) => {

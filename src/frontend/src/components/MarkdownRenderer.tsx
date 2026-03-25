@@ -207,6 +207,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onLinkClic
       hr: memo((props: React.HTMLAttributes<HTMLHRElement>) => (
         <hr className={typography.hr} {...props} />
       )),
+      details: memo(({ children, ...props }: React.DetailsHTMLAttributes<HTMLDetailsElement>) => (
+        <details className={typography.details} {...props}>
+          {children}
+        </details>
+      )),
+      summary: memo(({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
+        <summary className={typography.summary} {...props}>
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4 shrink-0 transition-transform [[open]>summary_&]:rotate-90"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            {children}
+          </div>
+        </summary>
+      )),
     }),
     [
       typography.h1,
@@ -227,6 +247,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onLinkClic
       typography.th,
       typography.img,
       typography.hr,
+      typography.details,
+      typography.summary,
     ],
   );
 
@@ -270,7 +292,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onLinkClic
         // Convert app:// URLs to regular paths for href attribute
         let hrefForNavigation = safeHref;
         if (isApp) {
-          // Use the utility function to convert app:// URLs, preserving appshell=false
+          // Use the utility function to convert app:// URLs, preserving shell=false
           hrefForNavigation = convertAppUrlToPath(safeHref);
         }
 

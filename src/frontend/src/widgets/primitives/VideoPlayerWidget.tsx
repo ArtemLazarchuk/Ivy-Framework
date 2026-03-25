@@ -9,6 +9,7 @@ import {
   validateEmbedUrl,
 } from "@/lib/url";
 import { useEventHandler } from "@/components/event-handler";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 interface VideoPlayerWidgetProps {
   id: string;
@@ -78,7 +79,7 @@ export const VideoPlayerWidget: React.FC<VideoPlayerWidgetProps> = ({
   endTime,
   playbackRate,
   subtitles,
-  events = [],
+  events = EMPTY_ARRAY,
 }) => {
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);

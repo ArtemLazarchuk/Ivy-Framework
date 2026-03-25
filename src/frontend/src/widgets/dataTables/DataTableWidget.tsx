@@ -66,6 +66,11 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
 
   const finalColumns = useMemo(() => applyColumnsDefaults(columns), [columns]);
 
+  const hasFooter = useMemo(
+    () => finalColumns.some((col) => col.footer && col.footer.length > 0),
+    [finalColumns],
+  );
+
   // Create styles object with width and height if provided
   const containerStyle: React.CSSProperties = {
     ...getWidth(width),
@@ -107,6 +112,7 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
             widgetId={id}
             hasOptions={finalConfig.allowFiltering}
             rowActions={rowActions}
+            showAggregateFooter={hasFooter}
           />
         </TableLayout>
       </TableProvider>

@@ -108,7 +108,7 @@ public record NavigateArgs(string? AppId, object? AppArgs = null, string? TabId 
 
         if (!this.AppShell)
         {
-            queryParams.Add("appshell=false");
+            queryParams.Add("shell=false");
         }
 
         if (queryParams.Any())
@@ -172,5 +172,14 @@ public interface INavigator
     public void Navigate<T>(object? appArgs = null)
     {
         Navigate(typeof(T), appArgs);
+    }
+}
+
+public static class NavigatorBeaconExtensions
+{
+    public static void Navigate<T>(this INavigator navigator, NavigationBeacon<T> beacon, T entity)
+    {
+        var args = beacon.ArgsBuilder(entity);
+        navigator.Navigate("app://" + beacon.AppId, args);
     }
 }

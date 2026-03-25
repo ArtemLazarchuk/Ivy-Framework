@@ -26,6 +26,7 @@ export const TimeVariant: React.FC<TimeVariantProps> = ({
   step,
   density = Densities.Medium,
   "data-testid": dataTestId,
+  onFocusChange,
 }) => {
   // Use local state for the input value to make it uncontrolled
   const [localTimeValue, setLocalTimeValue] = useState(() => {
@@ -91,7 +92,8 @@ export const TimeVariant: React.FC<TimeVariantProps> = ({
 
   const handleTimeBlur = useCallback(() => {
     commitSnappedTime();
-  }, [commitSnappedTime]);
+    onFocusChange?.(false);
+  }, [commitSnappedTime, onFocusChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -123,6 +125,7 @@ export const TimeVariant: React.FC<TimeVariantProps> = ({
           density={density}
           value={localTimeValue}
           onChange={handleTimeChange}
+          onFocus={() => onFocusChange?.(true)}
           onBlur={handleTimeBlur}
           onKeyDown={handleKeyDown}
           disabled={disabled}

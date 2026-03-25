@@ -19,6 +19,7 @@ export interface DateTimeInputWidgetProps {
   step?: string;
   density?: Densities;
   "data-testid"?: string;
+  events?: string[];
 }
 
 export interface BaseVariantProps {
@@ -35,6 +36,7 @@ export interface BaseVariantProps {
   step?: string;
   density?: Densities;
   "data-testid"?: string;
+  onFocusChange?: (open: boolean) => void;
 }
 
 export interface DateChangeProp {

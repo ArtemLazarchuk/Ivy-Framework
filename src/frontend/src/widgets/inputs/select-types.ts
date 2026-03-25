@@ -10,6 +10,7 @@ export interface Option {
   group?: string;
   icon?: string;
   disabled?: boolean;
+  tooltip?: string;
 }
 
 export interface SelectInputWidgetProps {
@@ -34,4 +35,5 @@ export interface SelectInputWidgetProps {
   "data-testid"?: string;
   density?: Densities;
   width?: string;
+  events?: string[];
 }

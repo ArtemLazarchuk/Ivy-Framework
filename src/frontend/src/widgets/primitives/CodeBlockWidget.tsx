@@ -137,8 +137,9 @@ const CodeWidget: React.FC<CodeWidgetProps> = memo(
         whiteSpace: wrapLines ? "pre-wrap" : "pre",
         fontSize: currentScale.fontSize,
         lineHeight: currentScale.lineHeight,
+        ...(showLineNumbers && { display: "table" }),
       }),
-      [currentScale, wrapLines],
+      [currentScale, wrapLines, showLineNumbers],
     );
 
     const highlighterKey = useMemo(
