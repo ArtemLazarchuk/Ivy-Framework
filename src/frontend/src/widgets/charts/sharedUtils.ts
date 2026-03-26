@@ -193,12 +193,17 @@ export const generateSeries = (
       : {};
 
   // When explicit series are configured, only plot those data keys
+  // Use case-insensitive matching because backend serializes data keys as camelCase
+  // but Line.dataKey preserves the original PascalCase measure name
   const configuredKeys = (lines || []).map((l) => l.dataKey).filter(Boolean);
+  const configuredKeysLower = configuredKeys.map((k) => k.toLowerCase());
   const keysToPlot =
-    configuredKeys.length > 0 ? valueKeys.filter((k) => configuredKeys.includes(k)) : valueKeys;
+    configuredKeysLower.length > 0
+      ? valueKeys.filter((k) => configuredKeysLower.includes(k.toLowerCase()))
+      : valueKeys;
 
   return keysToPlot.map((key) => {
-    const rawLineConfig = lines?.find((l) => l.dataKey === key);
+    const rawLineConfig = lines?.find((l) => l.dataKey?.toLowerCase() === key.toLowerCase());
     // Apply defaults for line config
     const lineConfig = rawLineConfig ? applyDefaults(rawLineConfig, LINE_DEFAULTS) : LINE_DEFAULTS;
 
