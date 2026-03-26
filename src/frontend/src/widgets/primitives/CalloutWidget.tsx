@@ -85,10 +85,10 @@ export const CalloutWidget: React.FC<CalloutWidgetProps> = ({
 
   const iconSize = isSmall ? "20" : isLarge ? "28" : "24";
   const paddingClass = isSmall ? "py-2.5 px-3" : isLarge ? "py-6 px-6" : "py-4 px-4";
-  
+
   // Title line heights match icon sizes for perfect titled alignment
   const titleLeadingClass = isSmall ? "leading-5" : isLarge ? "leading-7" : "leading-6";
-  
+
   // text-sm leading-relaxed has a visual midline around 11.5px from the top.
   // Small icon center is 10px. We use mt-0.5 on the text to push it down visually to match the SVG circle's center.
   // Medium icon center is 12px. No offset needed.
@@ -116,7 +116,11 @@ export const CalloutWidget: React.FC<CalloutWidgetProps> = ({
       <span className="sr-only">{variant}</span>
       <div className={cn("flex flex-col min-w-0 flex-1", textAlignmentClass)}>
         {title && <div className={cn("font-medium mb-1", titleLeadingClass)}>{title}</div>}
-        {children && <div className="text-sm opacity-90 leading-relaxed [&_p]:text-sm [&_p]:mb-0">{children}</div>}
+        {children && (
+          <div className="text-sm opacity-90 leading-relaxed [&_p]:text-sm [&_p]:mb-0">
+            {children}
+          </div>
+        )}
       </div>
       {showCloseButton && (
         <button
