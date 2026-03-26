@@ -80,7 +80,9 @@ export const ActionDropdown: React.FC<ActionDropdownProps> = ({
                 <Icon
                   name={childAction.icon}
                   size={16}
-                  className={isDestructive ? "mr-2 text-destructive" : "mr-2 text-(--color-foreground)"}
+                  className={
+                    isDestructive ? "mr-2 text-destructive" : "mr-2 text-(--color-foreground)"
+                  }
                 />
               )}
               {childAction.label || childId}

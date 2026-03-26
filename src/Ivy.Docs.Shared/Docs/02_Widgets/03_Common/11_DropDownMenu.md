@@ -121,7 +121,6 @@ new DropDownMenu(@evt => client.Toast("Selected: " + @evt.Value),
 
 You can apply semantic colors to menu items to provide visual cues about their action or status. These colors align with the standard Ivy design system:
 
-
 ```csharp demo-tabs
 new DropDownMenu(@evt => client.Toast("Selected: " + @evt.Value), 
     new Button("Semantic Colors"),
