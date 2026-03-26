@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2, X } from "lucide-react";
 import Icon from "@/components/Icon";
 import { InvalidIcon } from "@/components/InvalidIcon";
-import { selectIconContainerVariant } from "@/components/ui/select/variant";
 import { xIconVariant } from "@/components/ui/input/text-input-variant";
 import { getWidth, inputStyles } from "@/lib/styles";
 import { SelectInputWidgetProps } from "./select-types";
@@ -141,6 +140,42 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
       onFocus={handleTriggerFocus}
     >
       <SelectValue placeholder={placeholder} />
+      {((nullable && hasValue && !disabled) || invalid || loading) && (
+        <div className="flex items-center gap-1 px-1 ml-auto shrink-0">
+          {loading && (
+            <div className="flex items-center h-6">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground text-opacity-50" />
+            </div>
+          )}
+          {hasValue && !disabled && (
+            <div
+              role="button"
+              tabIndex={-1}
+              aria-label="Clear"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                eventHandler("OnChange", id, [null]);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  eventHandler("OnChange", id, [null]);
+                }
+              }}
+              className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6 opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className={xIconVariant({ density })} />
+            </div>
+          )}
+          {invalid && (
+            <div className="flex items-center h-6">
+              <InvalidIcon message={invalid} />
+            </div>
+          )}
+        </div>
+      )}
     </SelectTrigger>
   );
 
@@ -238,42 +273,6 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
             )}
           </SelectContent>
         </Select>
-        {(nullable && hasValue && !disabled) || invalid || loading ? (
-          <div className={selectIconContainerVariant({ density })} style={{ zIndex: 2 }}>
-            {loading && (
-              <div className="pointer-events-auto flex items-center h-6 p-1">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground text-opacity-50" />
-              </div>
-            )}
-            {hasValue && !disabled && (
-              <button
-                type="button"
-                tabIndex={-1}
-                aria-label="Clear"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  eventHandler("OnChange", id, [null]);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    eventHandler("OnChange", id, [null]);
-                  }
-                }}
-                className="pointer-events-auto p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6"
-              >
-                <X className={xIconVariant({ density })} />
-              </button>
-            )}
-            {invalid && (
-              <div className="pointer-events-auto flex items-center h-6 p-1">
-                <InvalidIcon message={invalid} />
-              </div>
-            )}
-          </div>
-        ) : null}
       </div>
     </div>
   );
