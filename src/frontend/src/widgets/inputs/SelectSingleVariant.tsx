@@ -20,6 +20,7 @@ import { xIconVariant } from "@/components/ui/input/text-input-variant";
 import { getWidth, inputStyles } from "@/lib/styles";
 import { SelectInputWidgetProps } from "./select-types";
 import { useSelectValueHandler } from "./select-utils";
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   id,
@@ -27,7 +28,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   value,
   disabled = false,
   invalid,
-  options = [],
+  options = EMPTY_ARRAY,
   eventHandler,
   nullable = false,
   searchable = false,
@@ -38,6 +39,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   density,
   "data-testid": dataTestId,
   width,
+  events = EMPTY_ARRAY,
 }) => {
   const validOptions = options.filter(
     (option) => option.value != null && option.value.toString().trim() !== "",
@@ -107,6 +109,23 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   const hasValue = stringValue !== undefined;
   const styles = getWidth(width);
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen);
+    if (newOpen) {
+      if (events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+    } else {
+      if (events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+    }
+  };
+
+  const handleTriggerFocus = () => {
+    if (!isOpen && events.includes("OnFocus")) eventHandler("OnFocus", id, []);
+  };
+
+  const handleTriggerBlur = () => {
+    if (!isOpen && events.includes("OnBlur")) eventHandler("OnBlur", id, []);
+  };
+
   const selectTriggerElement = (
     <SelectTrigger
       ref={triggerRef}
@@ -118,6 +137,8 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
           "border-transparent shadow-none bg-transparent hover:bg-accent hover:text-accent-foreground dark:border-transparent dark:bg-transparent dark:hover:bg-accent dark:hover:text-accent-foreground",
       )}
       density={density}
+      onBlur={handleTriggerBlur}
+      onFocus={handleTriggerFocus}
     >
       <SelectValue placeholder={placeholder} />
     </SelectTrigger>
@@ -132,7 +153,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
           value={stringValue}
           onValueChange={handleValueChange}
           open={isOpen}
-          onOpenChange={setIsOpen}
+          onOpenChange={handleOpenChange}
           data-testid={dataTestId}
         >
           {isEllipsed && selectedLabel ? (
@@ -187,12 +208,28 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
                         density={density}
                         disabled={disabled || loading || option.disabled}
                       >
-                        <div className="flex items-center gap-2">
-                          {option.icon && (
-                            <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
-                          )}
-                          {option.label}
-                        </div>
+                        {option.tooltip ? (
+                          <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2">
+                                  {option.icon && (
+                                    <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                                  )}
+                                  {option.label}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>{option.tooltip}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            {option.icon && (
+                              <Icon name={option.icon} className="h-4 w-4 flex-shrink-0" />
+                            )}
+                            {option.label}
+                          </div>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectGroup>

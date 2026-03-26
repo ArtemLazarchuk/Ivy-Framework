@@ -44,6 +44,7 @@ public static partial class MarkdownConverter
         public List<string>? SearchHints { get; set; }
         public List<string>? Imports { get; set; }
         public string? Description { get; set; }
+        public bool Hidden { get; set; } = false;
     }
 
     static AppMeta ParseYamlAppMeta(string yaml)
@@ -115,6 +116,10 @@ public static partial class MarkdownConverter
         codeBuilder.Append(appMeta.Icon != null ? $", icon:Icons.{appMeta.Icon}" : "");
         codeBuilder.Append(appMeta.Title != null ? $", title:{FormatLiteral(appMeta.Title)}" : "");
         codeBuilder.Append(appMeta.GroupExpanded ? ", groupExpanded:true" : "");
+        if (appMeta.Hidden)
+        {
+            codeBuilder.Append(", isVisible:false");
+        }
         codeBuilder.Append(documentSource != null ? $", documentSource:{FormatLiteral(documentSource)}" : "");
         if (appMeta.SearchHints != null && appMeta.SearchHints.Count > 0)
         {

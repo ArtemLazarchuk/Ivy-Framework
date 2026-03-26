@@ -5,8 +5,7 @@ import { TextInputWidgetProps, TextInputVariant } from "./types";
 import { useShortcutKey } from "./hooks";
 import { useOptimisticValue } from "../shared/useOptimisticValue";
 import { DefaultVariant, TextareaVariant, PasswordVariant, SearchVariant } from "./variants";
-
-const EMPTY_ARRAY: never[] = [];
+import { EMPTY_ARRAY } from "@/lib/constants";
 
 export const TextInputWidget: React.FC<TextInputWidgetProps> = ({
   id,
