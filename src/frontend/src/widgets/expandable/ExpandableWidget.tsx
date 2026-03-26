@@ -18,6 +18,7 @@ interface ExpandableWidgetProps {
   open?: boolean;
   density?: Densities;
   icon?: string;
+  ghost?: boolean;
   slots?: {
     Header: React.ReactNode;
     Content: React.ReactNode;
@@ -30,6 +31,7 @@ export const ExpandableWidget: React.FC<ExpandableWidgetProps> = ({
   open = false,
   density = Densities.Medium,
   icon = undefined,
+  ghost = false,
   slots,
 }) => {
   let iconSize: number = 4;
@@ -99,7 +101,10 @@ export const ExpandableWidget: React.FC<ExpandableWidgetProps> = ({
       open={isOpen}
       onOpenChange={handleOpenChange}
       className={cn(
-        "w-full rounded-box border border-border shadow-sm data-[disabled=true]:cursor-not-allowed",
+        "w-full rounded-box data-[disabled=true]:cursor-not-allowed",
+        ghost
+          ? "border border-dashed border-border/50 shadow-none bg-transparent"
+          : "border border-border shadow-sm",
         "p-0",
       )}
       data-disabled={disabled}
