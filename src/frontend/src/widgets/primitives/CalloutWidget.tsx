@@ -83,9 +83,9 @@ export const CalloutWidget: React.FC<CalloutWidgetProps> = ({
   const isSmall = density === Densities.Small;
   const isLarge = density === Densities.Large;
 
-  const iconSize = isSmall ? "20" : isLarge ? "32" : "24";
+  const iconSize = isSmall ? "20" : isLarge ? "28" : "24";
   const paddingClass = isSmall ? "py-2.5 px-3" : isLarge ? "py-6 px-6" : "py-4 px-4";
-  const iconAlignmentClass = isSmall ? "mt-0.5" : isLarge ? "mt-1.5" : "mt-0.5";
+  const iconAlignmentClass = isSmall ? "mt-0.5" : isLarge ? "mt-0.5" : "mt-0";
 
   return (
     <div
@@ -101,13 +101,13 @@ export const CalloutWidget: React.FC<CalloutWidgetProps> = ({
         <Icon
           size={iconSize}
           name={icon}
-          className={cn("mr-4 shrink-0 opacity-90", iconAlignmentClass, variantStyles.icon)}
+          className={cn("mr-3.5 shrink-0 opacity-90", iconAlignmentClass, variantStyles.icon)}
         />
       )}
       <span className="sr-only">{variant}</span>
       <div className="flex flex-col min-w-0 flex-1">
-        {title && <div className="font-medium leading-none mb-1">{title}</div>}
-        {children && <div className="text-sm opacity-90 [&_p]:text-sm [&_p]:mb-0">{children}</div>}
+        {title && <div className="font-medium leading-tight mb-1">{title}</div>}
+        {children && <div className="text-sm opacity-90 leading-relaxed [&_p]:text-sm [&_p]:mb-0">{children}</div>}
       </div>
       {showCloseButton && (
         <button

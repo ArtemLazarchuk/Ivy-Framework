@@ -84,17 +84,17 @@ public class CalloutDensityExample : ViewBase
     public override object? Build()
     {
         return Layout.Vertical().Gap(6)
-            | Text.H3("Small Density")
+            | Text.H3("Small Density (20px Icon)")
             | Layout.Vertical().Gap(2)
-                | Callout.Info("This is a small density callout. Ideal for tight layouts.", "Small Info").Small()
-                | Callout.Warning("Warning in small density.").Small()
-            | Text.H3("Medium Density (Default)")
+                | Callout.Info("Small density with a title. Everything should be tight and perfectly aligned.", "Small Info").Small()
+                | Callout.Warning("Small density without a title. Icon center should match the first line center.").Small()
+            | Text.H3("Medium Density (Default - 24px Icon)")
             | Layout.Vertical().Gap(2)
-                | Callout.Info("This is the default medium density callout.", "Medium Info").Medium()
-                | Callout.Warning("Warning in medium density.").Medium()
-            | Text.H3("Large Density")
+                | Callout.Info("Medium density with a title. The standard look for alerts and hints.", "Medium Info").Medium()
+                | Callout.Warning("Medium density without a title. Balanced and professional alignment.").Medium()
+            | Text.H3("Large Density (28px Icon)")
             | Layout.Vertical().Gap(2)
-                | Callout.Info("This is a large density callout for high-impact zones.", "Large Info").Large()
-                | Callout.Warning("Warning in large density.").Large();
+                | Callout.Info("Large density for high-impact zones. Larger text and more generous padding.", "Large Info").Large()
+                | Callout.Warning("Large density without a title. High visibility with perfect baseline balance.").Large();
     }
 }
