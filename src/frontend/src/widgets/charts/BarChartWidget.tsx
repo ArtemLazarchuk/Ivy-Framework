@@ -179,8 +179,9 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
           showBackground: false,
           data: data.map((d) => d[key]),
           stack: barConfig.stackId !== undefined ? String(barConfig.stackId) : undefined,
-          barGap: barGap ? `${barGap}%` : "4%",
-          barCategoryGap: barCategoryGap ? `${barCategoryGap}%` : "10%",
+          barGap: typeof barGap === "number" ? `${barGap}%` : barGap || "4%",
+          barCategoryGap:
+            typeof barCategoryGap === "number" ? `${barCategoryGap}%` : barCategoryGap || "10%",
           barMaxWidth: maxBarSize,
           stackOrder: reverseStackOrder ? "seriesDesc" : "seriesAsc",
           itemStyle: {
