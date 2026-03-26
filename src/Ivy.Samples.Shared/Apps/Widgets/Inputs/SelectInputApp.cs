@@ -145,7 +145,7 @@ public class SelectInputVariantsExample : ViewBase
 
     public override object? Build()
     {
-        var colorState = UseState("");
+        var colorState = UseState<Colors?>(Colors.Red);
         var colorArrayState = UseState(Array.Empty<Colors>());
         var nullableColorArrayState = UseState<Colors[]?>(() => null);
         var iconsState = UseState<string>("bold");
