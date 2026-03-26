@@ -115,6 +115,7 @@ new DropDownMenu(@evt => client.Toast("Selected: " + @evt.Value),
             MenuItem.Default("Redo"),
             MenuItem.Default("Cut")
         )
+```
 
 ## Semantic Colors
 
