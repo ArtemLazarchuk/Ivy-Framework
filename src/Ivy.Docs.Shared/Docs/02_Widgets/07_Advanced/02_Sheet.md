@@ -237,7 +237,7 @@ public class SheetFormView : ViewBase
                 | new Button("Submit").OnClick(_ => HandleSubmit())
                 | new Button("Cancel").Variant(ButtonVariant.Outline).OnClick(_ => _close()),
             new Card(
-                new TextInput("Item Name").Bind(itemName)
+                itemName.ToTextInput("Item Name")
             ).Title("Item Details")
         );
     }

@@ -63,13 +63,13 @@ public class ToolbarApp : SampleBase
                     new MenuItem(
                         Variant: MenuItemVariant.Group,
                         Children: [
-                            MenuItem.Default(Icons.AlignLeft, tag: "align-left")
+                            MenuItem.Default(Icons.TextAlignStart, tag: "align-left")
                                 .Tooltip("Align Left")
                                 .OnSelect(_ => client.Toast("Align Left")),
-                            MenuItem.Default(Icons.AlignCenter, tag: "align-center")
+                            MenuItem.Default(Icons.TextAlignCenter, tag: "align-center")
                                 .Tooltip("Align Center")
                                 .OnSelect(_ => client.Toast("Align Center")),
-                            MenuItem.Default(Icons.AlignRight, tag: "align-right")
+                            MenuItem.Default(Icons.TextAlignEnd, tag: "align-right")
                                 .Tooltip("Align Right")
                                 .OnSelect(_ => client.Toast("Align Right"))
                         ]
@@ -103,10 +103,10 @@ public class ToolbarApp : SampleBase
                 | MenuItem.Default(Icons.Copy, tag: "copy")
                     .Tooltip("Copy")
                     .OnSelect(_ => client.Toast("Copied"))
-                | MenuItem.Default(Icons.Cut, tag: "cut")
+                | MenuItem.Default(Icons.Scissors, tag: "cut")
                     .Tooltip("Cut")
                     .OnSelect(_ => client.Toast("Cut"))
-                | MenuItem.Default(Icons.Paste, tag: "paste")
+                | MenuItem.Default(Icons.ClipboardPaste, tag: "paste")
                     .Tooltip("Paste")
                     .OnSelect(_ => client.Toast("Pasted"))
             );

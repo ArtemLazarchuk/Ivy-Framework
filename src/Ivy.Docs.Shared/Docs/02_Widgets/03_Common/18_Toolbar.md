@@ -52,8 +52,8 @@ new Toolbar(
     new MenuItem(
         Variant: MenuItemVariant.Group,
         Children: [
-            MenuItem.Default(Icons.AlignLeft, tag: "left").Tooltip("Left"),
-            MenuItem.Default(Icons.AlignCenter, tag: "center").Tooltip("Center")
+            MenuItem.Default(Icons.TextAlignStart, tag: "left").Tooltip("Left"),
+            MenuItem.Default(Icons.TextAlignCenter, tag: "center").Tooltip("Center")
         ]
     )
 )
@@ -63,19 +63,14 @@ new Toolbar(
 
 Use the `Checked` property to indicate selected or active toolbar buttons:
 
-```csharp demo-below
-var isBold = UseState(false);
-var isItalic = UseState(false);
-
+```csharp demo-tabs
 new Toolbar()
     | MenuItem.Default(Icons.Bold, tag: "bold")
         .Tooltip("Bold")
-        .Checked(isBold.Value)
-        .OnSelect(_ => isBold.Set(!isBold.Value))
+        .Checked(true)
     | MenuItem.Default(Icons.Italic, tag: "italic")
         .Tooltip("Italic")
-        .Checked(isItalic.Value)
-        .OnSelect(_ => isItalic.Set(!isItalic.Value))
+        .Checked(false)
 ```
 
 ## Icon-Only Buttons
@@ -87,10 +82,10 @@ new Toolbar()
     | MenuItem.Default(Icons.Copy, tag: "copy")
         .Tooltip("Copy")
         .OnSelect(_ => client.Toast("Copied"))
-    | MenuItem.Default(Icons.Cut, tag: "cut")
+    | MenuItem.Default(Icons.Scissors, tag: "cut")
         .Tooltip("Cut")
         .OnSelect(_ => client.Toast("Cut"))
-    | MenuItem.Default(Icons.Paste, tag: "paste")
+    | MenuItem.Default(Icons.ClipboardPaste, tag: "paste")
         .Tooltip("Paste")
         .OnSelect(_ => client.Toast("Pasted"))
 ```
@@ -106,10 +101,10 @@ new Toolbar()
 ```
 
 ```csharp demo-tabs
-new Toolbar()
+(new Toolbar()
     | MenuItem.Default("Action 1", tag: "action1").Icon(Icons.Wand)
     | MenuItem.Default("Action 2", tag: "action2").Icon(Icons.Sparkles)
-| Toolbar => Toolbar.Disabled()
+).Disabled()
 ```
 
 <WidgetDocs Type="Ivy.Toolbar" ExtensionTypes="Ivy.ToolbarExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Toolbar.cs"/>
