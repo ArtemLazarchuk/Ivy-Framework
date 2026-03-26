@@ -90,11 +90,11 @@ export const CalloutWidget: React.FC<CalloutWidgetProps> = ({
   const titleLeadingClass = isSmall ? "leading-5" : isLarge ? "leading-7" : "leading-6";
   
   // text-sm leading-relaxed has a visual midline around 11.5px from the top.
-  // Small icon center is 10px -> push icon down by 1px (mt-px or roughly mt-0.5) when no title
-  // Medium icon center is 12px -> almost perfect, no offset needed
-  // Large icon center is 14px -> push text down by 2px (mt-0.5) when no title
-  const iconAlignmentClass = !title && isSmall ? "mt-0.5" : "";
-  const textAlignmentClass = !title && isLarge ? "mt-0.5" : "";
+  // Small icon center is 10px. We use mt-0.5 on the text to push it down visually to match the SVG circle's center.
+  // Medium icon center is 12px. No offset needed.
+  // Large icon center is 14px. We use mt-0.5 on the text.
+  const iconAlignmentClass = "";
+  const textAlignmentClass = !title ? (isLarge || isSmall ? "mt-0.5" : "") : "";
 
   return (
     <div
