@@ -141,16 +141,9 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
     >
       <SelectValue placeholder={placeholder} />
       {((nullable && hasValue && !disabled) || invalid || loading) && (
-        <div
-          className="flex items-center gap-1 px-1 ml-auto shrink-0"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
+        <div className="flex items-center gap-1 px-1 ml-auto shrink-0 pointer-events-none">
           {loading && (
-            <div className="flex items-center h-6">
+            <div className="flex items-center h-6 pointer-events-auto">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground text-opacity-50" />
             </div>
           )}
@@ -164,6 +157,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
                 e.stopPropagation();
                 eventHandler("OnChange", id, [null]);
               }}
+              onPointerDown={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -171,13 +165,16 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
                   eventHandler("OnChange", id, [null]);
                 }
               }}
-              className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6 opacity-70 hover:opacity-100 transition-opacity"
+              className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6 pointer-events-auto"
             >
               <X className={xIconVariant({ density })} />
             </div>
           )}
           {invalid && (
-            <div className="flex items-center h-6 cursor-default">
+            <div
+              className="flex items-center h-6 cursor-default pointer-events-auto"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <InvalidIcon message={invalid} />
             </div>
           )}
