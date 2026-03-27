@@ -154,7 +154,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground text-opacity-50" />
             </div>
           )}
-          {hasValue && !disabled && (
+          {nullable && hasValue && !disabled && (
             <div
               role="button"
               tabIndex={-1}
