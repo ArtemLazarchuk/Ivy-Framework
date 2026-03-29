@@ -62,6 +62,129 @@ const injectMeta = (mode) => {
 };
 
 const mode = process.env.NODE_ENV || "development";
+
+/**
+ * Root package name for a resolved module (handles pnpm nested `node_modules`).
+ * @param {string} id
+ * @returns {string | null}
+ */
+function getRootPackageName(id) {
+  const parts = id.replace(/\\/g, "/").split("/");
+  const nm = parts.lastIndexOf("node_modules");
+  if (nm === -1 || nm >= parts.length - 1) return null;
+  const a = parts[nm + 1];
+  if (a?.startsWith("@")) {
+    const b = parts[nm + 2];
+    return b ? `${a}/${b}` : a;
+  }
+  return a ?? null;
+}
+
+/** Unified / remark / rehype / KaTeX — must stay in ONE chunk (cross-package circular deps → TDZ in prod). */
+const MARKDOWN_STACK_EXACT = new Set([
+  "bail",
+  "ccount",
+  "character-entities",
+  "character-reference-invalid",
+  "comma-separated-tokens",
+  "decode-named-character-reference",
+  "devlop",
+  "escape-string-regexp",
+  "extend",
+  "hastscript",
+  "html-void-elements",
+  "is-alphanumerical",
+  "is-alphabetical",
+  "is-decimal",
+  "is-hexadecimal",
+  "is-plain-obj",
+  "katex",
+  "longest-streak",
+  "markdown-table",
+  "mdast",
+  "property-information",
+  "react-markdown",
+  "rehype",
+  "remark",
+  "space-separated-tokens",
+  "trim-lines",
+  "trough",
+  "unified",
+  "vfile",
+  "vfile-message",
+  "zwitch",
+]);
+
+/**
+ * @param {string | null} pkg
+ * @returns {boolean}
+ */
+function isMarkdownStackPackage(pkg) {
+  if (!pkg) return false;
+  if (MARKDOWN_STACK_EXACT.has(pkg)) return true;
+  return (
+    pkg.startsWith("estree-util-") ||
+    pkg.startsWith("hast-") ||
+    pkg.startsWith("mdast-") ||
+    pkg.startsWith("micromark") ||
+    pkg.startsWith("rehype-") ||
+    pkg.startsWith("remark-") ||
+    pkg.startsWith("unist-")
+  );
+}
+
+/**
+ * @param {string} id
+ * @returns {string | undefined}
+ */
+function manualChunks(id) {
+  if (!id.includes("node_modules")) return;
+
+  const pkg = getRootPackageName(id);
+  if (!pkg) return;
+
+  // 1) Markdown / math pipeline (before react — do not split this graph across chunks)
+  if (isMarkdownStackPackage(pkg)) {
+    return "vendor-markdown";
+  }
+
+  // 2) React core (paths are …/node_modules/react/… not react-markdown)
+  if (pkg === "react" || pkg === "react-dom" || pkg === "scheduler") {
+    return "vendor-react";
+  }
+
+  // 3) CodeMirror + Lezer
+  if (pkg.startsWith("@codemirror/") || pkg.startsWith("@lezer/") || pkg === "@uiw/react-codemirror") {
+    return "vendor-codemirror";
+  }
+
+  // 4) Charts
+  if (pkg === "echarts" || pkg === "echarts-for-react" || pkg === "zrender") {
+    return "vendor-echarts";
+  }
+
+  // 5) Mermaid (large, dynamically imported; keep package + internals together)
+  if (pkg === "mermaid" || pkg.startsWith("@mermaid-js/")) {
+    return "vendor-mermaid";
+  }
+
+  // 6) Other stable vendor boundaries (loosely coupled to the rest of the app)
+  if (pkg === "framer-motion") {
+    return "vendor-framer-motion";
+  }
+  if (pkg === "lodash" || pkg === "lodash-es") {
+    return "vendor-lodash";
+  }
+  if (pkg === "apache-arrow") {
+    return "vendor-apache-arrow";
+  }
+  if (pkg === "@microsoft/signalr") {
+    return "vendor-signalr";
+  }
+
+  return undefined;
+}
+
 export default defineConfig({
   base: "./",
   staged: {
@@ -94,6 +217,7 @@ export default defineConfig({
         entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash].[ext]",
+        manualChunks,
       },
     },
   },
