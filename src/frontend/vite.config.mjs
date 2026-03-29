@@ -154,7 +154,11 @@ function manualChunks(id) {
   }
 
   // 3) CodeMirror + Lezer
-  if (pkg.startsWith("@codemirror/") || pkg.startsWith("@lezer/") || pkg === "@uiw/react-codemirror") {
+  if (
+    pkg.startsWith("@codemirror/") ||
+    pkg.startsWith("@lezer/") ||
+    pkg === "@uiw/react-codemirror"
+  ) {
     return "vendor-codemirror";
   }
 
