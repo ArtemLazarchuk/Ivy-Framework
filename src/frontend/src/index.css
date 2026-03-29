@@ -378,10 +378,6 @@ details > :last-child {
   padding-bottom: 1rem;
 }
 
-details[open] summary svg {
-  transform: rotate(90deg);
-}
-
 /* Prevent dialog from getting focus rings when elements inside are focused */
 @layer components {
   [data-radix-dialog-content] {

@@ -213,7 +213,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         <hr className={typography.hr} {...props} />
       )),
       details: memo(({ children, ...props }: React.DetailsHTMLAttributes<HTMLDetailsElement>) => (
-        <details className={typography.details} {...props}>
+        <details className={cn(typography.details, "group")} {...props}>
           {children}
         </details>
       )),
@@ -221,7 +221,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         <summary className={typography.summary} {...props}>
           <div className="flex items-center gap-2">
             <svg
-              className="h-4 w-4 shrink-0 transition-transform [[open]>summary_&]:rotate-90"
+              className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
