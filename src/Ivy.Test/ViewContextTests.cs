@@ -45,6 +45,48 @@ public class ViewContextTests
         Assert.IsType<TestServiceImpl>(service);
     }
 
+    [Fact]
+    public void CreateContext_ReEvaluatesFactoryOnReRender()
+    {
+        var ctx = CreateViewContext();
+        var stateValue = 0;
+
+        ctx.Reset();
+        var context1 = ctx.CreateContext(() => new TestContext { Value = stateValue });
+        Assert.Equal(0, context1.Value);
+
+        stateValue = 42;
+        ctx.Reset();
+        var context2 = ctx.CreateContext(() => new TestContext { Value = stateValue });
+        Assert.Equal(42, context2.Value);
+    }
+
+    [Fact]
+    public void CreateContext_UpdatesServiceContainerForUseContext()
+    {
+        var parentCtx = CreateViewContext();
+        var stateValue = 0;
+
+        parentCtx.Reset();
+        parentCtx.CreateContext(() => new TestContext { Value = stateValue });
+
+        var childCtx = new ViewContext(() => { }, parentCtx, new ServiceCollection().BuildServiceProvider());
+        childCtx.Reset();
+        Assert.Equal(0, childCtx.UseContext<TestContext>().Value);
+
+        stateValue = 100;
+        parentCtx.Reset();
+        parentCtx.CreateContext(() => new TestContext { Value = stateValue });
+
+        childCtx.Reset();
+        Assert.Equal(100, childCtx.UseContext<TestContext>().Value);
+    }
+
+    private class TestContext
+    {
+        public int Value { get; set; }
+    }
+
     private interface ITestService;
 
     private class TestServiceImpl : ITestService;
