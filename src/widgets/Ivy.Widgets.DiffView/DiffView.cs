@@ -1,7 +1,7 @@
 using Ivy;
 using Ivy.Core;
 
-namespace Ivy.External.DiffView;
+namespace Ivy.Widgets.DiffView;
 
 public enum DiffViewType
 {
@@ -9,7 +9,7 @@ public enum DiffViewType
     Split
 }
 
-[ExternalWidget("frontend/dist/Ivy_External_DiffView.js", StylePath = "frontend/dist/ivy-external-diffview.css", ExportName = "DiffView")]
+[ExternalWidget("frontend/dist/Ivy_Widgets_DiffView.js", StylePath = "frontend/dist/ivy-widgets-diffview.css", ExportName = "DiffView")]
 public record DiffView : WidgetBase<DiffView>
 {
     public DiffView()

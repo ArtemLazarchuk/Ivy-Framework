@@ -19,8 +19,8 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       formats: ["iife"],
-      fileName: () => "Ivy_External_DiffView.js",
-      name: "Ivy_External_DiffView",
+      fileName: () => "Ivy_Widgets_DiffView.js",
+      name: "Ivy_Widgets_DiffView",
     },
     rolldownOptions: {
       external: ["react", "react-dom", "react/jsx-runtime"],

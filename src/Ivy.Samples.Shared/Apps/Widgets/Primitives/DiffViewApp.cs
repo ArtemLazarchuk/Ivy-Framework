@@ -1,4 +1,4 @@
-using Ivy.External.DiffView;
+using Ivy.Widgets.DiffView;
 
 namespace Ivy.Samples.Shared.Apps.Widgets.Primitives;
 

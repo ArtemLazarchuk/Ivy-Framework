@@ -1,11 +1,11 @@
-# Ivy.External.DiffView
+# Ivy.Widgets.DiffView
 
 A diff viewer widget for Ivy Framework powered by [react-diff-view](https://github.com/otakustay/react-diff-view).
 
 ## Installation
 
 ```bash
-dotnet add package Ivy.External.DiffView
+dotnet add package Ivy.Widgets.DiffView
 ```
 
 ## Widgets
@@ -21,7 +21,7 @@ A unified/split diff viewer component for displaying git-style diffs.
 #### Basic Usage
 
 ```csharp
-using Ivy.External.DiffView;
+using Ivy.Widgets.DiffView;
 
 // Simple unified diff
 new DiffView()

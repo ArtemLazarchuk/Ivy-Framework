@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>CS1591;CS1573</NoWarn>
-    <PackageId>Ivy.External.DiffView</PackageId>
+    <PackageId>Ivy.Widgets.DiffView</PackageId>
     <Description>Diff viewer widget for Ivy Framework powered by react-diff-view</Description>
     <Authors>Ivy Interactive</Authors>
     <Company>Ivy Interactive</Company>

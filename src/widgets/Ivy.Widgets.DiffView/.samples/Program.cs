@@ -1,5 +1,5 @@
 using Ivy;
-using Ivy.External.DiffView;
+using Ivy.Widgets.DiffView;
 
 var server = new Server();
 server.AddApp<DiffViewDemo>();

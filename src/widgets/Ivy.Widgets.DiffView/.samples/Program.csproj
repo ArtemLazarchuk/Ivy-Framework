@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ivy.External.DiffView.csproj" />
+    <ProjectReference Include="..\Ivy.Widgets.DiffView.csproj" />
   </ItemGroup>
 </Project>

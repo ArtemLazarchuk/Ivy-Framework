@@ -18,13 +18,13 @@ The DiffView widget displays unified diffs (such as git diff output) in either u
 ## Installation
 
 ```terminal
-dotnet add package Ivy.External.DiffView
+dotnet add package Ivy.Widgets.DiffView
 ```
 
 ## Basic Usage
 
 ```csharp
-using Ivy.External.DiffView;
+using Ivy.Widgets.DiffView;
 
 new DiffView()
     .Diff(myDiffString)
