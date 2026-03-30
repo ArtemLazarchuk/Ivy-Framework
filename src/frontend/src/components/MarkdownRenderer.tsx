@@ -62,6 +62,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   const handleLinkClick = useCallback(
     (href: string, event: React.MouseEvent<HTMLAnchorElement>) => {
+      // When local files are enabled, pass file:// URLs directly to onLinkClick
+      if (dangerouslyAllowLocalFiles && href.startsWith("file:///")) {
+        if (onLinkClick) {
+          event.preventDefault();
+          onLinkClick(href);
+        }
+        return;
+      }
+
       // Validate URL to prevent open redirect vulnerabilities
       // validateLinkUrl always returns a string ('#' for invalid URLs)
       const validatedHref = validateLinkUrl(href);
@@ -77,7 +86,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         onLinkClick(validatedHref);
       }
     },
-    [onLinkClick],
+    [onLinkClick, dangerouslyAllowLocalFiles],
   );
 
   // Memoize static components separately (they don't need handleLinkClick)
@@ -299,9 +308,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   const linkComponent = useMemo(
     () => ({
       a: memo(({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
-        // Validate URL to prevent open redirect vulnerabilities
-        // validateLinkUrl always returns a string ('#' for invalid URLs)
-        const safeHref = validateLinkUrl(href);
+        // When local files are enabled, allow file:// URLs to render as clickable links
+        const isLocalFileUrl = dangerouslyAllowLocalFiles && href?.startsWith("file:///");
+
+        const safeHref = isLocalFileUrl ? href! : validateLinkUrl(href);
         if (safeHref === "#") {
           return <span {...props}>{children}</span>;
         }
@@ -356,7 +366,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         );
       }),
     }),
-    [handleLinkClick],
+    [handleLinkClick, dangerouslyAllowLocalFiles],
   );
 
   const components = useMemo(
@@ -381,7 +391,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   };
 
   const urlTransform = useCallback(
-    (url: string) => {
+    (url: string, key: string) => {
       if (url.startsWith("app://")) {
         return url;
       }
@@ -390,6 +400,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         dangerouslyAllowLocalFiles &&
         (url.startsWith("file://") || /^[a-zA-Z]:[\\/]/.test(url))
       ) {
+        // For links (href), preserve file:// URL for onLinkClick to handle
+        if (key === "href") {
+          if (/^[a-zA-Z]:[\\/]/.test(url)) {
+            const normalized = url.replace(/\\/g, "/");
+            return `file:///${normalized}`;
+          }
+          return url;
+        }
+        // For images (src), use local-file proxy
         if (isLocalFilesEnabled()) {
           // Server supports local file proxy - use /ivy/local-file endpoint
           let filePath: string;
