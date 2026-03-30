@@ -745,6 +745,27 @@ Text.H1("0").Align(TextAlignment.Right)
 2739aa95-7d5b-481b-a456-af895e6268df
 818a3388-f1c8-4206-a44c-303b0fa481fa
 
+## Card.Color() — non-existent method on Card
+
+**Hallucinated API:**
+
+```csharp
+new Card(...).Color(Colors.Green)
+```
+
+**Error:** `CS1061: 'Card' does not contain a definition for 'Color'`
+
+**Correct API:**
+
+```csharp
+// Cards don't have a Color method. Use Box for colored containers:
+new Box(content).Background(Colors.Green)
+```
+
+**Found In:**
+5c9cfb70-c9f5-4642-8de6-480be8f5ee85
+332383ac-d463-4640-abe6-ee0208735329
+
 ## FileInput.MaxFiles(n) on single-file state — runtime error
 
 **Hallucinated API:**
@@ -1958,26 +1979,6 @@ new Box(new Card(content)).Border(1)
 **Found In:**
 5c9cfb70-c9f5-4642-8de6-480be8f5ee85
 
-## Card.Color() — non-existent method on Card
-
-**Hallucinated API:**
-
-```csharp
-new Card(...).Color(Colors.Green)
-```
-
-**Error:** `CS1061: 'Card' does not contain a definition for 'Color'`
-
-**Correct API:**
-
-```csharp
-// Cards don't have a Color method. Use Box for colored containers:
-new Box(content).Background(Colors.Green)
-```
-
-**Found In:**
-5c9cfb70-c9f5-4642-8de6-480be8f5ee85
-
 ## Card.Align() — non-existent method on Card
 
 **Hallucinated API:**
@@ -2324,16 +2325,17 @@ When using `UseDownload` with a lambda, you must explicitly cast to `Func<byte[]
 **Found In:**
 (session not yet recorded)
 
-## Server.OnReady / Server.OnStartup — non-existent lifecycle callbacks
+## Server.OnReady / Server.OnStartup / Server.OnAfterStart — non-existent lifecycle callbacks
 
 **Hallucinated API:**
 
 ```csharp
 server.OnReady(() => { /* seed data */ });
 server.OnStartup(() => { /* initialize */ });
+server.OnAfterStart(() => { /* seed data */ });
 ```
 
-**Error:** `CS1061: 'Server' does not contain a definition for 'OnReady'`
+**Error:** `CS1061: 'Server' does not contain a definition for 'OnReady'` / `CS1061: 'Server' does not contain a definition for 'OnAfterStart'`
 
 **Correct API:**
 
@@ -2356,7 +2358,7 @@ myService.Initialize();
 The `Server` class does not have `OnReady`, `OnStartup`, or similar lifecycle callback methods. To run initialization code (e.g., database seeding), use the connection's context factory pattern — seed data in the factory's `CreateContext` method or use `server.Services` to resolve and call services directly in `Program.cs`.
 
 **Found In:**
-(session not yet recorded)
+c1b87041-f92b-4ba5-96d7-6a92419e84ea
 
 ## Fragment.Empty — non-existent static member
 
@@ -2706,6 +2708,52 @@ new Skeleton()
 
 **Found In:**
 9ed7f8e7-aa7c-4c8b-b6a0-8c5b389f1dc2
+
+## QueryOptions.InitialValue — non-existent property
+
+**Hallucinated API:**
+
+```csharp
+var options = new QueryOptions { InitialValue = someValue };
+```
+
+**Error:** `CS0117: 'QueryOptions' does not contain a definition for 'InitialValue'`
+
+**Correct API:**
+
+```csharp
+// QueryOptions does not have an InitialValue property.
+// Use UseQuery with a default value in the factory function,
+// or use UseState to hold initial data separately.
+```
+
+The agent hallucinated `QueryOptions.InitialValue` when building list blades with query-based data loading. `QueryOptions` is used for configuring query behavior (e.g., tags, refetch intervals), not for providing initial values. The agent likely confused this with React Query's `initialData` option.
+
+**Found In:**
+c1b87041-f92b-4ba5-96d7-6a92419e84ea (traces 007, 009, 013)
+
+## ToDialog/ToSheet subtitle parameter — non-existent named parameter
+
+**Hallucinated API:**
+
+```csharp
+form.ToDialog(title: "Create Post", subtitle: "Add a new blog post")
+form.ToSheet(title: "Edit Post", subtitle: "Modify post details")
+```
+
+**Error:** `CS1739: The best overload for 'ToDialog' does not have a parameter named 'subtitle'` / `CS1739: The best overload for 'ToSheet' does not have a parameter named 'subtitle'`
+
+**Correct API:**
+
+```csharp
+form.ToDialog(title: "Create Post")
+form.ToSheet(title: "Edit Post")
+```
+
+`ToDialog` and `ToSheet` accept a `title` parameter but not `subtitle`. There is no subtitle/description parameter on these methods. If a subtitle is needed, add it as content within the form itself.
+
+**Found In:**
+c1b87041-f92b-4ba5-96d7-6a92419e84ea (traces 009, 014)
 
 ## TextInput.Grow() — Box-only extension called on TextInput
 
