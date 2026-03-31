@@ -22,6 +22,7 @@ import { remarkCustomEmojiPlugin } from "./custom-emojis/remarkCustomEmojiPlugin
 
 import { ImageOverlay } from "./markdown/ImageOverlay";
 import { CodeBlock } from "./markdown/CodeBlock";
+import { PopoverLink } from "./markdown/PopoverLink";
 import Icon from "@/components/Icon";
 import { Components } from "react-markdown";
 
@@ -308,64 +309,71 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   // Memoize link component separately (depends on handleLinkClick)
   const linkComponent = useMemo(
     () => ({
-      a: memo(({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
-        // When local files are enabled, allow file:// URLs to render as clickable links
-        const isLocalFileUrl = dangerouslyAllowLocalFiles && href?.startsWith("file:///");
+      a: memo(
+        ({ children, href, title, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+          // Popover links: [text](## "popover content")
+          if (href === "##" && title) {
+            return <PopoverLink content={title}>{children}</PopoverLink>;
+          }
 
-        const safeHref = isLocalFileUrl ? href! : validateLinkUrl(href);
-        if (safeHref === "#") {
-          return <span {...props}>{children}</span>;
-        }
+          // When local files are enabled, allow file:// URLs to render as clickable links
+          const isLocalFileUrl = dangerouslyAllowLocalFiles && href?.startsWith("file:///");
 
-        // Use helper functions for URL type detection
-        const isExternalLink = isExternalUrl(safeHref);
-        const isAnchor = isAnchorLink(safeHref);
-        const isApp = isAppProtocol(safeHref);
+          const safeHref = isLocalFileUrl ? href! : validateLinkUrl(href);
+          if (safeHref === "#") {
+            return <span {...props}>{children}</span>;
+          }
 
-        // Convert app:// URLs to regular paths for href attribute
-        let hrefForNavigation = safeHref;
-        if (isApp) {
-          // Use the utility function to convert app:// URLs, preserving shell=false
-          hrefForNavigation = convertAppUrlToPath(safeHref);
-        }
+          // Use helper functions for URL type detection
+          const isExternalLink = isExternalUrl(safeHref);
+          const isAnchor = isAnchorLink(safeHref);
+          const isApp = isAppProtocol(safeHref);
 
-        return (
-          <a
-            {...props}
-            className="text-primary underline underline-offset-[3px] brightness-90 hover:brightness-100"
-            href={hrefForNavigation}
-            target={isExternalLink && !onLinkClick ? "_blank" : undefined}
-            rel={isExternalLink && !onLinkClick ? "noopener noreferrer" : undefined}
-            onClick={
-              isAnchor
-                ? (e) => {
-                    e.preventDefault();
-                    // Extract anchor ID by removing the '#' prefix
-                    const targetId = extractAnchorId(safeHref);
-                    if (targetId) {
-                      // Small delay to ensure content is rendered
-                      requestAnimationFrame(() => {
-                        const targetElement = document.getElementById(targetId);
-                        if (targetElement) {
-                          targetElement.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                          // Update URL hash
-                          window.history.replaceState(null, "", `#${targetId}`);
-                        }
-                      });
+          // Convert app:// URLs to regular paths for href attribute
+          let hrefForNavigation = safeHref;
+          if (isApp) {
+            // Use the utility function to convert app:// URLs, preserving shell=false
+            hrefForNavigation = convertAppUrlToPath(safeHref);
+          }
+
+          return (
+            <a
+              {...props}
+              className="text-primary underline underline-offset-[3px] brightness-90 hover:brightness-100"
+              href={hrefForNavigation}
+              target={isExternalLink && !onLinkClick ? "_blank" : undefined}
+              rel={isExternalLink && !onLinkClick ? "noopener noreferrer" : undefined}
+              onClick={
+                isAnchor
+                  ? (e) => {
+                      e.preventDefault();
+                      // Extract anchor ID by removing the '#' prefix
+                      const targetId = extractAnchorId(safeHref);
+                      if (targetId) {
+                        // Small delay to ensure content is rendered
+                        requestAnimationFrame(() => {
+                          const targetElement = document.getElementById(targetId);
+                          if (targetElement) {
+                            targetElement.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
+                            // Update URL hash
+                            window.history.replaceState(null, "", `#${targetId}`);
+                          }
+                        });
+                      }
                     }
-                  }
-                : onLinkClick
-                  ? (e) => handleLinkClick(safeHref, e)
-                  : undefined
-            }
-          >
-            {children}
-          </a>
-        );
-      }),
+                  : onLinkClick
+                    ? (e) => handleLinkClick(safeHref, e)
+                    : undefined
+              }
+            >
+              {children}
+            </a>
+          );
+        },
+      ),
     }),
     [handleLinkClick, dangerouslyAllowLocalFiles],
   );
@@ -393,6 +401,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   const urlTransform = useCallback(
     (url: string, key: string) => {
+      // Preserve popover link marker
+      if (url === "##") {
+        return url;
+      }
       if (url.startsWith("app://")) {
         return url;
       }
