@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 
@@ -11,6 +13,53 @@ namespace Ivy.Core;
 public static class NativeJsonDiff
 {
     private const string RustLib = "rustserver";
+
+    static NativeJsonDiff()
+    {
+        NativeLibrary.SetDllImportResolver(typeof(NativeJsonDiff).Assembly, ResolveDllImport);
+    }
+
+    private static IntPtr ResolveDllImport(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        if (libraryName != RustLib) return IntPtr.Zero;
+
+        // Try default load first
+        if (NativeLibrary.TryLoad(libraryName, assembly, searchPath, out var handle))
+            return handle;
+
+        // Fallback to searching runtimes/ folder
+        var rid = GetRuntimeIdentifier();
+        var libFileName = GetLibraryFileName();
+        var probePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", rid, "native", libFileName);
+
+        if (File.Exists(probePath) && NativeLibrary.TryLoad(probePath, out handle))
+            return handle;
+
+        return IntPtr.Zero;
+    }
+
+    private static string GetRuntimeIdentifier()
+    {
+        var os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" :
+                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "linux" :
+                 RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx" : "unknown";
+
+        var arch = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            _ => "unknown"
+        };
+
+        return $"{os}-{arch}";
+    }
+
+    private static string GetLibraryFileName()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "rustserver.dll";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return "librustserver.dylib";
+        return "librustserver.so";
+    }
 
     [DllImport(RustLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr rustserver_diff_trees(
