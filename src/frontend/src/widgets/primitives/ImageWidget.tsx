@@ -18,7 +18,7 @@ import {
   isAppProtocol,
 } from "@/lib/url";
 import { useEventHandler } from "@/components/event-handler";
-import type { BoxHoverVariant } from "@/widgets/primitives/BoxWidget";
+import type { HoverEffect } from "@/widgets/primitives/BoxWidget";
 import { cardStyles } from "@/widgets/card/styles";
 import React, { useCallback } from "react";
 
@@ -37,7 +37,7 @@ interface ImageWidgetProps {
   borderRadius?: BorderRadius;
   borderStyle?: BorderStyle;
   borderThickness?: string;
-  hoverVariant?: BoxHoverVariant;
+  hoverVariant?: HoverEffect;
 }
 
 const getImageUrl = (url: string | undefined | null): string | null => {
@@ -89,7 +89,7 @@ const objectFitMap: Record<string, React.CSSProperties["objectFit"]> = {
   ScaleDown: "scale-down",
 };
 
-const getHoverClass = (hoverVariant?: BoxHoverVariant): string | null => {
+const getHoverClass = (hoverVariant?: HoverEffect): string | null => {
   if (!hoverVariant || hoverVariant === "None") return null;
   if (hoverVariant === "Pointer") return cardStyles.hover.pointer;
   if (hoverVariant === "Shadow") return cardStyles.hover.shadow;

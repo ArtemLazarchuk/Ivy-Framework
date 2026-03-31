@@ -39,7 +39,7 @@ public record Image : WidgetBase<Image>
     [Prop] public BorderRadius BorderRadius { get; set; } = BorderRadius.None;
     [Prop] public BorderStyle BorderStyle { get; set; } = BorderStyle.None;
     [Prop] public Thickness BorderThickness { get; set; } = new(0);
-    [Prop] public CardHoverVariant HoverVariant { get; set; } = CardHoverVariant.None;
+    [Prop] public HoverEffect HoverVariant { get; set; } = HoverEffect.None;
 
     [Event] public EventHandler<Event<Image>>? OnClick { get; set; }
 }
@@ -68,9 +68,9 @@ public static class ImageExtensions
 
     public static Image BorderThickness(this Image image, Thickness thickness) => image with { BorderThickness = thickness };
 
-    public static Image Hover(this Image image, CardHoverVariant variant) => image with { HoverVariant = variant };
+    public static Image Hover(this Image image, HoverEffect variant) => image with { HoverVariant = variant };
 
-    private static CardHoverVariant HoverVariantWithClick(this Image image) => image.HoverVariant == CardHoverVariant.None ? CardHoverVariant.PointerAndTranslate : image.HoverVariant;
+    private static HoverEffect HoverVariantWithClick(this Image image) => image.HoverVariant == HoverEffect.None ? HoverEffect.PointerAndTranslate : image.HoverVariant;
 
     public static Image OnClick(this Image image, Func<Event<Image>, ValueTask> onClick)
         => image with { HoverVariant = image.HoverVariantWithClick(), OnClick = new(onClick) };

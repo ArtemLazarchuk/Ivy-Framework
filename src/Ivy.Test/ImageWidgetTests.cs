@@ -57,7 +57,7 @@ public class ImageWidgetTests(ITestOutputHelper output)
     public void Serialize_WithHoverVariant_IsSerialized()
     {
         var image = new Image("https://example.com/img.png")
-            .Hover(CardHoverVariant.Shadow);
+            .Hover(HoverEffect.Shadow);
 
         var result = SerializeImage(image);
         var props = result["props"]!.AsObject();
@@ -74,17 +74,17 @@ public class ImageWidgetTests(ITestOutputHelper output)
         var image = new Image("https://example.com/img.png")
             .OnClick(() => { });
 
-        Assert.Equal(CardHoverVariant.PointerAndTranslate, image.HoverVariant);
+        Assert.Equal(HoverEffect.PointerAndTranslate, image.HoverVariant);
     }
 
     [Fact]
     public void OnClick_PreservesExisting_HoverVariant()
     {
         var image = new Image("https://example.com/img.png")
-            .Hover(CardHoverVariant.Shadow)
+            .Hover(HoverEffect.Shadow)
             .OnClick(() => { });
 
-        Assert.Equal(CardHoverVariant.Shadow, image.HoverVariant);
+        Assert.Equal(HoverEffect.Shadow, image.HoverVariant);
     }
 
     [Fact]
