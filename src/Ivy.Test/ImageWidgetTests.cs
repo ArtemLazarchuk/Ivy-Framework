@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Ivy;
 using Ivy.Core;
 using Xunit.Abstractions;
@@ -7,7 +8,7 @@ namespace Ivy.Test;
 
 public class ImageWidgetTests(ITestOutputHelper output)
 {
-    private static JsonObject SerializeImage(Image image)
+    private static JsonNode SerializeImage(Image image)
     {
         image.Id = Guid.NewGuid().ToString();
         return WidgetSerializer.Serialize(image);
