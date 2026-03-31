@@ -119,13 +119,12 @@
     <Exec Command="cargo build --release" WorkingDirectory="../RustServer" />
   </Target>
 
-  <Target Name="AddRustBinariesToContent" BeforeTargets="AssignTargetPaths" DependsOnTargets="BuildRustServer">
+  <Target Name="AddRustBinaries" BeforeTargets="AssignTargetPaths" DependsOnTargets="BuildRustServer">
+    <Message Importance="High" Text="Adding Rust binaries to project output and package..." />
     <ItemGroup>
-      <Content Include="../RustServer/target/release/*rustserver*.dll;../RustServer/target/release/*rustserver*.so;../RustServer/target/release/*rustserver*.dylib">
-        <Link>%(Filename)%(Extension)</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <Visible>false</Visible>
-      </Content>
+      <Content Include="../RustServer/target/release/*rustserver*.dll" Pack="true" PackagePath="runtimes/win-x64/native" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+      <Content Include="../RustServer/target/release/*rustserver*.so" Pack="true" PackagePath="runtimes/linux-x64/native" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+      <Content Include="../RustServer/target/release/*rustserver*.dylib" Pack="true" PackagePath="runtimes/osx-x64/native" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
     </ItemGroup>
   </Target>
 
