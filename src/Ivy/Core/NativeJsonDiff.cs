@@ -12,25 +12,28 @@ namespace Ivy.Core;
 /// </summary>
 public static class NativeJsonDiff
 {
-    private const string RustLib = "rustserver";
-
-    static NativeJsonDiff()
-    {
-        NativeLibrary.SetDllImportResolver(typeof(NativeJsonDiff).Assembly, ResolveDllImport);
-    }
+    private static IntPtr _cachedHandle = IntPtr.Zero;
 
     private static IntPtr ResolveDllImport(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         if (libraryName != RustLib) return IntPtr.Zero;
+        if (_cachedHandle != IntPtr.Zero) return _cachedHandle;
 
-        // Try default load first
+        // 1. Try default load first (most common)
         if (NativeLibrary.TryLoad(libraryName, assembly, searchPath, out var handle))
-            return handle;
+            return _cachedHandle = handle;
 
-        // Fallback to searching runtimes/ folder
+        // 2. High-performance probe: try the base directory directly for the specific filename
+        // This handles cases where 'dotnet publish' moves the lib to the root.
+        var libFileName = GetLibraryFileName();
+        var baseLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, libFileName);
+        if (File.Exists(baseLibPath) && NativeLibrary.TryLoad(baseLibPath, out handle))
+            return _cachedHandle = handle;
+
+        // 3. Fallback: full RID probe path (standard for NuGet runtimes layout)
         var probePath = GetProbePath();
         if (File.Exists(probePath) && NativeLibrary.TryLoad(probePath, out handle))
-            return handle;
+            return _cachedHandle = handle;
 
         return IntPtr.Zero;
     }
