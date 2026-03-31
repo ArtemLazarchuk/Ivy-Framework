@@ -23,6 +23,8 @@ public class DataTableBuilder<TModel>(
     private readonly Dictionary<string, EventHandler<object>> _cellActions = [];
     private RefreshToken? _refreshToken;
     private FuncViewBuilder? _emptyViewFactory;
+    private FuncViewBuilder? _headerLeftFactory;
+    private FuncViewBuilder? _headerRightFactory;
     private Dictionary<string, object>? _footerValuesByColumn;
 
     private readonly string? _idColumnName =
@@ -360,6 +362,18 @@ public class DataTableBuilder<TModel>(
         return this;
     }
 
+    public DataTableBuilder<TModel> HeaderLeft(FuncViewBuilder factory)
+    {
+        _headerLeftFactory = factory;
+        return this;
+    }
+
+    public DataTableBuilder<TModel> HeaderRight(FuncViewBuilder factory)
+    {
+        _headerRightFactory = factory;
+        return this;
+    }
+
     public override object? Build()
     {
         Context.TryUseService<IChatClient>(out var chatClient);
@@ -430,7 +444,9 @@ public class DataTableBuilder<TModel>(
             onRowAction: _onRowAction,
             idSelector: idSelectorForView,
             refreshToken: _refreshToken,
-            emptyViewFactory: _emptyViewFactory);
+            emptyViewFactory: _emptyViewFactory,
+            headerLeftFactory: _headerLeftFactory,
+            headerRightFactory: _headerRightFactory);
     }
 
     public object[] GetMemoValues()
