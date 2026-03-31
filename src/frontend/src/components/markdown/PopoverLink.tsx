@@ -11,10 +11,11 @@ export const PopoverLink: React.FC<PopoverLinkProps> = ({ content, children }) =
     <Popover>
       <PopoverTrigger asChild>
         <span
-          className="cursor-pointer text-popover-foreground"
+          className="cursor-pointer text-secondary-foreground"
           style={{
             textDecoration: "underline dotted",
             textUnderlineOffset: "3px",
+            textDecorationColor: "var(--secondary)",
           }}
           role="button"
           tabIndex={0}
