@@ -688,9 +688,9 @@ public class Server
                         new JsonArrayMessagePackFormatter(),
                         new JsonValueMessagePackFormatter()
                     },
-                    new IFormatterResolver[] { 
+                    new IFormatterResolver[] {
                         JsonNodeResolver.Instance,
-                        ContractlessStandardResolver.Instance 
+                        ContractlessStandardResolver.Instance
                     }
                 )
             );
