@@ -9,6 +9,7 @@ public class DataTableApp : SampleBase
     {
         return Layout.Tabs(
             new Tab("Overview", new DataTableMainSample()),
+            new Tab("Header Slots", new DataTableHeaderSlotsSample()),
             new Tab("Footer", new DataTableFooterSample()),
             new Tab("Multi Agg", new DataTableMultiAggSample()),
             new Tab("Million Rows", new DataTablesMillionRowsSample())
@@ -184,6 +185,28 @@ public class DataTableMainSample : ViewBase
         {
             mockService.UpdateEmployee(updated);
         })]);
+    }
+}
+
+public class DataTableHeaderSlotsSample : ViewBase
+{
+    public override object? Build()
+    {
+        var products = new[]
+        {
+            new { Id = 1, Product = "Widget A", Price = 29.99m, Stock = 150 },
+            new { Id = 2, Product = "Widget B", Price = 49.99m, Stock = 85 },
+            new { Id = 3, Product = "Widget C", Price = 19.99m, Stock = 320 },
+            new { Id = 4, Product = "Gadget X", Price = 99.99m, Stock = 42 },
+            new { Id = 5, Product = "Gadget Y", Price = 149.99m, Stock = 18 },
+        }.AsQueryable();
+
+        return products.ToDataTable()
+            .HeaderLeft(ctx => new Button("Export", icon: Icons.Download).Small())
+            .HeaderRight(ctx => Layout.Horizontal().Gap(2)
+                | new Badge($"{products.Count()} items")
+                | new Button("Settings", icon: Icons.Settings).Small())
+            .Height(Size.Units(80));
     }
 }
 
