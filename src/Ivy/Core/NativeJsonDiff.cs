@@ -28,37 +28,34 @@ public static class NativeJsonDiff
             return handle;
 
         // Fallback to searching runtimes/ folder
-        var rid = GetRuntimeIdentifier();
-        var libFileName = GetLibraryFileName();
-        var probePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", rid, "native", libFileName);
-
+        var probePath = GetProbePath();
         if (File.Exists(probePath) && NativeLibrary.TryLoad(probePath, out handle))
             return handle;
 
         return IntPtr.Zero;
     }
 
-    private static string GetRuntimeIdentifier()
+    private static string GetLibraryFileName() =>
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "rustserver.dll" :
+        RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "librustserver.dylib" : "librustserver.so";
+
+    private static string GetProbePath()
     {
-        var os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" :
-                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "linux" :
-                 RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx" : "unknown";
-
-        var arch = RuntimeInformation.ProcessArchitecture switch
-        {
-            Architecture.X64 => "x64",
-            Architecture.Arm64 => "arm64",
-            _ => "unknown"
-        };
-
-        return $"{os}-{arch}";
+        var rid = GetRuntimeIdentifier();
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", rid, "native", GetLibraryFileName());
     }
 
-    private static string GetLibraryFileName()
+    private static string GetRuntimeIdentifier()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "rustserver.dll";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return "librustserver.dylib";
-        return "librustserver.so";
+        string os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" :
+                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx" : "linux";
+
+        if (os == "linux" && (File.Exists("/lib/ld-musl-x86_64.so.1") || File.Exists("/lib/ld-musl-aarch64.so.1")))
+        {
+            os = "linux-musl";
+        }
+
+        return $"{os}-{RuntimeInformation.ProcessArchitecture.ToString().ToLower()}";
     }
 
     [DllImport(RustLib, CallingConvention = CallingConvention.Cdecl)]
@@ -96,6 +93,15 @@ public static class NativeJsonDiff
             rustserver_free_string(cstr);
 
             return JsonNode.Parse(patchStr);
+        }
+        catch (DllNotFoundException ex)
+        {
+            var probePath = GetProbePath();
+            throw new InvalidOperationException($"[NativeJsonDiff Error] Failed to load native library '{RustLib}'. \n" +
+                $"RuntimeIdentifier: {GetRuntimeIdentifier()}\n" +
+                $"Probed Path: {probePath}\n" +
+                $"File Exists: {File.Exists(probePath)}\n" +
+                $"BaseDirectory: {AppDomain.CurrentDomain.BaseDirectory}", ex);
         }
         catch (Exception ex)
         {
