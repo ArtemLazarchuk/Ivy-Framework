@@ -114,3 +114,14 @@
 [data-sheet-side="bottom"][data-state="closed"] {
   animation: slideOutToBottom 300ms ease-in;
 }
+
+/* Resize handle hover area */
+.sheet-resize-handle:hover,
+.sheet-resize-handle:active {
+  background: transparent;
+}
+
+/* Prevent text selection while resizing */
+body:has(.sheet-resize-handle:active) {
+  user-select: none;
+}
