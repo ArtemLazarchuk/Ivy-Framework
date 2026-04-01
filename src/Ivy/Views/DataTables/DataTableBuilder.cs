@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using Ivy.Core.Helpers;
@@ -182,7 +183,7 @@ public class DataTableBuilder<TModel>(
         var selector = field.Compile();
         var values = GetOrCreateFooterValueList(field, selector);
         var result = aggregateFunc(values);
-        var footerText = $"{label}: {result}";
+        var footerText = $"{label}: {FormatFooterValue(column.Column, result)}";
         column.Column.Footer ??= [];
         column.Column.Footer.Add(footerText);
         return this;
@@ -196,11 +197,59 @@ public class DataTableBuilder<TModel>(
         var selector = field.Compile();
         var values = GetOrCreateFooterValueList(field, selector);
         var footerValues = aggregates
-            .Select(agg => $"{agg.Label}: {agg.AggregateFunc(values)}")
+            .Select(agg => $"{agg.Label}: {FormatFooterValue(column.Column, agg.AggregateFunc(values))}")
             .ToList();
         column.Column.Footer ??= [];
         column.Column.Footer.AddRange(footerValues);
         return this;
+    }
+
+    private static string FormatFooterValue(DataTableColumn column, object value)
+    {
+        if (value is IFormattable formattable && column.FormatStyle.HasValue)
+        {
+            var style = column.FormatStyle.Value;
+            var precision = column.Precision ?? 2;
+
+            if (style == NumberFormatStyle.Currency || style == NumberFormatStyle.Accounting)
+            {
+                var currency = column.Currency ?? "USD";
+                var culture = GetCultureForCurrency(currency);
+                return formattable.ToString($"C{precision}", culture);
+            }
+
+            var invariant = CultureInfo.InvariantCulture;
+            return style switch
+            {
+                NumberFormatStyle.Percent => formattable.ToString($"P{precision}", invariant),
+                NumberFormatStyle.Decimal => formattable.ToString($"N{precision}", invariant),
+                _ => value.ToString() ?? ""
+            };
+        }
+
+        return value.ToString() ?? "";
+    }
+
+    private static CultureInfo GetCultureForCurrency(string isoCurrencyCode)
+    {
+        try
+        {
+            foreach (var ci in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
+            {
+                var region = new RegionInfo(ci.Name);
+                if (string.Equals(region.ISOCurrencySymbol, isoCurrencyCode, StringComparison.OrdinalIgnoreCase))
+                    return ci;
+            }
+        }
+        catch
+        {
+            // Fall through to default
+        }
+
+        // Default to en-US for unknown currencies
+        var fallback = new CultureInfo("en-US");
+        fallback.NumberFormat.CurrencySymbol = isoCurrencyCode;
+        return fallback;
     }
 
     private List<TValue> GetOrCreateFooterValueList<TValue>(
