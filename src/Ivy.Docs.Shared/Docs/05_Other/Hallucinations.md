@@ -2964,6 +2964,65 @@ var blades = UseContext<IBladeContext>();
 **Found In:**
 0e9fc5ed-1724-4fed-b9ea-44b370358457 (4 instances across CategoryListBlade, CategoryDetailsBlade, TagListBlade, TagDetailsBlade)
 
+## IBladeService — non-existent interface (correct: IBladeContext)
+
+**Hallucinated API:**
+
+```csharp
+var blades = UseContext<IBladeService>();
+blades.Push(new CustomerDetailsBlade(id));
+blades.Pop();
+```
+
+**Error:** `CS0246: The type or namespace name 'IBladeService' could not be found`
+
+**Correct API:**
+
+```csharp
+var blades = UseContext<IBladeContext>();
+blades.Push(new CustomerDetailsBlade(id));
+blades.Pop();
+```
+
+The blade navigation context interface is `IBladeContext`, not `IBladeService`. Access it via `UseContext<IBladeContext>()` inside views initialized with the `UseBlades` hook. The agent consistently uses `IBladeService` because **IvyMcp returns the wrong interface name in all blade-related answers** (10 out of 10 IvyQuestion responses about blades use `IBladeService`). This is an IvyMcp knowledge base bug, not an LLM hallucination.
+
+**Found In:**
+2235e1c1-ab1e-4313-be50-995daa1be1f9 (12 blade files affected)
+
+## Server.StartAsync() / Server.WaitForShutdownAsync() — non-existent methods
+
+**Hallucinated API:**
+
+```csharp
+await server.StartAsync();
+// ... seed data ...
+await server.WaitForShutdownAsync();
+```
+
+**Error:** `CS1061: 'Server' does not contain a definition for 'StartAsync'` / `CS1061: 'Server' does not contain a definition for 'WaitForShutdownAsync'`
+
+**Correct API:**
+
+```csharp
+// Use RunAsync() which handles both start and shutdown:
+await server.RunAsync();
+
+// For startup initialization, use UseWebApplication:
+server.UseWebApplication(app =>
+{
+    using var scope = app.Services.CreateScope();
+    var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+    ctx.Database.EnsureCreated();
+    SeedData(ctx);
+});
+await server.RunAsync();
+```
+
+The `Server` class does not have `StartAsync()` or `WaitForShutdownAsync()`. The agent confused ASP.NET Core's `IHost.StartAsync()` / `IHost.WaitForShutdownAsync()` pattern with Ivy's `Server` API. Use `server.RunAsync()` for the full lifecycle. See also: `Server.OnReady / Server.OnStartup` and `Server.BuildAsync()` entries.
+
+**Found In:**
+2235e1c1-ab1e-4313-be50-995daa1be1f9
+
 ## TextInput.Grow() — Box-only extension called on TextInput
 
 **Hallucinated API:**
