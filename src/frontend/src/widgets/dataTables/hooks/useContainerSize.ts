@@ -57,6 +57,15 @@ export const useContainerSize = () => {
     });
 
     resizeObserver.observe(containerRef.current);
+
+    // Synchronous initial measurement to avoid first render with height=0.
+    // Without this, the deferred requestAnimationFrame in the ResizeObserver callback
+    // causes DataEditor to render with height=undefined, showing only headers.
+    const { width: initWidth, height: initHeight } = containerRef.current.getBoundingClientRect();
+    if ((initWidth > 0 || initHeight > 0) && !hasAppliedInitialRef.current) {
+      apply(initWidth, initHeight);
+    }
+
     requestAnimationFrame(observeScrollArea);
 
     return () => {
