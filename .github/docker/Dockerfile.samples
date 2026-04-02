@@ -1,50 +1,40 @@
-# Dockerfile.samples — PR preview from repo source (ProjectReference to Ivy, no Ivy NuGet package).
-#
-# Use the same layout as src/Ivy.Samples/Dockerfile (single toolchain). Do NOT use a separate
-# Node stage + COPY dist + dotnet publish: that runs vp build twice (pre-built dist then MSBuild
-# BuildFrontend again), which can mismatch assets and cause constant reloads in the browser.
+# Dockerfile.samples — used in ivy-examples to deploy samples preview from PRs.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 5010
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS toolchain
+# Build frontend (Ivy embeds frontend/dist)
+FROM node:24-bookworm-slim AS frontend
 WORKDIR /src
-RUN apt-get update && apt-get install -y curl gnupg build-essential && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
-    npm install -g pnpm@10.33.0 vite-plus@0.1.14 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY ["src/frontend/package.json", "src/frontend/pnpm-lock.yaml", "src/frontend/"]
+RUN apt-get update && apt-get install -y curl bash && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://vite.plus | bash
+ENV PATH="/root/.vite-plus/bin:${PATH}"
+RUN cd src/frontend && vp install
+COPY ["src/frontend/", "src/frontend/"]
+RUN cd src/frontend && vp build
+
+# Build .NET from source (no IVY_PACKAGE_VERSION = use ProjectReference, your changes apply)
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+RUN apt-get update && apt-get install -y curl bash build-essential && rm -rf /var/lib/apt/lists/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-
-FROM toolchain AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["src/Ivy.Samples/Ivy.Samples.csproj", "src/Ivy.Samples/"]
-COPY ["src/Ivy.Samples.Shared/Ivy.Samples.Shared.csproj", "src/Ivy.Samples.Shared/"]
-COPY ["src/Ivy/Ivy.csproj", "src/Ivy/"]
-COPY ["src/Ivy.Agent.Filter/Ivy.Agent.Filter.csproj", "src/Ivy.Agent.Filter/"]
-COPY ["src/Ivy.XamlBuilder/Ivy.XamlBuilder.csproj", "src/Ivy.XamlBuilder/"]
-COPY ["src/Ivy.Analyser/Ivy.Analyser.csproj", "src/Ivy.Analyser/"]
-RUN dotnet restore "src/Ivy.Samples.Shared/Ivy.Samples.Shared.csproj"
-RUN dotnet restore "src/Ivy.Samples/Ivy.Samples.csproj"
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
+RUN curl -fsSL https://vite.plus | bash
+ENV PATH="/root/.vite-plus/bin:${PATH}"
 COPY . .
-
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-WORKDIR "/src/src/Ivy.Samples"
-RUN dotnet publish "./Ivy.Samples.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
+# Build Rust native libraries before dotnet restore/publish so msbuild can properly pick them up in static ItemGroup evaluation
+RUN cd src/RustServer && cargo build --release
+RUN dotnet restore "src/Ivy.Samples/Ivy.Samples.csproj"
+RUN dotnet publish "src/Ivy.Samples/Ivy.Samples.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 ENV PORT=5010
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libc6 \
-    libgcc-s1 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-USER $APP_UID
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Ivy.Samples.dll"]
