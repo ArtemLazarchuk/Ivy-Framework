@@ -87,6 +87,12 @@ describe("DataTableWidget - min-height fallback for unconstrained parents", () =
     expect(widgetSource).toContain('minHeight = "200px"');
   });
 
+  it('should remove height: 100% when height is "Full"', () => {
+    // height: 100% doesn't work in unconstrained parents (resolves to 0)
+    // because the parent has no definite height. Using flex-based sizing instead.
+    expect(widgetSource).toContain("delete containerStyle.height");
+  });
+
   it('should set flexGrow to 1 when height is "Full"', () => {
     expect(widgetSource).toContain("flexGrow = 1");
   });

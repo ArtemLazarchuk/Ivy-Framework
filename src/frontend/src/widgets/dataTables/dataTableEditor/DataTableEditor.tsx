@@ -231,8 +231,11 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
       height={
         containerHeight > 0
           ? containerHeight
-          : containerRef.current?.clientHeight ||
-            (totalRows > 0 ? totalRows * ROW_HEIGHT + ROW_HEIGHT : undefined)
+          : containerRef.current?.clientHeight && containerRef.current.clientHeight > ROW_HEIGHT * 2
+            ? containerRef.current.clientHeight
+            : totalRows > 0
+              ? totalRows * ROW_HEIGHT + ROW_HEIGHT
+              : undefined
       }
       rowMarkers={showIndexColumn ? "number" : "none"}
       onColumnMoved={allowColumnReordering ? handleColumnReorder : undefined}
