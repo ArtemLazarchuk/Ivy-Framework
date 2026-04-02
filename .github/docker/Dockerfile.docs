@@ -40,14 +40,14 @@ COPY . .
 COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
 
 # Use BuildKit mounts to cache crates and packages across builds
-RUN --mount=type=cache,target=/root/.cargo/registry \
+RUN --mount=type=cache,id=cargo-docs,target=/root/.cargo/registry \
     cd src/RustServer && cargo build --release
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget-docs,target=/root/.nuget/packages \
     dotnet restore "src/Ivy.Docs/Ivy.Docs.csproj"
 
 # Publish with ReadyToRun to pre-compile IL to native code for instant container spin-up
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget-docs,target=/root/.nuget/packages \
     dotnet publish "src/Ivy.Docs/Ivy.Docs.csproj" \
     -a ${TARGETARCH:-x64} \
     -c $BUILD_CONFIGURATION \
