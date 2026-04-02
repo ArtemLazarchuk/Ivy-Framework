@@ -77,8 +77,9 @@ public class ThemeColors
 
     public static ThemeColors DefaultLight => new()
     {
-        Primary = IvyFrameworkLightThemeTokens.Color.Primary,
-        PrimaryForeground = IvyFrameworkLightThemeTokens.Color.PrimaryForeground,
+        // Orange primary (Tailwind orange-500, light foreground for contrast)
+        Primary = "#f97316",
+        PrimaryForeground = "#fafafa",
         Secondary = IvyFrameworkLightThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkLightThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkLightThemeTokens.Color.Background,
@@ -106,8 +107,9 @@ public class ThemeColors
 
     public static ThemeColors DefaultDark => new()
     {
-        Primary = IvyFrameworkDarkThemeTokens.Color.Primary,
-        PrimaryForeground = IvyFrameworkDarkThemeTokens.Color.PrimaryForeground,
+        // Orange primary for dark UI (Tailwind orange-400)
+        Primary = "#fb923c",
+        PrimaryForeground = "#0a0a0a",
         Secondary = IvyFrameworkDarkThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkDarkThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkDarkThemeTokens.Color.Background,
