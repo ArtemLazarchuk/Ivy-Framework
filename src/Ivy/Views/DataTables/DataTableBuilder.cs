@@ -83,8 +83,13 @@ public class DataTableBuilder<TModel>(
                 align = Ivy.Align.Center;
             }
 
-            var removed = field.Name.StartsWith($"_") && field.Name.Length > 1 && char.IsLetter(field.Name[1]) ||
-                          field.Name == "_hiddenKey";
+            var isNavigationCollection = field.Type.IsCollectionType() &&
+                field.Type.GetCollectionTypeParameter() is { IsClass: true } elementType &&
+                elementType != typeof(string);
+
+            var removed = field.Name.StartsWith("_") && field.Name.Length > 1 && char.IsLetter(field.Name[1]) ||
+                          field.Name == "_hiddenKey" ||
+                          isNavigationCollection;
 
             _columns[field.Name] = new InternalColumn()
             {
