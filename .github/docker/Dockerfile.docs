@@ -1,35 +1,39 @@
-# Dockerfile.docs — used in ivy-examples to deploy docs preview from PRs.
+# Dockerfile.docs — PR preview from repo source (ProjectReference to Ivy, no Ivy NuGet package).
+# Layout matches src/Ivy.Docs/Dockerfile: one toolchain image runs vp build via dotnet publish.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 5010
 
-# Build frontend (Ivy embeds frontend/dist)
-FROM node:24-bookworm-slim AS frontend
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS toolchain
 WORKDIR /src
-COPY ["src/frontend/package.json", "src/frontend/pnpm-lock.yaml", "src/frontend/"]
-RUN apt-get update && apt-get install -y curl bash && rm -rf /var/lib/apt/lists/*
-RUN curl -fsSL https://vite.plus | bash
-ENV PATH="/root/.vite-plus/bin:${PATH}"
-RUN cd src/frontend && vp install
-COPY ["src/frontend/", "src/frontend/"]
-RUN cd src/frontend && vp build
+RUN apt-get update && apt-get install -y curl gnupg build-essential && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
+    npm install -g pnpm@10.33.0 vite-plus@0.1.14 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Build .NET from source (no IVY_PACKAGE_VERSION = use ProjectReference, your changes apply)
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM toolchain AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-RUN apt-get update && apt-get install -y curl bash build-essential && rm -rf /var/lib/apt/lists/*
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
-RUN curl -fsSL https://vite.plus | bash
-ENV PATH="/root/.vite-plus/bin:${PATH}"
-COPY . .
-COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
+COPY ["src/Ivy.Docs/Ivy.Docs.csproj", "src/Ivy.Docs/"]
+COPY ["src/Ivy.Docs.Shared/Ivy.Docs.Shared.csproj", "src/Ivy.Docs.Shared/"]
+COPY ["src/Ivy.Docs.Tools/Ivy.Docs.Tools.csproj", "src/Ivy.Docs.Tools/"]
+COPY ["src/Ivy/Ivy.csproj", "src/Ivy/"]
+COPY ["src/Ivy.Agent.Filter/Ivy.Agent.Filter.csproj", "src/Ivy.Agent.Filter/"]
+COPY ["src/Ivy.Analyser/Ivy.Analyser.csproj", "src/Ivy.Analyser/"]
+RUN dotnet restore "src/Ivy.Docs.Tools/Ivy.Docs.Tools.csproj"
+RUN dotnet restore "src/Ivy.Docs.Shared/Ivy.Docs.Shared.csproj"
 RUN dotnet restore "src/Ivy.Docs/Ivy.Docs.csproj"
-RUN dotnet publish "src/Ivy.Docs/Ivy.Docs.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+COPY . .
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+WORKDIR "/src/src/Ivy.Docs"
+RUN dotnet publish "./Ivy.Docs.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
@@ -40,5 +44,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgcc-s1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Ivy.Docs.dll"]
