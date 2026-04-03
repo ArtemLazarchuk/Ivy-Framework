@@ -44,7 +44,8 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
             ["plans"] = planCounts.Drafts,
             ["review"] = planCounts.Reviews,
             ["jobs"] = planCounts.RunningJobs,
-            ["icebox"] = planCounts.Icebox
+            ["icebox"] = planCounts.Icebox,
+            ["recommendations"] = planCounts.Recommendations
         };
         return repo.GetMenuItems().Select(m => AddBadge(m, badges)).ToArray();
     }
