@@ -108,13 +108,21 @@ public class RecommendationsApp : ViewBase
         var acceptedCount = recommendations.Count(r => r.State == "Accepted");
         var declinedCount = recommendations.Count(r => r.State == "Declined");
 
-        var header = Layout.Horizontal().Gap(Size.Of(4)).AlignItems(Align.Center) | new object?[]
+        var header = Layout.Horizontal().Gap(2) | new object?[]
         {
             Text.Block($"Recommendations ({filtered.Count})").Bold(),
-            new Button("All").Ghost(stateFilter.Value != null).OnClick(() => stateFilter.Set(null)),
-            new Button($"Pending ({pendingCount})").Ghost(stateFilter.Value != "Pending").OnClick(() => stateFilter.Set("Pending")),
-            new Button($"Accepted ({acceptedCount})").Ghost(stateFilter.Value != "Accepted").OnClick(() => stateFilter.Set("Accepted")),
-            new Button($"Declined ({declinedCount})").Ghost(stateFilter.Value != "Declined").OnClick(() => stateFilter.Set("Declined"))
+            stateFilter.Value == null
+                ? (object)new Button("All").OnClick(() => stateFilter.Set(null))
+                : new Button("All").Ghost().OnClick(() => stateFilter.Set(null)),
+            stateFilter.Value == "Pending"
+                ? (object)new Button($"Pending ({pendingCount})").OnClick(() => stateFilter.Set("Pending"))
+                : new Button($"Pending ({pendingCount})").Ghost().OnClick(() => stateFilter.Set("Pending")),
+            stateFilter.Value == "Accepted"
+                ? (object)new Button($"Accepted ({acceptedCount})").OnClick(() => stateFilter.Set("Accepted"))
+                : new Button($"Accepted ({acceptedCount})").Ghost().OnClick(() => stateFilter.Set("Accepted")),
+            stateFilter.Value == "Declined"
+                ? (object)new Button($"Declined ({declinedCount})").OnClick(() => stateFilter.Set("Declined"))
+                : new Button($"Declined ({declinedCount})").Ghost().OnClick(() => stateFilter.Set("Declined"))
         };
 
         return new HeaderLayout(

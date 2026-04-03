@@ -5,15 +5,18 @@ namespace Ivy.Tendril.Test;
 public class RecommendationServiceTests : IDisposable
 {
     private readonly string _tempDir;
+    private readonly string _plansDir;
     private readonly PlanReaderService _service;
 
     public RecommendationServiceTests()
     {
         _tempDir = Path.Combine(Path.GetTempPath(), $"tendril-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_tempDir);
+        _plansDir = Path.Combine(_tempDir, "Plans");
+        Directory.CreateDirectory(_plansDir);
 
-        var settings = new TendrilSettings { PlanFolder = _tempDir };
-        var configService = new ConfigService(settings);
+        var settings = new TendrilSettings();
+        var configService = new ConfigService(settings, _tempDir);
         _service = new PlanReaderService(configService);
     }
 
@@ -25,7 +28,7 @@ public class RecommendationServiceTests : IDisposable
 
     private string CreatePlanWithRecommendations(string folderName, string recommendationsYaml)
     {
-        var dir = Path.Combine(_tempDir, folderName);
+        var dir = Path.Combine(_plansDir, folderName);
         Directory.CreateDirectory(dir);
 
         var planYaml = "state: Completed\nproject: Tendril\ntitle: Test Plan\nrepos: []\ncommits: []\nprs: []\nverifications: []\nrelatedPlans: []\ndependsOn: []\ncreated: 2026-01-01T00:00:00Z\nupdated: 2026-01-01T00:00:00Z\n";
@@ -89,11 +92,10 @@ public class RecommendationServiceTests : IDisposable
 
         _service.UpdateRecommendationState("01603-PersistTest", "Item Two", "Declined");
 
-        // Re-read from disk to verify persistence
-        var filePath = Path.Combine(_tempDir, "01603-PersistTest", "artifacts", "recommendations.yaml");
+        var filePath = Path.Combine(_plansDir, "01603-PersistTest", "artifacts", "recommendations.yaml");
         var content = File.ReadAllText(filePath);
         Assert.Contains("Declined", content);
-        Assert.Contains("Pending", content); // Item One should still be Pending
+        Assert.Contains("Pending", content);
     }
 
     [Fact]
@@ -112,7 +114,6 @@ public class RecommendationServiceTests : IDisposable
     [Fact]
     public void UpdateRecommendationState_NonExistentFolder_DoesNothing()
     {
-        // Should not throw
         _service.UpdateRecommendationState("99999-DoesNotExist", "Title", "Accepted");
     }
 }
