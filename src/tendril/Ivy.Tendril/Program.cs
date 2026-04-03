@@ -99,7 +99,7 @@ var version = typeof(TendrilAppShell).Assembly.GetName().Version!.ToString();
 var appShellSettings = new AppShellSettings()
     .Header(
         Layout.Horizontal(
-            new Image("/tendril/assets/Tendril.svg").Width(Size.Units(30)).Height(Size.Auto()),
+            new Image("/tendril/assets/Tendril.svg").Width(Size.Units(21)).Height(Size.Auto()),
             Text.Muted($"v{version}")
         ).Gap(2).Padding(2).AlignContent(Align.Left)
     )
