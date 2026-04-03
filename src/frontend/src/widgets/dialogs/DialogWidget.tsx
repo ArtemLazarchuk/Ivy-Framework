@@ -26,7 +26,15 @@ export const DialogWidget: React.FC<DialogWidgetProps> = ({ id, children, width 
         style={styles}
         className={cn(isVisible && "alert-animate-enter")}
         aria-describedby={undefined}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => {
+          const target = e.currentTarget?.querySelector<HTMLElement>("[autofocus]");
+          if (target) {
+            e.preventDefault();
+            target.focus();
+          } else {
+            e.preventDefault();
+          }
+        }}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         {children}
