@@ -69,10 +69,13 @@ public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
     {
-        var details = UseState(new TendrilHomeDetails { TendrilHome = Path.Combine(
+        var details = UseState(new TendrilHomeDetails
+        {
+            TendrilHome = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".tendril"
-        ) });
+        )
+        });
         var error = UseState<string?>(null);
         var config = UseService<ConfigService>();
 
