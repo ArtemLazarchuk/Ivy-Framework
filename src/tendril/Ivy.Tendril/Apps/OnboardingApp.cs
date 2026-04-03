@@ -1,9 +1,10 @@
 using Ivy;
 using Ivy.Tendril.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ivy.Tendril.Apps;
 
-[App(isVisible: false, icon: Icons.Rocket, path: ["Hidden"])]
+[App(isVisible: false, icon: Icons.Rocket)]
 public class OnboardingApp : ViewBase
 {
     private StepperItem[] GetSteps(int selectedIndex) =>
