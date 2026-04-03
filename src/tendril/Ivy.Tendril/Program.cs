@@ -102,6 +102,6 @@ var appShellSettings = new AppShellSettings()
             Text.Muted($"v{version}")
         ).Gap(2).Padding(2).AlignContent(Align.Left)
     )
-    .UseTabs(preventDuplicates: true);
+    .UseTabs(preventDuplicates: false);
 server.UseAppShell(() => new TendrilAppShell(appShellSettings));
 await server.RunAsync();
