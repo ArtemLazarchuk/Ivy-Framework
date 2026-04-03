@@ -175,6 +175,23 @@ public class ContentView(
                     var url = downloadUrl.Value;
                     if (!string.IsNullOrEmpty(url)) client.OpenUrl(url);
                 }),
+                new MenuItem("Open in File Manager", Icon: Icons.FolderOpen, Tag: "OpenInExplorer").OnSelect(() =>
+                {
+                    PlatformHelper.OpenInFileManager(_selectedPlan.FolderPath);
+                }),
+                new MenuItem("Open in Terminal", Icon: Icons.Terminal, Tag: "OpenInTerminal").OnSelect(() =>
+                {
+                    PlatformHelper.OpenInTerminal(_selectedPlan.FolderPath);
+                }),
+                new MenuItem($"Open in {_config.Editor.Label}", Icon: Icons.Code, Tag: "OpenInEditor").OnSelect(() =>
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = _config.Editor.Command,
+                        Arguments = $"\"{_selectedPlan.FolderPath}\"",
+                        UseShellExecute = true
+                    });
+                }),
                 new MenuItem("Copy Path to Clipboard", Icon: Icons.ClipboardCopy, Tag: "CopyPath").OnSelect(() =>
                 {
                     copyToClipboard(_selectedPlan.FolderPath);
