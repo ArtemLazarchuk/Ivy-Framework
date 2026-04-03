@@ -133,7 +133,7 @@ public class DashboardApp : ViewBase
             .Width(Size.Full());
 
         var content = Layout.Vertical().Gap(2)
-            | projectProgress
+            | new Box(projectProgress).Padding(5)
             | dataTable
             | combinedChart;
 
