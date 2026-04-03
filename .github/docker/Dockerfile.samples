@@ -63,5 +63,5 @@ RUN --mount=type=cache,id=nuget-samples,target=/root/.nuget/packages \
 FROM base AS final
 WORKDIR /app
 ENV PORT=5010
-COPY --from=build /app/publish .
+COPY --from=build /app/deploy .
 ENTRYPOINT ["dotnet", "Ivy.Samples.dll"]
