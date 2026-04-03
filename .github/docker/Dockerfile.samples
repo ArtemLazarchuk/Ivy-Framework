@@ -45,18 +45,15 @@ COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
 # Restore Rust artifacts from the cache-mounted build step above
 RUN mkdir -p src/RustServer/target/release && cp /tmp/rust-artifacts/* src/RustServer/target/release/
 
-RUN --mount=type=cache,id=nuget-samples,target=/root/.nuget/packages \
-    dotnet restore "src/Ivy.Samples/Ivy.Samples.csproj" -a ${TARGETARCH:-x64}
-
 # Publish with ReadyToRun to pre-compile IL to native code for instant container spin-up
+# (restore is intentionally included so runtime packs required by ReadyToRun are downloaded)
 RUN --mount=type=cache,id=nuget-samples,target=/root/.nuget/packages \
     dotnet publish "src/Ivy.Samples/Ivy.Samples.csproj" \
     -a ${TARGETARCH:-x64} \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false \
-    /p:PublishReadyToRun=true \
-    --no-restore
+    /p:PublishReadyToRun=true
 
 FROM base AS final
 WORKDIR /app
