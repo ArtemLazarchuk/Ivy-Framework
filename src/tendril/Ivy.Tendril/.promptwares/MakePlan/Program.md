@@ -43,7 +43,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
 
 ### 3. Research
 
-- **Check for duplicate plans** first — **unless the description starts with `[FORCE]`**, in which case skip duplicate detection entirely and strip the `[FORCE] ` prefix before using the description. List existing plan folders in `PlansDirectory` and scan their `plan.yaml` titles. If an existing plan already covers the same issue (same problem, same project), perform **state-aware duplicate detection** before deciding:
+- **Check for duplicate plans** first — **unless the description starts with `[FORCE]`**, in which case skip duplicate detection entirely and move `[FORCE]` to the end of the description (format: `<description> [FORCE]`). List existing plan folders in `PlansDirectory` and scan their `plan.yaml` titles. If an existing plan already covers the same issue (same problem, same project), perform **state-aware duplicate detection** before deciding:
 
   #### Step 1: Read existing plan state
   
