@@ -408,6 +408,10 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                 .Tag("$setup")
                 .Icon(Icons.Settings)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
+            MenuItem.Default("Trash")
+                .Tag("$trash")
+                .Icon(Icons.Trash2)
+                .OnSelect(() => navigator.Navigate<TrashApp>()),
             // MenuItem.Default("Tendril Feedback")
             //     .Tag("$feedback")
             //     .Icon(Icons.MessageSquare)
