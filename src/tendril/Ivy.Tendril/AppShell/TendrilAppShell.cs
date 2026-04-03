@@ -431,9 +431,9 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
 
         var commonMenuItems = new[]
         {
-            MenuItem.Default("Setup")
+            MenuItem.Default("Settings")
                 .Tag("$setup")
-                .Icon(Icons.Construction)
+                .Icon(Icons.Settings)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
             MenuItem.Default("Tendril Feedback")
                 .Tag("$feedback")

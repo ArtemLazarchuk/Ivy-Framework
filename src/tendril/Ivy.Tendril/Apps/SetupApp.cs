@@ -4,7 +4,7 @@ using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Setup", icon: Icons.Construction, isVisible: false)]
+[App(title: "Settings", icon: Icons.Settings, isVisible: false)]
 public class SetupApp : ViewBase
 {
     public override object? Build()
