@@ -408,7 +408,7 @@ public class JobService
         RunHooks("after", job.Type, planFolderForHooks, job.Project, job);
 
         var isSuccess = job.Status == "Completed";
-        var title = job.Status == "Timeout" ? "Job Timed Out" : (isSuccess ? "Job Completed" : "Job Failed");
+        var title = job.Status == "Timeout" ? $"{job.Type} Timed Out" : (isSuccess ? $"{job.Type} Completed" : $"{job.Type} Failed");
         var message = job.PlanFile ?? job.Type;
         if (!isSuccess && job.StatusMessage != null)
             message += $": {job.StatusMessage}";
