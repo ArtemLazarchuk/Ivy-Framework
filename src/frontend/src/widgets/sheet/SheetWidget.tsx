@@ -170,7 +170,8 @@ export const SheetWidget: React.FC<SheetWidgetProps> = ({
         )}
         data-sheet-side={normalizedSide}
         onOpenAutoFocus={(e) => {
-          const target = e.currentTarget?.querySelector<HTMLElement>("[autofocus]");
+          const container = e.currentTarget as HTMLElement | null;
+          const target = container?.querySelector<HTMLElement>("[autofocus]");
           if (target) {
             e.preventDefault();
             target.focus();
