@@ -60,11 +60,6 @@ finally {
 }
 Pop-Location
 
-$costData = ReportSessionCost $sessionId
-$planFolder = Get-ChildItem -Path $script:PlansDir -Directory -Filter ("{0:D5}-*" -f $planId) | Select-Object -First 1
-if ($costData -and $planFolder) {
-    LogPlanCost $planFolder.FullName "MakePlan" $costData.Tokens $costData.Cost
-}
 Remove-Item $promptFile
 
 # Verify the agent actually created a plan folder or a trash entry (duplicate)

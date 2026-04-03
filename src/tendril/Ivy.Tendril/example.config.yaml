@@ -26,25 +26,8 @@ editor:
 
 telemetry: true
 
-# Model pricing per million tokens
-# Source: https://www.anthropic.com/pricing
-# Last verified: 2026-04-03
-modelPricing:
-  claude-opus-4:
-    input: 15.00
-    output: 75.00
-    cacheWrite: 18.75
-    cacheRead: 1.50
-  claude-sonnet-4:
-    input: 3.00
-    output: 15.00
-    cacheWrite: 3.75
-    cacheRead: 0.30
-  claude-haiku-4:
-    input: 0.80
-    output: 4.00
-    cacheWrite: 1.00
-    cacheRead: 0.08
+# Model pricing is now embedded in Assets/models.yaml and managed by ModelPricingService.
+# No configuration needed — costs are calculated automatically when jobs complete.
 
 # Example project configuration:
 # projects:

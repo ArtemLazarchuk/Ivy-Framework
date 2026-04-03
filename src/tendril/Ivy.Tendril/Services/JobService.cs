@@ -14,6 +14,7 @@ public class JobService
     private int _counter;
     private PlanReaderService? _planReaderService;
     private readonly ConfigService? _configService;
+    private readonly ModelPricingService? _modelPricingService;
     private TelemetryService? _telemetryService;
     private readonly TimeSpan _jobTimeout;
     private readonly TimeSpan _staleOutputTimeout;
@@ -40,9 +41,10 @@ public class JobService
         ["CreateIssue"] = Path.Combine(PromptsRoot, "CreateIssue.ps1"),
     };
 
-    public JobService(ConfigService configService)
+    public JobService(ConfigService configService, ModelPricingService? modelPricingService = null)
     {
         _configService = configService;
+        _modelPricingService = modelPricingService;
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
         _staleOutputTimeout = TimeSpan.FromMinutes(configService.Settings.StaleOutputTimeout);
         _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
@@ -192,6 +194,9 @@ public class JobService
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
+        // Capture session ID from environment for cost tracking after job completes
+        job.SessionId = Environment.GetEnvironmentVariable("CLAUDE_SESSION_ID");
+
         psi.Environment["TENDRIL_JOB_ID"] = id;
         psi.Environment["TENDRIL_URL"] = "http://localhost:5010";
         psi.Environment["TENDRIL_SHARED"] = SharedRoot;
@@ -434,6 +439,31 @@ public class JobService
 
         CleanupInboxFile(job);
         WriteJobLog(job);
+
+        // Calculate and log costs automatically (delayed to allow session to complete)
+        if (isSuccess && _modelPricingService != null && !string.IsNullOrEmpty(job.SessionId))
+        {
+            var sessionId = job.SessionId;
+            var jobArgs = job.Args;
+            var jobType = job.Type;
+
+            _ = Task.Run(async () =>
+            {
+                // Wait for Claude session to write final usage data
+                await Task.Delay(TimeSpan.FromSeconds(30));
+
+                try
+                {
+                    var costCalc = _modelPricingService.CalculateSessionCost(sessionId);
+                    if (costCalc.TotalCost > 0 && jobArgs.Length > 0)
+                    {
+                        LogCostToCsv(jobArgs[0], jobType, costCalc.TotalTokens, costCalc.TotalCost);
+                    }
+                }
+                catch { /* Best-effort cost tracking */ }
+            });
+        }
+
         JobsChanged?.Invoke();
 
         if (!_jobs.Values.Any(j => j.Status == "Running"))
@@ -796,6 +826,20 @@ public class JobService
             }
             catch { /* Notification is best-effort */ }
         });
+    }
+
+    internal static void LogCostToCsv(string planFolder, string jobType, int tokens, double cost)
+    {
+        if (!Directory.Exists(planFolder)) return;
+
+        var csvPath = Path.Combine(planFolder, "costs.csv");
+        if (!File.Exists(csvPath))
+        {
+            File.WriteAllText(csvPath, "Promptware,Tokens,Cost\n");
+        }
+
+        var line = $"{jobType},{tokens},{cost:F4}\n";
+        File.AppendAllText(csvPath, line);
     }
 
     private void WriteJobLog(JobItem job)
