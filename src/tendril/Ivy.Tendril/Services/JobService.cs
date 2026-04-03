@@ -80,7 +80,7 @@ public class JobService
 
         // Extract plan folder and project from args
         var planFile = "";
-        var project = "General";
+        var project = "[Auto]";
 
         // For MakePlan: args are named params like -Description "..." -Project "..."
         // For others: args[0] is the plan folder path
@@ -89,8 +89,7 @@ public class JobService
             planFile = GetNamedArg(args, "-Description") is { } desc
                 ? (desc.Length > 80 ? desc[..80] + "..." : desc)
                 : "New Plan";
-            project = GetNamedArg(args, "-Project") ?? "General";
-            if (project == "[Auto]") project = "General";
+            project = GetNamedArg(args, "-Project") ?? "[Auto]";
         }
         else
         {
