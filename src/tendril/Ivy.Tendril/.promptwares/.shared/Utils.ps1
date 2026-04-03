@@ -360,12 +360,29 @@ function ReportSessionCost {
 
         if (-not $sessionFile) { return $null }
 
-        # Token prices (per token) for Claude Opus 4
-        $priceInput = 15e-6
-        $priceOutput = 75e-6
-        $priceCache5m = 18.75e-6
-        $priceCache1h = 18.75e-6
-        $priceCacheRead = 1.5e-6
+        # Load pricing from config.yaml
+        $configPath = $script:ConfigPath
+        if (-not $configPath -or -not (Test-Path $configPath)) {
+            $configPath = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "config.yaml"
+        }
+
+        $modelPricing = $null
+        if (Test-Path $configPath) {
+            try {
+                $config = Get-Content $configPath -Raw | ConvertFrom-Yaml
+                $modelPricing = $config.modelPricing
+            }
+            catch {
+                Write-Warning "Could not load modelPricing from config.yaml: $_"
+            }
+        }
+
+        if (-not $modelPricing) {
+            Write-Warning "No modelPricing found in config.yaml, using Opus 4 defaults"
+            $modelPricing = @{
+                "claude-opus-4" = @{ input=15.00; output=75.00; cacheWrite=18.75; cacheRead=1.50 }
+            }
+        }
 
         $totalCost = 0.0
         $totalTokens = 0
@@ -386,24 +403,48 @@ function ReportSessionCost {
                     $obj = $line | ConvertFrom-Json
                     if ($obj.type -eq "assistant" -and $obj.message.usage) {
                         $u = $obj.message.usage
+                        $model = $obj.message.model ?? "claude-opus-4"
+
+                        # Find matching pricing tier
+                        $prices = $null
+                        foreach ($key in $modelPricing.Keys) {
+                            if ($model -like "*$key*") {
+                                $prices = $modelPricing[$key]
+                                break
+                            }
+                        }
+
+                        # Fallback to Opus if no match
+                        if (-not $prices) {
+                            $prices = $modelPricing["claude-opus-4"]
+                        }
+
+                        # Convert per-million to per-token
+                        $priceInput = $prices.input * 1e-6
+                        $priceOutput = $prices.output * 1e-6
+                        $priceCacheWrite = $prices.cacheWrite * 1e-6
+                        $priceCacheRead = $prices.cacheRead * 1e-6
+
+                        # Calculate cost
                         $inputTokens = ($u.input_tokens ?? 0)
                         $outputTokens = ($u.output_tokens ?? 0)
                         $cacheReadTokens = ($u.cache_read_input_tokens ?? 0)
+
                         $totalTokens += $inputTokens + $outputTokens + $cacheReadTokens
                         $totalCost += $inputTokens * $priceInput
                         $totalCost += $outputTokens * $priceOutput
                         $totalCost += $cacheReadTokens * $priceCacheRead
+
+                        # Handle cache creation
                         if ($u.cache_creation) {
                             $cache5m = ($u.cache_creation.ephemeral_5m_input_tokens ?? 0)
                             $cache1h = ($u.cache_creation.ephemeral_1h_input_tokens ?? 0)
                             $totalTokens += $cache5m + $cache1h
-                            $totalCost += $cache5m * $priceCache5m
-                            $totalCost += $cache1h * $priceCache1h
-                        }
-                        else {
+                            $totalCost += ($cache5m + $cache1h) * $priceCacheWrite
+                        } else {
                             $cacheCreation = ($u.cache_creation_input_tokens ?? 0)
                             $totalTokens += $cacheCreation
-                            $totalCost += $cacheCreation * $priceCache5m
+                            $totalCost += $cacheCreation * $priceCacheWrite
                         }
                     }
                 }
