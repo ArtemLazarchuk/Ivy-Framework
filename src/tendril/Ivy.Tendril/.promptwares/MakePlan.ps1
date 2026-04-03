@@ -64,6 +64,7 @@ Remove-Item $promptFile
 
 # Verify the agent actually created a plan folder or a trash entry (duplicate)
 $planIdFormatted = "{0:D5}" -f $planId
+$planFolder = Get-ChildItem -Path $script:PlansDir -Filter "$planIdFormatted-*" -Directory | Select-Object -First 1
 if ($planFolder) {
     Write-Host "Plan created: $($planFolder.Name)" -ForegroundColor Green
 }
