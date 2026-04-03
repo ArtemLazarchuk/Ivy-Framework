@@ -127,7 +127,7 @@ public class JobsApp : ViewBase
                         if (!string.IsNullOrEmpty(job.PlanFile))
                         {
                             var fullPath = Path.Combine(planService.PlansDirectory, job.PlanFile);
-                                if (Directory.Exists(fullPath))
+                            if (Directory.Exists(fullPath))
                                 showPlan.Set(fullPath);
                         }
                     }
