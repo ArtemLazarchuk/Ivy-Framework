@@ -56,7 +56,7 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
                    "- Create necessary folders and configuration\n\n" +
                    "Let's begin!")
                | new Button("Get Started").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
-                   .HandleClick(stepperIndex.Incr);
+                   .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1));
     }
 }
 
@@ -71,21 +71,20 @@ public class TendrilDataLocationStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
-        var defaultPath = Path.Combine(
+        var details = UseState(new TendrilDataLocationDetails { TendrilHome = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".tendril"
-        );
-        var details = UseState(new TendrilDataLocationDetails { TendrilHome = defaultPath });
+        ) });
         var error = UseState<string?>(null);
+        var config = UseService<ConfigService>();
 
         return Layout.Vertical()
                | Text.H2("Tendril Data Location")
                | Text.Muted("This folder will store your plans, inbox, trash, and other Tendril data.")
-               | (error.Value != null ? new Alert(error.Value).Destructive() : null!)
+               | (error.Value != null ? Text.Danger(error.Value) : null!)
                | details.ToForm().Large()
                    .SubmitBuilder((saving) => new Button("Next").Icon(Icons.ArrowRight, Align.Right).Disabled(saving))
-                   .HandleSubmit(OnSubmit)
+                   .OnSubmit(OnSubmit)
             ;
 
         Task OnSubmit(TendrilDataLocationDetails? details)
@@ -119,7 +118,7 @@ public class TendrilDataLocationStepView(IState<int> stepperIndex) : ViewBase
                 // Store in config for next step
                 config.SetPendingTendrilHome(tendrilHome);
                 error.Set(null);
-                stepperIndex.Incr();
+                stepperIndex.Set(stepperIndex.Value + 1);
             }
             catch (Exception ex)
             {
@@ -141,13 +140,12 @@ public class ReposLocationStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
-        var defaultPath = Path.Combine(
+        var details = UseState(new ReposLocationDetails { ReposHome = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "repos"
-        );
-        var details = UseState(new ReposLocationDetails { ReposHome = defaultPath });
+        ) });
         var error = UseState<string?>(null);
+        var config = UseService<ConfigService>();
 
         return Layout.Vertical()
                | Text.H2("Repositories Location (Optional)")
@@ -159,13 +157,11 @@ public class ReposLocationStepView(IState<int> stepperIndex) : ViewBase
                    "- `C:\\Users\\YourName\\repos` (Windows)\n" +
                    "- `/home/yourname/repos` (Linux)\n" +
                    "- `~/repos` (Any platform)")
-               | (error.Value != null ? new Alert(error.Value).Destructive() : null!)
+               | (error.Value != null ? Text.Danger(error.Value) : null!)
                | details.ToForm().Large()
-                   .SubmitBuilder((saving) =>
-                       Layout.Horizontal().Gap(2)
-                       | new Button("Skip").Outline().HandleClick(() => { config.SetPendingReposHome(""); stepperIndex.Incr(); })
-                       | new Button("Next").Primary().Icon(Icons.ArrowRight, Align.Right).Disabled(saving).Type(ButtonType.Submit))
-                   .HandleSubmit(OnSubmit)
+                   .SubmitBuilder((saving) => new Button("Next").Primary().Icon(Icons.ArrowRight, Align.Right).Disabled(saving))
+                   .OnSubmit(OnSubmit)
+               | new Button("Skip").Outline().OnClick(() => { config.SetPendingReposHome(""); stepperIndex.Set(stepperIndex.Value + 1); })
             ;
 
         Task OnSubmit(ReposLocationDetails? details)
@@ -203,7 +199,7 @@ public class ReposLocationStepView(IState<int> stepperIndex) : ViewBase
                 // Store in config for next step
                 config.SetPendingReposHome(reposHome);
                 error.Set(null);
-                stepperIndex.Incr();
+                stepperIndex.Set(stepperIndex.Value + 1);
             }
             catch (Exception ex)
             {
@@ -219,10 +215,10 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
-        var navigator = UseNavigation();
         var isProcessing = UseState(false);
         var error = UseState<string?>(null);
+        var config = UseService<ConfigService>();
+        var navigator = UseNavigation();
 
         async Task OnComplete()
         {
@@ -250,8 +246,8 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                 Directory.CreateDirectory(Path.Combine(tendrilHome, "Hooks"));
 
                 // Copy example.config.yaml to config.yaml
-                var exampleConfigPath = Path.Combine(AppContext.BaseDirectory, "example.config.yaml");
-                var configPath = Path.Combine(AppContext.BaseDirectory, "config.yaml");
+                var exampleConfigPath = Path.Combine(System.AppContext.BaseDirectory, "example.config.yaml");
+                var configPath = Path.Combine(System.AppContext.BaseDirectory, "config.yaml");
 
                 if (File.Exists(exampleConfigPath))
                 {
@@ -310,13 +306,13 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                    "- Set up your configuration file\n" +
                    "- Initialize Tendril with default settings\n\n" +
                    "Click 'Complete Setup' to finish.")
-               | (error.Value != null ? new Alert(error.Value).Destructive() : null!)
+               | (error.Value != null ? Text.Danger(error.Value) : null!)
                | new Button("Complete Setup")
                    .Primary()
                    .Large()
                    .Icon(Icons.Check, Align.Right)
                    .Disabled(isProcessing.Value)
                    .Loading(isProcessing.Value)
-                   .HandleClick(OnComplete);
+                   .OnClick(async () => await OnComplete());
     }
 }

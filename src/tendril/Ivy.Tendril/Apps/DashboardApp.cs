@@ -71,7 +71,7 @@ public class DashboardApp : ViewBase
         }).ToList();
 
         var dataTable = rows.AsQueryable()
-            .ToDataTable(idSelector: t => t.SortDate.ToString("yyyy-MM-dd"))
+            .ToDataTable(idSelector: t => t.SortDate)
             .RefreshToken(refreshToken)
             .Width(Size.Full())
             .Height(Size.Px(320))

@@ -85,6 +85,49 @@ public static class VariableExpansion
         // Expand environment variables (both %VAR% and $VAR formats)
         value = Environment.ExpandEnvironmentVariables(value);
 
+        // Normalize path separators: convert forward slashes to backslashes on Windows,
+        // and remove any double slashes that might have been created during expansion
+        value = NormalizePath(value);
+
+        return value;
+    }
+
+    /// <summary>
+    /// Normalize path separators and clean up double separators.
+    /// </summary>
+    private static string NormalizePath(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+
+        // Only normalize if the string contains path-like patterns
+        // (contains both path separators or environment variable markers)
+        if (!value.Contains('/') && !value.Contains('\\'))
+        {
+            return value;
+        }
+
+        // On Windows, standardize to backslashes
+        if (Path.DirectorySeparatorChar == '\\')
+        {
+            value = value.Replace('/', '\\');
+        }
+        // On Unix, standardize to forward slashes
+        else
+        {
+            value = value.Replace('\\', '/');
+        }
+
+        // Remove double separators (e.g., \\ or //)
+        var sep = Path.DirectorySeparatorChar.ToString();
+        var doubleSep = sep + sep;
+        while (value.Contains(doubleSep))
+        {
+            value = value.Replace(doubleSep, sep);
+        }
+
         return value;
     }
 
