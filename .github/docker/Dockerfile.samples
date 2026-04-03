@@ -46,7 +46,7 @@ COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
 RUN mkdir -p src/RustServer/target/release && cp /tmp/rust-artifacts/* src/RustServer/target/release/
 
 RUN --mount=type=cache,id=nuget-samples,target=/root/.nuget/packages \
-    dotnet restore "src/Ivy.Samples/Ivy.Samples.csproj"
+    dotnet restore "src/Ivy.Samples/Ivy.Samples.csproj" -a ${TARGETARCH:-x64}
 
 # Publish with ReadyToRun to pre-compile IL to native code for instant container spin-up
 RUN --mount=type=cache,id=nuget-samples,target=/root/.nuget/packages \
