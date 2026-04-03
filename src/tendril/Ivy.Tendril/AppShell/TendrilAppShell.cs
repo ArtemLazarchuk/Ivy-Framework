@@ -408,10 +408,10 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                 .Tag("$setup")
                 .Icon(Icons.Settings)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
-            MenuItem.Default("Tendril Feedback")
-                .Tag("$feedback")
-                .Icon(Icons.MessageSquare)
-                .OnSelect(() => feedbackOpen.Set(true)),
+            // MenuItem.Default("Tendril Feedback")
+            //     .Tag("$feedback")
+            //     .Icon(Icons.MessageSquare)
+            //     .OnSelect(() => feedbackOpen.Set(true)),
             MenuItem.Default("Theme")
                 .Tag("$theme")
                 .Icon(Icons.SunMoon)
