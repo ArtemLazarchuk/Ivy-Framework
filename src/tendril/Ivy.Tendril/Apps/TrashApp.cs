@@ -19,7 +19,7 @@ public class TrashApp : ViewBase
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromSeconds(10));
 
-        var trashDir = Path.Combine(configService.TendrilData, "Trash");
+        var trashDir = Path.Combine(configService.TendrilHome, "Trash");
         var files = LoadTrashFiles(trashDir);
 
         // Auto-select first file if selection is invalid

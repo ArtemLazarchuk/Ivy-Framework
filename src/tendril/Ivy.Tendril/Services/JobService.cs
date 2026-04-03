@@ -26,6 +26,8 @@ public class JobService
     private static readonly string PromptsRoot =
         Path.GetFullPath(Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", ".promptwares"));
 
+    internal static readonly string SharedRoot = Path.Combine(PromptsRoot, ".shared");
+
     private static readonly Dictionary<string, string> ScriptPaths = new()
     {
         ["MakePlan"] = Path.Combine(PromptsRoot, "MakePlan.ps1"),
@@ -43,7 +45,7 @@ public class JobService
         _configService = configService;
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
         _staleOutputTimeout = TimeSpan.FromMinutes(configService.Settings.StaleOutputTimeout);
-        _inboxPath = Path.Combine(configService.TendrilData, "Inbox");
+        _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
     }
 
     public JobService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout, string? inboxPath = null)
@@ -193,6 +195,7 @@ public class JobService
         };
         psi.Environment["TENDRIL_JOB_ID"] = id;
         psi.Environment["TENDRIL_URL"] = "http://localhost:5010";
+        psi.Environment["TENDRIL_SHARED"] = SharedRoot;
 
         foreach (var arg in processArgs)
             psi.ArgumentList.Add(arg);

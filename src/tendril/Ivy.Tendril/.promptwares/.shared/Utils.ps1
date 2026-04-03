@@ -10,32 +10,14 @@ if ($claudeDir -and (Test-Path $claudeDir)) {
     }
 }
 
-# Read plans directory from config.yaml
-$script:ConfigPath = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "config.yaml"
-$script:PlansDir = $null
-if (Test-Path $script:ConfigPath) {
-    try {
-        $configYaml = Get-Content $script:ConfigPath -Raw
-        # First check explicit planFolder
-        $pfMatch = [regex]::Match($configYaml, '(?m)^planFolder:\s*(.+)$')
-        if ($pfMatch.Success) {
-            $script:PlansDir = $pfMatch.Groups[1].Value.Trim().TrimEnd('\', '/')
-        }
-        # Otherwise derive from tendrilData
-        if (-not $script:PlansDir) {
-            $tdMatch = [regex]::Match($configYaml, '(?m)^tendrilData:\s*(.+)$')
-            if ($tdMatch.Success) {
-                $script:PlansDir = Join-Path $tdMatch.Groups[1].Value.Trim().TrimEnd('\', '/') "Plans"
-            }
-        }
-    }
-    catch { }
+# TENDRIL_HOME is required
+if (-not $env:TENDRIL_HOME) {
+    Write-Error "TENDRIL_HOME environment variable is not set. Please set it to your Tendril configuration directory."
+    exit 1
 }
-if (-not $script:PlansDir) {
-    # Fallback to temp directory if config cannot be read
-    $fallbackRoot = Join-Path ([System.IO.Path]::GetTempPath()) "Tendril"
-    $script:PlansDir = Join-Path $fallbackRoot "Plans"
-}
+
+$script:ConfigPath = Join-Path $env:TENDRIL_HOME "config.yaml"
+$script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 
 function GetProgramFolder {
     param([string]$ScriptPath)

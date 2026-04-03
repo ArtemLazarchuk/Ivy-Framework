@@ -81,7 +81,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
 
   #### Step 5: Write trash file (when trashing)
 
-  Write a file to `<tendrilData>/Trash/<PlanId>-<SafeTitle>.md` (where `<SafeTitle>` is the title with spaces replaced by hyphens and special characters removed) with the following format, then exit without creating a plan folder:
+  Write a file to `$env:TENDRIL_HOME/Trash/<PlanId>-<SafeTitle>.md` (where `<SafeTitle>` is the title with spaces replaced by hyphens and special characters removed) with the following format, then exit without creating a plan folder:
 
   ```markdown
   ---
@@ -104,7 +104,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
   **Reason:** <brief explanation of why it's a duplicate>
   ```
 
-  The `tendrilData` path is available from `config.yaml`.
+  The Trash directory is at `$env:TENDRIL_HOME/Trash`.
 - Read relevant source files to understand the codebase areas involved
 - **Search GitHub issues** before creating plans to avoid duplicates or workaround plans for features already being built. Example:
   ```bash

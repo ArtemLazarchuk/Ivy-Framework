@@ -74,9 +74,7 @@ if ($planFolder) {
 }
 else {
     # Check if it was a duplicate (written to Trash)
-    $configYaml = Get-Content $script:ConfigPath -Raw
-    $tdMatch = [regex]::Match($configYaml, '(?m)^tendrilData:\s*(.+)$')
-    $trashDir = if ($tdMatch.Success) { Join-Path $tdMatch.Groups[1].Value.Trim() "Trash" } else { $null }
+    $trashDir = if ($env:TENDRIL_HOME) { Join-Path $env:TENDRIL_HOME "Trash" } else { $null }
     $trashEntry = if ($trashDir -and (Test-Path $trashDir)) {
         Get-ChildItem -Path $trashDir -Filter "$planIdFormatted-*" | Select-Object -First 1
     }
