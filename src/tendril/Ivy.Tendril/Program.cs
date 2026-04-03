@@ -6,6 +6,7 @@ using OpenAI;
 using Ivy.Tendril.AppShell;
 using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.Logging;
 
 
 AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -89,9 +90,18 @@ server.UseWebApplication(app =>
     app.Services.GetRequiredService<PlanWatcherService>();
     app.Services.GetRequiredService<InboxWatcherService>();
     app.Services.GetRequiredService<TelemetryService>().TrackAppStarted();
+    app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");
 });
 server.AddAppsFromAssembly();
 server.AddConnectionsFromAssembly();
-server.UseAppShell(() => new TendrilAppShell(new AppShellSettings()
-    .UseTabs(preventDuplicates: false)));
+var version = typeof(TendrilAppShell).Assembly.GetName().Version!.ToString();
+var appShellSettings = new AppShellSettings()
+    .Header(
+        Layout.Horizontal(
+            new Image("/tendril/assets/Tendril.svg").Width(Size.Units(30)).Height(Size.Auto()),
+            Text.Muted($"v{version}")
+        ).Gap(2).Padding(2).AlignContent(Align.Left)
+    )
+    .UseTabs(preventDuplicates: false);
+server.UseAppShell(() => new TendrilAppShell(appShellSettings));
 await server.RunAsync();

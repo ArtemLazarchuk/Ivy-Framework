@@ -64,7 +64,7 @@ public class JobsApp : ViewBase
             .Renderer(t => t.Status, new LabelsDisplayRenderer())
             .Renderer(t => t.PlanId, new ButtonDisplayRenderer())
             .Hidden(t => t.Id)
-            .Hidden(t => t.LastOutput)
+            .Hidden(t => t.LastOutputTimestamp)
             .Filterable(t => t.Timer, false)
             .Filterable(t => t.LastOutput, false)
             .Sortable(t => t.Timer, false)
