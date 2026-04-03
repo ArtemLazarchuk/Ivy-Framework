@@ -22,6 +22,8 @@ Read the project configuration from the `ConfigPath` in the firmware header.
 
 Args contains the user's task description. If it references related plans with `[number]` syntax (e.g. `[01205]`), find and read those plan files from `PlansDirectory` for context.
 
+**Extract Force Flag**: If args starts with `[FORCE] `, set an internal flag to skip duplicate detection (see Step 3), then strip `[FORCE] ` entirely from the description. The cleaned description should be used for all subsequent steps (title, plan.yaml, etc.). Never let `[FORCE]` appear in any plan field or title.
+
 **Extract Criticality Level**: Look for a criticality or priority level indicator in Args.
 
 ### 1.5. Load Project Context
@@ -43,7 +45,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
 
 ### 3. Research
 
-- **Check for duplicate plans** first — **unless the description starts with `[FORCE]`**, in which case skip duplicate detection entirely and strip the `[FORCE] ` prefix before using the description. List existing plan folders in `PlansDirectory` and scan their `plan.yaml` titles. If an existing plan already covers the same issue (same problem, same project), perform **state-aware duplicate detection** before deciding:
+- **Check for duplicate plans** first — **unless the force flag was set in Step 1** (args started with `[FORCE]`), in which case skip duplicate detection entirely. List existing plan folders in `PlansDirectory` and scan their `plan.yaml` titles. If an existing plan already covers the same issue (same problem, same project), perform **state-aware duplicate detection** before deciding:
 
   #### Step 1: Read existing plan state
   

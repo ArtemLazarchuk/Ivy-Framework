@@ -404,14 +404,14 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
 
         var commonMenuItems = new[]
         {
-            MenuItem.Default("Settings")
+            MenuItem.Default("Setup")
                 .Tag("$setup")
                 .Icon(Icons.Settings)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
-            MenuItem.Default("Tendril Feedback")
-                .Tag("$feedback")
-                .Icon(Icons.MessageSquare)
-                .OnSelect(() => feedbackOpen.Set(true)),
+            // MenuItem.Default("Tendril Feedback")
+            //     .Tag("$feedback")
+            //     .Icon(Icons.MessageSquare)
+            //     .OnSelect(() => feedbackOpen.Set(true)),
             MenuItem.Default("Theme")
                 .Tag("$theme")
                 .Icon(Icons.SunMoon)
@@ -464,11 +464,11 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
         }
         else
         {
-            var trigger = new Button("Setup")
+            var trigger = new Button("Settings")
                 .Content(
                     Layout.Horizontal().AlignContent(Align.Left)
                         | Icons.Construction.ToIcon()
-                        | Text.P("Setup").Small().Muted()
+                        | Text.P("Settings").Small().Muted()
                     )
                     .Variant(ButtonVariant.Ghost).Width(Size.Full());
 

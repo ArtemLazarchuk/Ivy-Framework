@@ -4,7 +4,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ivy.Tendril.Apps;
 
+#if DEBUG
+[App(title: "Onboarding", icon: Icons.Rocket, group: new[] { "Debug" }, isVisible: true, order: 100)]
+#else
 [App(isVisible: false, icon: Icons.Rocket)]
+#endif
 public class OnboardingApp : ViewBase
 {
     private StepperItem[] GetSteps(int selectedIndex) =>

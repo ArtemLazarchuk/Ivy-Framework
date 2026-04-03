@@ -536,11 +536,12 @@ function GetAgentCommandFromConfig {
                     $raw += " --model $($pwConfig.model)"
                 }
 
-                # Apply allowedTools with %TENDRIL_HOME% substitution
+                # Apply allowedTools with environment variable expansion
                 if ($pwConfig.allowedTools) {
-                    $tendrilPath = if ($config.tendrilData) { $config.tendrilData -replace '\\', '/' } else { "" }
                     foreach ($tool in $pwConfig.allowedTools) {
-                        $resolvedTool = $tool -replace '%TENDRIL_HOME%', $tendrilPath
+                        $resolvedTool = [Environment]::ExpandEnvironmentVariables($tool)
+                        # Normalize to forward slashes for claude CLI path patterns
+                        $resolvedTool = $resolvedTool -replace '\\', '/'
                         $allowedTools += $resolvedTool
                     }
                 }
@@ -566,17 +567,16 @@ function GetAgentCommandFromConfig {
     }
     if ($current) { $parts += $current }
 
-    # Append allowedTools as individual args
-    $args = $parts[1..($parts.Length - 1)]
+    # Append allowedTools as a single comma-separated argument
+    # Note: avoid using $args as it's an automatic variable in PowerShell
+    $cmdArgs = @($parts[1..($parts.Length - 1)])
     if ($allowedTools.Count -gt 0) {
-        foreach ($tool in $allowedTools) {
-            $args += "--allowedTools"
-            $args += $tool
-        }
+        $cmdArgs += "--allowedTools"
+        $cmdArgs += ($allowedTools -join ",")
     }
 
     return @{
         Executable = $parts[0]
-        Args       = $args
+        Args       = $cmdArgs
     }
 }

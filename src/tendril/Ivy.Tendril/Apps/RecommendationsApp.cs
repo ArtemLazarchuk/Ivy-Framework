@@ -1,17 +1,8 @@
 using Ivy;
+using Ivy.Tendril.Apps.Recommendations;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
-
-public class RecommendationRow
-{
-    public string Id { get; set; } = "";
-    public string Date { get; set; } = "";
-    public string PlanId { get; set; } = "";
-    public string PlanFolderName { get; set; } = "";
-    public string Title { get; set; } = "";
-    public string Description { get; set; } = "";
-}
 
 [App(title: "Recommendations", icon: Icons.Lightbulb, group: new[] { "Tools" }, order: 15)]
 public class RecommendationsApp : ViewBase
@@ -19,67 +10,57 @@ public class RecommendationsApp : ViewBase
     public override object? Build()
     {
         var planService = UseService<PlanReaderService>();
-        var nav = this.UseNavigation();
         var refreshToken = UseRefreshToken();
+        var stateFilter = UseState<string?>(null);
+        var selectedState = UseState<Recommendation?>(null);
+        var textFilter = UseState<string?>("");
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromMinutes(1));
 
         var recommendations = planService.GetRecommendations();
 
-        var rows = recommendations.Select(r => new RecommendationRow
+        var filtered = stateFilter.Value is { } filter
+            ? recommendations.Where(r => r.State == filter).ToList()
+            : recommendations;
+
+        // If selected recommendation is no longer in filtered list, adjust selection
+        if (selectedState.Value is { } selected && !filtered.Any(r => r.PlanId == selected.PlanId && r.Title == selected.Title))
         {
-            Id = $"{r.PlanId}-{r.Title.GetHashCode()}",
-            Date = r.Date.ToString("yyyy-MM-dd HH:mm"),
-            PlanId = r.PlanId,
-            PlanFolderName = r.PlanFolderName,
-            Title = r.Title,
-            Description = r.Description.Length > 200 ? r.Description.Substring(0, 200) + "..." : r.Description
-        }).ToList();
+            selectedState.Set(filtered.Count > 0 ? filtered[0] : null);
+        }
 
-        var dataTable = rows.AsQueryable()
-            .ToDataTable(idSelector: r => r.Id)
-            .RefreshToken(refreshToken)
-            .Width(Size.Full())
-            .Height(Size.Full())
-            .Header(r => r.Date, "Date")
-            .Header(r => r.PlanId, "Plan")
-            .Header(r => r.Title, "Title")
-            .Header(r => r.Description, "Description")
-            .Hidden(r => r.Id)
-            .Hidden(r => r.PlanFolderName)
-            .Config(c =>
-            {
-                c.AllowSorting = true;
-                c.AllowFiltering = true;
-                c.ShowSearch = true;
-                c.SelectionMode = SelectionModes.None;
-                c.ShowIndexColumn = true;
-                c.BatchSize = 50;
-                c.EnableCellClickEvents = true;
-            })
-            .Renderer(r => r.PlanId, new ButtonDisplayRenderer())
-            .OnCellClick(e =>
-            {
-                if (e.Value.ColumnName == "Plan")
-                {
-                    var planId = e.Value.CellValue?.ToString();
-                    if (!string.IsNullOrEmpty(planId))
-                    {
-                        var row = rows.FirstOrDefault(r => r.PlanId == planId);
-                        if (row != null)
-                        {
-                            var fullPath = Path.Combine(planService.PlansDirectory, row.PlanFolderName);
-                            if (Directory.Exists(fullPath))
-                                nav.Navigate<PlanViewerApp>(new PlanViewerAppArgs(fullPath));
-                        }
-                    }
-                }
-                return ValueTask.CompletedTask;
-            });
+        void Refresh() => refreshToken.Refresh();
 
-        return new HeaderLayout(
-            header: Text.Block($"All Recommendations ({recommendations.Count})").Bold(),
-            content: dataTable
+        var pendingCount = recommendations.Count(r => r.State == "Pending");
+        var acceptedCount = recommendations.Count(r => r.State == "Accepted");
+        var declinedCount = recommendations.Count(r => r.State == "Declined");
+
+        var filterBar = Layout.Horizontal().Gap(2) | new object?[]
+        {
+            stateFilter.Value == null
+                ? (object)new Button($"All ({recommendations.Count})").OnClick(() => stateFilter.Set(null))
+                : new Button($"All ({recommendations.Count})").Ghost().OnClick(() => stateFilter.Set(null)),
+            stateFilter.Value == "Pending"
+                ? (object)new Button($"Pending ({pendingCount})").OnClick(() => stateFilter.Set("Pending"))
+                : new Button($"Pending ({pendingCount})").Ghost().OnClick(() => stateFilter.Set("Pending")),
+            stateFilter.Value == "Accepted"
+                ? (object)new Button($"Accepted ({acceptedCount})").OnClick(() => stateFilter.Set("Accepted"))
+                : new Button($"Accepted ({acceptedCount})").Ghost().OnClick(() => stateFilter.Set("Accepted")),
+            stateFilter.Value == "Declined"
+                ? (object)new Button($"Declined ({declinedCount})").OnClick(() => stateFilter.Set("Declined"))
+                : new Button($"Declined ({declinedCount})").Ghost().OnClick(() => stateFilter.Set("Declined"))
+        };
+
+        var sidebar = new Recommendations.SidebarView(filtered, selectedState, textFilter);
+
+        var sidebarHeader = Layout.Vertical().Gap(2)
+            | sidebar.BuildHeader()
+            | filterBar;
+
+        return new SidebarLayout(
+            mainContent: new Recommendations.ContentView(selectedState.Value, filtered, selectedState, planService, Refresh),
+            sidebarContent: sidebar,
+            sidebarHeader: sidebarHeader
         );
     }
 }

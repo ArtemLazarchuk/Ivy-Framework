@@ -522,6 +522,7 @@ public class PlanReaderService(ConfigService config)
                     recommendations.Add(new Recommendation(
                         Title: item.Title,
                         Description: item.Description,
+                        State: string.IsNullOrWhiteSpace(item.State) ? "Pending" : item.State,
                         PlanId: plan.Id.ToString("D5"),
                         PlanTitle: plan.Title,
                         PlanFolderName: plan.FolderName,
@@ -536,6 +537,22 @@ public class PlanReaderService(ConfigService config)
         }
 
         return recommendations.OrderByDescending(r => r.Date).ToList();
+    }
+
+    public void UpdateRecommendationState(string planFolderName, string recommendationTitle, string newState)
+    {
+        var recommendationsPath = Path.Combine(PlansDirectory, planFolderName, "artifacts", "recommendations.yaml");
+        if (!File.Exists(recommendationsPath)) return;
+
+        var yaml = File.ReadAllText(recommendationsPath);
+        var items = YamlDeserializer.Deserialize<List<RecommendationYaml>>(yaml);
+        if (items == null) return;
+
+        var item = items.FirstOrDefault(r => r.Title == recommendationTitle);
+        if (item == null) return;
+
+        item.State = newState;
+        File.WriteAllText(recommendationsPath, YamlSerializer.Serialize(items));
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
@@ -580,6 +597,7 @@ public class HourlyTokenBurn
 public record Recommendation(
     string Title,
     string Description,
+    string State,
     string PlanId,
     string PlanTitle,
     string PlanFolderName,
@@ -590,4 +608,5 @@ public class RecommendationYaml
 {
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
+    public string State { get; set; } = "Pending";
 }

@@ -18,15 +18,9 @@ promptwares:
       - Read
       - Glob
       - Grep
-      - "Bash(git log *)"
-      - "Bash(git show *)"
-      - "Bash(git diff *)"
-      - "Bash(gh search issues *)"
-      - "Bash(ls *)"
-      - "Bash(cat *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
-      - "Write(//%TENDRIL_HOME%/Trash/**)"
+      - Bash
+      - Write
+      - Edit
   ExecutePlan:
     model: opus
     allowedTools:
@@ -44,57 +38,45 @@ promptwares:
       - Read
       - Glob
       - Grep
-      - "Bash(git log *)"
-      - "Bash(git show *)"
-      - "Bash(git diff *)"
-      - "Bash(ls *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
+      - Bash
+      - Write
+      - Edit
   MakePr:
     model: sonnet
     allowedTools:
       - Read
       - Glob
       - Grep
-      - "Bash(git *)"
-      - "Bash(gh pr *)"
-      - "Bash(gh api *)"
-      - "Bash(storage *)"
-      - "Bash(ls *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
+      - Bash
+      - Write
+      - Edit
   UpdatePlan:
     model: sonnet
     allowedTools:
       - Read
       - Glob
       - Grep
-      - "Bash(git log *)"
-      - "Bash(git show *)"
-      - "Bash(git diff *)"
-      - "Bash(ls *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
+      - Bash
+      - Write
+      - Edit
   SplitPlan:
     model: sonnet
     allowedTools:
       - Read
       - Glob
       - Grep
-      - "Bash(ls *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
+      - Bash
+      - Write
+      - Edit
   CreateIssue:
     model: sonnet
     allowedTools:
       - Read
       - Glob
       - Grep
-      - "Bash(gh issue *)"
-      - "Bash(gh repo *)"
-      - "Bash(ls *)"
-      - "Write(//%TENDRIL_HOME%/Plans/**)"
-      - "Edit(//%TENDRIL_HOME%/Plans/**)"
+      - Bash
+      - Write
+      - Edit
   IvyFrameworkVerification:
     model: sonnet
     allowedTools:
@@ -103,13 +85,7 @@ promptwares:
       - Edit
       - Glob
       - Grep
-      - "Bash(dotnet *)"
-      - "Bash(npx *)"
-      - "Bash(npm *)"
-      - "Bash(ls *)"
-      - "Bash(mkdir *)"
-      - "Bash(cp *)"
-      - "Bash(pwsh *)"
+      - Bash
 
 levels:
   - name: Critical
