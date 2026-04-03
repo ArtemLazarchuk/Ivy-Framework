@@ -115,6 +115,7 @@ public class DashboardApp : ViewBase
                 style: BarChartStyles.Default,
                 polish: chart => chart with
                 {
+                    CartesianGrid = null,
                     Bars =
                     [
                         new Bar("Cost ($)").Radius(4).FillOpacity(0.8).YAxisIndex(0),
@@ -122,8 +123,8 @@ public class DashboardApp : ViewBase
                     ],
                     YAxis =
                     [
-                        new YAxis("Cost ($)").TickFormatter("C2"),
-                        new YAxis("Tokens").Orientation(YAxis.Orientations.Right),
+                        new YAxis("Cost ($)").TickFormatter("C2").Hide(),
+                        new YAxis("Tokens").Orientation(YAxis.Orientations.Right).Hide(),
                     ]
                 })
             .Dimension("Hour", e => e.Hour.ToString("MM/dd HH"))
