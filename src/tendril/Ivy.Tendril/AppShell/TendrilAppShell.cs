@@ -404,7 +404,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
 
         var commonMenuItems = new[]
         {
-            MenuItem.Default("Settings")
+            MenuItem.Default("Setup")
                 .Tag("$setup")
                 .Icon(Icons.Settings)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
@@ -464,11 +464,11 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
         }
         else
         {
-            var trigger = new Button("Setup")
+            var trigger = new Button("Settings")
                 .Content(
                     Layout.Horizontal().AlignContent(Align.Left)
                         | Icons.Construction.ToIcon()
-                        | Text.P("Setup").Small().Muted()
+                        | Text.P("Settings").Small().Muted()
                     )
                     .Variant(ButtonVariant.Ghost).Width(Size.Full());
 
