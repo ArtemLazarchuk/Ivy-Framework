@@ -434,6 +434,43 @@ public class PlanReaderService(ConfigService config)
             .ToList();
     }
 
+    public List<Recommendation> GetRecommendations()
+    {
+        var recommendations = new List<Recommendation>();
+        var plans = GetPlans();
+
+        foreach (var plan in plans)
+        {
+            var recommendationsPath = Path.Combine(plan.FolderPath, "artifacts", "recommendations.yaml");
+            if (!File.Exists(recommendationsPath)) continue;
+
+            try
+            {
+                var yaml = File.ReadAllText(recommendationsPath);
+                var items = YamlDeserializer.Deserialize<List<RecommendationYaml>>(yaml);
+                if (items == null) continue;
+
+                foreach (var item in items)
+                {
+                    recommendations.Add(new Recommendation(
+                        Title: item.Title,
+                        Description: item.Description,
+                        PlanId: plan.Id.ToString("D5"),
+                        PlanTitle: plan.Title,
+                        PlanFolderName: plan.FolderName,
+                        Date: plan.Updated
+                    ));
+                }
+            }
+            catch
+            {
+                // Skip malformed YAML files
+            }
+        }
+
+        return recommendations.OrderByDescending(r => r.Date).ToList();
+    }
+
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
     {
         try
@@ -471,4 +508,19 @@ public class HourlyTokenBurn
     public DateTime Hour { get; set; }
     public decimal Cost { get; set; }
     public int Tokens { get; set; }
+}
+
+public record Recommendation(
+    string Title,
+    string Description,
+    string PlanId,
+    string PlanTitle,
+    string PlanFolderName,
+    DateTime Date
+);
+
+public class RecommendationYaml
+{
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
 }
