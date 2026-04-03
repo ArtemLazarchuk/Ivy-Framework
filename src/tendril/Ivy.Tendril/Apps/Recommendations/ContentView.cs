@@ -8,12 +8,14 @@ public class ContentView(
     List<Recommendation> allRecommendations,
     IState<Recommendation?> selectedState,
     PlanReaderService planService,
+    JobService jobService,
     Action refresh) : ViewBase
 {
     private readonly Recommendation? _selected = selectedRecommendation;
     private readonly List<Recommendation> _all = allRecommendations;
     private readonly IState<Recommendation?> _selectedState = selectedState;
     private readonly PlanReaderService _planService = planService;
+    private readonly JobService _jobService = jobService;
     private readonly Action _refresh = refresh;
 
     public override object? Build()
@@ -63,7 +65,10 @@ public class ContentView(
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
             | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
             {
+                var client = UseService<IClientProvider>();
                 _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
+                _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
+                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted");
                 _refresh();
                 GoToNext();
             })

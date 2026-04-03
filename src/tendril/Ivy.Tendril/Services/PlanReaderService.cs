@@ -526,6 +526,7 @@ public class PlanReaderService(ConfigService config)
                         PlanId: plan.Id.ToString("D5"),
                         PlanTitle: plan.Title,
                         PlanFolderName: plan.FolderName,
+                        Project: plan.Project,
                         Date: plan.Updated
                     ));
                 }
@@ -634,6 +635,7 @@ public record Recommendation(
     string PlanId,
     string PlanTitle,
     string PlanFolderName,
+    string Project,
     DateTime Date
 );
 

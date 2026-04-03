@@ -10,6 +10,7 @@ public class RecommendationsApp : ViewBase
     public override object? Build()
     {
         var planService = UseService<PlanReaderService>();
+        var jobService = UseService<JobService>();
         var refreshToken = UseRefreshToken();
         var selectedState = UseState<Recommendation?>(null);
 
@@ -30,7 +31,7 @@ public class RecommendationsApp : ViewBase
         var sidebar = new Recommendations.SidebarView(filtered, selectedState);
 
         return new SidebarLayout(
-            mainContent: new Recommendations.ContentView(selectedState.Value, filtered, selectedState, planService, Refresh),
+            mainContent: new Recommendations.ContentView(selectedState.Value, filtered, selectedState, planService, jobService, Refresh),
             sidebarContent: sidebar
         );
     }
