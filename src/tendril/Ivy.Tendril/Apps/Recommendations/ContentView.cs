@@ -20,8 +20,8 @@ public class ContentView(
 
     public override object? Build()
     {
-        var nav = this.UseNavigation();
         var client = UseService<IClientProvider>();
+        var showPlan = UseState<string?>(null);
 
         if (_selected is null)
         {
@@ -82,18 +82,41 @@ public class ContentView(
             {
                 var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
                 if (Directory.Exists(fullPath))
-                    nav.Navigate<PlanViewerApp>(new PlanViewerAppArgs(fullPath));
+                    showPlan.Set(fullPath);
             })
             | new Button("Previous").Icon(Icons.ChevronLeft).Outline().ShortcutKey("p").OnClick(() => GoToPrevious())
             | new Button("Next").Icon(Icons.ChevronRight, Align.Right).Outline().ShortcutKey("n").OnClick(() => GoToNext());
 
-        return new HeaderLayout(
+        var mainLayout = new HeaderLayout(
             header: header,
             content: new FooterLayout(
                 footer: actionBar,
                 content: scrollableContent
             ).Size(Size.Full())
         ).Scroll(Scroll.None).Size(Size.Full());
+
+        if (showPlan.Value is { } planPath)
+        {
+            var folderName = Path.GetFileName(planPath);
+            var content = _planService.ReadLatestRevision(folderName);
+            var plan = _planService.GetPlanByFolder(planPath);
+
+            var sheetContent = string.IsNullOrEmpty(content)
+                ? Text.P("Plan not found or empty.")
+                : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
+                    .DangerouslyAllowLocalFiles();
+
+            return new Fragment(
+                mainLayout,
+                new Sheet(
+                    onClose: () => showPlan.Set(null),
+                    content: sheetContent,
+                    title: plan?.Title ?? folderName
+                ).Width(Size.Half()).Resizable()
+            );
+        }
+
+        return mainLayout;
     }
 
     private void GoToNext()

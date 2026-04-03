@@ -13,10 +13,10 @@ public class JobsApp : ViewBase
         var jobService = UseService<JobService>();
         var planService = UseService<PlanReaderService>();
         var client = UseService<IClientProvider>();
-        var nav = this.UseNavigation();
         var refreshToken = UseRefreshToken();
         var showCommand = UseState<string?>(null);
         var showOutput = UseState<string?>(null);
+        var showPlan = UseState<string?>(null);
         UseInterval(() =>
         {
             while (jobService.PendingNotifications.TryDequeue(out var notification))
@@ -99,9 +99,8 @@ public class JobsApp : ViewBase
                         if (job != null && !string.IsNullOrEmpty(job.PlanFile))
                         {
                             var fullPath = Path.Combine(planService.PlansDirectory, job.PlanFile);
-                            Console.WriteLine($"[Jobs] Navigating to plan (cell click): {fullPath}, exists: {Directory.Exists(fullPath)}");
                             if (Directory.Exists(fullPath))
-                                nav.Navigate<PlanViewerApp>(new PlanViewerAppArgs(fullPath));
+                                showPlan.Set(fullPath);
                         }
                     }
                 }
@@ -128,9 +127,8 @@ public class JobsApp : ViewBase
                         if (!string.IsNullOrEmpty(job.PlanFile))
                         {
                             var fullPath = Path.Combine(planService.PlansDirectory, job.PlanFile);
-                            Console.WriteLine($"[Jobs] Navigating to plan (row action): {fullPath}, exists: {Directory.Exists(fullPath)}");
-                            if (Directory.Exists(fullPath))
-                                nav.Navigate<PlanViewerApp>(new PlanViewerAppArgs(fullPath));
+                                if (Directory.Exists(fullPath))
+                                showPlan.Set(fullPath);
                         }
                     }
                     else if (tag == "stop-job")
@@ -217,6 +215,27 @@ public class JobsApp : ViewBase
                     onClose: () => showOutput.Set(null),
                     content: new Markdown($"```\n{output}\n```"),
                     title: "Job Output"
+                ).Width(Size.Half()).Resizable()
+            );
+        }
+
+        if (showPlan.Value is { } planPath)
+        {
+            var folderName = Path.GetFileName(planPath);
+            var content = planService.ReadLatestRevision(folderName);
+            var plan = planService.GetPlanByFolder(planPath);
+
+            var sheetContent = string.IsNullOrEmpty(content)
+                ? Text.P("Plan not found or empty.")
+                : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
+                    .DangerouslyAllowLocalFiles();
+
+            return layout | new Fragment(
+                dataTable,
+                new Sheet(
+                    onClose: () => showPlan.Set(null),
+                    content: sheetContent,
+                    title: plan?.Title ?? folderName
                 ).Width(Size.Half()).Resizable()
             );
         }
