@@ -68,7 +68,7 @@ public class DashboardApp : ViewBase
                 Cost = dayCost > 0 ? $"${dayCost:F2}" : "",
                 Tokens = dayTokens > 0 ? FormatTokens(dayTokens) : ""
             };
-        }).OrderByDescending(r => r.SortDate).ToList();
+        }).ToList();
 
         var dataTable = rows.AsQueryable()
             .ToDataTable(idSelector: t => t.SortDate)
