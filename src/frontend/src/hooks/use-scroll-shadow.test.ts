@@ -41,12 +41,46 @@ describe("useScrollShadow", () => {
     expect(hookSource).toContain('removeEventListener("scroll"');
   });
 
-  it("should include selector in useEffect dependency array", () => {
-    expect(hookSource).toContain("[selector]");
+  it("should include selector and direction in useEffect dependency array", () => {
+    expect(hookSource).toContain("[selector, direction]");
   });
 
   it("should return isScrolled and scrollRef", () => {
     expect(hookSource).toContain("return { isScrolled, scrollRef }");
+  });
+});
+
+describe("useScrollShadow direction parameter", () => {
+  const hookSource = fs.readFileSync(path.resolve(__dirname, "./use-scroll-shadow.ts"), "utf-8");
+
+  it("should export ScrollShadowDirection type", () => {
+    expect(hookSource).toContain("export type ScrollShadowDirection");
+  });
+
+  it("should accept a direction parameter defaulting to bottom", () => {
+    expect(hookSource).toMatch(/direction:\s*ScrollShadowDirection\s*=\s*"bottom"/);
+  });
+
+  it("should check scrollTop > 0 for bottom direction", () => {
+    expect(hookSource).toContain('direction === "bottom"');
+    expect(hookSource).toContain("scrollTop > 0");
+  });
+
+  it("should check not-at-bottom for top direction", () => {
+    expect(hookSource).toContain("scrollTop < scrollHeight - clientHeight - 1");
+  });
+
+  it("should use ResizeObserver for top direction", () => {
+    expect(hookSource).toContain("new ResizeObserver(handleScroll)");
+    expect(hookSource).toContain('direction === "top"');
+  });
+
+  it("should call handleScroll on initial mount to set state", () => {
+    expect(hookSource).toMatch(/handleScroll\(\);\s*\n\s*viewport\.addEventListener/);
+  });
+
+  it("should disconnect ResizeObserver on cleanup", () => {
+    expect(hookSource).toContain("resizeObserver?.disconnect()");
   });
 });
 
@@ -69,5 +103,29 @@ describe("HeaderLayoutWidget uses useScrollShadow hook", () => {
 
   it("should destructure isScrolled and scrollRef from the hook", () => {
     expect(widgetSource).toContain("const { isScrolled, scrollRef } = useScrollShadow()");
+  });
+});
+
+describe("FooterLayoutWidget uses useScrollShadow hook with top direction", () => {
+  const widgetSource = fs.readFileSync(
+    path.resolve(__dirname, "../widgets/layouts/FooterLayoutWidget.tsx"),
+    "utf-8",
+  );
+
+  it("should import useScrollShadow", () => {
+    expect(widgetSource).toContain('from "@/hooks/use-scroll-shadow"');
+  });
+
+  it("should use the hook with top direction instead of inline implementation", () => {
+    expect(widgetSource).toContain('"top"');
+    // Should NOT have the inline scroll listener pattern
+    expect(widgetSource).not.toContain('addEventListener("scroll"');
+    expect(widgetSource).not.toContain("setHasMoreContent");
+    expect(widgetSource).not.toContain("ResizeObserver");
+  });
+
+  it("should destructure isScrolled as hasMoreContent from the hook", () => {
+    expect(widgetSource).toContain("isScrolled: hasMoreContent");
+    expect(widgetSource).toContain("scrollRef");
   });
 });

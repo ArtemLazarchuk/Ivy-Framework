@@ -1,6 +1,7 @@
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useScrollShadow } from "@/hooks/use-scroll-shadow";
 
 interface FooterLayoutWidgetProps {
   slots?: {
@@ -10,29 +11,10 @@ interface FooterLayoutWidgetProps {
 }
 
 export const FooterLayoutWidget: React.FC<FooterLayoutWidgetProps> = ({ slots }) => {
-  const [hasMoreContent, setHasMoreContent] = React.useState(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const viewport = scrollRef.current?.querySelector("[data-radix-scroll-area-viewport]");
-    if (!viewport) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = viewport;
-      setHasMoreContent(scrollTop < scrollHeight - clientHeight - 1);
-    };
-
-    handleScroll();
-
-    viewport.addEventListener("scroll", handleScroll);
-    const resizeObserver = new ResizeObserver(handleScroll);
-    resizeObserver.observe(viewport);
-
-    return () => {
-      viewport.removeEventListener("scroll", handleScroll);
-      resizeObserver.disconnect();
-    };
-  }, []);
+  const { isScrolled: hasMoreContent, scrollRef } = useScrollShadow(
+    "[data-radix-scroll-area-viewport]",
+    "top",
+  );
 
   if (!slots?.Footer || !slots?.Content) {
     return (
