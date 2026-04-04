@@ -96,7 +96,7 @@ public class ThemeColors
         InfoForeground = IvyFrameworkLightThemeTokens.Color.InfoForeground,
         Border = IvyFrameworkLightThemeTokens.Color.Border,
         Input = IvyFrameworkLightThemeTokens.Color.Input,
-        Ring = IvyFrameworkLightThemeTokens.Color.Ring,
+        Ring = "#eab308",
         Muted = IvyFrameworkLightThemeTokens.Color.Muted,
         MutedForeground = IvyFrameworkLightThemeTokens.Color.MutedForeground,
         Accent = IvyFrameworkLightThemeTokens.Color.Accent,
@@ -105,8 +105,8 @@ public class ThemeColors
         CardForeground = IvyFrameworkLightThemeTokens.Color.CardForeground,
         Popover = IvyFrameworkLightThemeTokens.Color.Popover,
         PopoverForeground = IvyFrameworkLightThemeTokens.Color.PopoverForeground,
-        IvyGreen = IvyFrameworkLightThemeTokens.Color.Primary,
-        IvyGreenForeground = IvyFrameworkLightThemeTokens.Color.PrimaryForeground
+        IvyGreen = "#eab308",
+        IvyGreenForeground = "#0a0a0a"
     };
 
     public static ThemeColors DefaultDark => new()
@@ -128,7 +128,7 @@ public class ThemeColors
         InfoForeground = IvyFrameworkDarkThemeTokens.Color.InfoForeground,
         Border = IvyFrameworkDarkThemeTokens.Color.Border,
         Input = IvyFrameworkDarkThemeTokens.Color.Input,
-        Ring = IvyFrameworkDarkThemeTokens.Color.Ring,
+        Ring = "#facc15",
         Muted = IvyFrameworkDarkThemeTokens.Color.Muted,
         MutedForeground = IvyFrameworkDarkThemeTokens.Color.MutedForeground,
         Accent = IvyFrameworkDarkThemeTokens.Color.Accent,
@@ -137,7 +137,7 @@ public class ThemeColors
         CardForeground = IvyFrameworkDarkThemeTokens.Color.CardForeground,
         Popover = IvyFrameworkDarkThemeTokens.Color.Popover,
         PopoverForeground = IvyFrameworkDarkThemeTokens.Color.PopoverForeground,
-        IvyGreen = IvyFrameworkDarkThemeTokens.Color.Primary,
-        IvyGreenForeground = IvyFrameworkDarkThemeTokens.Color.PrimaryForeground
+        IvyGreen = "#facc15",
+        IvyGreenForeground = "#0a0a0a"
     };
 }
