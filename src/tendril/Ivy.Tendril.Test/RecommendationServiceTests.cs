@@ -119,6 +119,19 @@ public class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
+    public void UpdateRecommendationState_AcceptedWithNotes_PersistsCorrectly()
+    {
+        var yaml = "- title: Fix bug\n  description: Found a bug\n  state: Pending\n";
+        CreatePlanWithRecommendations("01605-AcceptWithNotes", yaml);
+
+        _service.UpdateRecommendationState("01605-AcceptWithNotes", "Fix bug", "AcceptedWithNotes");
+
+        var recommendations = _service.GetRecommendations();
+        Assert.Single(recommendations);
+        Assert.Equal("AcceptedWithNotes", recommendations[0].State);
+    }
+
+    [Fact]
     public void GetPendingRecommendationsCount_MatchesFullDeserializationCount()
     {
         var yaml1 = "- title: Pending item\n  description: Needs work\n  state: Pending\n- title: Accepted item\n  description: Done\n  state: Accepted\n";

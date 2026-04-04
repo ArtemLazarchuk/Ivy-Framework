@@ -71,6 +71,14 @@ public class ContentView(
                 _refresh();
                 GoToNext();
             })
+            | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() =>
+            {
+                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "AcceptedWithNotes");
+                _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
+                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted with Notes");
+                _refresh();
+                GoToNext();
+            })
             | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
             {
                 _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Declined");
