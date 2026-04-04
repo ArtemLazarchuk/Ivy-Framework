@@ -10,18 +10,11 @@ param(
 
 $ErrorActionPreference = "Continue"
 
-# Bootstrap required PowerShell modules
+# Bootstrap shared utilities (includes Bootstrap-Modules.ps1 and ExtractRepoPathsFromYaml)
 $sharedPath = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "Ivy.Tendril/.promptwares/.shared"
-. (Join-Path $sharedPath "Bootstrap-Modules.ps1")
+. (Join-Path $sharedPath "Utils.ps1")
 
-# Resolve plans directory
-$tendrilHome = $env:TENDRIL_HOME
-if (-not $tendrilHome) {
-    Write-Error "TENDRIL_HOME environment variable is not set."
-    exit 1
-}
-
-$plansDir = Join-Path $tendrilHome "Plans"
+$plansDir = Join-Path $env:TENDRIL_HOME "Plans"
 if (-not (Test-Path $plansDir)) {
     Write-Host "Plans directory not found: $plansDir" -ForegroundColor Yellow
     exit 0
@@ -58,16 +51,7 @@ foreach ($planFolder in $planFolders) {
     $planId = if ($planFolder.Name -match '^(\d+)') { $Matches[1] } else { "" }
 
     # Extract repo paths
-    $repoPaths = @()
-    if ($yaml.repos) {
-        foreach ($repo in $yaml.repos) {
-            $p = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) { $repo.path } else { "$repo" }
-            if ($p) {
-                $p = [Environment]::ExpandEnvironmentVariables($p)
-                if (Test-Path $p) { $repoPaths += $p }
-            }
-        }
-    }
+    $repoPaths = ExtractRepoPathsFromYaml -ReposArray $yaml.repos -ValidateExists
 
     Write-Host "Cleaning plan $($planFolder.Name) (state: $state)" -ForegroundColor Cyan
 

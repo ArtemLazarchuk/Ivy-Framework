@@ -29,16 +29,7 @@ $planFolderName = Split-Path $PlanPath -Leaf
 $planId = if ($planFolderName -match '^(\d+)') { $Matches[1] } else { "" }
 
 # Extract repo paths from plan.yaml
-$repoPaths = @()
-if ($planInfo.Yaml.repos) {
-    foreach ($repo in $planInfo.Yaml.repos) {
-        $p = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) { $repo.path } else { "$repo" }
-        if ($p) {
-            $p = [Environment]::ExpandEnvironmentVariables($p)
-            if (Test-Path $p) { $repoPaths += $p }
-        }
-    }
-}
+$repoPaths = ExtractRepoPathsFromYaml -ReposArray $planInfo.Yaml.repos -ValidateExists
 
 $worktreeDirs = Get-ChildItem -Path $worktreesDir -Directory -ErrorAction SilentlyContinue
 $cleanedCount = 0

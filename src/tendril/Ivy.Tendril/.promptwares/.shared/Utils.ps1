@@ -218,6 +218,44 @@ function ReadPlanProject {
     return @{ Content = $content; Project = $project; Yaml = $yaml }
 }
 
+function ExtractRepoPathsFromYaml {
+    param(
+        [Parameter(Mandatory = $true)]
+        $ReposArray,
+        [switch]$ValidateExists
+    )
+
+    $paths = @()
+
+    if (-not $ReposArray) {
+        return $paths
+    }
+
+    foreach ($repo in $ReposArray) {
+        # Handle both formats: plain string or object with 'path' property
+        $p = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
+            $repo.path
+        } else {
+            "$repo"
+        }
+
+        if ($p) {
+            # Expand environment variables (e.g. %REPOS_HOME%)
+            $p = [Environment]::ExpandEnvironmentVariables($p)
+
+            if ($ValidateExists) {
+                if (Test-Path $p) {
+                    $paths += $p
+                }
+            } else {
+                $paths += $p
+            }
+        }
+    }
+
+    return $paths
+}
+
 function GetProjectWorkDir {
     param([string]$Project)
 
@@ -225,11 +263,10 @@ function GetProjectWorkDir {
         try {
             $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
             $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
-            if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
-                $repo = $projectEntry.repos[0]
-                $path = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) { $repo.path } else { "$repo" }
-                if ($path) {
-                    return [Environment]::ExpandEnvironmentVariables($path)
+            if ($projectEntry -and $projectEntry.repos) {
+                $paths = ExtractRepoPathsFromYaml -ReposArray $projectEntry.repos
+                if ($paths.Count -gt 0) {
+                    return $paths[0]
                 }
             }
         }
