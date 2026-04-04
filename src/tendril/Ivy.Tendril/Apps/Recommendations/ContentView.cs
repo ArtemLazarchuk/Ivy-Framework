@@ -25,6 +25,13 @@ public class ContentView(
 
         if (_selected is null)
         {
+            if (_all.Count == 0)
+            {
+                return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(2)
+                    | new Icon(Icons.Inbox).Large().Color(Colors.Gray)
+                    | Text.Muted("No recommendations yet");
+            }
+
             return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
                 | Text.Muted("Select a recommendation from the sidebar");
         }
