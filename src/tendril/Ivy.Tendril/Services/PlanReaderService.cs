@@ -504,18 +504,36 @@ public class PlanReaderService(ConfigService config)
     public List<Recommendation> GetRecommendations()
     {
         var recommendations = new List<Recommendation>();
-        var plans = GetPlans();
 
-        foreach (var plan in plans)
+        if (!Directory.Exists(PlansDirectory))
+            return recommendations;
+
+        foreach (var dir in Directory.GetDirectories(PlansDirectory))
         {
-            var recommendationsPath = Path.Combine(plan.FolderPath, "artifacts", "recommendations.yaml");
+            var recommendationsPath = Path.Combine(dir, "artifacts", "recommendations.yaml");
             if (!File.Exists(recommendationsPath)) continue;
+
+            var folderName = Path.GetFileName(dir);
+            var match = FolderNameRegex.Match(folderName);
+            if (!match.Success) continue;
+
+            var planYamlPath = Path.Combine(dir, "plan.yaml");
+            if (!File.Exists(planYamlPath)) continue;
 
             try
             {
+                var planYaml = File.ReadAllText(planYamlPath);
+                var plan = YamlDeserializer.Deserialize<PlanYaml>(planYaml);
+                if (plan == null) continue;
+
                 var yaml = File.ReadAllText(recommendationsPath);
                 var items = YamlDeserializer.Deserialize<List<RecommendationYaml>>(yaml);
                 if (items == null) continue;
+
+                var planId = match.Groups[1].Value;
+
+                if (!Enum.TryParse<PlanStatus>(plan.State, ignoreCase: true, out var status))
+                    status = PlanStatus.Draft;
 
                 foreach (var item in items)
                 {
@@ -523,12 +541,12 @@ public class PlanReaderService(ConfigService config)
                         Title: item.Title,
                         Description: item.Description,
                         State: string.IsNullOrWhiteSpace(item.State) ? "Pending" : item.State,
-                        PlanId: plan.Id.ToString("D5"),
-                        PlanTitle: plan.Title,
-                        PlanFolderName: plan.FolderName,
-                        Project: plan.Project,
+                        PlanId: planId,
+                        PlanTitle: plan.Title ?? "",
+                        PlanFolderName: folderName,
+                        Project: plan.Project ?? "",
                         Date: plan.Updated,
-                        SourcePlanStatus: plan.Status
+                        SourcePlanStatus: status
                     ));
                 }
             }
