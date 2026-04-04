@@ -68,7 +68,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
 
   - **Verify the fix commit exists on main**: Read the existing plan's `commits` list and run `git log --oneline <hash>` to confirm the commit is on the main branch. If the commit is not on main, do NOT trash — create the plan.
   - **Check commit date vs observation time**: If the inbox item describes an issue observed at a specific time, compare against the fix commit date (`git log -1 --format=%ci <hash>`). If the observation is **after** the fix was committed, the fix may not have worked — create the plan instead of trashing.
-  - **Verify in code**: For code fixes, grep the actual source to confirm the fix is still present.
+  - **Verify in code**: For code fixes, use `Tools/Validate-CodeAssertion.ps1` or grep the actual source to confirm the fix is still present.
 
   #### Step 4: Regression detection (for Completed plans)
 
@@ -113,6 +113,30 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
   gh search issues "<keyword>" --repo <owner>/<repo> --json title,url,number,state
   ```
   Derive the repo owner/name from the repos in `config.yaml`. If an issue already covers the task, reference it in the plan and avoid creating workaround plans.
+
+### 3.5. Validate Code State
+
+Before creating the plan, scan the task description (args) for code state assertions — statements about what the code currently does or how it currently looks.
+
+**Patterns to detect:**
+- "currently does/has/is/returns"
+- "the code at [location]" or "[file]:[lines]"
+- Code blocks (` ```language ... ``` `) with descriptive context
+- "existing implementation" or "current behavior"
+
+For each assertion found:
+1. Extract the referenced file path and optional line range
+2. Use `Tools/Validate-CodeAssertion.ps1` to check if the described code actually exists
+3. If validation fails, investigate:
+   - Check `git log --oneline -10 --all -- <file>` for recent changes
+   - Check `git blame <file>` to find who/when the code changed
+   - Look for plan IDs in commit messages (e.g., `[01234]`)
+
+**Decision:**
+- **All validations pass** → Proceed to Step 4, include validated code blocks in plan with `**Current implementation**` headers
+- **Any validation fails** → Write trash file to `$env:TENDRIL_HOME/Trash/<PlanId>-<SafeTitle>.md` explaining the validation failure, then exit without creating a plan
+
+This catches stale plans before they enter the review queue, reducing wasted review time.
 
 ### 4. Create Plan
 
