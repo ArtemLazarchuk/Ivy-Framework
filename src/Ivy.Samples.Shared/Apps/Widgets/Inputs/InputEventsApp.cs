@@ -1,4 +1,3 @@
-using Ivy;
 using System.Collections.Immutable;
 
 namespace Ivy.Samples.Shared.Apps.Widgets.Inputs;

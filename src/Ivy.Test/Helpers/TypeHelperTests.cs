@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using Ivy;
 
 namespace Ivy.Test.Helpers;
 

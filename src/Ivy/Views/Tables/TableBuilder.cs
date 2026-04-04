@@ -2,8 +2,6 @@ using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
-using Ivy.Core;
-using Ivy.Core.Hooks;
 
 // ReSharper disable once CheckNamespace
 namespace Ivy;

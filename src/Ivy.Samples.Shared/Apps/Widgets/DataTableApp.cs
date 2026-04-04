@@ -1,5 +1,3 @@
-using Ivy.Samples.Shared.Apps;
-
 namespace Ivy.Samples.Shared.Apps.Widgets;
 
 [App(icon: Icons.DatabaseZap, group: ["Widgets"], searchHints: ["datatable", "table", "grid", "rows", "columns", "footer", "aggregation", "million", "performance"])]
