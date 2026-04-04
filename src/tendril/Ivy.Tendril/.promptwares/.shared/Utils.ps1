@@ -22,6 +22,21 @@ $script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 # Bootstrap required PowerShell modules
 . (Join-Path $PSScriptRoot "Bootstrap-Modules.ps1")
 
+# Resolves the shared folder path. Uses $env:TENDRIL_SHARED if set, otherwise
+# falls back to the ".shared" directory relative to the given script root.
+# Note: Scripts that need to dot-source Utils.ps1 itself cannot use this helper
+# (they need the path before Utils.ps1 is loaded). Those scripts must use the
+# inline pattern instead — see IvyFrameworkVerification.ps1 for an example.
+function Get-SharedFolder {
+    param([string]$ScriptRoot)
+
+    if ($env:TENDRIL_SHARED) {
+        return $env:TENDRIL_SHARED
+    } else {
+        return Join-Path $ScriptRoot ".shared"
+    }
+}
+
 function GetProgramFolder {
     param([string]$ScriptPath)
 
@@ -69,11 +84,7 @@ function PrepareFirmware {
 
     $header = ($Values.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key): $($_.Value)" }) -join "`n"
 
-    $sharedFolder = if ($env:TENDRIL_SHARED) {
-        $env:TENDRIL_SHARED
-    } else {
-        Join-Path $ScriptRoot ".shared"
-    }
+    $sharedFolder = Get-SharedFolder $ScriptRoot
     $firmware = Get-Content "$sharedFolder\Firmware.md" -Raw
     $firmware = $firmware.Replace("[HEADER]", $header)
     $firmware = $firmware.Replace("[LOGFILE]", $LogFile)
