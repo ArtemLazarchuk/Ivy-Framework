@@ -132,6 +132,11 @@ If `SourcePath` is present in the firmware header, copy it to `plan.yaml` as `so
 
 If the plan references other plans (from `[number]` syntax in args), add them to `relatedPlans`.
 
+**Validate repo paths**: After determining the project and repos from config.yaml, verify each repo path exists locally:
+- For each repo in the plan's repos list, check `Test-Path <repo-path>`
+- If any repo path doesn't exist, fail with error: "Repository path does not exist: `<path>`. Check config.yaml project configuration."
+- This prevents creating plans targeting non-existent repo paths (e.g. a deprecated `Ivy-Tendril` repo when the code actually lives in `Ivy-Framework/src/tendril/`)
+
 ### 4.5. Questions Section
 
 Only include `## Questions` if you have genuine questions for the user that block the plan. Place it immediately after the title (before `## Problem`). If there are no questions, **omit the section entirely** — do not include an empty heading or placeholder text.
