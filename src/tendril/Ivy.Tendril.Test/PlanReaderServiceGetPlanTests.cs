@@ -13,7 +13,6 @@ public class PlanReaderServiceGetPlanTests : IDisposable
         Directory.CreateDirectory(_tempDir);
 
         var settings = new TendrilSettings();
-        Directory.CreateDirectory(Path.Combine(_tempDir, "Plans"));
         var configService = new ConfigService(settings, _tempDir);
         _service = new PlanReaderService(configService);
     }
@@ -26,7 +25,7 @@ public class PlanReaderServiceGetPlanTests : IDisposable
 
     private string CreatePlanWithRevision(string folderName, string yaml, string? revisionContent = null)
     {
-        var dir = Path.Combine(_tempDir, folderName);
+        var dir = Path.Combine(_service.PlansDirectory, folderName);
         Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir, "plan.yaml"), yaml);
 
