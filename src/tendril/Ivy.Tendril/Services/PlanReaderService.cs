@@ -573,6 +573,68 @@ public class PlanReaderService(ConfigService config)
         return count;
     }
 
+    public record PlanCountSnapshot(
+        int Drafts,
+        int ReadyForReview,
+        int Failed,
+        int Icebox,
+        int PendingRecommendations
+    );
+
+    public PlanCountSnapshot ComputePlanCounts()
+    {
+        int drafts = 0, reviews = 0, failed = 0, icebox = 0, pendingRecs = 0;
+
+        if (!Directory.Exists(PlansDirectory))
+            return new PlanCountSnapshot(0, 0, 0, 0, 0);
+
+        foreach (var dir in Directory.GetDirectories(PlansDirectory))
+        {
+            try
+            {
+                var planYamlPath = Path.Combine(dir, "plan.yaml");
+                if (File.Exists(planYamlPath))
+                {
+                    var yaml = File.ReadAllText(planYamlPath);
+                    var stateMatch = Regex.Match(yaml, @"(?m)^state:\s*(.+)$");
+                    if (stateMatch.Success)
+                    {
+                        var state = stateMatch.Groups[1].Value.Trim();
+                        switch (state.ToLowerInvariant())
+                        {
+                            case "draft": drafts++; break;
+                            case "readyforreview": reviews++; break;
+                            case "failed": failed++; break;
+                            case "icebox": icebox++; break;
+                        }
+                    }
+                }
+
+                var recommendationsPath = Path.Combine(dir, "artifacts", "recommendations.yaml");
+                if (File.Exists(recommendationsPath))
+                {
+                    var yaml = File.ReadAllText(recommendationsPath);
+                    var items = YamlDeserializer.Deserialize<List<RecommendationYaml>>(yaml);
+                    if (items != null)
+                    {
+                        foreach (var item in items)
+                        {
+                            var state = string.IsNullOrWhiteSpace(item.State) ? "Pending" : item.State;
+                            if (state.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                                pendingRecs++;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Skip malformed plans
+            }
+        }
+
+        return new PlanCountSnapshot(drafts, reviews, failed, icebox, pendingRecs);
+    }
+
     public void UpdateRecommendationState(string planFolderName, string recommendationTitle, string newState)
     {
         var recommendationsPath = Path.Combine(PlansDirectory, planFolderName, "artifacts", "recommendations.yaml");
