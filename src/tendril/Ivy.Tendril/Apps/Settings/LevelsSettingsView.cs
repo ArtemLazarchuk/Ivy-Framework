@@ -18,35 +18,24 @@ public class LevelsSettingsView : ViewBase
 
         var levels = config.Settings.Levels;
 
-        var table = new Table(
-            new TableRow(
-                new TableCell("Name").IsHeader(),
-                new TableCell("Badge").IsHeader(),
-                new TableCell("Actions").IsHeader()
-            )
-            { IsHeader = true }
-        );
+        var rows = levels.Select((level, i) => new LevelRow(i, level.Name, level.Badge)).ToList();
 
-        for (var i = 0; i < levels.Count; i++)
-        {
-            var level = levels[i];
-            var idx = i;
-            table |= new TableRow(
-                new TableCell(Text.Block(level.Name)),
-                new TableCell(new Badge(level.Badge).Variant(
-                    Enum.TryParse<BadgeVariant>(level.Badge, out var v) ? v : BadgeVariant.Outline)),
-                new TableCell(Layout.Horizontal().Gap(1)
+        var table = new TableBuilder<LevelRow>(rows)
+            .Header(t => t.Index, "Actions")
+            .Builder(t => t.Index, f => f.Func<LevelRow, int>(idx =>
+                Layout.Horizontal().Gap(1)
                     | new Button("Edit").Outline().Small().OnClick(() =>
                     {
                         editIndex.Set(idx);
-                        editName.Set(level.Name);
-                        editBadge.Set(level.Badge);
+                        editName.Set(levels[idx].Name);
+                        editBadge.Set(levels[idx].Badge);
                     })
                     | new Button("Delete").Outline().Small().OnClick(() =>
                     {
+                        var name = levels[idx].Name;
                         levels.RemoveAt(idx);
                         config.SaveSettings();
-                        client.Toast($"Level '{level.Name}' deleted", "Deleted");
+                        client.Toast($"Level '{name}' deleted", "Deleted");
                         refreshToken.Refresh();
                     })
                     | (idx > 0
@@ -65,9 +54,12 @@ public class LevelsSettingsView : ViewBase
                             refreshToken.Refresh();
                         })
                         : new Spacer().Width(Size.Units(0)))
+            ))
+            .Builder(t => t.Badge, f => f.Func<LevelRow, string>(badge =>
+                new Badge(badge).Variant(
+                    Enum.TryParse<BadgeVariant>(badge, out var v) ? v : BadgeVariant.Outline
                 )
-            );
-        }
+            ));
 
         var content = Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
             | Text.Block("Priority Levels").Bold()
@@ -119,4 +111,6 @@ public class LevelsSettingsView : ViewBase
 
         return content;
     }
+
+    private record LevelRow(int Index, string Name, string Badge);
 }
