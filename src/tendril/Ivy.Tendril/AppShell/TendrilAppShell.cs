@@ -407,7 +407,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
         {
             MenuItem.Default("Setup")
                 .Tag("$setup")
-                .Icon(Icons.Settings)
+                .Icon(Icons.Construction)
                 .OnSelect(() => navigator.Navigate<SetupApp>()),
             MenuItem.Default("Trash")
                 .Tag("$trash")
@@ -472,7 +472,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
             var trigger = new Button("Settings")
                 .Content(
                     Layout.Horizontal().AlignContent(Align.Left)
-                        | Icons.Construction.ToIcon()
+                        | Icons.Settings.ToIcon()
                         | Text.P("Settings").Small().Muted()
                     )
                     .Variant(ButtonVariant.Ghost).Width(Size.Full());
