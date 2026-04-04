@@ -237,6 +237,9 @@ projects:
     meta:
       slackEmoji: ":seedling:"
     repos:
+      # NOTE: Tendril code lives at src/tendril/Ivy.Tendril/ inside Ivy-Framework repo.
+      # There is a deprecated Ivy-Tendril repo on GitHub - do NOT use it for new plans.
+      # All Tendril plans MUST target Ivy-Framework repo only.
       - path: "%REPOS_HOME%/Ivy-Framework"
         prRule: yolo
     hooks:

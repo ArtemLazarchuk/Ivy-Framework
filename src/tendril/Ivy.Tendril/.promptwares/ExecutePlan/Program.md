@@ -17,6 +17,18 @@ The launcher script sets the working directory to the project's primary repo.
 
 **Note:** Plans are often executed multiple times. For example, a reviewer may not be satisfied with the first execution and sends the plan back to Draft with comments (via UpdatePlan). When re-executing, the worktree branch from the previous run may already exist — handle this gracefully (delete old worktree first, or create with a new branch suffix). Check for existing artifacts and verification reports from prior runs.
 
+## Time Budget Awareness
+
+**You have a 30-minute hard timeout.** Plan your time carefully:
+
+1. **Spend at most 10 minutes reading/understanding the codebase**, then start implementing. If you haven't started writing code by the 10-minute mark, simplify your approach.
+
+2. **Prefer implementing incrementally** (write code, build, fix errors) over exhaustive upfront research. You can read more code as needed during implementation.
+
+3. **If the plan involves unfamiliar patterns, look at ONE good example and follow it** — don't survey every usage in the codebase. Find a single clear reference and proceed.
+
+Focus on making progress, not achieving perfect understanding. A working implementation with minor imperfections beats a timeout with no code written.
+
 ## Execution Steps
 
 ### 1. Read Plan
@@ -123,15 +135,71 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 
 ### 2.5. Setup Frontend Dependencies
 
-If any worktree contains a `frontend/` directory with `package.json`, run the frontend setup tool:
+**!CRITICAL: Frontend builds in worktrees have known issues with `@linaria/core` and `echarts` module resolution that cause 15-25 minute timeouts. Follow this workaround to avoid them.**
+
+#### Default Path (Most Plans)
+
+If the plan does **NOT** modify frontend code (`.tsx`, `.ts`, `.css` files in `src/frontend/` or `src/widgets/*/frontend/`):
+
+1. **Copy pre-built artifacts** from the original repo into each worktree:
 
 ```bash
-pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Setup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
+# Copy main frontend dist
+if [ -d "<original-repo-path>/src/frontend/dist" ]; then
+  mkdir -p "<worktree-path>/src/frontend"
+  cp -r "<original-repo-path>/src/frontend/dist" "<worktree-path>/src/frontend/"
+fi
+
+# Copy widget frontend dists
+for widget_dist in "<original-repo-path>"/src/widgets/*/frontend/dist; do
+  if [ -d "$widget_dist" ]; then
+    widget_name=$(basename $(dirname $(dirname "$widget_dist")))
+    mkdir -p "<worktree-path>/src/widgets/$widget_name/frontend"
+    cp -r "$widget_dist" "<worktree-path>/src/widgets/$widget_name/frontend/"
+  fi
+done
 ```
 
-This creates `.npmrc` files for private package authentication and `node-linker=hoisted` (required for pnpm in worktrees), runs `pnpm install`, and cleans up credentials afterward.
+2. **Create `.npmrc`** in each frontend directory preemptively (in case C# tests need to load frontend resources):
 
-**Important:** This step must run after worktrees are created but before any build commands that depend on `node_modules`.
+```bash
+# Create .npmrc in main frontend
+if [ -d "<worktree-path>/src/frontend" ]; then
+  echo "node-linker=hoisted" > "<worktree-path>/src/frontend/.npmrc"
+fi
+
+# Create .npmrc in widget frontends
+for widget_frontend in "<worktree-path>"/src/widgets/*/frontend; do
+  if [ -d "$widget_frontend" ]; then
+    echo "node-linker=hoisted" > "$widget_frontend/.npmrc"
+  fi
+done
+```
+
+3. **Skip `pnpm install`** entirely — the copied artifacts are sufficient for C# build and tests.
+
+#### Exception Path (Frontend Code Changes)
+
+If the plan **modifies frontend code** (adding/editing `.tsx`, `.ts`, `.css` files), you MUST rebuild:
+
+1. **Create `.npmrc`** with `node-linker=hoisted` in each frontend directory (required for pnpm in worktrees)
+2. **Run `pnpm install`** in each frontend directory:
+
+```bash
+cd "<worktree-path>/src/frontend" && pnpm install && cd ../..
+
+# For each widget with frontend
+for widget_frontend in "<worktree-path>"/src/widgets/*/frontend; do
+  if [ -f "$widget_frontend/package.json" ]; then
+    cd "$widget_frontend" && pnpm install && cd ../../..
+  fi
+done
+```
+
+3. **Run `pnpm run build`** to regenerate `dist/`
+4. Be prepared for resolution failures — if `pnpm install` fails after 2 attempts, document the failure and recommend the user manually fix the lockfile
+
+**Note:** The `Setup-WorktreeFrontend.ps1` tool can automate authentication and `.npmrc` creation, but by default it also runs `pnpm install`. Only use it for the Exception Path when you need a full rebuild.
 
 ### 3. Handle Cross-Repo References
 

@@ -251,7 +251,7 @@ public class ContentView(
         // Plan tab content
         var planTabContent = new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
             .DangerouslyAllowLocalFiles()
-            .OnLinkClick(FileLinkHelper.CreateLinkClickHandler(openFile));
+            .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
         // Review actions
         var projectConfig = _config.GetProject(_selectedPlan.Project);
@@ -443,7 +443,7 @@ public class ContentView(
             var fileRepoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
                 ? _selectedPlan.Repos
                 : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
-            var fileLinkSheet = FileLinkHelper.RenderFileSheet(openFile.Value, fileRepoPaths, () => openFile.Set(null));
+            var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(openFile.Value, () => openFile.Set(null), fileRepoPaths);
             if (fileLinkSheet != null) content |= fileLinkSheet;
         }
 
