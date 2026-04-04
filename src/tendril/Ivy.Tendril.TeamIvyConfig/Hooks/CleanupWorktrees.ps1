@@ -10,6 +10,12 @@ param(
 
 $ErrorActionPreference = "Continue"
 
+# Ensure powershell-yaml is available
+if (-not (Get-Module -ListAvailable -Name powershell-yaml)) {
+    Install-Module -Name powershell-yaml -Force -Scope CurrentUser
+}
+Import-Module powershell-yaml
+
 # Resolve plans directory
 $tendrilHome = $env:TENDRIL_HOME
 if (-not $tendrilHome) {
@@ -38,16 +44,15 @@ foreach ($planFolder in $planFolders) {
     if (-not (Test-Path $planYamlPath)) { continue }
 
     $planContent = Get-Content $planYamlPath -Raw
+    $yaml = $planContent | ConvertFrom-Yaml
 
     # Check state
-    $stateMatch = [regex]::Match($planContent, '(?m)^state:\s*(.+)$')
-    $state = if ($stateMatch.Success) { $stateMatch.Groups[1].Value.Trim() } else { "Unknown" }
+    $state = if ($yaml.state) { $yaml.state } else { "Unknown" }
     if ($state -notin $terminalStates) { continue }
 
     # Check age (use updated timestamp)
-    $updatedMatch = [regex]::Match($planContent, '(?m)^updated:\s*(.+)$')
-    if ($updatedMatch.Success) {
-        $updated = [datetime]::Parse($updatedMatch.Groups[1].Value.Trim())
+    if ($yaml.updated) {
+        $updated = [datetime]::Parse("$($yaml.updated)")
         if ($updated -gt $cutoffDate) { continue }
     }
 
@@ -55,12 +60,15 @@ foreach ($planFolder in $planFolders) {
     $planId = if ($planFolder.Name -match '^(\d+)') { $Matches[1] } else { "" }
 
     # Extract repo paths
-    $repoMatches = [regex]::Matches($planContent, '(?m)^\s*-\s*((?:[A-Za-z]:\\|/).+)$')
     $repoPaths = @()
-    foreach ($m in $repoMatches) {
-        $p = $m.Groups[1].Value.Trim()
-        $p = [Environment]::ExpandEnvironmentVariables($p)
-        if (Test-Path $p) { $repoPaths += $p }
+    if ($yaml.repos) {
+        foreach ($repo in $yaml.repos) {
+            $p = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) { $repo.path } else { "$repo" }
+            if ($p) {
+                $p = [Environment]::ExpandEnvironmentVariables($p)
+                if (Test-Path $p) { $repoPaths += $p }
+            }
+        }
     }
 
     Write-Host "Cleaning plan $($planFolder.Name) (state: $state)" -ForegroundColor Cyan

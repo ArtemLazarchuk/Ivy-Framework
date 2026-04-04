@@ -19,6 +19,12 @@ if (-not $env:TENDRIL_HOME) {
 $script:ConfigPath = Join-Path $env:TENDRIL_HOME "config.yaml"
 $script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 
+# Ensure powershell-yaml is available
+if (-not (Get-Module -ListAvailable -Name powershell-yaml)) {
+    Install-Module -Name powershell-yaml -Force -Scope CurrentUser
+}
+Import-Module powershell-yaml
+
 function GetProgramFolder {
     param([string]$ScriptPath)
 
@@ -127,9 +133,11 @@ function UpdatePlanState {
 
     $content = Get-Content $planYamlPath -Raw
     $now = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    $content = $content -replace '(?m)^state:\s*.*$', "state: $NewState"
-    $content = $content -replace '(?m)^updated:\s*.*$', "updated: $now"
-    Set-Content -Path $planYamlPath -Value $content -Encoding UTF8
+    $yaml = $content | ConvertFrom-Yaml -Ordered
+    $yaml["state"] = $NewState
+    $yaml["updated"] = $now
+    $content = ConvertTo-Yaml $yaml
+    Set-Content -Path $planYamlPath -Value $content -NoNewline -Encoding UTF8
     Write-Host "Plan state updated to: $NewState" -ForegroundColor Cyan
 }
 
@@ -208,9 +216,9 @@ function ReadPlanProject {
     param([string]$PlanYamlPath)
 
     $content = Get-Content $PlanYamlPath -Raw
-    $match = [regex]::Match($content, '(?m)^project:\s*(.+)$')
-    $project = if ($match.Success) { $match.Groups[1].Value.Trim() } else { "[Auto]" }
-    return @{ Content = $content; Project = $project }
+    $yaml = $content | ConvertFrom-Yaml
+    $project = if ($yaml.project) { $yaml.project } else { "[Auto]" }
+    return @{ Content = $content; Project = $project; Yaml = $yaml }
 }
 
 function GetProjectWorkDir {
@@ -218,20 +226,13 @@ function GetProjectWorkDir {
 
     if (Test-Path $script:ConfigPath) {
         try {
-            $yaml = Get-Content $script:ConfigPath -Raw
-            # Match the project block and extract the first repo path
-            $pattern = "(?s)- name:\s*$([regex]::Escape($Project))\s+repos:\s*\n((?:\s+-.+\n?)+)"
-            $match = [regex]::Match($yaml, $pattern)
-            if ($match.Success) {
-                # Try new format: - path: D:\...
-                $pathLine = [regex]::Match($match.Groups[1].Value, '(?m)path:\s*(.+)$')
-                if ($pathLine.Success) {
-                    return $pathLine.Groups[1].Value.Trim()
-                }
-                # Fallback: old format - D:\...
-                $repoLine = [regex]::Match($match.Groups[1].Value, '^\s+-\s*(.+)$', [System.Text.RegularExpressions.RegexOptions]::Multiline)
-                if ($repoLine.Success) {
-                    return $repoLine.Groups[1].Value.Trim()
+            $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
+            $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
+            if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
+                $repo = $projectEntry.repos[0]
+                $path = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) { $repo.path } else { "$repo" }
+                if ($path) {
+                    return [Environment]::ExpandEnvironmentVariables($path)
                 }
             }
         }
@@ -373,16 +374,7 @@ function GetAgentCommandFromConfig {
 
     if (Test-Path $configPath) {
         try {
-            $yaml = Get-Content $configPath -Raw
-            # Regex match as first pass or fallback
-            $pattern = "(?m)^agentCommand:\s*(.+)$"
-            $match = [regex]::Match($yaml, $pattern)
-            if ($match.Success) {
-                $raw = $match.Groups[1].Value.Trim()
-            }
-
-            # Parse config with ConvertFrom-Yaml for structured access
-            $config = $yaml | ConvertFrom-Yaml
+            $config = Get-Content $configPath -Raw | ConvertFrom-Yaml
 
             if ($config.agentCommand) {
                 $raw = $config.agentCommand
