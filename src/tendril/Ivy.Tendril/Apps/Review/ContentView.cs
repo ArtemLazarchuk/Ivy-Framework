@@ -251,14 +251,7 @@ public class ContentView(
         // Plan tab content
         var planTabContent = new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
             .DangerouslyAllowLocalFiles()
-            .OnLinkClick(url =>
-            {
-                if (url.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
-                {
-                    var filePath = url.Substring("file:///".Length);
-                    openFile.Set(filePath);
-                }
-            });
+            .OnLinkClick(FileLinkHelper.CreateLinkClickHandler(openFile));
 
         // Review actions
         var projectConfig = _config.GetProject(_selectedPlan.Project);
@@ -446,58 +439,12 @@ public class ContentView(
             ).Width(Size.Half()).Resizable();
         }
 
-        if (openFile.Value is { } filePath2)
         {
-            var ext = Path.GetExtension(filePath2);
-            var imageExts = new[] { ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp" };
-            object fileSheetContent;
-            if (imageExts.Contains(ext, StringComparer.OrdinalIgnoreCase))
-            {
-                var imageUrl = $"/ivy/local-file?path={Uri.EscapeDataString(filePath2)}";
-                fileSheetContent = new Image(imageUrl) { ObjectFit = ImageFit.Contain, Alt = Path.GetFileName(filePath2) };
-            }
-            else
-            {
-                if (File.Exists(filePath2))
-                {
-                    var fileContent = File.ReadAllText(filePath2);
-                    var language = FileApp.GetLanguage(Path.GetExtension(filePath2));
-                    fileSheetContent = new Markdown($"```{language.ToString().ToLowerInvariant()}\n{fileContent}\n```");
-                }
-                else
-                {
-                    var fileName = Path.GetFileName(filePath2);
-                    var fileRepoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
-                        ? _selectedPlan.Repos
-                        : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
-                    var suggestions = MarkdownHelper.FindFilesInRepos(fileRepoPaths, fileName);
-                    var notFoundContent = suggestions.Count > 0
-                        ? $"File not found.\n\nDid you mean:\n{string.Join("\n", suggestions.Select(s => $"- `{s}`"))}"
-                        : "File not found.";
-                    fileSheetContent = new Markdown(notFoundContent);
-                }
-            }
-
-            var fileFinalContent = File.Exists(filePath2)
-                ? (object)new HeaderLayout(
-                    header: new Button("Open in VS Code").Icon(Icons.ExternalLink).Outline().OnClick(() =>
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = "code",
-                            Arguments = $"\"{filePath2}\"",
-                            UseShellExecute = true
-                        });
-                    }),
-                    content: fileSheetContent
-                )
-                : fileSheetContent;
-
-            content |= new Sheet(
-                onClose: () => openFile.Set(null),
-                content: fileFinalContent,
-                title: Path.GetFileName(filePath2)
-            ).Width(Size.Half()).Resizable();
+            var fileRepoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
+                ? _selectedPlan.Repos
+                : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+            var fileLinkSheet = FileLinkHelper.RenderFileSheet(openFile.Value, fileRepoPaths, () => openFile.Set(null));
+            if (fileLinkSheet != null) content |= fileLinkSheet;
         }
 
         // Suggest Changes dialog
