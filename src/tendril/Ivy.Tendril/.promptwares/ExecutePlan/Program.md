@@ -73,6 +73,28 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 
 **Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.
 
+### 2.5. Configure pnpm for Ivy-Framework Worktrees
+
+If the worktree is for the Ivy-Framework repo (contains `src/frontend/` and uses pnpm):
+
+1. Create temporary `.npmrc` files with `node-linker=hoisted` in:
+   - `<worktree>/src/frontend/.npmrc`
+   - Each `<worktree>/src/widgets/*/frontend/.npmrc` (if widget frontend directories exist)
+
+2. Run pnpm install:
+   ```bash
+   cd <worktree>/src/frontend && pnpm install
+   ```
+
+3. For each widget frontend:
+   ```bash
+   cd <worktree>/src/widgets/<widget>/frontend && pnpm install
+   ```
+
+**Important:** These `.npmrc` files must be deleted after verification (Step 8 "Final Clean Check") — they are build workarounds and should not be committed.
+
+**Rationale:** Worktree paths are longer than main repo paths, breaking pnpm's symlink resolution for `@voidzero-dev/vite-plus-core`'s package imports. Hoisted mode avoids this issue. See Memory/dotnet-project-gotchas.md for details.
+
 ### 3. Handle Cross-Repo References
 
 Projects may reference other repos via absolute paths in `.csproj` files (e.g. `<ProjectReference Include="/path/to/other-repo/src/Project.csproj" />`).
@@ -239,7 +261,15 @@ A verification is not complete without its report. If the report file does not e
 
 ### 8. Final Clean Check
 
-After all verifications pass, run `git status` in every worktree. If there are any uncommitted files (from verification fixes, generated files, etc.), commit or discard them. The worktrees must be completely clean before finishing.
+After all verifications pass:
+
+1. Delete temporary `.npmrc` files created in Step 2.5 (if any):
+   ```bash
+   rm -f <worktree>/src/frontend/.npmrc
+   rm -f <worktree>/src/widgets/*/frontend/.npmrc
+   ```
+
+2. Run `git status` in every worktree. If there are any uncommitted files (from verification fixes, generated files, etc.), commit or discard them. The worktrees must be completely clean before finishing.
 
 ### 9. Plan State
 
