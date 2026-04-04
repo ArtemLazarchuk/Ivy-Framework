@@ -30,6 +30,10 @@ public class JobServiceTimeoutTests
         Assert.Contains("30 minute timeout", job.StatusMessage);
         Assert.NotNull(job.CompletedAt);
         Assert.NotNull(job.DurationSeconds);
+
+        var notification = service.PendingNotifications.TryDequeue(out var result) ? result : null;
+        Assert.NotNull(notification);
+        Assert.Equal("ExecutePlan Timed Out", notification.Title);
     }
 
     [Fact]
@@ -46,6 +50,10 @@ public class JobServiceTimeoutTests
         Assert.NotNull(job);
         Assert.Equal("Timeout", job.Status);
         Assert.Contains("No output for 10 minutes", job.StatusMessage);
+
+        var notification = service.PendingNotifications.TryDequeue(out var result) ? result : null;
+        Assert.NotNull(notification);
+        Assert.Equal("ExecutePlan Timed Out", notification.Title);
     }
 
     [Fact]
@@ -61,6 +69,10 @@ public class JobServiceTimeoutTests
         Assert.NotNull(job);
         Assert.Equal("Completed", job.Status);
         Assert.Null(job.StatusMessage);
+
+        var notification = service.PendingNotifications.TryDequeue(out var result) ? result : null;
+        Assert.NotNull(notification);
+        Assert.Equal("ExecutePlan Completed", notification.Title);
     }
 
     [Fact]
@@ -75,6 +87,10 @@ public class JobServiceTimeoutTests
         var job = service.GetJob(id);
         Assert.NotNull(job);
         Assert.Equal("Failed", job.Status);
+
+        var notification = service.PendingNotifications.TryDequeue(out var result) ? result : null;
+        Assert.NotNull(notification);
+        Assert.Equal("ExecutePlan Failed", notification.Title);
     }
 
     [Fact]
