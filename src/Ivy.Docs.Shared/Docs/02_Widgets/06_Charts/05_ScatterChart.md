@@ -181,6 +181,61 @@ public class ZAxisRangeDemo : ViewBase
 }
 ```
 
+## Customizing with polish
+
+When building charts from queryable data with `ToScatterChart()`, use the `polish` callback to customize the scaffolded chart before it renders. The callback receives the fully built `ScatterChart` with scatter series already configured by the selected style.
+
+Common use cases for `polish`:
+- Override scatter point colors, shapes, or fill opacity
+- Add reference lines or grid customization
+- Replace the default scatters array with custom configurations
+- Add or modify tooltips, legends, or grids
+
+### Example: Custom scatter styling
+
+```csharp demo-below
+public class PolishScatterChartDemo : ViewBase
+{
+    record CityData(string City, int Population, int Area, int GreenSpace);
+
+    public override object? Build()
+    {
+        var data = new CityData[]
+        {
+            new("Oslo", 700, 480, 68),
+            new("Berlin", 3600, 892, 44),
+            new("Paris", 2100, 105, 21),
+            new("London", 8900, 1572, 33),
+            new("Rome", 2800, 1285, 52),
+        };
+
+        return Layout.Vertical()
+            | data.ToScatterChart(
+                polish: chart =>
+                {
+                    // Replace the scaffolded scatters with custom styling
+                    return chart with
+                    {
+                        Scatters = chart.Scatters.Select(s =>
+                            s with
+                            {
+                                Shape = ScatterShape.Diamond,
+                                Fill = Colors.Teal,
+                                FillOpacity = 0.7
+                            }
+                        ).ToArray()
+                    };
+                }
+            )
+            .Dimension("City", e => e.City)
+            .Measure("Population", e => e.Population)
+            .Size("Area", e => e.Area);
+    }
+}
+```
+
+> **Note:** The `polish` callback receives the fully scaffolded `ScatterChart` which already includes scatters from the style. Use `chart with { ... }` syntax to replace or modify chart properties while preserving others.
+
 <WidgetDocs Type="Ivy.ScatterChart" ExtensionTypes="Ivy.ScatterChartExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Charts/ScatterChart.cs"/>
 
 ## Example
