@@ -64,7 +64,7 @@ public class ContentView(
                 _refresh();
                 GoToNext();
             })
-            | new Button("Accept with Notes").Icon(Icons.CheckCircle).Outline().ShortcutKey("w").OnClick(() =>
+            | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() =>
             {
                 _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "AcceptedWithNotes");
                 _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
