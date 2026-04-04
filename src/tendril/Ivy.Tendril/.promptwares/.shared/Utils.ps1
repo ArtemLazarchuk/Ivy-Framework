@@ -223,20 +223,37 @@ function ReadPlanProject {
 }
 
 function ExtractRepoPathsFromYaml {
+    <#
+    .SYNOPSIS
+    Extracts and resolves repository paths from YAML repo entries.
+
+    .PARAMETER Repos
+    Array of repo entries from YAML (can be hashtables with .path or plain strings)
+
+    .PARAMETER ValidateExists
+    If true, only returns paths that exist on disk
+
+    .PARAMETER ReturnFirst
+    If true, returns only the first valid path (for GetProjectWorkDir compatibility)
+
+    .EXAMPLE
+    $repoPaths = ExtractRepoPathsFromYaml $planInfo.Yaml.repos -ValidateExists
+    #>
     param(
         [Parameter(Mandatory = $true)]
-        $ReposArray,
-        [switch]$ValidateExists
+        $Repos,
+
+        [switch]$ValidateExists,
+        [switch]$ReturnFirst
     )
 
-    $paths = @()
-
-    if (-not $ReposArray) {
-        return $paths
+    if (-not $Repos) {
+        if ($ReturnFirst) { return $null }
+        return @()
     }
 
-    foreach ($repo in $ReposArray) {
-        # Handle both formats: plain string or object with 'path' property
+    $paths = @()
+    foreach ($repo in $Repos) {
         $p = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
             $repo.path
         } else {
@@ -244,19 +261,21 @@ function ExtractRepoPathsFromYaml {
         }
 
         if ($p) {
-            # Expand environment variables (e.g. %REPOS_HOME%)
             $p = [Environment]::ExpandEnvironmentVariables($p)
 
             if ($ValidateExists) {
                 if (Test-Path $p) {
                     $paths += $p
+                    if ($ReturnFirst) { return $p }
                 }
             } else {
                 $paths += $p
+                if ($ReturnFirst) { return $p }
             }
         }
     }
 
+    if ($ReturnFirst) { return $null }
     return $paths
 }
 
@@ -267,11 +286,8 @@ function GetProjectWorkDir {
         try {
             $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
             $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
-            if ($projectEntry -and $projectEntry.repos) {
-                $paths = ExtractRepoPathsFromYaml -ReposArray $projectEntry.repos
-                if ($paths.Count -gt 0) {
-                    return $paths[0]
-                }
+            if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
+                return ExtractRepoPathsFromYaml $projectEntry.repos -ReturnFirst
             }
         }
         catch { }
