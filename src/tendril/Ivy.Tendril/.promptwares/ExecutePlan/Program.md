@@ -121,27 +121,17 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 
 **Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.
 
-### 2.5. Configure pnpm for Ivy-Framework Worktrees
+### 2.5. Setup Frontend Dependencies
 
-If the worktree is for the Ivy-Framework repo (contains `src/frontend/` and uses pnpm):
+If any worktree contains a `frontend/` directory with `package.json`, run the frontend setup tool:
 
-1. Create temporary `.npmrc` files with `node-linker=hoisted` in:
-   - `<worktree>/src/frontend/.npmrc`
-   - Each `<worktree>/src/widgets/*/frontend/.npmrc` (if widget frontend directories exist)
+```bash
+pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Setup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
+```
 
-2. Run pnpm install:
-   ```bash
-   cd <worktree>/src/frontend && pnpm install
-   ```
+This creates `.npmrc` files for private package authentication and `node-linker=hoisted` (required for pnpm in worktrees), runs `pnpm install`, and cleans up credentials afterward.
 
-3. For each widget frontend:
-   ```bash
-   cd <worktree>/src/widgets/<widget>/frontend && pnpm install
-   ```
-
-**Important:** These `.npmrc` files must be deleted after verification (Step 8 "Final Clean Check") — they are build workarounds and should not be committed.
-
-**Rationale:** Worktree paths are longer than main repo paths, breaking pnpm's symlink resolution for `@voidzero-dev/vite-plus-core`'s package imports. Hoisted mode avoids this issue. See Memory/dotnet-project-gotchas.md for details.
+**Important:** This step must run after worktrees are created but before any build commands that depend on `node_modules`.
 
 ### 3. Handle Cross-Repo References
 
@@ -338,3 +328,4 @@ You are running in non-interactive mode and CANNOT ask questions. If you are uns
 - Commit messages must reference the plan ID
 - All `file:///` paths in plans should be converted to Windows paths when needed
 - Do NOT commit artifact files (screenshots, images) to the repo. Test artifacts belong in `<PlanFolder>/artifacts/` only — MakePr handles uploading them to persistent storage.
+- Private npm packages (like `@ivy-interactive/ivy-design-system`) require authentication via `.npmrc`. The Setup-WorktreeFrontend.ps1 tool handles this automatically. Credentials come from NPM_TOKEN env var or .NET user secrets (Npm:RegistryToken).
