@@ -1,4 +1,5 @@
 using Ivy;
+using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.PullRequest;
 using Ivy.Tendril.Services;
 
@@ -103,9 +104,7 @@ public class PullRequestApp : ViewBase
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
-            var repoPaths = (plan?.Repos?.Count ?? 0) > 0
-                ? plan!.Repos
-                : config.GetProject(plan?.Project ?? "")?.RepoPaths ?? [];
+            var repoPaths = plan?.GetEffectiveRepoPaths(config) ?? [];
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
                 openFile.Value, () => openFile.Set(null), repoPaths);
 

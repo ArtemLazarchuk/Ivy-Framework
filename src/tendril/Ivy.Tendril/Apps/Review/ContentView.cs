@@ -72,9 +72,7 @@ public class ContentView(
             async (_, ct) =>
             {
                 if (_selectedPlan is null) return Array.Empty<string>();
-                var repos = (_selectedPlan.Repos?.Count ?? 0) > 0
-                    ? _selectedPlan.Repos
-                    : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+                var repos = _selectedPlan.GetEffectiveRepoPaths(_config);
                 var repoPath = repos.FirstOrDefault();
                 if (repoPath is null) return Array.Empty<string>();
                 var repoConfig = GithubService.GetRepoConfigFromPath(repoPath);
@@ -173,9 +171,7 @@ public class ContentView(
         }
 
         // Commits tab content
-        var repoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
-            ? _selectedPlan.Repos
-            : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+        var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
         var commitRows = _selectedPlan.Commits.Select(commit =>
         {
             var title = repoPaths
@@ -374,9 +370,7 @@ public class ContentView(
 
         if (openCommit.Value is { } commitHash)
         {
-            var repoPaths2 = (_selectedPlan.Repos?.Count ?? 0) > 0
-                ? _selectedPlan.Repos
-                : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+            var repoPaths2 = _selectedPlan.GetEffectiveRepoPaths(_config);
 
             string? commitDiff = null;
             List<(string Status, string FilePath)>? commitFiles = null;
@@ -441,9 +435,7 @@ public class ContentView(
         }
 
         {
-            var fileRepoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
-                ? _selectedPlan.Repos
-                : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+            var fileRepoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(openFile.Value, () => openFile.Set(null), fileRepoPaths);
             if (fileLinkSheet != null) content |= fileLinkSheet;
         }

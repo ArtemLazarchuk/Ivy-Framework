@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Ivy;
 using Ivy.Tendril.Apps.Jobs;
+using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
@@ -233,9 +234,7 @@ public class JobsApp : ViewBase
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
-            var repoPaths = (plan?.Repos?.Count ?? 0) > 0
-                ? plan!.Repos
-                : config.GetProject(plan?.Project ?? "")?.RepoPaths ?? [];
+            var repoPaths = plan?.GetEffectiveRepoPaths(config) ?? [];
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
                 openFile.Value, () => openFile.Set(null), repoPaths);
 

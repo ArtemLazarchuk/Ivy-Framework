@@ -172,9 +172,7 @@ public class ContentView(
             new Icebox.Dialogs.DeletePlanDialog(deleteDialogOpen, _selectedPlan, _planService, _refreshPlans)
         };
 
-        var repoPaths = (_selectedPlan.Repos?.Count ?? 0) > 0
-            ? _selectedPlan.Repos
-            : _config.GetProject(_selectedPlan.Project)?.RepoPaths ?? [];
+        var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
         var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
             openFile.Value, () => openFile.Set(null), repoPaths, _config.Editor.Command, _config.Editor.Label);
         if (fileLinkSheet is not null)
