@@ -32,5 +32,5 @@ RUN dotnet publish "src/Ivy.Samples/Ivy.Samples.csproj" -c $BUILD_CONFIGURATION 
 FROM base AS final
 WORKDIR /app
 ENV PORT=5010
-COPY --from=build /app/publish .
+COPY --from=build /app/deploy .
 ENTRYPOINT ["dotnet", "Ivy.Samples.dll"]
