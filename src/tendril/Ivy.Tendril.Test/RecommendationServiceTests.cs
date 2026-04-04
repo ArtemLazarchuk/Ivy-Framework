@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Test;
@@ -26,12 +27,12 @@ public class RecommendationServiceTests : IDisposable
             Directory.Delete(_tempDir, recursive: true);
     }
 
-    private string CreatePlanWithRecommendations(string folderName, string recommendationsYaml)
+    private string CreatePlanWithRecommendations(string folderName, string recommendationsYaml, string project = "Tendril", string state = "Completed")
     {
         var dir = Path.Combine(_plansDir, folderName);
         Directory.CreateDirectory(dir);
 
-        var planYaml = "state: Completed\nproject: Tendril\ntitle: Test Plan\nrepos: []\ncommits: []\nprs: []\nverifications: []\nrelatedPlans: []\ndependsOn: []\ncreated: 2026-01-01T00:00:00Z\nupdated: 2026-01-01T00:00:00Z\n";
+        var planYaml = $"state: {state}\nproject: {project}\ntitle: Test Plan\nrepos: []\ncommits: []\nprs: []\nverifications: []\nrelatedPlans: []\ndependsOn: []\ncreated: 2026-01-01T00:00:00Z\nupdated: 2026-01-01T00:00:00Z\n";
         File.WriteAllText(Path.Combine(dir, "plan.yaml"), planYaml);
 
         var revisionsDir = Path.Combine(dir, "revisions");
@@ -150,5 +151,88 @@ public class RecommendationServiceTests : IDisposable
         var count = _service.GetPendingRecommendationsCount();
 
         Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public void GetRecommendations_PopulatesSourcePlanStatus()
+    {
+        var yaml = "- title: Item\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01620-StatusTest", yaml, project: "Framework", state: "Completed");
+
+        var recommendations = _service.GetRecommendations();
+
+        Assert.Single(recommendations);
+        Assert.Equal(PlanStatus.Completed, recommendations[0].SourcePlanStatus);
+    }
+
+    [Fact]
+    public void GetRecommendations_FilterByProject_ReturnsOnlyMatchingProject()
+    {
+        var yaml = "- title: Rec A\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01621-Framework", yaml, project: "Framework");
+        CreatePlanWithRecommendations("01622-Tendril", yaml, project: "Tendril");
+        CreatePlanWithRecommendations("01623-Agent", yaml, project: "Agent");
+
+        var recommendations = _service.GetRecommendations();
+        var frameworkOnly = recommendations.Where(r => r.Project == "Framework").ToList();
+
+        Assert.Equal(3, recommendations.Count);
+        Assert.Single(frameworkOnly);
+        Assert.Equal("Framework", frameworkOnly[0].Project);
+    }
+
+    [Fact]
+    public void GetRecommendations_FilterByPlanStatus_ReturnsOnlyMatchingStatus()
+    {
+        var yaml = "- title: Rec\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01624-Completed", yaml, state: "Completed");
+        CreatePlanWithRecommendations("01625-Failed", yaml, state: "Failed");
+        CreatePlanWithRecommendations("01626-Draft", yaml, state: "Draft");
+
+        var recommendations = _service.GetRecommendations();
+        var completedOnly = recommendations.Where(r => r.SourcePlanStatus == PlanStatus.Completed).ToList();
+
+        Assert.Equal(3, recommendations.Count);
+        Assert.Single(completedOnly);
+        Assert.Equal(PlanStatus.Completed, completedOnly[0].SourcePlanStatus);
+    }
+
+    [Fact]
+    public void GetRecommendations_CombinedFilters_ApplyAndLogic()
+    {
+        var yaml = "- title: Rec\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01627-FwCompleted", yaml, project: "Framework", state: "Completed");
+        CreatePlanWithRecommendations("01628-FwFailed", yaml, project: "Framework", state: "Failed");
+        CreatePlanWithRecommendations("01629-TdCompleted", yaml, project: "Tendril", state: "Completed");
+
+        var recommendations = _service.GetRecommendations();
+        var filtered = recommendations
+            .Where(r => r.Project == "Framework")
+            .Where(r => r.SourcePlanStatus == PlanStatus.Completed)
+            .ToList();
+
+        Assert.Equal(3, recommendations.Count);
+        Assert.Single(filtered);
+        Assert.Equal("Framework", filtered[0].Project);
+        Assert.Equal(PlanStatus.Completed, filtered[0].SourcePlanStatus);
+    }
+
+    [Fact]
+    public void GetRecommendations_NullFilters_ReturnsAll()
+    {
+        var yaml = "- title: Rec\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01630-All1", yaml, project: "Framework", state: "Completed");
+        CreatePlanWithRecommendations("01631-All2", yaml, project: "Tendril", state: "Failed");
+
+        var recommendations = _service.GetRecommendations();
+        string? projectFilter = null;
+        string? statusFilter = null;
+
+        var filtered = recommendations
+            .Where(r => projectFilter == null || r.Project == projectFilter)
+            .Where(r => statusFilter == null || r.SourcePlanStatus.ToString() == statusFilter)
+            .ToList();
+
+        Assert.Equal(2, filtered.Count);
     }
 }

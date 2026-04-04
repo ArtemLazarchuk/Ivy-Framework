@@ -527,7 +527,8 @@ public class PlanReaderService(ConfigService config)
                         PlanTitle: plan.Title,
                         PlanFolderName: plan.FolderName,
                         Project: plan.Project,
-                        Date: plan.Updated
+                        Date: plan.Updated,
+                        SourcePlanStatus: plan.Status
                     ));
                 }
             }
@@ -698,7 +699,8 @@ public record Recommendation(
     string PlanTitle,
     string PlanFolderName,
     string Project,
-    DateTime Date
+    DateTime Date,
+    PlanStatus SourcePlanStatus
 );
 
 public class RecommendationYaml
