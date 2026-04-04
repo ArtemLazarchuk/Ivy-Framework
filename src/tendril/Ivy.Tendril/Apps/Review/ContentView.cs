@@ -112,7 +112,7 @@ public class ContentView(
                 _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
                 _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
                 _refreshPlans();
-            }).WithConfetti(AnimationTrigger.Click);
+            }).ShortcutKey("m").WithConfetti(AnimationTrigger.Click);
 
         // Content sections
         var content = Layout.Vertical();
