@@ -69,7 +69,11 @@ function PrepareFirmware {
 
     $header = ($Values.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key): $($_.Value)" }) -join "`n"
 
-    $sharedFolder = Join-Path $ScriptRoot ".shared"
+    $sharedFolder = if ($env:TENDRIL_SHARED) {
+        $env:TENDRIL_SHARED
+    } else {
+        Join-Path $ScriptRoot ".shared"
+    }
     $firmware = Get-Content "$sharedFolder\Firmware.md" -Raw
     $firmware = $firmware.Replace("[HEADER]", $header)
     $firmware = $firmware.Replace("[LOGFILE]", $LogFile)

@@ -57,7 +57,10 @@ public class RecommendationsApp : ViewBase
                 | planStatusFilter.ToSelectInput(statusOptions).Placeholder("All Statuses").Nullable().WithField().Label("Plan Status")
         ).Open(false).Ghost();
 
-        var sidebar = new Recommendations.SidebarView(filtered, selectedState);
+        var totalPendingCount = recommendations.Count(r => r.State == "Pending");
+        var hasActiveFilters = projectFilter.Value != null || planStatusFilter.Value != null;
+
+        var sidebar = new Recommendations.SidebarView(filtered, selectedState, totalPendingCount, hasActiveFilters);
 
         return new SidebarLayout(
             mainContent: new Recommendations.ContentView(selectedState.Value, filtered, selectedState, planService, jobService, Refresh),

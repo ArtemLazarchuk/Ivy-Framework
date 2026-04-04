@@ -231,85 +231,26 @@ public class JobsApp : ViewBase
                 ? Text.P("Plan not found or empty.")
                 : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
                     .DangerouslyAllowLocalFiles()
-                    .OnLinkClick(url =>
-                    {
-                        if (url.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var filePath = url.Substring("file:///".Length);
-                            openFile.Set(filePath);
-                        }
-                    });
+                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
-            if (openFile.Value is { } filePath2)
+            var repoPaths = (plan?.Repos?.Count ?? 0) > 0
+                ? plan!.Repos
+                : config.GetProject(plan?.Project ?? "")?.RepoPaths ?? [];
+            var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
+                openFile.Value, () => openFile.Set(null), repoPaths);
+
+            var planSheet = new Sheet(
+                onClose: () => showPlan.Set(null),
+                content: sheetContent,
+                title: plan?.Title ?? folderName
+            ).Width(Size.Half()).Resizable();
+
+            if (fileLinkSheet is not null)
             {
-                var ext = Path.GetExtension(filePath2);
-                var imageExts = new[] { ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp" };
-                object fileSheetContent;
-                if (imageExts.Contains(ext, StringComparer.OrdinalIgnoreCase))
-                {
-                    var imageUrl = $"/ivy/local-file?path={Uri.EscapeDataString(filePath2)}";
-                    fileSheetContent = new Image(imageUrl) { ObjectFit = ImageFit.Contain, Alt = Path.GetFileName(filePath2) };
-                }
-                else
-                {
-                    if (File.Exists(filePath2))
-                    {
-                        var fileContent = File.ReadAllText(filePath2);
-                        var language = FileApp.GetLanguage(ext);
-                        fileSheetContent = new Markdown($"```{language.ToString().ToLowerInvariant()}\n{fileContent}\n```");
-                    }
-                    else
-                    {
-                        var fileName = Path.GetFileName(filePath2);
-                        var repoPaths = (plan?.Repos?.Count ?? 0) > 0
-                            ? plan!.Repos
-                            : config.GetProject(plan?.Project ?? "")?.RepoPaths ?? [];
-                        var suggestions = MarkdownHelper.FindFilesInRepos(repoPaths, fileName);
-                        var notFoundContent = suggestions.Count > 0
-                            ? $"File not found.\n\nDid you mean:\n{string.Join("\n", suggestions.Select(s => $"- `{s}`"))}"
-                            : "File not found.";
-                        fileSheetContent = new Markdown(notFoundContent);
-                    }
-                }
-
-                var finalContent = File.Exists(filePath2)
-                    ? (object)new HeaderLayout(
-                        header: new Button("Open in VS Code").Icon(Icons.ExternalLink).Outline().OnClick(() =>
-                        {
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                            {
-                                FileName = "code",
-                                Arguments = $"\"{filePath2}\"",
-                                UseShellExecute = true
-                            });
-                        }),
-                        content: fileSheetContent
-                    )
-                    : fileSheetContent;
-
-                return layout | new Fragment(
-                    dataTable,
-                    new Sheet(
-                        onClose: () => showPlan.Set(null),
-                        content: sheetContent,
-                        title: plan?.Title ?? folderName
-                    ).Width(Size.Half()).Resizable(),
-                    new Sheet(
-                        onClose: () => openFile.Set(null),
-                        content: finalContent,
-                        title: Path.GetFileName(filePath2)
-                    ).Width(Size.Half()).Resizable()
-                );
+                return layout | new Fragment(dataTable, planSheet, fileLinkSheet);
             }
 
-            return layout | new Fragment(
-                dataTable,
-                new Sheet(
-                    onClose: () => showPlan.Set(null),
-                    content: sheetContent,
-                    title: plan?.Title ?? folderName
-                ).Width(Size.Half()).Resizable()
-            );
+            return layout | new Fragment(dataTable, planSheet);
         }
 
         return layout | dataTable;

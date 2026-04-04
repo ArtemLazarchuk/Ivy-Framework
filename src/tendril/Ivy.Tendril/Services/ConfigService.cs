@@ -108,9 +108,9 @@ public class TendrilSettings
 
 public class ConfigService
 {
-    private readonly TendrilSettings _settings;
-    private readonly string _configPath;
-    private readonly string _tendrilHome;
+    private TendrilSettings _settings;
+    private string _configPath;
+    private string _tendrilHome;
     private string? _pendingTendrilHome;
 
     internal ConfigService(TendrilSettings settings, string tendrilHome = "")
@@ -245,24 +245,45 @@ public class ConfigService
         return _pendingTendrilHome;
     }
 
+    internal void SetTendrilHome(string tendrilHome)
+    {
+        _tendrilHome = tendrilHome;
+        _configPath = Path.Combine(_tendrilHome, "config.yaml");
+
+        // Load config if it exists at the new path
+        if (File.Exists(_configPath))
+        {
+            var yaml = File.ReadAllText(_configPath);
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build();
+            var loadedSettings = deserializer.Deserialize<TendrilSettings>(yaml);
+            if (loadedSettings != null)
+            {
+                _settings = loadedSettings;
+            }
+        }
+
+        VariableExpansion.InitializeUserSecrets(_tendrilHome);
+        ExpandSettingsVariables();
+    }
+
     public void CompleteOnboarding(string tendrilHome)
     {
-        // Create tendril home directory structure
-        Directory.CreateDirectory(tendrilHome);
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Inbox"));
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Plans"));
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Trash"));
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Promptwares"));
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Hooks"));
+        // Update paths
+        SetTendrilHome(tendrilHome);
 
-        // Save config to tendrilHome
-        var newConfigPath = Path.Combine(tendrilHome, "config.yaml");
-        var serializer = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults)
-            .Build();
-        var yaml = serializer.Serialize(_settings);
-        File.WriteAllText(newConfigPath, yaml);
+        // Ensure directories exist
+        Directory.CreateDirectory(_tendrilHome);
+        Directory.CreateDirectory(Path.Combine(_tendrilHome, "Inbox"));
+        Directory.CreateDirectory(Path.Combine(_tendrilHome, "Plans"));
+        Directory.CreateDirectory(Path.Combine(_tendrilHome, "Trash"));
+        Directory.CreateDirectory(Path.Combine(_tendrilHome, "Promptwares"));
+        Directory.CreateDirectory(Path.Combine(_tendrilHome, "Hooks"));
+
+        // Use current settings (already initialized or updated during onboarding)
+        // If they are empty, serialize defaults
+        SaveSettings();
 
         NeedsOnboarding = false;
     }
