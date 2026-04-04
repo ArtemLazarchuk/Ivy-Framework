@@ -79,8 +79,9 @@ public class ThemeColors
 
     public static ThemeColors DefaultLight => new()
     {
-        Primary = IvyFrameworkLightThemeTokens.Color.Primary,
-        PrimaryForeground = IvyFrameworkLightThemeTokens.Color.PrimaryForeground,
+        // Blue primary (overrides design-system default accent)
+        Primary = IvyFrameworkChromaticTokens.Color.Blue,
+        PrimaryForeground = IvyFrameworkChromaticTokens.Color.BlueForeground,
         Secondary = IvyFrameworkLightThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkLightThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkLightThemeTokens.Color.Background,
@@ -95,7 +96,7 @@ public class ThemeColors
         InfoForeground = IvyFrameworkLightThemeTokens.Color.InfoForeground,
         Border = IvyFrameworkLightThemeTokens.Color.Border,
         Input = IvyFrameworkLightThemeTokens.Color.Input,
-        Ring = IvyFrameworkLightThemeTokens.Color.Ring,
+        Ring = IvyFrameworkChromaticTokens.Color.Blue,
         Muted = IvyFrameworkLightThemeTokens.Color.Muted,
         MutedForeground = IvyFrameworkLightThemeTokens.Color.MutedForeground,
         Accent = IvyFrameworkLightThemeTokens.Color.Accent,
@@ -104,14 +105,14 @@ public class ThemeColors
         CardForeground = IvyFrameworkLightThemeTokens.Color.CardForeground,
         Popover = IvyFrameworkLightThemeTokens.Color.Popover,
         PopoverForeground = IvyFrameworkLightThemeTokens.Color.PopoverForeground,
-        IvyGreen = IvyFrameworkLightThemeTokens.Color.Primary,
-        IvyGreenForeground = IvyFrameworkLightThemeTokens.Color.PrimaryForeground
+        IvyGreen = IvyFrameworkChromaticTokens.Color.Blue,
+        IvyGreenForeground = IvyFrameworkChromaticTokens.Color.BlueForeground
     };
 
     public static ThemeColors DefaultDark => new()
     {
-        Primary = IvyFrameworkDarkThemeTokens.Color.Primary,
-        PrimaryForeground = IvyFrameworkDarkThemeTokens.Color.PrimaryForeground,
+        Primary = IvyFrameworkChromaticTokens.Color.Blue,
+        PrimaryForeground = IvyFrameworkChromaticTokens.Color.BlueForeground,
         Secondary = IvyFrameworkDarkThemeTokens.Color.Secondary,
         SecondaryForeground = IvyFrameworkDarkThemeTokens.Color.SecondaryForeground,
         Background = IvyFrameworkDarkThemeTokens.Color.Background,
@@ -126,7 +127,7 @@ public class ThemeColors
         InfoForeground = IvyFrameworkDarkThemeTokens.Color.InfoForeground,
         Border = IvyFrameworkDarkThemeTokens.Color.Border,
         Input = IvyFrameworkDarkThemeTokens.Color.Input,
-        Ring = IvyFrameworkDarkThemeTokens.Color.Ring,
+        Ring = IvyFrameworkChromaticTokens.Color.Blue,
         Muted = IvyFrameworkDarkThemeTokens.Color.Muted,
         MutedForeground = IvyFrameworkDarkThemeTokens.Color.MutedForeground,
         Accent = IvyFrameworkDarkThemeTokens.Color.Accent,
@@ -135,7 +136,7 @@ public class ThemeColors
         CardForeground = IvyFrameworkDarkThemeTokens.Color.CardForeground,
         Popover = IvyFrameworkDarkThemeTokens.Color.Popover,
         PopoverForeground = IvyFrameworkDarkThemeTokens.Color.PopoverForeground,
-        IvyGreen = IvyFrameworkDarkThemeTokens.Color.Primary,
-        IvyGreenForeground = IvyFrameworkDarkThemeTokens.Color.PrimaryForeground
+        IvyGreen = IvyFrameworkChromaticTokens.Color.Blue,
+        IvyGreenForeground = IvyFrameworkChromaticTokens.Color.BlueForeground
     };
 }
