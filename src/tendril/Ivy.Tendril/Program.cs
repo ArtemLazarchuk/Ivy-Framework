@@ -1,12 +1,12 @@
-using System.ClientModel;
 using Ivy;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
-using OpenAI;
 using Ivy.Tendril.AppShell;
 using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
 using Microsoft.Extensions.Logging;
+using OpenAI;
+using System.ClientModel;
 
 
 AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -103,6 +103,7 @@ var appShellSettings = new AppShellSettings()
             Text.Muted($"v{version}")
         ).Gap(2).Padding(2).AlignContent(Align.Left)
     )
+    .DefaultAppId("dashboard")
     .UseTabs(preventDuplicates: false);
 server.UseAppShell(() => new TendrilAppShell(appShellSettings));
 await server.RunAsync();
