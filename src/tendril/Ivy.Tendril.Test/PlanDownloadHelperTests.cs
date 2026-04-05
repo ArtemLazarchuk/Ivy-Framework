@@ -1,4 +1,3 @@
-using Ivy;
 using Ivy.Core;
 using Ivy.Core.Exceptions;
 using Ivy.Core.Hooks;

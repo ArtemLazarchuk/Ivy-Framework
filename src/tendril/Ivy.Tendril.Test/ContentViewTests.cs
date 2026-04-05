@@ -1,4 +1,3 @@
-using Ivy;
 using Ivy.Tendril.Apps.Plans;
 
 namespace Ivy.Tendril.Test;
