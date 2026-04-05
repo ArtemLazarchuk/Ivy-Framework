@@ -1,7 +1,5 @@
-using System.Drawing;
 using Ivy;
 using Ivy.Core;
-using Ivy.Hooks;
 using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
 

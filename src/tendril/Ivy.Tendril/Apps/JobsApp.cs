@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Ivy;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
@@ -136,7 +135,7 @@ public class JobsApp : ViewBase
                     }
                     else if (tag == "stop-job")
                     {
-                        if (job.Status == "Running")
+                        if (job.Status is "Running" or "Queued")
                         {
                             jobService.StopJob(job.Id);
                             refreshToken.Refresh();

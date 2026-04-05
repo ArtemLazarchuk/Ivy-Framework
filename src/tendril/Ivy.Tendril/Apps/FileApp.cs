@@ -1,5 +1,3 @@
-using Ivy;
-
 namespace Ivy.Tendril.Apps;
 
 public record FileAppArgs(string Url);

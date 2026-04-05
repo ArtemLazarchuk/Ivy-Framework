@@ -1,6 +1,4 @@
 using System.Reactive.Disposables;
-using Ivy;
-using Ivy.Tendril.Apps.Icebox;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 

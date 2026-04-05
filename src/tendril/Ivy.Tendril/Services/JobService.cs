@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using Ivy;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 
@@ -11,6 +10,7 @@ public record JobNotification(string Title, string Message, bool IsSuccess);
 public class JobService
 {
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
+    private readonly ConcurrentQueue<string> _jobQueue = new();
     private int _counter;
     private PlanReaderService? _planReaderService;
     private readonly ConfigService? _configService;
@@ -18,6 +18,7 @@ public class JobService
     private TelemetryService? _telemetryService;
     private readonly TimeSpan _jobTimeout;
     private readonly TimeSpan _staleOutputTimeout;
+    private readonly int _maxConcurrentJobs;
 
     private readonly string? _inboxPath;
 
@@ -47,13 +48,15 @@ public class JobService
         _modelPricingService = modelPricingService;
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
         _staleOutputTimeout = TimeSpan.FromMinutes(configService.Settings.StaleOutputTimeout);
+        _maxConcurrentJobs = configService.Settings.MaxConcurrentJobs;
         _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
     }
 
-    public JobService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout, string? inboxPath = null)
+    public JobService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout, string? inboxPath = null, int maxConcurrentJobs = 5)
     {
         _jobTimeout = jobTimeout;
         _staleOutputTimeout = staleOutputTimeout;
+        _maxConcurrentJobs = maxConcurrentJobs;
         _inboxPath = inboxPath;
     }
 
@@ -117,8 +120,7 @@ public class JobService
             Type = type,
             PlanFile = planFile,
             Project = project,
-            Status = "Running",
-            StartedAt = DateTime.UtcNow,
+            Status = "Pending",
             ScriptPath = scriptPath,
             Args = args,
         };
@@ -160,8 +162,6 @@ public class JobService
                 job.Status = "Blocked";
                 job.StatusMessage = blockReason;
                 job.CompletedAt = DateTime.UtcNow;
-                if (job.StartedAt.HasValue)
-                    job.DurationSeconds = (int)(job.CompletedAt.Value - job.StartedAt.Value).TotalSeconds;
 
                 // Reset plan state back to Draft since we can't execute
                 ResetPlanStateToBlocked(job);
@@ -172,9 +172,35 @@ public class JobService
             }
         }
 
+        // Check concurrency limit
+        var runningCount = _jobs.Values.Count(j => j.Status == "Running");
+        if (runningCount >= _maxConcurrentJobs)
+        {
+            job.Status = "Queued";
+            job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
+            _jobQueue.Enqueue(id);
+            JobsChanged?.Invoke();
+            return id;
+        }
+
+        LaunchJob(job);
+        return id;
+    }
+
+    private void LaunchJob(JobItem job)
+    {
+        var id = job.Id;
+        var type = job.Type;
+        var args = job.Args;
+        var scriptPath = job.ScriptPath;
+
+        job.Status = "Running";
+        job.StartedAt = DateTime.UtcNow;
+        job.StatusMessage = null;
+
         // Run before-hooks
         var planFolderForHooks = type != "MakePlan" && args.Length > 0 ? args[0] : "";
-        RunHooks("before", type, planFolderForHooks, project, job);
+        RunHooks("before", type, planFolderForHooks, job.Project, job);
 
         // Launch process
         var processArgs = new List<string> { "-NoProfile", "-File", scriptPath };
@@ -273,7 +299,6 @@ public class JobService
         }
 
         JobsChanged?.Invoke();
-        return id;
     }
 
     internal void RunHooks(string when, string jobType, string planFolder, string project, JobItem job)
@@ -469,6 +494,9 @@ public class JobService
 
         JobsChanged?.Invoke();
 
+        // Try to start queued jobs now that a slot is free
+        ProcessJobQueue();
+
         if (!_jobs.Values.Any(j => j.Status == "Running"))
             SendNativeNotification();
     }
@@ -477,6 +505,7 @@ public class JobService
     {
         if (!_jobs.TryGetValue(id, out var job)) return;
 
+        var wasRunning = job.Status == "Running";
         job.CancellationRequested = true;
         try { job.TimeoutCts?.Cancel(); } catch { }
         try { job.Process?.Kill(entireProcessTree: true); } catch { }
@@ -488,6 +517,10 @@ public class JobService
         CleanupInboxFile(job);
         ResetPlanState(job);
         JobsChanged?.Invoke();
+
+        // Try to start queued jobs now that a slot is free
+        if (wasRunning)
+            ProcessJobQueue();
     }
 
     public void DeleteJob(string id)
@@ -528,6 +561,24 @@ public class JobService
     public JobItem? GetJob(string id)
     {
         return _jobs.GetValueOrDefault(id);
+    }
+
+    private void ProcessJobQueue()
+    {
+        while (_jobQueue.TryPeek(out var queuedId))
+        {
+            var runningCount = _jobs.Values.Count(j => j.Status == "Running");
+            if (runningCount >= _maxConcurrentJobs)
+                break;
+
+            if (!_jobQueue.TryDequeue(out queuedId))
+                break;
+
+            if (!_jobs.TryGetValue(queuedId, out var queuedJob) || queuedJob.Status != "Queued")
+                continue;
+
+            LaunchJob(queuedJob);
+        }
     }
 
     internal static string ExtractFailureReason(List<string> outputLines)

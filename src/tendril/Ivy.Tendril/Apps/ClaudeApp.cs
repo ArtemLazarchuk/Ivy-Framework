@@ -1,4 +1,3 @@
-using Ivy;
 using Ivy.Hooks.Pty;
 
 namespace Ivy.Tendril.Apps;

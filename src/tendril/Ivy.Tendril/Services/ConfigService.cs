@@ -1,4 +1,3 @@
-using Ivy;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -90,6 +89,7 @@ public class TendrilSettings
     public string AgentCommand { get; set; } = "claude";
     public int JobTimeout { get; set; } = 30;
     public int StaleOutputTimeout { get; set; } = 10;
+    public int MaxConcurrentJobs { get; set; } = 5;
     public List<ProjectConfig> Projects { get; set; } = new();
     public List<VerificationConfig> Verifications { get; set; } = new();
     public string PlanTemplate { get; set; } = "";

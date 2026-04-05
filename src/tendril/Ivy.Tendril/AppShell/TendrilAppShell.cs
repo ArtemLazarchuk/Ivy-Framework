@@ -1,18 +1,13 @@
 using Ivy;
 using Ivy.Core;
 using Ivy.Core.Apps;
-using Ivy.Core.AppShell;
-using Ivy.Core.Server;
 using Ivy.Tendril.Apps;
-using Ivy.Tendril.Apps.Jobs;
-using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 using Ivy.Widgets.Internal;
 using Ivy.Widgets.ScreenshotFeedback;
 using System.Collections.Immutable;
 using System.Reactive.Disposables;
 using Ivy.Tendril.Views;
-using AppContext = Ivy.AppContext;
 
 namespace Ivy.Tendril.AppShell;
 

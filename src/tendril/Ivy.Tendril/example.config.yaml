@@ -4,6 +4,7 @@
 agentCommand: claude
 jobTimeout: 30
 staleOutputTimeout: 10
+maxConcurrentJobs: 5  # Maximum number of jobs to run concurrently (default: 5)
 
 # Variable Expansion Support:
 # - %DotnetUserSecrets:Section:Key% - Read from .NET user secrets (requires .csproj with UserSecretsId)

@@ -1,5 +1,3 @@
-using Ivy;
-
 namespace Ivy.Tendril.Apps.Jobs;
 
 public record JobItem
@@ -9,7 +7,7 @@ public record JobItem
     public string PlanFile { get; init; } = "";
     public string Project { get; init; } = "";
     public string Status { get; set; } = "Pending";
-    public DateTime? StartedAt { get; init; }
+    public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public int? DurationSeconds { get; set; }
     public string ScriptPath { get; init; } = "";

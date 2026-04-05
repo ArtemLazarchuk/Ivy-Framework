@@ -1,6 +1,7 @@
 agentCommand: claude --print --verbose --output-format stream-json
 jobTimeout: 30
 staleOutputTimeout: 10
+maxConcurrentJobs: 10
 
 llm:
   endpoint: DotnetUserSecrets:OpenAi:Endpoint

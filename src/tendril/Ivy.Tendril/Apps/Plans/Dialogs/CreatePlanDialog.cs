@@ -1,5 +1,3 @@
-using Ivy;
-
 namespace Ivy.Tendril.Apps.Plans.Dialogs;
 
 public class CreatePlanDialog(List<string> projectNames, Action<string, string> onCreatePlan, Action onClose, string defaultProject = "[Auto]") : ViewBase
