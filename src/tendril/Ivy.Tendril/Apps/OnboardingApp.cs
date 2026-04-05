@@ -53,7 +53,8 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
     public override object? Build()
     {
         return Layout.Vertical()
-               | Text.H1("Welcome to Ivy Tendril")
+               | new Image("/tendril/assets/Tendril.svg").Width(Size.Units(20)).Height(Size.Auto())
+               | Text.H1("Welcome to Tendril")
                | Text.Markdown(
                    "Ivy Tendril is a coding orchestrator.\n\n" +
                    "To get started, we need to set up a few things:\n" +
