@@ -21,6 +21,7 @@ public class ProjectsSettingsView : ViewBase
         var editVerifications = UseState(new List<ProjectVerificationRef>());
         var newRepoPath = UseState("");
         var newRepoPrRule = UseState("default");
+        var repoPathError = UseState<string?>(null);
 
         var projects = config.Settings.Projects;
         var allVerifications = config.Settings.Verifications.Select(v => v.Name).ToList();
@@ -86,6 +87,11 @@ public class ProjectsSettingsView : ViewBase
                     });
             }
 
+            if (repoPathError.Value != null)
+            {
+                reposLayout |= Text.Danger(repoPathError.Value);
+            }
+
             reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
                 | newRepoPath.ToTextInput("Repo path...").Width(Size.Grow())
                 | newRepoPrRule.ToSelectInput(new List<string> { "default", "yolo" }).Width(Size.Units(20))
@@ -93,6 +99,14 @@ public class ProjectsSettingsView : ViewBase
                 {
                     if (!string.IsNullOrWhiteSpace(newRepoPath.Value))
                     {
+                        var expandedPath = Environment.ExpandEnvironmentVariables(newRepoPath.Value);
+
+                        if (!Directory.Exists(expandedPath))
+                        {
+                            repoPathError.Set($"Directory does not exist: {expandedPath}");
+                            return;
+                        }
+
                         var list = new List<RepoRef>(editRepos.Value)
                         {
                             new() { Path = newRepoPath.Value, PrRule = newRepoPrRule.Value }
@@ -100,6 +114,7 @@ public class ProjectsSettingsView : ViewBase
                         editRepos.Set(list);
                         newRepoPath.Set("");
                         newRepoPrRule.Set("default");
+                        repoPathError.Set(null);
                     }
                 });
 
