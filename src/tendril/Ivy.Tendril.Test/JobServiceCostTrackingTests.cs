@@ -45,7 +45,7 @@ public class JobServiceCostTrackingTests
     {
         // Arrange
         var testScriptPath = Path.Combine(
-            AppContext.BaseDirectory,
+            System.AppContext.BaseDirectory,
             "..", "..", "..",
             "TestScripts",
             "TestSessionId.ps1");
