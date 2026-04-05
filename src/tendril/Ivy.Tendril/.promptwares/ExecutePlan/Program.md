@@ -7,11 +7,10 @@ Execute an approved plan in isolated git worktrees.
 The firmware header contains:
 
 - **Args** / **PlanFolder** — path to the plan folder
-- **ConfigPath** — absolute path to config.yaml
 - **CurrentTime** — current UTC timestamp
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` (from `ConfigPath`) for project repos and context.
+Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and context.
 
 The launcher script sets the working directory to the project's primary repo.
 

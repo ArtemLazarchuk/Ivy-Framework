@@ -82,10 +82,6 @@ function PrepareFirmware {
     if (-not $Values.ContainsKey("CurrentTime")) {
         $Values["CurrentTime"] = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     }
-    if (-not $Values.ContainsKey("ConfigPath")) {
-        $Values["ConfigPath"] = $script:ConfigPath
-    }
-
     $header = ($Values.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key): $($_.Value)" }) -join "`n"
 
     $sharedFolder = Get-SharedFolder $ScriptRoot

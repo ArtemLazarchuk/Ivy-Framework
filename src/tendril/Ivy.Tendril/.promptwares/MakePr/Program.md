@@ -8,11 +8,10 @@ Create GitHub pull requests and apply PR rules.
 
 The firmware header contains:
 - **PlanFolder** — path to the plan folder
-- **ConfigPath** — absolute path to config.yaml
 - **CurrentTime** — current UTC timestamp
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` (from `ConfigPath`) for project repos and their `prRule` setting.
+Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and their `prRule` setting.
 
 ## PR Rules (from config.yaml per repo)
 

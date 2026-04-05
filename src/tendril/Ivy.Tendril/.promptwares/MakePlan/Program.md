@@ -9,12 +9,11 @@ Create an implementation plan for a task described in args.
 The firmware header contains these key values:
 - **PlanId** — pre-allocated 5-digit plan ID (e.g. `01127`). Use this — do NOT read `.counter`.
 - **PlansDirectory** — where plan folders are created
-- **ConfigPath** — absolute path to config.yaml (projects, repos, context)
 - **Project** — selected project name, or `[Auto]` if not specified
 - **SourcePath** (optional) — absolute path to the source that generated this plan (e.g. test working directory)
 
 Read the plan folder structure in `../.shared/Plans.md`.
-Read the project configuration from the `ConfigPath` in the firmware header.
+Read the project configuration from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml).
 
 ## Execution Steps
 
@@ -28,7 +27,7 @@ Args contains the user's task description. If it references related plans with `
 
 ### 1.5. Load Project Context
 
-Read `config.yaml` (at the path from the firmware header) to understand all available projects, their repos, and context.
+Read `config.yaml` (at the path from `TENDRIL_CONFIG` environment variable) to understand all available projects, their repos, and context.
 
 **If `Project` is set to a specific project name** (not `[Auto]`):
 - Find that project in `config.yaml` and use its repos and context to scope your research
