@@ -509,10 +509,10 @@ public class PlanReaderService(ConfigService config)
     /// Correlates <c>costs.csv</c> entries with log file timestamps to determine when tokens were consumed.
     /// Plans without both a costs file and a logs directory are skipped.
     /// </remarks>
-    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7, string? project = null)
+    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
     {
         var cutoff = DateTime.UtcNow.AddDays(-days);
-        var buckets = new Dictionary<DateTime, (decimal Cost, int Tokens)>();
+        var buckets = new Dictionary<(DateTime Hour, string Project), (decimal Cost, int Tokens)>();
 
         if (!Directory.Exists(PlansDirectory)) return new List<HourlyTokenBurn>();
 
@@ -520,18 +520,17 @@ public class PlanReaderService(ConfigService config)
         {
             try
             {
-                if (project != null)
-                {
-                    var planYamlPath = Path.Combine(dir, "plan.yaml");
-                    if (!File.Exists(planYamlPath)) continue;
-                    var planYaml = YamlDeserializer.Deserialize<PlanYaml>(FileHelper.ReadAllText(planYamlPath));
-                    if (planYaml == null || !string.Equals(planYaml.Project, project, StringComparison.OrdinalIgnoreCase))
-                        continue;
-                }
-
                 var costsPath = Path.Combine(dir, "costs.csv");
                 var logsDir = Path.Combine(dir, "logs");
                 if (!File.Exists(costsPath) || !Directory.Exists(logsDir)) continue;
+
+                var planYamlPath = Path.Combine(dir, "plan.yaml");
+                if (!File.Exists(planYamlPath)) continue;
+
+                var planYaml = YamlDeserializer.Deserialize<PlanYaml>(FileHelper.ReadAllText(planYamlPath));
+                if (planYaml == null) continue;
+
+                var project = planYaml.Project ?? "";
 
                 var costLines = FileHelper.ReadAllLines(costsPath).Skip(1).ToList();
                 if (costLines.Count == 0) continue;
@@ -582,10 +581,11 @@ public class PlanReaderService(ConfigService config)
                     var hour = new DateTime(timestamp.Value.Year, timestamp.Value.Month,
                         timestamp.Value.Day, timestamp.Value.Hour, 0, 0, DateTimeKind.Utc);
 
-                    if (buckets.TryGetValue(hour, out var existing))
-                        buckets[hour] = (existing.Cost + cost, existing.Tokens + tokens);
+                    var key = (hour, project);
+                    if (buckets.TryGetValue(key, out var existing))
+                        buckets[key] = (existing.Cost + cost, existing.Tokens + tokens);
                     else
-                        buckets[hour] = (cost, tokens);
+                        buckets[key] = (cost, tokens);
                 }
             }
             catch
@@ -595,10 +595,12 @@ public class PlanReaderService(ConfigService config)
         }
 
         return buckets
-            .OrderBy(b => b.Key)
+            .OrderBy(b => b.Key.Hour)
+            .ThenBy(b => b.Key.Project)
             .Select(b => new HourlyTokenBurn
             {
-                Hour = b.Key,
+                Hour = b.Key.Hour,
+                Project = b.Key.Project,
                 Cost = b.Value.Cost,
                 Tokens = b.Value.Tokens
             })
@@ -803,6 +805,7 @@ public class HourlyTokenBurn
     public DateTime Hour { get; set; }
     public decimal Cost { get; set; }
     public int Tokens { get; set; }
+    public string Project { get; set; } = "";
 }
 
 public record Recommendation(
