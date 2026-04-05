@@ -222,12 +222,13 @@ public class JobService
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
-        // Capture session ID from environment for cost tracking after job completes
-        job.SessionId = Environment.GetEnvironmentVariable("CLAUDE_SESSION_ID");
+        // Generate session ID for cost tracking — passed to child process so both sides share the same ID
+        job.SessionId = Guid.NewGuid().ToString();
 
         psi.Environment["TENDRIL_JOB_ID"] = id;
         psi.Environment["TENDRIL_URL"] = "http://localhost:5010";
         psi.Environment["TENDRIL_SHARED"] = SharedRoot;
+        psi.Environment["TENDRIL_SESSION_ID"] = job.SessionId;
         if (_configService != null)
             psi.Environment["TENDRIL_CONFIG"] = _configService.ConfigPath;
 

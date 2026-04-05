@@ -32,7 +32,11 @@ $promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder @{
 }
 
 $agent = GetAgentCommandFromConfig -Promptware "ExecutePlan"
-$sessionId = [guid]::NewGuid().ToString()
+$sessionId = $env:TENDRIL_SESSION_ID
+if (-not $sessionId) {
+    $sessionId = [guid]::NewGuid().ToString()
+    Write-Warning "TENDRIL_SESSION_ID not set, generated fallback: $sessionId"
+}
 
 Write-Host "Starting Agent in $workDir..."
 SendStatusMessage "Executing Plan"
