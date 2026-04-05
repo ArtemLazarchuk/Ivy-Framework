@@ -31,10 +31,7 @@ public class SidebarView(
                 ? rec.Description[..120] + "…"
                 : rec.Description;
 
-            return new ListItem(rec.Title, subtitle: preview)
-                .Content(Layout.Horizontal().Gap(1)
-                    | new Badge($"#{rec.PlanId}").Variant(BadgeVariant.Outline).Small()
-                )
+            return new ListItem($"#{rec.PlanId} {rec.Title}", subtitle: preview)
                 .OnClick(() => _selectedState.Set(clickableRec));
         }));
     }
