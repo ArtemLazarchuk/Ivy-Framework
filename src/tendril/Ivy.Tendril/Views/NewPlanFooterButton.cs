@@ -16,12 +16,12 @@ public class NewPlanFooterButton : ViewBase
 
         var elements = new List<object>
         {
-            new Button("New Draft")
+            new Button("New Plan")
                 .Icon(Icons.Plus)
                 .Width(Size.Full())
                 .Variant(ButtonVariant.Primary)
                 .OnClick(() => dialogOpen.Set(true))
-                .ShortcutKey("CTRL+ALT+D")
+                .ShortcutKey("CTRL+ALT+N")
         };
 
         if (dialogOpen.Value)
