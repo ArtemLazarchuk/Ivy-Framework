@@ -22,6 +22,7 @@ public class JobService : IJobService
     private readonly SemaphoreSlim _jobSlotSemaphore;
 
     private readonly string? _inboxPath;
+    private readonly SynchronizationContext? _syncContext;
 
     public event Action? JobsChanged;
     public ConcurrentQueue<JobNotification> PendingNotifications { get; } = new();
@@ -45,6 +46,7 @@ public class JobService : IJobService
 
     public JobService(ConfigService configService, ModelPricingService? modelPricingService = null)
     {
+        _syncContext = SynchronizationContext.Current;
         _configService = configService;
         _modelPricingService = modelPricingService;
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
@@ -56,6 +58,7 @@ public class JobService : IJobService
 
     public JobService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout, string? inboxPath = null, int maxConcurrentJobs = 5)
     {
+        _syncContext = SynchronizationContext.Current;
         _jobTimeout = jobTimeout;
         _staleOutputTimeout = staleOutputTimeout;
         _maxConcurrentJobs = maxConcurrentJobs;
@@ -71,6 +74,18 @@ public class JobService : IJobService
     public void SetTelemetryService(TelemetryService telemetryService)
     {
         _telemetryService = telemetryService;
+    }
+
+    private void RaiseJobsChanged()
+    {
+        if (_syncContext != null)
+        {
+            _syncContext.Post(_ => JobsChanged?.Invoke(), null);
+        }
+        else
+        {
+            JobsChanged?.Invoke();
+        }
     }
 
     public string StartJob(string type, string[] args, string? inboxFilePath)
@@ -170,7 +185,7 @@ public class JobService : IJobService
                 ResetPlanStateToBlocked(job);
 
                 PendingNotifications.Enqueue(new JobNotification("Job Blocked", $"{planFile}: {blockReason}", false));
-                JobsChanged?.Invoke();
+                RaiseJobsChanged();
                 return id;
             }
         }
@@ -181,7 +196,7 @@ public class JobService : IJobService
             job.Status = "Queued";
             job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
             _jobQueue.Enqueue(id);
-            JobsChanged?.Invoke();
+            RaiseJobsChanged();
             return id;
         }
 
@@ -301,7 +316,7 @@ public class JobService : IJobService
             _ = RunStaleOutputWatchdog(id, cts);
         }
 
-        JobsChanged?.Invoke();
+        RaiseJobsChanged();
     }
 
     internal void RunHooks(string when, string jobType, string planFolder, string project, JobItem job)
@@ -495,7 +510,7 @@ public class JobService : IJobService
                         if (_jobs.TryGetValue(jobId, out var j))
                         {
                             j.Cost = (decimal)costCalc.TotalCost;
-                            JobsChanged?.Invoke();
+                            RaiseJobsChanged();
                         }
 
                         if (jobArgs.Length > 0)
@@ -508,7 +523,7 @@ public class JobService : IJobService
             });
         }
 
-        JobsChanged?.Invoke();
+        RaiseJobsChanged();
 
         // Try to start queued jobs now that a slot is free
         ProcessJobQueue();
@@ -536,7 +551,7 @@ public class JobService : IJobService
 
         CleanupInboxFile(job);
         ResetPlanState(job);
-        JobsChanged?.Invoke();
+        RaiseJobsChanged();
 
         // Try to start queued jobs now that a slot is free
         if (wasRunning)
@@ -546,7 +561,7 @@ public class JobService : IJobService
     public void DeleteJob(string id)
     {
         _jobs.TryRemove(id, out _);
-        JobsChanged?.Invoke();
+        RaiseJobsChanged();
     }
 
     public void ClearCompletedJobs()
@@ -558,7 +573,7 @@ public class JobService : IJobService
         foreach (var id in completedIds)
             _jobs.TryRemove(id, out _);
         if (completedIds.Count > 0)
-            JobsChanged?.Invoke();
+            RaiseJobsChanged();
     }
 
     public void ClearFailedJobs()
@@ -570,7 +585,7 @@ public class JobService : IJobService
         foreach (var id in failedIds)
             _jobs.TryRemove(id, out _);
         if (failedIds.Count > 0)
-            JobsChanged?.Invoke();
+            RaiseJobsChanged();
     }
 
     public List<JobItem> GetJobs()
