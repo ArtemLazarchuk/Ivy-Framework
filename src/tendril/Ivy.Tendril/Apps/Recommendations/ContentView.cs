@@ -41,10 +41,14 @@ public class ContentView(
 
         var currentIndex = _all.FindIndex(r => r.PlanId == _selected.PlanId && r.Title == _selected.Title);
 
-        // Header with Accept/Decline actions
+        // Header with Accept action at right edge
         var header = Layout.Horizontal().Width(Size.Full()).Padding(1).Gap(2)
             | Text.Block(_selected.Title).Bold()
             | new Badge($"#{_selected.PlanId}").Variant(BadgeVariant.Outline)
+            | new Spacer().Width(Size.Grow())
+            | Text.Rich()
+                .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
+                .Muted("recommendations", word: true)
             | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
             {
                 _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
@@ -52,16 +56,7 @@ public class ContentView(
                 client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted");
                 _refresh();
                 GoToNext();
-            })
-            | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
-            {
-                declineReason.Set("");
-                showDeclineDialog.Set(true);
-            })
-            | new Spacer().Width(Size.Grow())
-            | Text.Rich()
-                .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
-                .Muted("recommendations", word: true);
+            });
 
         // Content
         var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200))).Gap(4).Padding(2);
@@ -79,6 +74,11 @@ public class ContentView(
 
         // Action bar (secondary actions)
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
+            | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
+            {
+                declineReason.Set("");
+                showDeclineDialog.Set(true);
+            })
             | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() => showNotesDialog.Set(true))
             | new Button("View Plan").Icon(Icons.ExternalLink).Outline().ShortcutKey("d").OnClick(() =>
             {
