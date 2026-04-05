@@ -122,7 +122,20 @@ public class DashboardApp : ViewBase
         });
 
         // Hourly cost & tokens combined bar chart
-        var hourlyBurn = planService.GetHourlyTokenBurn(days: 7, project: selectedProject.Value);
+        var allHourlyBurn = planService.GetHourlyTokenBurn(days: 7);
+        var hourlyBurn = selectedProject.Value != null
+            ? allHourlyBurn.Where(h => h.Project == selectedProject.Value).ToList()
+            : allHourlyBurn
+                .GroupBy(h => h.Hour)
+                .Select(g => new HourlyTokenBurn
+                {
+                    Hour = g.Key,
+                    Cost = g.Sum(h => h.Cost),
+                    Tokens = g.Sum(h => h.Tokens),
+                    Project = ""
+                })
+                .OrderBy(h => h.Hour)
+                .ToList();
 
         var combinedChart = hourlyBurn.ToBarChart(
                 style: BarChartStyles.Default,
