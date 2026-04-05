@@ -509,7 +509,7 @@ public class PlanReaderService(ConfigService config)
     /// Correlates <c>costs.csv</c> entries with log file timestamps to determine when tokens were consumed.
     /// Plans without both a costs file and a logs directory are skipped.
     /// </remarks>
-    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
+    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7, string? project = null)
     {
         var cutoff = DateTime.UtcNow.AddDays(-days);
         var buckets = new Dictionary<DateTime, (decimal Cost, int Tokens)>();
@@ -520,6 +520,15 @@ public class PlanReaderService(ConfigService config)
         {
             try
             {
+                if (project != null)
+                {
+                    var planYamlPath = Path.Combine(dir, "plan.yaml");
+                    if (!File.Exists(planYamlPath)) continue;
+                    var planYaml = YamlDeserializer.Deserialize<PlanYaml>(FileHelper.ReadAllText(planYamlPath));
+                    if (planYaml == null || !string.Equals(planYaml.Project, project, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+
                 var costsPath = Path.Combine(dir, "costs.csv");
                 var logsDir = Path.Combine(dir, "logs");
                 if (!File.Exists(costsPath) || !Directory.Exists(logsDir)) continue;
