@@ -117,6 +117,7 @@ public class ConfigService
     private string _configPath;
     private string _tendrilHome;
     private string? _pendingTendrilHome;
+    private ProjectConfig? _pendingProject;
 
     internal ConfigService(TendrilSettings settings, string tendrilHome = "")
     {
@@ -242,6 +243,16 @@ public class ConfigService
     public string? GetPendingTendrilHome()
     {
         return _pendingTendrilHome;
+    }
+
+    public void SetPendingProject(ProjectConfig project)
+    {
+        _pendingProject = project;
+    }
+
+    public ProjectConfig? GetPendingProject()
+    {
+        return _pendingProject;
     }
 
     internal void SetTendrilHome(string tendrilHome)
