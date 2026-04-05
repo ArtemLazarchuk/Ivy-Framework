@@ -16,6 +16,8 @@ public class DashboardApp : ViewBase
             refreshToken.Refresh();
         }, TimeSpan.FromSeconds(60));
 
+        var selectedProject = UseState<string?>(null);
+
         var plans = planService.GetPlans();
 
         // Statistics cards
@@ -35,6 +37,10 @@ public class DashboardApp : ViewBase
             | BuildStatCard(failedCount, "Failed");
 
         // Daily activity table - last 7 days
+        var filteredPlans = selectedProject.Value != null
+            ? plans.Where(p => p.Project == selectedProject.Value).ToList()
+            : plans;
+
         var today = DateTime.UtcNow.Date;
         var days = Enumerable.Range(0, 7).Select(i => today.AddDays(-i)).ToList();
 
@@ -44,12 +50,12 @@ public class DashboardApp : ViewBase
                 : day == today.AddDays(-1) ? "Yesterday"
                 : day.ToString("MMM dd");
 
-            var createdCount = plans.Count(p => p.Created.Date == day);
-            var dayCompletedCount = plans.Count(p => p.Status == PlanStatus.Completed && p.Updated.Date == day);
-            var prsMerged = plans.Where(p => p.Status == PlanStatus.Completed && p.Updated.Date == day).Sum(p => p.Prs.Count);
-            var dayFailedCount = plans.Count(p => p.Status == PlanStatus.Failed && p.Updated.Date == day);
+            var createdCount = filteredPlans.Count(p => p.Created.Date == day);
+            var dayCompletedCount = filteredPlans.Count(p => p.Status == PlanStatus.Completed && p.Updated.Date == day);
+            var prsMerged = filteredPlans.Where(p => p.Status == PlanStatus.Completed && p.Updated.Date == day).Sum(p => p.Prs.Count);
+            var dayFailedCount = filteredPlans.Count(p => p.Status == PlanStatus.Failed && p.Updated.Date == day);
 
-            var completedOrFailedPlans = plans
+            var completedOrFailedPlans = filteredPlans
                 .Where(p => p.Updated.Date == day && p.Status is PlanStatus.Completed or PlanStatus.Failed or PlanStatus.ReadyForReview)
                 .ToList();
 
@@ -105,10 +111,18 @@ public class DashboardApp : ViewBase
                 Color: configService.GetProjectColor(p.Project),
                 Label: p.Project
             )).ToArray()
-        );
+        )
+        .Selected(selectedProject.Value != null
+            ? Array.FindIndex(projectData, p => p.Project == selectedProject.Value)
+            : null)
+        .OnSelect(async e =>
+        {
+            var clickedProject = projectData[e.Value].Project;
+            selectedProject.Set(selectedProject.Value == clickedProject ? null : clickedProject);
+        });
 
         // Hourly cost & tokens combined bar chart
-        var hourlyBurn = planService.GetHourlyTokenBurn(days: 7);
+        var hourlyBurn = planService.GetHourlyTokenBurn(days: 7, project: selectedProject.Value);
 
         var combinedChart = hourlyBurn.ToBarChart(
                 style: BarChartStyles.Default,
