@@ -4,7 +4,7 @@ using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Pull Requests", icon: Icons.GitPullRequest, group: new[] { "Tools" }, order: 27)]
+[App(title: "Pull Requests", icon: Icons.GitPullRequest, group: new[] { "Tools" }, order: MenuOrder.PullRequests)]
 public class PullRequestApp : ViewBase
 {
     public override object? Build()

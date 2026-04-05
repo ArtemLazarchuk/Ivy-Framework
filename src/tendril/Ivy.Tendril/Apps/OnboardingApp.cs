@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Ivy.Tendril.Apps;
 
 #if DEBUG
-[App(title: "Onboarding", icon: Icons.Rocket, group: new[] { "Debug" }, isVisible: true, order: 100)]
+[App(title: "Onboarding", icon: Icons.Rocket, group: new[] { "Debug" }, isVisible: true, order: MenuOrder.Onboarding)]
 #else
-[App(icon: Icons.Rocket, isVisible: false, order: 100)]
+[App(icon: Icons.Rocket, isVisible: false, order: MenuOrder.Onboarding)]
 #endif
 public class OnboardingApp : ViewBase
 {

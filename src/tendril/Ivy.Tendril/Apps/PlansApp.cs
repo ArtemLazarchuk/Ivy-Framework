@@ -4,7 +4,7 @@ using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Drafts", icon: Icons.Feather, group: new[] { "Tools" }, order: 15)]
+[App(title: "Drafts", icon: Icons.Feather, group: new[] { "Tools" }, order: MenuOrder.Drafts)]
 public class PlansApp : ViewBase
 {
     public override object? Build()

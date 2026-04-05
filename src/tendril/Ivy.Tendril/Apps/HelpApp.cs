@@ -1,6 +1,6 @@
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Help", icon: Icons.CircleQuestionMark, group: new[] { "Tools" }, order: 50)]
+[App(title: "Help", icon: Icons.CircleQuestionMark, group: new[] { "Tools" }, order: MenuOrder.Help)]
 public class HelpApp : ViewBase
 {
     public override object? Build()

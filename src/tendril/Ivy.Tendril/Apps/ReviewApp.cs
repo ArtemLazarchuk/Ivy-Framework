@@ -4,7 +4,7 @@ using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Review", icon: Icons.ThumbsUp, group: new[] { "Tools" }, order: 25, allowDuplicateTabs: true)]
+[App(title: "Review", icon: Icons.ThumbsUp, group: new[] { "Tools" }, order: MenuOrder.Review, allowDuplicateTabs: true)]
 public class ReviewApp : ViewBase
 {
     public override object? Build()
