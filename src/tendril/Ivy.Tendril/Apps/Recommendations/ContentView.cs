@@ -37,10 +37,24 @@ public class ContentView(
 
         var currentIndex = _all.FindIndex(r => r.PlanId == _selected.PlanId && r.Title == _selected.Title);
 
-        // Header
+        // Header with Accept/Decline actions
         var header = Layout.Horizontal().Width(Size.Full()).Padding(1).Gap(2)
             | Text.Block(_selected.Title).Bold()
             | new Badge($"#{_selected.PlanId}").Variant(BadgeVariant.Outline)
+            | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
+            {
+                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
+                _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
+                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted");
+                _refresh();
+                GoToNext();
+            })
+            | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
+            {
+                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Declined");
+                _refresh();
+                GoToNext();
+            })
             | new Spacer().Width(Size.Grow())
             | Text.Rich()
                 .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
@@ -60,27 +74,13 @@ public class ContentView(
         scrollableContent |= new Separator();
         scrollableContent |= new Markdown(_selected.Description);
 
-        // Action bar
+        // Action bar (secondary actions)
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
-            | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
-            {
-                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
-                _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
-                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted");
-                _refresh();
-                GoToNext();
-            })
             | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() =>
             {
                 _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "AcceptedWithNotes");
                 _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
                 client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted with Notes");
-                _refresh();
-                GoToNext();
-            })
-            | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
-            {
-                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Declined");
                 _refresh();
                 GoToNext();
             })
