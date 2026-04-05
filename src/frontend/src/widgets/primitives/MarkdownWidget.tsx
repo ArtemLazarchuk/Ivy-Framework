@@ -64,7 +64,7 @@ const MarkdownWidget: React.FC<MarkdownWidgetProps> = ({
   const styles: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    gap: "1rem",
+    gap: "0.5rem",
     wordBreak: "normal",
     overflowWrap: "break-word",
     ...(textAlignment && {
