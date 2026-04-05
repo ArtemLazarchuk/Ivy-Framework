@@ -1,218 +1,170 @@
-# Widget-Specific Patterns
+# Widget-Specific Playwright Patterns
 
-## Ivy UI Components Overview
+## DataTable (Canvas-Based)
 
-- `Layout.Center()`, `Layout.Vertical()`, `Layout.Horizontal()` — layout containers
-- `Text.H2()`, `Text.P()`, `Text.Label()`, `Text.InlineCode()` — text elements
-- `Slider` — range input, configured with `.Min()`, `.Max()`, `.Step()`
-- `Switch` — toggle input, configured with `.Label()`
-- `Button` — click handler, configured with `.Icon()`, `.Variant()`, `.Disabled()`
-- `Badge` — status label with variant (Destructive, Warning, Success, Info, Secondary)
-- `Card` — container card component. Note: Card supports pipe `|` for children but Text elements (H3, P) added directly as Card children may not render; use `Layout.Vertical()` inside Card for mixed content
-- `Json` — displays formatted JSON with syntax highlighting and collapsible tree. Constructors: `Json(JsonNode)`, `Json(object)` (auto-serializes), `Json(string)`. Props: `Expanded` (null=collapsed, N=depth, -1=fully expanded). Default is collapsed — use `{ Expanded = -1 }` for testing to make content visible
-- `Xml` — displays formatted XML with syntax highlighting and collapsible tree. Constructors: `Xml(XObject)`, `Xml(string)`. Props: `Expanded` (null=collapsed, 0=collapsed, N=depth, -1=fully expanded). Same behavior as Json widget. `.TestId()` does NOT render `data-testid` in the DOM — use text-based or heading-relative locators instead
-- `Toast` — notification via `IClientProvider.Toast(message, type)`
-- State bindings: `state.ToSliderInput()`, `state.ToSwitchInput()`
+DataTable uses Glide Data Grid — renders as `<canvas>`, NOT HTML `<table>`.
 
-## DataTable
+**Locators:**
+- Canvas: `page.locator('[data-testid="data-grid-canvas"]')` or `page.locator('canvas').first()`
+- Click target: `page.locator('.dvn-scroller').first().click({ position: { x, y } })` — the overlay div intercepts pointer events
+- Wait: `await page.waitForSelector('canvas', { timeout: 15000 })` then wait 1s for render
+- Virtualized elements (`role="gridcell"`, `role="columnheader"`) are "hidden" — use `.toBeAttached()` not `.toBeVisible()`
 
-### DataTable Testing Patterns
+**Reading cell values:** DOM text assertions don't work on canvas. Use React fiber introspection: walk `__reactFiber` tree from canvas to find `getCellContent` prop, then call `getCellContent([col, row])` → `{ kind, data, displayData }`. Column 0 = first visible column.
 
-- DataTable uses Glide Data Grid which renders as `<canvas>` elements, NOT HTML `<table>`
-- Canvas locator: `page.locator('[data-testid="data-grid-canvas"]')` or `page.locator('canvas').first()`
-- **Click target**: Use `page.locator('.dvn-scroller').first().click({ position: { x, y } })` — the `dvn-scroller` overlay div intercepts pointer events over the canvas
-- Wait for table: `await page.waitForSelector('canvas', { timeout: 15000 })`; then wait 1s for render
-- Stale process cleanup: Always kill previous `DataTableAutoWidth.exe` processes before running tests — they lock DLLs and cause build failures
-- Use `--no-build` in test spawn after pre-building: `spawn('dotnet', ['run', '--no-build', '--', '--port', port])`
+**Gotchas:**
+- Shows ALL model properties, not just those with `.Header()` calls — `.Header()` only renames the label
+- One `ValueAccessor` per root property — two `.Header()` calls on sub-properties of the same root share one column
+- `DataTableBuilder` has no `.Remove()` method — resolves to `CollectionExtensions.Remove` and fails
+- `.Remove()` on positional records: crash fixed (commit `e08a55d6`) but data alignment broken (index shift)
+- `decimal` columns display as `0000000000000000` (framework bug in `useRowData.ts` Decimal128 handling)
+- `.dispatchEvent("click")` on gridcells bypasses visibility but does NOT trigger Ivy's `OnCellClick`
+- Kill stale `.exe` processes before tests — they lock DLLs
 
-### DataTable Gotchas
+## Input Widgets
 
-- **DataTable uses virtualized grid rendering** — cells are `<td role="gridcell">` elements that Playwright considers "hidden" even when data is present. Use `page.locator('[role="gridcell"]').first()` with `.toBeAttached()` instead of `.toBeVisible()` to verify data loaded.
-- **`.Remove()` on positional records: crash fixed but data alignment broken** — Commit `e08a55d6` fixes the crash (fills removed params with defaults in constructor). However, the DataTable serializes ALL property values (including defaults for removed fields) but maps them by index to only the visible column headers, causing a systematic data shift.
-- **Decimal columns display as `0000000000000000`** — `decimal` values in DataTable grid render incorrectly (framework bug). Root cause: `useRowData.ts` reads raw Arrow Decimal128 values via `column.get(i)` without applying `10^scale` division.
-- **Reading DataTable cell values in Playwright**: Since DataTable renders on `<canvas>`, DOM text assertions don't work. Use React fiber introspection: find a `canvas` element, walk `__reactFiber` tree upward to find a component with `getCellContent` prop, then call `getCellContent([col, row])` to get `{ kind, data, displayData }`. Column 0 = first visible column.
-- **DataTable shows ALL model properties, not just those with `.Header()` calls**: The `.Header()` method only renames a column label and optionally sets a `ValueAccessor`. All properties of the model type appear as columns in the grid.
-- **One ValueAccessor per root property**: Two `.Header()` calls targeting different sub-properties of the same root property share one column — only the first `ValueAccessor` is stored.
-- **`DataTableBuilder` does NOT have a `.Remove()` method** — `builder.Remove(expressions)` resolves to `CollectionExtensions.Remove<TKey,TValue>` and fails to compile
-- **Column headers with virtualized rendering**: `role="columnheader"` elements are "hidden" (glide-data-grid virtual rendering) — use `toBeAttached()` not `toBeVisible()` for column headers too
-- **glide-data-grid cell clicking**: gridcell elements are hidden behind the canvas overlay. `.click()` and `.click({ force: true })` both fail. Use `.dispatchEvent("click")` to bypass visibility — but note this does NOT trigger Ivy's `OnCellClick` handler (the canvas intercepts real mouse events).
+### SelectInput
 
-## SelectInput
+**Single-select:** Radix Select — trigger `button[role="combobox"]`, options `[role="option"]`.
+**Multi-select:** CMDK in Popover — trigger is div with input, options are `[cmdk-item]`. Popover stays open after selecting — close with `Escape`.
+**Trigger gotcha:** Renders ALL option labels concatenated in trigger button — `getByText("Option")` is ambiguous (matches trigger + dropdown item). Use `page.evaluate` + coordinate clicking, or `getByRole("option", { name: "Option", exact: true })`.
 
-### SelectInput Multi-Select vs Single-Select
+**Variants:**
+- `.Slider()` — Radix slider with `role="slider"`, keyboard nav (ArrowRight/Left, Home/End). No `selectMany` support.
+- `.Variant(SelectInputVariant.Toggle)` — Radix toggle buttons with `aria-pressed`, NOT `role="radio"/"checkbox"`. Use `getByText("Option", { exact: true }).first().click()`.
 
-- **Single-select** (Select variant): Uses Radix Select — trigger is `button[role="combobox"]`, options are `[role="option"]`
-- **Multi-select** (Select variant): Uses CMDK (Command Menu) in a Popover — trigger is a div with input, options are `[cmdk-item]`
-- To open multi-select: `page.getByPlaceholder('placeholder text').click()`
-- To select option in multi-select: `page.locator('[cmdk-item]').filter({ hasText: 'Option' }).click()`
-- Multi-select popover stays open after selecting — close with `page.keyboard.press('Escape')`
-- Visual group separators appear between option groups in the dropdown (Select variant only)
+**AsyncSelectInput:** Opens a Sheet (`role="dialog"`) with search + ListItem options. Trigger: `getByRole('button', { name: 'placeholder text' })`. Wait 1500ms after selection for state update. `.Invalid()` renders as icon, not text.
 
-### SelectInput Slider Variant
+### NumberInput / MoneyInput
 
-- `state.ToSelectInput(options).Slider()` renders a discrete range slider using Radix UI `<Slider>` with `role="slider"`
-- Use `page.getByRole('slider')` to locate; keyboard interaction with ArrowRight/ArrowLeft (step), Home/End (min/max)
-- Does NOT support `selectMany` — logs a warning and falls back to single-select
+- `state.ToNumberInput()` renders as text `<input>`, NOT `type="number"` — `input[type="number"]` finds nothing
+- `state.ToMoneyInput().Currency("USD")` renders formatted currency (e.g., "$850,000")
+- `state.ToNumberRangeInput()` renders dual-handle slider with 2 `role="slider"` elements
+- `.Variant(NumberInputVariants.Slider)` renders as Radix slider (same as `ToSliderInput()`)
+- `.WithField().Label("X")` does NOT create `<label for="">` — `getByLabel("X")` fails; use index-based locators
 
-### SelectInput Trigger Display
+### BoolInput (Checkbox / Switch)
 
-- **SelectInput trigger displays all option labels**: `SelectInput<T>` with many options renders ALL option display names concatenated in the trigger button (combobox). This makes `getByText("OptionName")` ambiguous — it matches both the trigger and the dropdown item. Use `page.evaluate` + coordinate clicking.
-- **SelectInput dropdown structure**: Trigger is `<button role="combobox">`. Dropdown panel is `<div role="listbox">`. Items inside may have NO `role="option"` — they are plain `<div>` elements with text content.
-- `state.ToSelectInput(options)` WITHOUT `.Variant(SelectInputVariants.Toggle)` renders as a Radix dropdown (not native `<select>`) — click the trigger text to open, then `getByText("Option", { exact: true }).first().click()` to select.
-- **Searchable SelectInput dropdown**: `getByRole("combobox").first().click()` opens the dropdown, `keyboard.type("search")` filters, `getByRole("option").first().click()` selects.
+- Renders as `<button role="checkbox">` (Radix UI), NOT native `<input type="checkbox">`
+- `getByRole("checkbox", { name: /.../ })` and `getByLabel()` do NOT work — use `page.locator('[role="checkbox"]').nth(N)`
+- Clicking label text does NOT toggle the checkbox — must click the `<button>` directly
+- Without explicit `.Variant()`, defaults to `role="checkbox"` (not `role="switch"`)
 
-### Multi-Select Toggle Variant
+### Slider
 
-- `IState<string[]>` with `.Variant(SelectInputVariant.Toggle)` renders as Radix toggle buttons with `aria-pressed` attribute, NOT `role="radio"` or `role="checkbox"`. Use `page.getByText("Option", { exact: true }).first().click()`.
-- When Toggle row field options overlap with dropdown option names, `getByText("Quantity").first()` matches the TOGGLE button, not the dropdown option. Use `getByRole("option", { name: "Quantity", exact: true })` to select dropdown items when a popover/dropdown is open.
+- `state.ToSliderInput()` renders as Radix UI slider with `role="slider"`, NOT `<input type="range">`
+- Keyboard: ArrowRight/Left (step), Home/End (min/max)
 
-### AsyncSelectInput
+### TextInput / TextareaInput
 
-- AsyncSelectInput opens a **Sheet** (`role="dialog"`) with search input and ListItem options
-- The trigger button contains placeholder text as `<span>` — use `getByRole('button', { name: 'placeholder text' })` to click the trigger
-- Inside the sheet: `sheet.getByPlaceholder('Search')` for the search input, `sheet.getByText('Option', { exact: true }).first()` for options
-- After selecting, the sheet auto-closes and state feedback updates — wait 1500ms after click
-- **OnBlur test**: Use `.focus()` + `keyboard.press('Tab')` to trigger blur without opening the sheet
-- `.Invalid("message")` renders as an icon/visual indicator on the button, NOT as visible text
+- `state.ToTextareaInput()` → `<textarea>`, `state.ToTextInput()` → `role="textbox"`
+- `.Placeholder("X")` → accessible via `getByRole("textbox", { name: "X" })`
+- `.Multiline().Rows(6)` renders as `<textarea>`
 
-## Dialog and Sheet (Critical)
+### DateInput / DateRangeInput
 
-- Ivy dialogs (`.ToDialog()`) and confirmation dialogs (`.WithConfirm()`) render as `<div role="dialog">`, NOT HTML `<dialog>` elements
-- **NEVER** use `page.locator("dialog")` — it won't match. Always use `page.getByRole("dialog", { name: "Dialog Title" })` or `page.locator("[role='dialog']")`
-- Ivy sheets (`.ToSheet()`) also render with `role="dialog"` — same locator pattern applies
-- Form fields inside dialogs use labels like "Title *" (with asterisk for required) — `getByLabel("Title")` may not match. Use `dialog.getByRole("textbox").nth(N)` to target fields by position
-- Edit sheets use "Save" button (not "Submit") for form submission
-- Create dialogs reuse the entity action name as the submit button text (e.g., "Create")
+- `state.ToDateInput()` renders as `<button data-slot="calendar">` trigger with Radix Popover — NOT `<input type="date">`
+- Calendar navigation: `input[placeholder="M"]` (month), `input[placeholder="YYYY"]` (year) — fill and Enter
+- Day selection: `page.locator('div[data-slot="calendar"]').locator("button").filter({ hasText: /^15$/ }).first().click()`
+- Popover auto-closes after day selection; nullable dates show clear (X) button
+- react-day-picker v9 uses flex layout, NOT `<table>` — use `.rdp-weekdays .rdp-weekday`, `.rdp-day button`
 
-### WithConfirm Dialog
+**DateRangeInput:** Two-month calendar with presets. After clicking start date, dates before it are disabled — use sidebar presets for reliable testing. State: `UseState<(DateOnly, DateOnly)>()` (non-nullable only).
 
-- `button.WithConfirm("message", "title")` renders a custom Dialog with "Cancel" (outline) and "Ok" (primary) buttons
-- The confirm button text is always **"Ok"** — use `getByRole("button", { name: "Ok" })` to click it
-- The dialog title and message are customizable, but button labels are hardcoded in `WithConfirmView`
+### CodeInput / CodeBlock
 
-## Form Patterns (.ToForm / .ToDialog / .ToSheet)
+- CodeMirror editor locator: `.cm-content[contenteditable='true']`
+- **Do NOT use `keyboard.type()`** for CodeMirror — use clipboard: `page.evaluate(async (t) => { await navigator.clipboard.writeText(t); }, text)` then `Control+V`. Requires `permissions: ["clipboard-read", "clipboard-write"]`.
+- `CodeInput<TString>` requires type parameter — prefer `.ToCodeInput()` extension or `Markdown` widget
+- `CodeBlock` with `UseEffect`-populated state renders empty initially — trigger state change, wait 500-1000ms
+- Syntax tokens use inline `style` attributes (react-syntax-highlighter/Prism), not CSS classes
+- `.ShowCopyButton()` adds `aria-label="Copy to clipboard"` — use `{ exact: true }`
 
-- `.ToForm()` with `[Required]` fields renders labels as "FieldName *" (with asterisk suffix) — `getByText("Code", { exact: true })` won't match "Code *". Use input element locators instead
-- `.ToDialog(isOpen, title, submitTitle)` renders a dialog with custom title and submit button text
-- `.ToSheet(isOpen, title)` renders a slide-in sheet with Save/Cancel buttons
-- `.WithField().Required()` adds `*` suffix to field labels
-- `.WithField().Label("X")` on NumberInput does NOT create an HTML `<label for="">` association — `getByLabel("X")` fails. Use `page.locator("input").first()` or index-based locators instead
+### FeedbackInput (Star Rating)
 
-## NumberInput / NumberRangeInput / MoneyInput
+- Star SVGs: `page.locator('button svg')` — extra SVGs from Ivy branding exist on page
+- `.AllowHalf()` creates extra SVG elements — don't assert exact `button svg` counts
+- Use `CultureInfo.InvariantCulture` for decimal values matched by Playwright
+- `.Invalid()` renders as icon, not text
 
-- **NumberInput** (`state.ToNumberInput()`) renders as a regular text `<input>` in the DOM, NOT `<input type="number">`. `page.locator('input[type="number"]')` will find nothing. Use `page.locator('input[value="200"]')` to locate by current value, or find inputs relative to their label text.
-- **NumberRangeInput** (`state.ToNumberRangeInput()`) renders as a dual-handle slider with `role="slider"` attributes (2 sliders per range input for lower/upper bounds). Supports currency formatting, percent formatting, prefix/suffix, and keyboard navigation.
-- `state.ToMoneyInput().Currency("USD").Precision(0)` renders as a text input with formatted currency (e.g., "$850,000") — values are displayed with `$` prefix and comma separators
-- `state.ToNumberInput().Variant(NumberInputVariants.Slider)` renders similarly to `ToSliderInput()` — a Radix slider with `role="slider"`.
+## Dialogs, Sheets & Forms
 
-## BoolInput (Checkbox / Switch)
+- `.ToDialog()`, `.WithConfirm()`, `.ToSheet()` all render as `<div role="dialog">`, NOT HTML `<dialog>`
+- **NEVER** use `page.locator("dialog")` — use `page.getByRole("dialog", { name: "Title" })` or `[role='dialog']`
+- `.WithConfirm("message", "title")` always uses **"Ok"** and **"Cancel"** buttons (hardcoded)
+- Edit sheets use "Save" button; create dialogs use entity action name (e.g., "Create")
+- `[Required]` fields render labels as "FieldName *" — `getByText("Code", { exact: true })` won't match "Code *"; use input element locators
+- `.WithField().Required()` adds `*` suffix; `.WithField().Label("X")` on NumberInput has no `<label for="">` association
 
-- `state.ToBoolInput().Variant(BoolInputVariants.Checkbox)` renders as `<button role="checkbox">` (Radix UI), NOT a native `<input type="checkbox">` — `getByRole("checkbox", { name: /.../ })` and `getByLabel()` do NOT work for locating these; use `page.locator('[role="checkbox"]').nth(N)` by index order instead
-- Clicking the checkbox label text via `getByText("Label").click()` does NOT toggle the checkbox — must click the `<button>` element directly
-- `state.ToBoolInput().Label("X")` WITHOUT explicit `.Variant()` renders as `role="checkbox"` (NOT `role="switch"`) — clicking the label text does NOT toggle the checkbox
+## Layout Widgets
 
-## Slider
+### Card
 
-- `state.ToSliderInput()` renders as a Radix UI slider with `role="slider"`, NOT a native `<input type="range">` — use `page.getByRole("slider")` and keyboard interaction (ArrowRight/ArrowLeft to increment/decrement by step, Home/End for min/max)
+- `.Title("X")` renders as `<span>`, NOT heading — use `getByText("X", { exact: true })`, not `getByRole("heading")`
+- `new Card(content, header: Text.H3("X"))` renders heading; `.Title("X")` does not
+- `Card.Default(content)` does NOT exist — use `new Card().Content(widget)` pattern
+- `.Title().Content()` may render invisible card body — use `Layout.Vertical()` as workaround
 
-## TextInput / TextareaInput
+### Tabs
 
-- `state.ToTextareaInput()` renders as a standard `<textarea>` element, locatable via `page.locator("textarea").first()`; disabled output textarea is the `.nth(1)`
-- `state.ToTextInput()` renders as a standard `role="textbox"` element
-- `new TextInput(value, onChange).Placeholder("X")` renders with `placeholder="X"` attribute accessible via `getByRole("textbox", { name: "X" })`
-- `.Multiline().Rows(6)` on TextInput renders as `<textarea>` element
+- `Layout.Tabs` renders BOTH tab panels in DOM — inactive content is hidden but locators can match it
+- Tab switching: `getByRole("tab", { name: "TabName" })`
 
-## DateInput / DateRangeInput
+### Kanban
 
-### DateInput (ToDateInput)
+- Column headers include counts: "Todo (2)" — use regex `/^Todo/` or `/Todo.*\(\d+\)/`
 
-- `state.ToDateInput()` renders as a `<button data-slot="calendar">` trigger that opens a Radix Popover with a react-day-picker Calendar — NOT a native `<input type="date">`
-- **Calendar navigation**: Month input: `input[placeholder="M"]`, Year input: `input[placeholder="YYYY"]` — fill and press Enter
-- **Day selection**: Day buttons inside `div[data-slot="calendar"]` (calendar root, NOT the trigger button). Use `page.locator('div[data-slot="calendar"]').locator("button").filter({ hasText: /^15$/ }).first().click()`
-- The popover content renders via Radix Portal at document root
-- After selecting a day, the popover auto-closes
-- `nullable` dates show a clear (X) button when a value is set
+### Calendar
 
-### DateRangeInput (ToDateRangeInput)
+- Uses react-big-calendar with toolbar (Today, <, >, Month/Week/Day/Agenda)
+- Color support via string values ("Blue", "Green", "Red", "Purple"); all-day events span date cells
+- `OnEventClick` receives event ID; `.ShowToolbar(false)` hides navigation
 
-- `state.ToDateRangeInput()` renders as a `<button data-slot="calendar">` trigger with a two-month calendar popover and preset shortcuts
-- The `data-testid` attribute is placed directly on the trigger button itself, NOT on a wrapper div
-- **Date selection in range mode**: After clicking the start date, react-day-picker disables dates before the start. Use sidebar presets for reliable testing
-- Supports `Placeholder`, `StartPlaceholder`, `EndPlaceholder`
-- Range inputs use tuple state: `UseState<(DateOnly, DateOnly)>()`
-- `UseState<(DateOnly, DateOnly)?>()` (nullable tuple) is incompatible — use non-nullable
+## Data Display
 
-### Calendar Widget Patterns
+### Json / Xml
 
-- react-day-picker v9 uses flex layout, NOT `<table>` elements. Use `.rdp-weekdays .rdp-weekday` for weekday headers, `.rdp-day button` for day buttons
+- `Json(object)` auto-serializes; `Xml(XObject)` or `Xml(string)`. Both have `Expanded` prop (null=collapsed, -1=fully expanded)
+- Default is collapsed — use `{ Expanded = -1 }` for testing
+- Xml's `.TestId()` does NOT render `data-testid` — use text-based locators
 
-## CodeInput / CodeBlock
+### Details
 
-- `new CodeBlock(state.Value, language)` where `state` is populated via `UseEffect` will render with EMPTY `<code>` element on initial page load — the UseEffect hasn't fired yet. Trigger a state change first, then wait 500-1000ms.
-- CodeMirror-based code inputs (from `state.ToCodeInput()`) use `.cm-content[contenteditable='true']` as the editable locator
-- **IMPORTANT**: Do NOT use `keyboard.type()` or `keyboard.insertText()` for CodeMirror editors — use clipboard paste instead: `page.evaluate(async (t) => { await navigator.clipboard.writeText(t); }, text)` then `page.keyboard.press("Control+V")`. Requires `permissions: ["clipboard-read", "clipboard-write"]`.
-- `CodeInput<TString>` requires a type parameter — use `.ToCodeInput()` extension method or `Markdown` widget as alternative
-- `.ShowCopyButton()` and code editors add `aria-label="Copy to clipboard"` icon buttons — always use `{ exact: true }` for explicit Copy buttons
-- **CodeBlock syntax tokens use inline styles, not CSS classes** — `react-syntax-highlighter` (Prism mode) applies styles via inline `style` attributes. Do NOT use class-based selectors.
+- `.ToDetails()` converts PascalCase to spaced labels ("MonthlyNetBurn" → "Monthly Net Burn")
+- `Dictionary<TKey, TValue>.ToDetails()` crashes with `TargetParameterCountException` — convert to anonymous object first
 
-## Card Component
+### ECharts
 
-- `new Card(content).Title("X")` renders the title as a `<span>`, NOT as a heading element — use `getByText("X", { exact: true })` to locate card titles, not `getByRole("heading")`
-- `new Card(content, header: Text.H3("X"))` renders a heading — but `.Title("X")` does not
-- Card title text can cause strict mode violations — always use `{ exact: true }`
-- `Card.Default(content)` does NOT exist. Use `new Card().Content(widget)` or `new Card().Header("title").Content(widget)` pattern instead.
-- **Card `.Title().Content()` renders invisible card body** — workaround: use `Layout.Vertical()` with manual styling instead of Card
+- Uses **echarts-for-react** rendering as **SVG** by default — `page.locator('canvas')` won't work
+- Locate via: `page.locator('[_echarts_instance_]')`; `data-chart-rendered="true"` indicates ready
+- Use React fiber to read chart data (walk from canvas to `memoizedProps.option`), not `__ec_instance__`/`_ec_`
+- `option.radar` can be object or array — always normalize with `Array.isArray`
+- Case sensitivity: axes/labels visible but no data lines → suspect dataKey case mismatch
+- Screenshot-based verification needs 3s+ waits
 
-## VideoPlayer Widget
+## Media & Files
 
-- `<track>` elements inside `<video>` are NOT accessible via Playwright locators — use `page.evaluate()` to query `document.querySelectorAll('video')[N].querySelectorAll('track')`
-- Non-CORS video sources will fail when subtitles are present — use CORS-compatible sources
+### VideoPlayer
 
-## Kanban Widget
+- `<track>` elements not accessible via Playwright — use `page.evaluate()` with `querySelectorAll('video')[N].querySelectorAll('track')`
+- Subtitles require CORS-compatible video sources
 
-- Kanban column headers include card counts, e.g., "Todo (2)" — use regex `/^Todo/` or `/Todo.*\(\d+\)/`
-- The `group:` parameter (not `path:`) is used in the `[App]` attribute for nav grouping
+### Camera
 
-## Calendar Widget
+- Chromium's `--use-fake-device-for-media-stream` produces `videoWidth=0`/`videoHeight=0` in headless — upload assertions unverifiable
+- State machine (idle → active → captured) can be tested
+- Config: `permissions: ['camera']` + appropriate `launchOptions.args`
 
-- Calendar renders using react-big-calendar with toolbar (Today, <, >, Month/Week/Day/Agenda)
-- Events display on correct dates with color support (string colors like "Blue", "Green", "Red", "Purple")
-- All-day events span across multiple date cells
-- `OnEventClick` handler receives the event ID
-- `.ShowToolbar(false)` hides the navigation toolbar
+### Upload / FileUpload
 
-## ECharts (Bar/Line/Area/Pie/Radar Charts)
+- `FileUpload<byte[]>`: FileName, Length, Content, Status (Pending/Loading/Aborted/Failed/Finished — NO `InProgress`)
+- `ToFileInput(upload).Placeholder(...)` renders dashed dropzone with hidden `input[type="file"]`
+- `page.locator('input[type="file"]').setInputFiles({name, mimeType, buffer})` for testing
+- `FileUpload<byte[]>.ToTable()` with `.Remove(e => e.Content)` throws `KeyNotFoundException`
 
-- Ivy charts use **echarts-for-react** which renders as **SVG** (not canvas) by default — `page.locator('canvas')` will NOT find chart elements
-- Locate ECharts instances via: `page.locator('[_echarts_instance_]')`
-- The `onChartReady` callback sets `data-chart-rendered="true"` on the container
-- For screenshot-based verification, use longer waits (3s+)
-- **Screenshot path in test specs**: `projectRoot` resolves to `sample/` dir; screenshots go to `path.resolve(projectRoot, '..', 'screenshots')`
-- **Canvas presence ≠ visual content**: Charts can have valid canvas elements but render completely empty
-- **ECharts indicator labels are rendered on canvas, NOT in DOM text**: Use React fiber to extract option data
-- **Accessing ECharts option data via React fiber**: Walk up from `<canvas>` to find `memoizedProps.option.radar`
-- **`__ec_instance__` and `_ec_` are NOT reliable** — use fiber tree instead
-- **Radar option.radar can be object or array**: Always normalize: `Array.isArray(data) ? data : [data]`
-- **Case sensitivity pattern**: When charts show axes/labels but no data lines, suspect dataKey case mismatch
+### File Dialogs (UseFileDialog / UseSaveDialog / UseFolderDialog)
 
-## Camera/Media Testing
-
-- Chromium's `--use-fake-device-for-media-stream` produces `videoWidth=0` and `videoHeight=0` in headless mode — upload-dependent assertions cannot be verified
-- CameraInput widget's state machine (idle -> active -> captured) CAN be tested
-- Set Playwright config: `permissions: ['camera']` and appropriate `launchOptions.args`
-
-## Upload/FileUpload Patterns
-
-- `UseUpload(MemoryStreamUploadHandler.Create(photoState), defaultContentType: "image/png")` creates an upload context
-- `FileUpload<byte[]>` has: FileName, Length, Content, Status (Pending/Loading/Aborted/Failed/Finished)
-- `FileUploadStatus` values: Pending, Aborted, Loading, Failed, Finished (NO `InProgress`)
-- `ToFileInput(upload).Placeholder(...)` renders a dashed dropzone with hidden `input[type="file"]`
-- `page.locator('input[type="file"]').setInputFiles({name, mimeType, buffer})` works for Playwright testing
-- `FileUpload<byte[]>.ToTable()` with `.Remove(e => e.Content)` throws `KeyNotFoundException` — remove the `.Remove()` call
-
-## File Dialog Testing (UseFileDialog/UseSaveDialog/UseFolderDialog)
-
-### Disabling File System Access API for Playwright
+Disable File System Access API for Playwright:
 ```typescript
 await page.addInitScript(() => {
   Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true, writable: true });
@@ -223,48 +175,26 @@ await page.addInitScript(() => {
   delete (window as any).showDirectoryPicker;
 });
 ```
+- Folder dialog (`<input webkitdirectory>`): `fileChooser.setFiles()` requires **directory path**, not individual files
+- Save dialog in headless: uses `<a download>` fallback — `page.waitForEvent('download')` to capture
 
-### Folder Dialog with webkitdirectory
-Playwright's `fileChooser.setFiles()` for `<input webkitdirectory>` requires passing a **directory path**, not individual file paths.
+## Other Widgets
 
-### Save Dialog Fallback
-In headless mode with File System Access API disabled, the save dialog uses `<a download>` fallback. Use `page.waitForEvent('download')` to capture it.
+### Markdown
 
-## Markdown Widget
+- `OnLinkClick` fires for ALL URL types when handler registered; lambda needs explicit type: `(string url) => { }`
+- Popover links (`[text](## "content")`): renders `<span role="button">` with Radix Popover
+- Local images: `.DangerouslyAllowLocalFiles()` preserves file:// URLs; browser blocking is expected
 
-- **OnLinkClick event fires for ALL URL types** when handler is registered
-- **Lambda overload ambiguity**: Must explicitly type parameter: `(string url) => { }`
-- **Popover links** (`[text](## "content")` syntax): Renders as `<span role="button">` with Radix `<Popover>`
-- **normalizeNestedFences preprocessor**: Handles nested code blocks per CommonMark spec
-- **Icons.X in inline code**: react-markdown v10 removed `inline` prop — use `!className` check instead
-- **Local image support**: `.DangerouslyAllowLocalFiles()` preserves file:// URLs; browser blocking is expected behavior
+### Webhooks (UseWebhook)
 
-## FeedbackInput (Star Rating)
+- URLs at `/ivy/webhook/<guid>`, NOT `/api/webhook/<guid>`
+- GET and POST only — PUT/DELETE return non-200
+- Each `page.goto()` creates fresh WebSocket session with new webhook URL
+- State updates need 1500-3000ms wait
 
-- **Star rating SVG locator**: Use `page.locator('button svg')` — page has extra SVGs from Ivy branding
-- **AllowHalf creates extra SVG elements**: Don't assert exact `button svg` counts
-- **Decimal formatting locale**: Use `CultureInfo.InvariantCulture` for values matched by Playwright
-- `.Invalid("message")` renders as an icon, not visible text
+### UseArgs / UseDownload
 
-## Details Widget
-
-- `.ToDetails()` on anonymous objects converts PascalCase to spaced labels (e.g., `MonthlyNetBurn` → "Monthly Net Burn")
-- **`Dictionary<TKey, TValue>.ToDetails()` crashes** with `TargetParameterCountException` — convert to anonymous object first
-
-## Tabs Layout
-
-- **Ivy `Layout.Tabs` renders BOTH tab panels in DOM** — inactive tab content is hidden but still exists. Locators can match hidden elements from inactive panel.
-- Tab switching: `getByRole("tab", { name: "TabName" })` works reliably for clicking tab triggers
-
-## Webhooks
-
-- `UseWebhook` generates URLs at `/ivy/webhook/<guid>`, NOT `/api/webhook/<guid>`
-- Only accepts GET and POST requests — PUT/DELETE return non-200
-- Each `page.goto()` creates new WebSocket session with fresh state and new webhook URL
-- State updates via WebSocket need 1500-3000ms wait for UI reflection
-
-## UseArgs / UseDownload
-
-- **`UseArgs<T>` does NOT work with external URL navigation** — reads from WebSocket `appArgs`, not browser URL
-- **`IHttpContextAccessor.HttpContext` is null in WebSocket context** — always use `?.`
-- `UseDownload(factory, mimeType, fileName)` returns nullable URL — renders as `role="link"` when non-null
+- `UseArgs<T>` reads from WebSocket `appArgs`, NOT browser URL — external URL navigation doesn't work
+- `IHttpContextAccessor.HttpContext` is null in WebSocket context — always use `?.`
+- `UseDownload` returns nullable URL — renders as `role="link"` when non-null
