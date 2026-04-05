@@ -8,15 +8,15 @@ namespace Ivy.Tendril.Apps.Review.Dialogs;
 public class CustomPrDialog(
     IState<bool> dialogOpen,
     PlanFile selectedPlan,
-    JobService jobService,
-    PlanReaderService planService,
+    IJobService jobService,
+    IPlanReaderService planService,
     Action refreshPlans,
     QueryResult<string[]> assigneesQuery) : ViewBase
 {
     private readonly IState<bool> _dialogOpen = dialogOpen;
     private readonly PlanFile _selectedPlan = selectedPlan;
-    private readonly JobService _jobService = jobService;
-    private readonly PlanReaderService _planService = planService;
+    private readonly IJobService _jobService = jobService;
+    private readonly IPlanReaderService _planService = planService;
     private readonly Action _refreshPlans = refreshPlans;
     private readonly QueryResult<string[]> _assigneesQuery = assigneesQuery;
 
