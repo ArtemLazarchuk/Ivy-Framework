@@ -16,6 +16,8 @@ searchHints:
 Visualize correlations and distributions with interactive scatter plots that support bubble charts, multiple series, and customizable point shapes.
 </Ingress>
 
+> **Important:** ScatterChart requires numeric axes for both X and Y. Always use `.Type(AxisTypes.Number)` on axes, or omit the `.Type()` call (YAxis defaults to Number). Do NOT use `AxisTypes.Category` — it will cause "NaN" rendering and data clustering. If you have categorical data (e.g., "Q1", "Q2"), convert it to numeric values before using ScatterChart.
+
 Scatter charts display data points on a two-dimensional coordinate system, making them ideal for showing correlations between two numeric variables. Build chart [views](../../01_Onboarding/02_Concepts/02_Views.md) inside [layouts](../../01_Onboarding/02_Concepts/04_Layout.md) and use [state](../../03_Hooks/02_Core/03_UseState.md) for dynamic data. See [Charts](../../01_Onboarding/02_Concepts/18_Charts.md) for an overview of Ivy chart widgets. The example below renders a basic scatter plot showing the relationship between height and weight.
 
 ```csharp demo-tabs
