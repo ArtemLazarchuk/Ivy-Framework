@@ -69,7 +69,14 @@ public class TrashApp : ViewBase
 
         // Main content
         object mainContent;
-        if (selected is null)
+        if (files.Count == 0)
+        {
+            mainContent = Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
+                | new Icon(Icons.Trash2).Size(Size.Units(8)).Color(Colors.Gray)
+                | Text.Muted("No trash files yet")
+                | Text.Muted("Duplicate plans will appear here").Small();
+        }
+        else if (selected is null)
         {
             mainContent = Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
                 | Text.Muted("Select a file from the sidebar");
