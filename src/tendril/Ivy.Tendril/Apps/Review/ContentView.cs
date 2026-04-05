@@ -412,6 +412,8 @@ public class ContentView(
         // Dialogs
         content |= new UpdatePlanDialog(suggestChangesOpen, suggestChangesText, _selectedPlan, _jobService, _planService, _refreshPlans);
         content |= new CustomPrDialog(customPrOpen, _selectedPlan, _jobService, _planService, _refreshPlans, assigneesQuery);
+
+        // Discard confirmation dialog
         content |= new DiscardPlanDialog(discardDialogOpen, _selectedPlan, _planService, _refreshPlans);
 
         // Action bar

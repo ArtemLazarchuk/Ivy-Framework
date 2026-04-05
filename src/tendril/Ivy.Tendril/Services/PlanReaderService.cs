@@ -11,6 +11,11 @@ public class PlanReaderService(ConfigService config)
 {
     private readonly ConfigService _config = config;
 
+    // Cache for GetHourlyTokenBurn results
+    private List<HourlyTokenBurn>? _hourlyBurnCache;
+    private DateTime? _hourlyBurnCacheTime;
+    private static readonly TimeSpan HourlyBurnCacheExpiration = TimeSpan.FromMinutes(2);
+
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
 
     public static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
@@ -18,7 +23,7 @@ public class PlanReaderService(ConfigService config)
         .IgnoreUnmatchedProperties()
         .Build();
 
-    private static readonly ISerializer YamlSerializer = new SerializerBuilder()
+    public static readonly ISerializer YamlSerializer = new SerializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
 
@@ -510,6 +515,23 @@ public class PlanReaderService(ConfigService config)
     /// Plans without both a costs file and a logs directory are skipped.
     /// </remarks>
     public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
+    {
+        if (_hourlyBurnCache != null &&
+            _hourlyBurnCacheTime != null &&
+            DateTime.UtcNow - _hourlyBurnCacheTime.Value < HourlyBurnCacheExpiration)
+        {
+            return _hourlyBurnCache;
+        }
+
+        var result = ComputeHourlyTokenBurn(days);
+
+        _hourlyBurnCache = result;
+        _hourlyBurnCacheTime = DateTime.UtcNow;
+
+        return result;
+    }
+
+    private List<HourlyTokenBurn> ComputeHourlyTokenBurn(int days)
     {
         var cutoff = DateTime.UtcNow.AddDays(-days);
         var buckets = new Dictionary<(DateTime Hour, string Project), (decimal Cost, int Tokens)>();

@@ -24,6 +24,24 @@ public class WidgetSchemaController(ServerArgs args) : ControllerBase
         var schema = WidgetSchemaGenerator.Generate();
         return Content(schema.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), "application/json");
     }
+
+    [HttpGet("env-info")]
+    public IActionResult GetEnvInfo()
+    {
+        if (!args.EnableDevTools)
+            return NotFound("Env info is only available with --enable-dev-tools");
+
+        var tendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
+        var hasTendril = false;
+
+        if (!string.IsNullOrEmpty(tendrilHome) && Directory.Exists(tendrilHome))
+        {
+            var inboxPath = Path.Combine(tendrilHome, "Inbox");
+            hasTendril = Directory.Exists(inboxPath);
+        }
+
+        return Ok(new { tendrilDetected = hasTendril, tendrilHome });
+    }
 }
 
 internal static class WidgetSchemaGenerator

@@ -108,10 +108,16 @@ public class TendrilSettings
 
 public class ConfigService
 {
+    private static readonly IDeserializer CamelCaseDeserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
     private TendrilSettings _settings;
     private string _configPath;
     private string _tendrilHome;
     private string? _pendingTendrilHome;
+    private ProjectConfig? _pendingProject;
 
     internal ConfigService(TendrilSettings settings, string tendrilHome = "")
     {
@@ -151,11 +157,7 @@ public class ConfigService
             try
             {
                 var yaml = File.ReadAllText(_configPath);
-                var deserializer = new DeserializerBuilder()
-                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                    .IgnoreUnmatchedProperties()
-                    .Build();
-                _settings = deserializer.Deserialize<TendrilSettings>(yaml) ?? new TendrilSettings();
+                _settings = CamelCaseDeserializer.Deserialize<TendrilSettings>(yaml) ?? new TendrilSettings();
                 NeedsOnboarding = false;
             }
             catch (Exception)
@@ -243,6 +245,16 @@ public class ConfigService
         return _pendingTendrilHome;
     }
 
+    public void SetPendingProject(ProjectConfig project)
+    {
+        _pendingProject = project;
+    }
+
+    public ProjectConfig? GetPendingProject()
+    {
+        return _pendingProject;
+    }
+
     internal void SetTendrilHome(string tendrilHome)
     {
         _tendrilHome = tendrilHome;
@@ -252,10 +264,7 @@ public class ConfigService
         if (File.Exists(_configPath))
         {
             var yaml = File.ReadAllText(_configPath);
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            var loadedSettings = deserializer.Deserialize<TendrilSettings>(yaml);
+            var loadedSettings = CamelCaseDeserializer.Deserialize<TendrilSettings>(yaml);
             if (loadedSettings != null)
             {
                 _settings = loadedSettings;

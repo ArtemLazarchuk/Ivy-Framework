@@ -9,8 +9,8 @@ public class HelpApp : ViewBase
 
         return Layout.TopCenter()
             | (Layout.Vertical().Margin(0, 20).Width(150).Gap(3)
-                | Text.H1("Help & Documentation")
-                | Text.Muted("View Tendril documentation and guides at tendril.ivy.app.")
+                | Text.H1("Help")
+                | Text.Muted("View Tendril documentation and guides at https://tendril.ivy.app.")
                 | new Button("Open Documentation")
                     .Primary()
                     .Large()
