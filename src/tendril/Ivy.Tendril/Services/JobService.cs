@@ -7,7 +7,7 @@ namespace Ivy.Tendril.Services;
 
 public record JobNotification(string Title, string Message, bool IsSuccess);
 
-public class JobService
+public class JobService : IJobService
 {
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
     private readonly ConcurrentQueue<string> _jobQueue = new();

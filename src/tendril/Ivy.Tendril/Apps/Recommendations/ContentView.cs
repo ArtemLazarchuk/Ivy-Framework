@@ -7,15 +7,15 @@ public class ContentView(
     Recommendation? selectedRecommendation,
     List<Recommendation> allRecommendations,
     IState<Recommendation?> selectedState,
-    PlanReaderService planService,
-    JobService jobService,
+    IPlanReaderService planService,
+    IJobService jobService,
     Action refresh) : ViewBase
 {
     private readonly Recommendation? _selected = selectedRecommendation;
     private readonly List<Recommendation> _all = allRecommendations;
     private readonly IState<Recommendation?> _selectedState = selectedState;
-    private readonly PlanReaderService _planService = planService;
-    private readonly JobService _jobService = jobService;
+    private readonly IPlanReaderService _planService = planService;
+    private readonly IJobService _jobService = jobService;
     private readonly Action _refresh = refresh;
 
     public override object? Build()

@@ -10,8 +10,8 @@ public class JobsApp : ViewBase
 {
     public override object? Build()
     {
-        var jobService = UseService<JobService>();
-        var planService = UseService<PlanReaderService>();
+        var jobService = UseService<IJobService>();
+        var planService = UseService<IPlanReaderService>();
         var client = UseService<IClientProvider>();
         var refreshToken = UseRefreshToken();
         var showCommand = UseState<string?>(null);

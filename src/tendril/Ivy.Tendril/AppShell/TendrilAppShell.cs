@@ -59,7 +59,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
         var countsService = UseService<PlanCountsService>();
         var menuItems = UseState(() => BuildMenuItems(appRepository, countsService.Current));
         var counts = UseState(() => countsService.Current);
-        var jobService = UseService<JobService>();
+        var jobService = UseService<IJobService>();
         var sidebarOpen = UseState(settings.SidebarOpen);
         var args = UseService<AppContext>();
         var serverArgs = UseService<ServerArgs>();

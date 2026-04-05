@@ -9,11 +9,11 @@ public class ReviewApp : ViewBase
 {
     public override object? Build()
     {
-        var planService = UseService<PlanReaderService>();
-        var jobService = UseService<JobService>();
+        var planService = UseService<IPlanReaderService>();
+        var jobService = UseService<IJobService>();
         var configService = UseService<ConfigService>();
         var gitService = UseService<GitService>();
-        var planWatcher = UseService<PlanWatcherService>();
+        var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
         var textFilter = UseState<string?>("");
         var refreshToken = UseRefreshToken();

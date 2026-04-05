@@ -9,7 +9,7 @@ public class PullRequestApp : ViewBase
 {
     public override object? Build()
     {
-        var planService = UseService<PlanReaderService>();
+        var planService = UseService<IPlanReaderService>();
         var refreshToken = UseRefreshToken();
         var nav = this.UseNavigation();
         var showPlan = UseState<string?>(null);

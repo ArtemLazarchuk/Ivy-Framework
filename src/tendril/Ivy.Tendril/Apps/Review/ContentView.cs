@@ -13,8 +13,8 @@ public class ContentView(
     PlanFile? selectedPlan,
     List<PlanFile> allPlans,
     IState<PlanFile?> selectedPlanState,
-    PlanReaderService planService,
-    JobService jobService,
+    IPlanReaderService planService,
+    IJobService jobService,
     Action refreshPlans,
     ConfigService config,
     GitService gitService) : ViewBase
@@ -22,8 +22,8 @@ public class ContentView(
     private readonly PlanFile? _selectedPlan = selectedPlan;
     private readonly List<PlanFile> _allPlans = allPlans;
     private readonly IState<PlanFile?> _selectedPlanState = selectedPlanState;
-    private readonly PlanReaderService _planService = planService;
-    private readonly JobService _jobService = jobService;
+    private readonly IPlanReaderService _planService = planService;
+    private readonly IJobService _jobService = jobService;
     private readonly Action _refreshPlans = refreshPlans;
     private readonly ConfigService _config = config;
     private readonly GitService _gitService = gitService;

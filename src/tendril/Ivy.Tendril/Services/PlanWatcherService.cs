@@ -1,6 +1,6 @@
 namespace Ivy.Tendril.Services;
 
-public class PlanWatcherService : IDisposable
+public class PlanWatcherService : IPlanWatcherService, IDisposable
 {
     private readonly FileSystemWatcher? _watcher;
     private readonly System.Timers.Timer _debounceTimer;

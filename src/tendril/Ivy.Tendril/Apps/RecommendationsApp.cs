@@ -7,8 +7,8 @@ public class RecommendationsApp : ViewBase
 {
     public override object? Build()
     {
-        var planService = UseService<PlanReaderService>();
-        var jobService = UseService<JobService>();
+        var planService = UseService<IPlanReaderService>();
+        var jobService = UseService<IJobService>();
         var refreshToken = UseRefreshToken();
         var selectedState = UseState<Recommendation?>(null);
         var projectFilter = UseState<string?>(null);

@@ -54,6 +54,7 @@ server.Services.AddSingleton<PlanReaderService>(sp =>
     planService.RecoverStuckPlans();
     return planService;
 });
+server.Services.AddSingleton<IPlanReaderService>(sp => sp.GetRequiredService<PlanReaderService>());
 server.Services.AddSingleton<TelemetryService>(sp =>
 {
     var config = sp.GetRequiredService<ConfigService>();
@@ -66,22 +67,24 @@ server.Services.AddSingleton<JobService>(sp =>
     jobService.SetTelemetryService(sp.GetRequiredService<TelemetryService>());
     return jobService;
 });
+server.Services.AddSingleton<IJobService>(sp => sp.GetRequiredService<JobService>());
 server.Services.AddSingleton<PlanWatcherService>(sp =>
 {
     var config = sp.GetRequiredService<ConfigService>();
     return new PlanWatcherService(config);
 });
+server.Services.AddSingleton<IPlanWatcherService>(sp => sp.GetRequiredService<PlanWatcherService>());
 server.Services.AddSingleton<PlanCountsService>(sp =>
 {
-    var planReader = sp.GetRequiredService<PlanReaderService>();
-    var jobService = sp.GetRequiredService<JobService>();
-    var planWatcher = sp.GetRequiredService<PlanWatcherService>();
+    var planReader = sp.GetRequiredService<IPlanReaderService>();
+    var jobService = sp.GetRequiredService<IJobService>();
+    var planWatcher = sp.GetRequiredService<IPlanWatcherService>();
     return new PlanCountsService(planReader, jobService, planWatcher);
 });
 server.Services.AddSingleton<InboxWatcherService>(sp =>
 {
     var config = sp.GetRequiredService<ConfigService>();
-    var jobService = sp.GetRequiredService<JobService>();
+    var jobService = sp.GetRequiredService<IJobService>();
     return new InboxWatcherService(config, jobService);
 });
 server.UseWebApplication(app =>

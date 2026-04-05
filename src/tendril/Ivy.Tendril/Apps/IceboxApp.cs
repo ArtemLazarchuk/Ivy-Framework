@@ -9,10 +9,10 @@ public class IceboxApp : ViewBase
 {
     public override object? Build()
     {
-        var planService = UseService<PlanReaderService>();
-        var jobService = UseService<JobService>();
+        var planService = UseService<IPlanReaderService>();
+        var jobService = UseService<IJobService>();
         var configService = UseService<ConfigService>();
-        var planWatcher = UseService<PlanWatcherService>();
+        var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
         var projectFilter = UseState<string?>(null);
         var levelFilter = UseState<string?>(null);

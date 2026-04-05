@@ -10,7 +10,7 @@ public class TrashApp : ViewBase
     public override object? Build()
     {
         var configService = UseService<ConfigService>();
-        var jobService = UseService<JobService>();
+        var jobService = UseService<IJobService>();
         var client = UseService<IClientProvider>();
         var refreshToken = UseRefreshToken();
         var selectedFile = UseState<string?>(null);

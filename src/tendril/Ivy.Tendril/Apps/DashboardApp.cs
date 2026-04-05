@@ -8,7 +8,7 @@ public class DashboardApp : ViewBase
 {
     public override object? Build()
     {
-        var planService = UseService<PlanReaderService>();
+        var planService = UseService<IPlanReaderService>();
         var configService = UseService<ConfigService>();
         var refreshToken = UseRefreshToken();
         UseInterval(() =>

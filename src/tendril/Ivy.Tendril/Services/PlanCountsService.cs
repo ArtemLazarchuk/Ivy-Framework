@@ -4,16 +4,16 @@ public record PlanCounts(int Drafts, int ActiveJobs, int Reviews, int Icebox, in
 
 public class PlanCountsService : IDisposable
 {
-    private readonly PlanReaderService _planReaderService;
-    private readonly JobService _jobService;
-    private readonly PlanWatcherService _planWatcher;
+    private readonly IPlanReaderService _planReaderService;
+    private readonly IJobService _jobService;
+    private readonly IPlanWatcherService _planWatcher;
     private PlanCounts _current;
 
     public event Action? CountsChanged;
 
     public PlanCounts Current => _current;
 
-    public PlanCountsService(PlanReaderService planReaderService, JobService jobService, PlanWatcherService planWatcher)
+    public PlanCountsService(IPlanReaderService planReaderService, IJobService jobService, IPlanWatcherService planWatcher)
     {
         _planReaderService = planReaderService;
         _jobService = jobService;

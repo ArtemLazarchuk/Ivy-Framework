@@ -7,7 +7,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ivy.Tendril.Services;
 
-public class PlanReaderService(ConfigService config)
+public class PlanReaderService(ConfigService config) : IPlanReaderService
 {
     private readonly ConfigService _config = config;
 
