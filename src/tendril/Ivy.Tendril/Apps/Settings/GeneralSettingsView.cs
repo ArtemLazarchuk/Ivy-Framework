@@ -19,13 +19,16 @@ public class GeneralSettingsView : ViewBase
                 .Language(Languages.Markdown)
                 .Height(Size.Units(40))
                 .WithField().Label("Plan Template")
-            | new Button("Save").Primary().OnClick(() =>
-            {
-                config.Settings.AgentCommand = agentCommand.Value;
-                config.Settings.PlanTemplate = planTemplate.Value;
-                config.SaveSettings();
-                client.Toast("Settings saved successfully", "Saved");
-            });
+            | new Button("Save").Primary()
+                .Disabled(agentCommand.Value == config.Settings.AgentCommand
+                          && planTemplate.Value == config.Settings.PlanTemplate)
+                .OnClick(() =>
+                {
+                    config.Settings.AgentCommand = agentCommand.Value;
+                    config.Settings.PlanTemplate = planTemplate.Value;
+                    config.SaveSettings();
+                    client.Toast("Settings saved successfully", "Saved");
+                });
 
         return form;
     }
