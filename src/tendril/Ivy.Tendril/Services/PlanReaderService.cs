@@ -584,6 +584,9 @@ public class PlanReaderService(ConfigService config)
         {
             try
             {
+                var folderName = Path.GetFileName(dir);
+                if (!FolderNameRegex.Match(folderName).Success) continue;
+
                 var planYamlPath = Path.Combine(dir, "plan.yaml");
                 if (File.Exists(planYamlPath))
                 {
