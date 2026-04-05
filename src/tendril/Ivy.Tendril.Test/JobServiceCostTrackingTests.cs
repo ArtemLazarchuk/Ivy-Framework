@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Test;
@@ -37,5 +38,65 @@ public class JobServiceCostTrackingTests
         Assert.NotNull(job1?.SessionId);
         Assert.NotNull(job2?.SessionId);
         Assert.NotEqual(job1.SessionId, job2.SessionId);
+    }
+
+    [Fact]
+    public async Task LaunchJob_PassesSessionIdToChildProcess()
+    {
+        // Arrange
+        var testScriptPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..",
+            "TestScripts",
+            "TestSessionId.ps1");
+
+        Assert.True(File.Exists(testScriptPath),
+            $"Test script not found at {testScriptPath}");
+
+        var sessionId = Guid.NewGuid().ToString();
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "pwsh",
+            WorkingDirectory = Path.GetDirectoryName(testScriptPath)!,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-File");
+        psi.ArgumentList.Add(testScriptPath);
+        psi.Environment["TENDRIL_SESSION_ID"] = sessionId;
+
+        var process = new Process { StartInfo = psi };
+        var outputLines = new List<string>();
+        var errorLines = new List<string>();
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null) outputLines.Add(e.Data);
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null) errorLines.Add(e.Data);
+        };
+
+        // Act
+        process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        await process.WaitForExitAsync();
+
+        // Assert
+        Assert.Equal(0, process.ExitCode);
+        Assert.Empty(errorLines);
+
+        var sessionIdLine = outputLines.FirstOrDefault(l => l.StartsWith("SESSION_ID:"));
+        Assert.NotNull(sessionIdLine);
+
+        var receivedSessionId = sessionIdLine.Substring("SESSION_ID:".Length);
+        Assert.Equal(sessionId, receivedSessionId);
     }
 }
