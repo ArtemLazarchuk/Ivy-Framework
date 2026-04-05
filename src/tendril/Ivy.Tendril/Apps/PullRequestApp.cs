@@ -40,7 +40,7 @@ public class PullRequestApp : ViewBase
             .Header(t => t.Repository, "Repository")
             .Header(t => t.Pr, "PR")
             .Header(t => t.Plan, "Plan")
-            .Renderer(t => t.PlanId, new ButtonDisplayRenderer())
+            .Renderer(t => t.PlanId, new LinkDisplayRenderer())
             .Renderer(t => t.Pr, new LinkDisplayRenderer())
             .SortDirection(t => t.PlanId, SortDirection.Descending)
             .Hidden(t => t.Id)

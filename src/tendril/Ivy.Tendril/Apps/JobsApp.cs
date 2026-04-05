@@ -89,7 +89,7 @@ public class JobsApp : ViewBase
             .Width(t => t.Cost, Size.Px(80))
             .Width(t => t.StatusMessage, Size.Auto())
             .Renderer(t => t.Status, new LabelsDisplayRenderer())
-            .Renderer(t => t.PlanId, new ButtonDisplayRenderer())
+            .Renderer(t => t.PlanId, new LinkDisplayRenderer())
             .Hidden(t => t.Id)
             .Hidden(t => t.LastOutputTimestamp)
             .Filterable(t => t.Timer, false)
