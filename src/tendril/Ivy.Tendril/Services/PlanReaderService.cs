@@ -514,6 +514,16 @@ public class PlanReaderService(ConfigService config)
             .ToList();
     }
 
+    /// <summary>
+    /// Gets all recommendations from all plans. This method reads and deserializes all
+    /// recommendations.yaml files in the plans directory, which can be expensive.
+    /// </summary>
+    /// <remarks>
+    /// If you only need the count of pending recommendations, use <see cref="GetPendingRecommendationsCount"/>
+    /// instead, which uses an optimized path via <see cref="ComputePlanCounts"/> that counts
+    /// without full deserialization.
+    /// </remarks>
+    /// <returns>List of all recommendations ordered by date (most recent first).</returns>
     public List<Recommendation> GetRecommendations()
     {
         var recommendations = new List<Recommendation>();
@@ -563,6 +573,15 @@ public class PlanReaderService(ConfigService config)
         return recommendations.OrderByDescending(r => r.Date).ToList();
     }
 
+    /// <summary>
+    /// Gets the count of pending recommendations efficiently without deserializing full recommendation objects.
+    /// </summary>
+    /// <remarks>
+    /// This method delegates to <see cref="ComputePlanCounts"/> which only counts pending items
+    /// without building full Recommendation objects, making it much more efficient than calling
+    /// <c>GetRecommendations().Count(r => r.State == "Pending")</c>.
+    /// </remarks>
+    /// <returns>Number of pending recommendations.</returns>
     public int GetPendingRecommendationsCount()
     {
         return ComputePlanCounts().PendingRecommendations;
