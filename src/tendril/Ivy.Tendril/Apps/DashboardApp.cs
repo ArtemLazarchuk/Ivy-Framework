@@ -20,13 +20,18 @@ public class DashboardApp : ViewBase
 
         var plans = planService.GetPlans();
 
+        // Filter by selected project
+        var filteredPlans = selectedProject.Value != null
+            ? plans.Where(p => p.Project == selectedProject.Value).ToList()
+            : plans;
+
         // Statistics cards
-        var totalCount = plans.Count;
-        var draftCount = plans.Count(p => p.Status == PlanStatus.Draft);
-        var inProgressCount = plans.Count(p => p.Status is PlanStatus.Building or PlanStatus.Executing or PlanStatus.Updating);
-        var reviewCount = plans.Count(p => p.Status == PlanStatus.ReadyForReview);
-        var completedCount = plans.Count(p => p.Status == PlanStatus.Completed);
-        var failedCount = plans.Count(p => p.Status == PlanStatus.Failed);
+        var totalCount = filteredPlans.Count;
+        var draftCount = filteredPlans.Count(p => p.Status == PlanStatus.Draft);
+        var inProgressCount = filteredPlans.Count(p => p.Status is PlanStatus.Building or PlanStatus.Executing or PlanStatus.Updating);
+        var reviewCount = filteredPlans.Count(p => p.Status == PlanStatus.ReadyForReview);
+        var completedCount = filteredPlans.Count(p => p.Status == PlanStatus.Completed);
+        var failedCount = filteredPlans.Count(p => p.Status == PlanStatus.Failed);
 
         var statsRow = Layout.Horizontal().Gap(2).Padding(2)
             | BuildStatCard(totalCount, "Total Plans")
@@ -35,11 +40,6 @@ public class DashboardApp : ViewBase
             | BuildStatCard(reviewCount, "Ready for Review")
             | BuildStatCard(completedCount, "Completed")
             | BuildStatCard(failedCount, "Failed");
-
-        // Daily activity table - last 7 days
-        var filteredPlans = selectedProject.Value != null
-            ? plans.Where(p => p.Project == selectedProject.Value).ToList()
-            : plans;
 
         var today = DateTime.UtcNow.Date;
         var days = Enumerable.Range(0, 7).Select(i => today.AddDays(-i)).ToList();
