@@ -144,7 +144,7 @@ Before setting up frontend dependencies, clean up any `.npmrc` files left from p
 pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
 ```
 
-This prevents stale `.npmrc` files with auth tokens from accumulating across multiple plan executions.
+This removes temporary `.npmrc` files with auth tokens while preserving tracked files.
 
 #### Default Path (Most Plans)
 
@@ -383,10 +383,9 @@ After all verifications pass:
    powershell.exe -NoProfile -Command "\$planFolder = '<PlanFolder>'.Replace('\\', '\\\\'); Get-Process -ErrorAction SilentlyContinue | Where-Object { \$_.Path -and \$_.Path -match [regex]::Escape(\$planFolder) -and \$_.Path -match '\\\\artifacts\\\\sample\\\\bin\\\\' } | ForEach-Object { Write-Host \"Killing zombie process: \$(\$_.ProcessName) (PID \$(\$_.Id))\"; \$_ | Stop-Process -Force -ErrorAction SilentlyContinue }"
    ```
 
-2. Delete temporary `.npmrc` files created in Step 2.5 (if any):
+2. Clean up temporary `.npmrc` files created in Step 2.5:
    ```bash
-   rm -f <worktree>/src/frontend/.npmrc
-   rm -f <worktree>/src/widgets/*/frontend/.npmrc
+   pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
    ```
 
 3. Run `git status` in every worktree. If there are any uncommitted files (from verification fixes, generated files, etc.), commit or discard them. The worktrees must be completely clean before finishing.
