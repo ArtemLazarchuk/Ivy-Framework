@@ -15,20 +15,38 @@ public class TrashApp : ViewBase
         var refreshToken = UseRefreshToken();
         var selectedFile = UseState<string?>(null);
         var confirmDelete = UseState(false);
+        var searchFilter = UseState<string?>("");
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromSeconds(10));
 
         var trashDir = Path.Combine(configService.TendrilHome, "Trash");
         var files = LoadTrashFiles(trashDir);
 
+        // Apply search filter
+        var filteredFiles = files.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(searchFilter.Value))
+        {
+            var searchTerm = searchFilter.Value.ToLowerInvariant();
+            filteredFiles = filteredFiles.Where(f =>
+                f.FileName.ToLowerInvariant().Contains(searchTerm) ||
+                f.OriginalRequest.ToLowerInvariant().Contains(searchTerm) ||
+                f.Project.ToLowerInvariant().Contains(searchTerm) ||
+                f.DuplicateOf.ToLowerInvariant().Contains(searchTerm)
+            );
+        }
+
+        var filteredList = filteredFiles.ToList();
+
         // Auto-select first file if selection is invalid
-        if (selectedFile.Value is { } sel && !files.Any(f => f.FilePath == sel))
-            selectedFile.Set(files.FirstOrDefault()?.FilePath);
+        if (selectedFile.Value is { } sel && !filteredList.Any(f => f.FilePath == sel))
+            selectedFile.Set(filteredList.FirstOrDefault()?.FilePath);
 
-        var selected = files.FirstOrDefault(f => f.FilePath == selectedFile.Value);
+        var selected = filteredList.FirstOrDefault(f => f.FilePath == selectedFile.Value);
 
-        // Sidebar content - file list
-        var sidebarContent = new List(files.Select(f =>
+        // Sidebar content - search input + file list
+        var sidebarHeader = searchFilter.ToSearchInput().Placeholder("Search trash...");
+
+        var sidebarList = new List(filteredList.Select(f =>
         {
             var item = f;
             return new ListItem(item.FileName.Replace(".md", ""))
@@ -82,7 +100,8 @@ public class TrashApp : ViewBase
         {
             new SidebarLayout(
                 mainContent: mainContent,
-                sidebarContent: sidebarContent
+                sidebarContent: sidebarList,
+                sidebarHeader: sidebarHeader
             )
         };
 
