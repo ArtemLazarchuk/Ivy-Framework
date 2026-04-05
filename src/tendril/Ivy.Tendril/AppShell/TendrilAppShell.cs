@@ -38,7 +38,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
         {
             ["plans"] = planCounts.Drafts,
             ["review"] = planCounts.Reviews,
-            ["jobs"] = planCounts.RunningJobs,
+            ["jobs"] = planCounts.ActiveJobs,
             ["icebox"] = planCounts.Icebox,
             ["recommendations"] = planCounts.Recommendations
         };
