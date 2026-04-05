@@ -197,6 +197,33 @@ function Find-SessionFile {
         Select-Object -First 1)
 }
 
+function Find-SessionFileById {
+    param(
+        [string]$ProjectDir,
+        [string]$SessionId
+    )
+
+    if (-not (Test-Path $ProjectDir)) { return $null }
+    if ([string]::IsNullOrEmpty($SessionId)) { return $null }
+
+    # Session files are named with the session ID (with or without extension)
+    $sessionFile = Get-ChildItem $ProjectDir -Filter "$SessionId.jsonl" -File -ErrorAction SilentlyContinue
+    if ($sessionFile) {
+        return $sessionFile
+    }
+
+    # Fallback: search all .jsonl files and check if filename starts with session ID
+    # (Claude might use variations like {sessionId}.jsonl or {sessionId}-{timestamp}.jsonl)
+    $matches = Get-ChildItem $ProjectDir -Filter "*.jsonl" -File |
+        Where-Object { $_.BaseName -eq $SessionId -or $_.BaseName.StartsWith("$SessionId-") }
+
+    if ($matches.Count -gt 0) {
+        return $matches | Select-Object -First 1
+    }
+
+    return $null
+}
+
 function Parse-LogCompletionTime {
     param([string]$LogPath)
 
@@ -206,6 +233,16 @@ function Parse-LogCompletionTime {
             return [DateTime]::Parse($Matches[1], $null, [System.Globalization.DateTimeStyles]::AssumeUniversal -bor [System.Globalization.DateTimeStyles]::AdjustToUniversal)
         }
         catch { }
+    }
+    return $null
+}
+
+function Parse-LogSessionId {
+    param([string]$LogPath)
+
+    $content = Get-Content $LogPath -Raw
+    if ($content -match '- \*\*SessionId:\*\*\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})') {
+        return $Matches[1]
     }
     return $null
 }
@@ -304,12 +341,6 @@ foreach ($plan in $affectedPlans) {
         $status = Parse-LogStatus $logFile.FullName
         if ($status -ne "Completed") { continue }
 
-        $completionTime = Parse-LogCompletionTime $logFile.FullName
-        if (-not $completionTime) {
-            Write-Host "  $($logFile.Name): Could not parse completion time" -ForegroundColor Yellow
-            continue
-        }
-
         # Find Claude project directory for this promptware
         $workDir = Get-ClaudeProjectDir -Promptware $promptware -Project $project
         $claudeDir = ConvertTo-ClaudeProjectPath $workDir
@@ -319,11 +350,35 @@ foreach ($plan in $affectedPlans) {
             continue
         }
 
-        # Find matching session file
-        $sessionFile = Find-SessionFile -ProjectDir $claudeDir -CompletionTime $completionTime
+        # Try SessionId lookup first (available for plans after 2026-04-05)
+        $sessionId = Parse-LogSessionId $logFile.FullName
+        $sessionFile = $null
+        $matchMethod = $null
+
+        if ($sessionId) {
+            $sessionFile = Find-SessionFileById -ProjectDir $claudeDir -SessionId $sessionId
+            if ($sessionFile) {
+                $matchMethod = "SessionId"
+            }
+        }
+
+        # Fallback to timestamp matching if SessionId not found or didn't work
+        if (-not $sessionFile) {
+            $completionTime = Parse-LogCompletionTime $logFile.FullName
+            if (-not $completionTime) {
+                Write-Host "  $($logFile.Name): Could not parse completion time or SessionId" -ForegroundColor Yellow
+                continue
+            }
+
+            $sessionFile = Find-SessionFile -ProjectDir $claudeDir -CompletionTime $completionTime
+            if ($sessionFile) {
+                $matchMethod = "Timestamp"
+            }
+        }
 
         if (-not $sessionFile) {
-            Write-Host "  $promptware ($($completionTime.ToString('HH:mm:ss'))): No matching session file" -ForegroundColor Yellow
+            $timeInfo = if ($completionTime) { " ($($completionTime.ToString('HH:mm:ss')))" } else { "" }
+            Write-Host "  $promptware${timeInfo}: No matching session file" -ForegroundColor Yellow
             continue
         }
 
@@ -347,7 +402,7 @@ foreach ($plan in $affectedPlans) {
         }
 
         $costFormatted = "{0:F4}" -f $cost.TotalCost
-        Write-Host "  ${promptware}: $($cost.TotalTokens) tokens, `$$costFormatted (session: $($sessionFile.Name))" -ForegroundColor Green
+        Write-Host "  ${promptware}: $($cost.TotalTokens) tokens, `$$costFormatted (session: $($sessionFile.Name), method: $matchMethod)" -ForegroundColor Green
     }
 
     if ($costEntries.Count -gt 0) {
