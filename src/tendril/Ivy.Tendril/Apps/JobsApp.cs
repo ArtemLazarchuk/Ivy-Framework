@@ -49,6 +49,22 @@ public class JobsApp : ViewBase
         .OrderByDescending(r => r.LastOutputTimestamp ?? DateTime.MinValue)
         .ToList();
 
+        var statusGroups = jobs
+            .GroupBy(j => j.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .OrderByDescending(g => g.Count)
+            .ToArray();
+
+        var statusSegments = statusGroups
+            .Select(g => new ProgressSegment(
+                Value: g.Count,
+                Color: GetStatusColor(g.Status),
+                Label: $"{g.Status} ({g.Count})"
+            ))
+            .ToArray();
+
+        var jobsProgress = new StackedProgress(statusSegments).ShowLabels();
+
         var dataTable = rows.AsQueryable()
             .ToDataTable(idSelector: t => t.Id)
             .RefreshToken(refreshToken)
@@ -182,18 +198,20 @@ public class JobsApp : ViewBase
                 }
                 return ValueTask.CompletedTask;
             })
-            .HeaderRight(ctx => new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
-                new MenuItem("Clear Completed", Icon: Icons.Trash, Tag: "ClearCompleted").OnSelect(() =>
-                {
-                    jobService.ClearCompletedJobs();
-                    refreshToken.Refresh();
-                }),
-                new MenuItem("Clear Failed", Icon: Icons.Trash, Tag: "ClearFailed").OnSelect(() =>
-                {
-                    jobService.ClearFailedJobs();
-                    refreshToken.Refresh();
-                })
-            ));
+            .HeaderRight(ctx => Layout.Horizontal().Gap(2)
+                | jobsProgress
+                | new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
+                    new MenuItem("Clear Completed", Icon: Icons.Trash, Tag: "ClearCompleted").OnSelect(() =>
+                    {
+                        jobService.ClearCompletedJobs();
+                        refreshToken.Refresh();
+                    }),
+                    new MenuItem("Clear Failed", Icon: Icons.Trash, Tag: "ClearFailed").OnSelect(() =>
+                    {
+                        jobService.ClearFailedJobs();
+                        refreshToken.Refresh();
+                    })
+                ));
 
         var layout = Layout.Vertical().Height(Size.Full());
 
@@ -293,4 +311,17 @@ public class JobsApp : ViewBase
             return $"{(int)span.TotalHours}h {span.Minutes:D2}m";
         return $"{span.Minutes}m {span.Seconds:D2}s";
     }
+
+    private static Colors GetStatusColor(string status) => status switch
+    {
+        "Running" => Colors.Blue,
+        "Completed" => Colors.Green,
+        "Failed" => Colors.Red,
+        "Timeout" => Colors.Red,
+        "Queued" => Colors.Amber,
+        "Pending" => Colors.Amber,
+        "Stopped" => Colors.Gray,
+        "Blocked" => Colors.Orange,
+        _ => Colors.Slate
+    };
 }
