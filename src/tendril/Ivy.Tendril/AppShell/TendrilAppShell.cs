@@ -214,28 +214,32 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                     if (settings.PreventTabDuplicates)
                     {
                         var appId = navigateArgs.AppId;
-                        int existingTabIndex = -1;
-                        for (int i = 0; i < tabs.Value.Length; i++)
+                        var appDescriptor = appRepository.GetApp(appId);
+                        if (appDescriptor?.AllowDuplicateTabs != true)
                         {
-                            if (tabs.Value[i].AppId == appId)
+                            int existingTabIndex = -1;
+                            for (int i = 0; i < tabs.Value.Length; i++)
                             {
-                                existingTabIndex = i;
-                                break;
+                                if (tabs.Value[i].AppId == appId)
+                                {
+                                    existingTabIndex = i;
+                                    break;
+                                }
                             }
-                        }
 
-                        if (existingTabIndex >= 0)
-                        {
-                            var previousSelectedIndex = selectedIndex.Value;
-                            selectedIndex.Set(existingTabIndex);
-                            tabId = tabs.Value[existingTabIndex].Id;
-                            SetAppTitle(appId);
-
-                            if (navigateArgs.HistoryOp is HistoryOp.Push && previousSelectedIndex != existingTabIndex)
+                            if (existingTabIndex >= 0)
                             {
-                                RedirectToAppIfNotError(navigateArgs, replaceHistory, tabId);
+                                var previousSelectedIndex = selectedIndex.Value;
+                                selectedIndex.Set(existingTabIndex);
+                                tabId = tabs.Value[existingTabIndex].Id;
+                                SetAppTitle(appId);
+
+                                if (navigateArgs.HistoryOp is HistoryOp.Push && previousSelectedIndex != existingTabIndex)
+                                {
+                                    RedirectToAppIfNotError(navigateArgs, replaceHistory, tabId);
+                                }
+                                return;
                             }
-                            return;
                         }
                     }
 
