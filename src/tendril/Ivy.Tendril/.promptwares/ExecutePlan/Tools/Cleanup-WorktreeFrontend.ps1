@@ -21,7 +21,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # Find all worktree directories
-$worktrees = Get-ChildItem -Path $WorktreeRoot -Directory
+[array]$worktrees = @(Get-ChildItem -Path $WorktreeRoot -Directory)
 
 if ($worktrees.Count -eq 0) {
     Write-Host "No worktrees found in $WorktreeRoot"
@@ -32,8 +32,8 @@ foreach ($worktree in $worktrees) {
     Write-Host "`nProcessing worktree: $($worktree.Name)"
 
     # Find all .npmrc files in frontend directories
-    $npmrcFiles = Get-ChildItem -Path $worktree.FullName -Recurse -Filter ".npmrc" |
-        Where-Object { $_.Directory.Name -eq "frontend" }
+    [array]$npmrcFiles = @(Get-ChildItem -Path $worktree.FullName -Recurse -Filter ".npmrc" |
+        Where-Object { $_.Directory.Name -eq "frontend" })
 
     foreach ($npmrcFile in $npmrcFiles) {
         $relativePath = $npmrcFile.FullName.Replace($worktree.FullName + "\", "").Replace("\", "/")
@@ -46,9 +46,9 @@ foreach ($worktree in $worktrees) {
             if ($isTracked) {
                 Write-Host "  Preserving tracked file: $relativePath"
             } else {
-                # Only delete if it matches the pattern we create
+                # Only delete if it matches patterns we create (with or without auth token)
                 $content = Get-Content $npmrcFile -Raw
-                if ($content -match "node-linker=hoisted" -and $content -match "@ivy-interactive:registry") {
+                if ($content -match "node-linker=hoisted") {
                     Write-Host "  Removing created file: $relativePath"
                     Remove-Item $npmrcFile -Force
                 } else {
