@@ -9,7 +9,7 @@ public class TrashApp : ViewBase
 {
     public override object? Build()
     {
-        var configService = UseService<ConfigService>();
+        var configService = UseService<IConfigService>();
         var jobService = UseService<IJobService>();
         var client = UseService<IClientProvider>();
         var refreshToken = UseRefreshToken();

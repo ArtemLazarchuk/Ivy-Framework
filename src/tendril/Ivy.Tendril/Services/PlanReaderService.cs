@@ -7,9 +7,9 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ivy.Tendril.Services;
 
-public class PlanReaderService(ConfigService config) : IPlanReaderService
+public class PlanReaderService(IConfigService config) : IPlanReaderService
 {
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
 
     // Cache for GetHourlyTokenBurn results
     private List<HourlyTokenBurn>? _hourlyBurnCache;

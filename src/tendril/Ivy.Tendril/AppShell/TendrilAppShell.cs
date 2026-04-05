@@ -48,7 +48,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
     public override object? Build()
     {
         // All hooks must be at the top level of Build()
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var tabs = UseState(ImmutableArray.Create<TabState>);
         var selectedIndex = UseState<int?>();
         var appRepository = UseService<IAppRepository>();

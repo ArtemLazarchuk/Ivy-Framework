@@ -15,7 +15,7 @@ public class ContentView(
     IPlanReaderService planService,
     IJobService jobService,
     Action refreshPlans,
-    ConfigService config,
+    IConfigService config,
     GitService gitService) : ViewBase
 {
     private readonly PlanFile? _selectedPlan = selectedPlan;
@@ -24,7 +24,7 @@ public class ContentView(
     private readonly IPlanReaderService _planService = planService;
     private readonly IJobService _jobService = jobService;
     private readonly Action _refreshPlans = refreshPlans;
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
     private readonly GitService _gitService = gitService;
 
     public override object? Build()

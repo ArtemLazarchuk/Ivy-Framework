@@ -6,7 +6,7 @@ public class VerificationsSettingsView : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var client = UseService<IClientProvider>();
         var refreshToken = UseRefreshToken();
         var editIndex = UseState<int?>(-1);

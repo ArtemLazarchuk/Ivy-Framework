@@ -18,7 +18,7 @@ public class JobsApp : ViewBase
         var showOutput = UseState<string?>(null);
         var showPlan = UseState<string?>(null);
         var openFile = UseState<string?>(null);
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         UseInterval(() =>
         {
             while (jobService.PendingNotifications.TryDequeue(out var notification))

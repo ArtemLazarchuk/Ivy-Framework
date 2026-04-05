@@ -7,7 +7,7 @@ public class PlanWatcherService : IPlanWatcherService, IDisposable
 
     public event Action? PlansChanged;
 
-    public PlanWatcherService(ConfigService config)
+    public PlanWatcherService(IConfigService config)
     {
         _debounceTimer = new System.Timers.Timer(500);
         _debounceTimer.AutoReset = false;

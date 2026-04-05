@@ -8,14 +8,14 @@ public class SidebarView(
     IState<string?> projectFilter,
     IState<string?> levelFilter,
     IState<string?> textFilter,
-    ConfigService config) : ViewBase
+    IConfigService config) : ViewBase
 {
     private readonly List<PlanFile> _plans = plans;
     private readonly IState<PlanFile?> _selectedPlanState = selectedPlanState;
     private readonly IState<string?> _projectFilter = projectFilter;
     private readonly IState<string?> _levelFilter = levelFilter;
     private readonly IState<string?> _textFilter = textFilter;
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
 
     public object BuildHeader()
     {

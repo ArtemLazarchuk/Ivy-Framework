@@ -11,7 +11,7 @@ public class ReviewApp : ViewBase
     {
         var planService = UseService<IPlanReaderService>();
         var jobService = UseService<IJobService>();
-        var configService = UseService<ConfigService>();
+        var configService = UseService<IConfigService>();
         var gitService = UseService<GitService>();
         var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);

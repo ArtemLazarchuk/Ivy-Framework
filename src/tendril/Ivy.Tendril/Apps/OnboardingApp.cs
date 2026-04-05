@@ -201,7 +201,7 @@ public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
         )
         });
         var error = UseState<string?>(null);
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
 
         return Layout.Vertical()
                | Text.H2("Tendril Data Location")
@@ -280,7 +280,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var projectName = UseState("");
         var projectColor = UseState("");
         var repoPaths = UseState(new List<string>());
@@ -368,7 +368,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
     {
         var isProcessing = UseState(false);
         var error = UseState<string?>(null);
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var navigator = UseNavigation();
 
         async Task OnComplete()

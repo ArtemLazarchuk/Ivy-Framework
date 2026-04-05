@@ -106,7 +106,7 @@ public class TendrilSettings
     };
 }
 
-public class ConfigService
+public class ConfigService : IConfigService
 {
     // Shared deserializer with lenient validation (.IgnoreUnmatchedProperties).
     // This allows config.yaml to contain keys that aren't in TendrilSettings without
@@ -389,7 +389,7 @@ public class ConfigService
 
 public static class ProjectBadgeExtensions
 {
-    public static Badge WithProjectColor(this Badge badge, ConfigService config, string projectName)
+    public static Badge WithProjectColor(this Badge badge, IConfigService config, string projectName)
     {
         var color = config.GetProjectColor(projectName);
         return color.HasValue ? badge.Color(color.Value) : badge;

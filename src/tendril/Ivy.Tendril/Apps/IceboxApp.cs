@@ -11,7 +11,7 @@ public class IceboxApp : ViewBase
     {
         var planService = UseService<IPlanReaderService>();
         var jobService = UseService<IJobService>();
-        var configService = UseService<ConfigService>();
+        var configService = UseService<IConfigService>();
         var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
         var projectFilter = UseState<string?>(null);

@@ -7,12 +7,12 @@ public class SidebarView(
     List<PlanFile> plans,
     IState<PlanFile?> selectedPlanState,
     IState<string?> textFilter,
-    ConfigService config) : ViewBase
+    IConfigService config) : ViewBase
 {
     private readonly List<PlanFile> _plans = plans;
     private readonly IState<PlanFile?> _selectedPlanState = selectedPlanState;
     private readonly IState<string?> _textFilter = textFilter;
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
 
     public object BuildHeader()
     {

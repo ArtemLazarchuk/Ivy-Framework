@@ -14,7 +14,7 @@ public class PullRequestApp : ViewBase
         var nav = this.UseNavigation();
         var showPlan = UseState<string?>(null);
         var openFile = UseState<string?>(null);
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
 
         var plans = planService.GetPlans()
             .Where(p => p.Prs.Count > 0)

@@ -33,7 +33,9 @@ public class PlanDownloadHelperTests
         var services = new ServiceCollection();
         services.AddSingleton<IExceptionHandler>(new StubExceptionHandler());
         services.AddSingleton<IDownloadService>(downloadService);
-        services.AddSingleton<ConfigService>(new TestConfigService(tempDir));
+        var testConfig = new TestConfigService(tempDir);
+        services.AddSingleton<IConfigService>(testConfig);
+        services.AddSingleton<ConfigService>(testConfig);
         services.AddSingleton<PlanReaderService>();
         var provider = services.BuildServiceProvider();
         var context = new ViewContext(() => { }, null, provider);
@@ -185,7 +187,7 @@ public class PlanDownloadHelperTests
         }
     }
 
-    private class TestConfigService : ConfigService
+    private class TestConfigService : ConfigService, IConfigService
     {
         private readonly string _planFolder;
 
@@ -195,5 +197,6 @@ public class PlanDownloadHelperTests
         }
 
         public new string PlanFolder => _planFolder;
+        string IConfigService.PlanFolder => _planFolder;
     }
 }

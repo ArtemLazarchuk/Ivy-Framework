@@ -10,7 +10,7 @@ public class InboxWatcherService : IDisposable
     private readonly Timer _pollTimer;
     private readonly ConcurrentDictionary<string, byte> _processing = new();
 
-    public InboxWatcherService(ConfigService config, IJobService jobService)
+    public InboxWatcherService(IConfigService config, IJobService jobService)
     {
         _jobService = jobService;
         _inboxPath = Path.Combine(config.TendrilHome, "Inbox");

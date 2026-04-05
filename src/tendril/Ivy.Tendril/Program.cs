@@ -26,16 +26,17 @@ server.UseCulture("en-US");
 server.UseHotReload();
 #endif
 server.SetMetaTitle("Ivy Tendril");
-server.Services.AddSingleton<ConfigService>();
+var configService = new ConfigService();
+server.Services.AddSingleton<IConfigService>(configService);
+server.Services.AddSingleton<ConfigService>(configService);
 server.Services.AddSingleton<ModelPricingService>();
 
 // Register IChatClient if LLM is configured
-var configForLlm = new ConfigService();
-if (configForLlm.Settings.Llm is { } llmConfig && !string.IsNullOrEmpty(llmConfig.ApiKey))
+if (configService.Settings.Llm is { } llmConfig && !string.IsNullOrEmpty(llmConfig.ApiKey))
 {
     server.Services.AddSingleton<IChatClient>(sp =>
     {
-        var config = sp.GetRequiredService<ConfigService>();
+        var config = sp.GetRequiredService<IConfigService>();
         var llm = config.Settings.Llm!;
         var endpoint = !string.IsNullOrEmpty(llm.Endpoint) ? llm.Endpoint : "https://api.openai.com/v1";
         var client = new OpenAIClient(
@@ -49,7 +50,7 @@ server.Services.AddSingleton<GithubService>();
 server.Services.AddSingleton<GitService>();
 server.Services.AddSingleton<PlanReaderService>(sp =>
 {
-    var planService = new PlanReaderService(sp.GetRequiredService<ConfigService>());
+    var planService = new PlanReaderService(sp.GetRequiredService<IConfigService>());
     planService.RepairPlans();
     planService.RecoverStuckPlans();
     return planService;
@@ -57,12 +58,12 @@ server.Services.AddSingleton<PlanReaderService>(sp =>
 server.Services.AddSingleton<IPlanReaderService>(sp => sp.GetRequiredService<PlanReaderService>());
 server.Services.AddSingleton<TelemetryService>(sp =>
 {
-    var config = sp.GetRequiredService<ConfigService>();
+    var config = sp.GetRequiredService<IConfigService>();
     return new TelemetryService(config.Settings.Telemetry);
 });
 server.Services.AddSingleton<JobService>(sp =>
 {
-    var jobService = new JobService(sp.GetRequiredService<ConfigService>(), sp.GetRequiredService<ModelPricingService>());
+    var jobService = new JobService(sp.GetRequiredService<IConfigService>(), sp.GetRequiredService<ModelPricingService>());
     jobService.SetPlanReaderService(sp.GetRequiredService<PlanReaderService>());
     jobService.SetTelemetryService(sp.GetRequiredService<TelemetryService>());
     return jobService;
@@ -70,7 +71,7 @@ server.Services.AddSingleton<JobService>(sp =>
 server.Services.AddSingleton<IJobService>(sp => sp.GetRequiredService<JobService>());
 server.Services.AddSingleton<PlanWatcherService>(sp =>
 {
-    var config = sp.GetRequiredService<ConfigService>();
+    var config = sp.GetRequiredService<IConfigService>();
     return new PlanWatcherService(config);
 });
 server.Services.AddSingleton<IPlanWatcherService>(sp => sp.GetRequiredService<PlanWatcherService>());
@@ -83,7 +84,7 @@ server.Services.AddSingleton<PlanCountsService>(sp =>
 });
 server.Services.AddSingleton<InboxWatcherService>(sp =>
 {
-    var config = sp.GetRequiredService<ConfigService>();
+    var config = sp.GetRequiredService<IConfigService>();
     var jobService = sp.GetRequiredService<IJobService>();
     return new InboxWatcherService(config, jobService);
 });

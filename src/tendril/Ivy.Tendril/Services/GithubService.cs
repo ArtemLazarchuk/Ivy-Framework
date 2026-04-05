@@ -3,9 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace Ivy.Tendril.Services;
 
-public class GithubService(ConfigService config)
+public class GithubService(IConfigService config)
 {
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
     private readonly Dictionary<string, List<string>> _assigneeCache = new();
     private readonly Dictionary<string, List<string>> _labelCache = new();
     private List<RepoConfig>? _repoCache;

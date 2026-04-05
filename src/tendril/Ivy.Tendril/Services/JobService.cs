@@ -13,7 +13,7 @@ public class JobService : IJobService
     private readonly ConcurrentQueue<string> _jobQueue = new();
     private int _counter;
     private PlanReaderService? _planReaderService;
-    private readonly ConfigService? _configService;
+    private readonly IConfigService? _configService;
     private readonly ModelPricingService? _modelPricingService;
     private TelemetryService? _telemetryService;
     private readonly TimeSpan _jobTimeout;
@@ -43,7 +43,7 @@ public class JobService : IJobService
         ["CreateIssue"] = Path.Combine(PromptsRoot, "CreateIssue.ps1"),
     };
 
-    public JobService(ConfigService configService, ModelPricingService? modelPricingService = null)
+    public JobService(IConfigService configService, ModelPricingService? modelPricingService = null)
     {
         _configService = configService;
         _modelPricingService = modelPricingService;

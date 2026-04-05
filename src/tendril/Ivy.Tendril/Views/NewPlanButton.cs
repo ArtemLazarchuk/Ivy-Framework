@@ -8,7 +8,7 @@ public class NewPlanButton : ViewBase
     public override object? Build()
     {
         var jobService = UseService<IJobService>();
-        var configService = UseService<ConfigService>();
+        var configService = UseService<IConfigService>();
         var dialogOpen = UseState(false);
         var lastSelectedProject = UseState("[Auto]");
 

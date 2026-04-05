@@ -12,7 +12,7 @@ public class ContentView(
     IPlanReaderService planService,
     IJobService jobService,
     Action refreshPlans,
-    ConfigService config) : ViewBase
+    IConfigService config) : ViewBase
 {
     private readonly PlanFile? _selectedPlan = selectedPlan;
     private readonly List<PlanFile> _allPlans = allPlans;
@@ -20,7 +20,7 @@ public class ContentView(
     private readonly IPlanReaderService _planService = planService;
     private readonly IJobService _jobService = jobService;
     private readonly Action _refreshPlans = refreshPlans;
-    private readonly ConfigService _config = config;
+    private readonly IConfigService _config = config;
 
     public override object? Build()
     {

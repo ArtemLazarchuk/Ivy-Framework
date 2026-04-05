@@ -6,7 +6,7 @@ public class GeneralSettingsView : ViewBase
 {
     public override object? Build()
     {
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var client = UseService<IClientProvider>();
         var agentCommand = UseState(config.Settings.AgentCommand);
         var planTemplate = UseState(config.Settings.PlanTemplate);
