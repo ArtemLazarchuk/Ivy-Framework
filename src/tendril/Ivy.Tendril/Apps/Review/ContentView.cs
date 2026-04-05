@@ -317,16 +317,9 @@ public class ContentView(
         {
             foreach (var rec in recommendations)
             {
-                var recCapture = rec;
                 var card = Layout.Vertical().Gap(1)
                     | Text.Block(rec.Title).Bold()
-                    | new Markdown(rec.Description).DangerouslyAllowLocalFiles()
-                    | new Button("Make Draft").Icon(Icons.Plus).Outline().Small().OnClick(() =>
-                    {
-                        _jobService.StartJob("MakePlan",
-                            "-Description", $"[FORCE] {_selectedPlan.Project}: {recCapture.Title}\n\n{recCapture.Description}",
-                            "-Project", _selectedPlan.Project);
-                    });
+                    | new Markdown(rec.Description).DangerouslyAllowLocalFiles();
                 recommendationsLayout |= card;
                 recommendationsLayout |= new Separator();
             }
