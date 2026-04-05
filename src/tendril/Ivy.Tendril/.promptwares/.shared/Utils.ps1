@@ -224,6 +224,24 @@ function ValidatePlanPath {
     return $planYamlPath
 }
 
+<#
+.SYNOPSIS
+Reads plan.yaml and extracts project name and parsed YAML structure.
+
+.PARAMETER PlanYamlPath
+Absolute path to the plan.yaml file to read
+
+.OUTPUTS
+Returns a hashtable with three keys:
+- Content: Raw YAML file content as string
+- Project: Project name from YAML, or "[Auto]" if not specified
+- Yaml: Parsed YAML as hashtable/ordered dictionary
+
+.EXAMPLE
+$planInfo = ReadPlanProject "D:\Plans\01234-MyPlan\plan.yaml"
+$projectName = $planInfo.Project  # "Tendril"
+$repos = $planInfo.Yaml.repos     # Array of repo paths
+#>
 function ReadPlanProject {
     param([string]$PlanYamlPath)
 
@@ -323,6 +341,24 @@ function ExtractRepoPathsFromYaml {
     return $paths
 }
 
+<#
+.SYNOPSIS
+Resolves the first repository path for a given project from config.yaml.
+
+.PARAMETER Project
+The project name to look up in config.yaml (e.g., "Framework", "Tendril")
+
+.OUTPUTS
+Returns the first repository path for the project from config.yaml, or the current working directory if project not found
+
+.EXAMPLE
+$workDir = GetProjectWorkDir "Tendril"
+# Returns: D:\Repos\_Ivy\Ivy-Framework (first repo path from Tendril project config)
+
+.EXAMPLE
+$workDir = GetProjectWorkDir "NonExistent"
+# Returns: (Get-Location).Path (falls back to current directory)
+#>
 function GetProjectWorkDir {
     param([string]$Project)
 
@@ -340,6 +376,52 @@ function GetProjectWorkDir {
     return (Get-Location).Path
 }
 
+<#
+.SYNOPSIS
+Invokes a Claude agent with firmware preparation, cost tracking, and logging.
+
+.PARAMETER ScriptRoot
+Root directory of the calling promptware script (usually $PSScriptRoot)
+
+.PARAMETER ProgramFolder
+Program folder path (from GetProgramFolder)
+
+.PARAMETER LogFile
+Path to the log file for this session
+
+.PARAMETER FirmwareValues
+Hashtable of key-value pairs to inject into firmware header (e.g., @{ PlanId = "01234"; Project = "Tendril" })
+
+.PARAMETER WorkDir
+Working directory for the agent (defaults to ProgramFolder)
+
+.PARAMETER PlanPath
+Optional path to plan folder (enables plan-specific logging and state updates)
+
+.PARAMETER Action
+Optional action name for logging (e.g., "MakePlan", "ExecutePlan")
+
+.PARAMETER FinalState
+Optional final state to set in plan.yaml after execution completes (e.g., "Draft", "ReadyForReview")
+
+.PARAMETER ExtraAgentArgs
+Optional array of additional arguments to pass to the claude CLI
+
+.PARAMETER Promptware
+Promptware name to look up model and allowedTools config overrides (e.g., "MakePlan", "ExecutePlan")
+
+.EXAMPLE
+InvokePromptwareAgent `
+    -ScriptRoot $PSScriptRoot `
+    -ProgramFolder $programFolder `
+    -LogFile $logFile `
+    -FirmwareValues @{ PlanId = $planId; Project = "Tendril" } `
+    -WorkDir $repoPath `
+    -PlanPath $planFolder `
+    -Action "MakePlan" `
+    -FinalState "Draft" `
+    -Promptware "MakePlan"
+#>
 function InvokePromptwareAgent {
     param(
         [string]$ScriptRoot,
