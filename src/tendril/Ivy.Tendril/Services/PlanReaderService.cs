@@ -518,20 +518,10 @@ public class PlanReaderService(ConfigService config)
     {
         var recommendations = new List<Recommendation>();
 
-        if (!Directory.Exists(PlansDirectory))
-            return recommendations;
-
-        foreach (var dir in Directory.GetDirectories(PlansDirectory))
+        foreach (var (folderPath, folderName, planYamlPath) in EnumerateValidPlanFolders())
         {
-            var recommendationsPath = Path.Combine(dir, "artifacts", "recommendations.yaml");
+            var recommendationsPath = Path.Combine(folderPath, "artifacts", "recommendations.yaml");
             if (!File.Exists(recommendationsPath)) continue;
-
-            var folderName = Path.GetFileName(dir);
-            var match = FolderNameRegex.Match(folderName);
-            if (!match.Success) continue;
-
-            var planYamlPath = Path.Combine(dir, "plan.yaml");
-            if (!File.Exists(planYamlPath)) continue;
 
             try
             {
@@ -543,6 +533,7 @@ public class PlanReaderService(ConfigService config)
                 var items = YamlDeserializer.Deserialize<List<RecommendationYaml>>(yaml);
                 if (items == null) continue;
 
+                var match = FolderNameRegex.Match(folderName);
                 var planId = match.Groups[1].Value;
 
                 if (!Enum.TryParse<PlanStatus>(plan.State, ignoreCase: true, out var status))
