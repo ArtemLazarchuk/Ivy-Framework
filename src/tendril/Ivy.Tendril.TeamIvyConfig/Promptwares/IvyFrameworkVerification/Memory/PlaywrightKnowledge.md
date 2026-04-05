@@ -102,6 +102,18 @@
 - **Toast DOM locator**: Radix Toast renders individual toasts as `<li>` elements with `data-state="open"`. Use `page.locator('li[data-state="open"]')` to find all visible toast elements. Do NOT use `[role="status"]` — that matches the aria-live region, not individual toasts. The toast viewport is an `<ol>` element with `gap-2` for spacing.
 - **`Html` component inline styles don't render as expected** — `new Html(...)` with inline CSS properties like `background-color`, `border`, `color`, `width`, `height` are NOT applied to the actual DOM. Do NOT use `page.locator('div[style*="..."]')` selectors to target Html content. Instead use text-based assertions (`page.content().includes(...)`) or `getByText()` locators. Also do NOT check for hex color codes in `page.content()` — they won't appear in the rendered HTML.
 - **Stale server processes**: The `taskkill` in `afterAll` may not reliably kill all dotnet processes. After multiple test runs, stale `Test.*.exe` processes can lock the EXE and prevent rebuilding. The launcher script (`IvyFrameworkVerification.ps1`) now kills processes with executables in `artifacts/sample/bin/` before starting, but the `afterAll` kill should still be done as best-effort cleanup. Use `taskkill //im <name>.exe //f` as a fallback.
+
+## Process Cleanup (Critical)
+
+- **ALWAYS use `test-utils.ts` process tracking** — raw `afterAll` cleanup is insufficient for test timeouts and crashes
+- Create `test-utils.ts` with `trackProcess()` and `killAllTrackedProcesses()` utilities (see IvyFrameworkVerification/Program.md Section 7)
+- **Call `trackProcess(proc)`** immediately after spawning any dotnet process in `beforeAll`
+- **Set explicit test timeout** with `test.setTimeout(60000)` (60s) to catch hung tests before Playwright's default 30s timeout
+- **Use `killAllTrackedProcesses()`** in `afterAll` instead of manual `proc.kill()` — ensures all tracked processes are killed
+- Process tracking registers global handlers for SIGINT, SIGTERM, uncaughtException, and exit events
+- On Windows, uses `taskkill /F /T` for force-kill with child process termination
+- This is **in addition to** the cleanup-on-next-run approach in IvyFrameworkVerification.ps1 (see plan 01834)
+
 - `state.ToTextareaInput()` renders as a standard `<textarea>` element, locatable via `page.locator("textarea").first()`; disabled output textarea is the `.nth(1)`
 - Clipboard `writeText` fails in headless Chromium with "Write permission denied" — this is expected and not an app bug
 - `state.ToSliderInput()` renders as a Radix UI slider with `role="slider"`, NOT a native `<input type="range">` — use `page.getByRole("slider")` and keyboard interaction (ArrowRight/ArrowLeft to increment/decrement by step, Home/End for min/max)
