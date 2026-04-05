@@ -28,13 +28,13 @@ public class LevelsSettingsView : ViewBase
             .Header(t => t.Index, "")
             .Builder(t => t.Index, f => f.Func<LevelRow, int>(idx =>
                 Layout.Horizontal().Gap(1)
-                    | new Button().Icon(Icons.Pencil).Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Pencil).Outline().Small().Tooltip("Edit this level").OnClick(() =>
                     {
                         editIndex.Set(idx);
                         editName.Set(levels[idx].Name);
                         editBadge.Set(levels[idx].Badge);
                     })
-                    | new Button().Icon(Icons.Trash).Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Trash).Outline().Small().Tooltip("Delete this level").OnClick(() =>
                     {
                         var name = levels[idx].Name;
                         levels.RemoveAt(idx);
@@ -43,7 +43,7 @@ public class LevelsSettingsView : ViewBase
                         refreshToken.Refresh();
                     })
                     | (idx > 0
-                        ? (object)new Button().Icon(Icons.ChevronUp).Ghost().Small().OnClick(() =>
+                        ? (object)new Button().Icon(Icons.ChevronUp).Ghost().Small().Tooltip("Move up").OnClick(() =>
                         {
                             (levels[idx], levels[idx - 1]) = (levels[idx - 1], levels[idx]);
                             config.SaveSettings();
@@ -51,7 +51,7 @@ public class LevelsSettingsView : ViewBase
                         })
                         : new Spacer().Width(Size.Units(0)))
                     | (idx < levels.Count - 1
-                        ? (object)new Button().Icon(Icons.ChevronDown).Ghost().Small().OnClick(() =>
+                        ? (object)new Button().Icon(Icons.ChevronDown).Ghost().Small().Tooltip("Move down").OnClick(() =>
                         {
                             (levels[idx], levels[idx + 1]) = (levels[idx + 1], levels[idx]);
                             config.SaveSettings();
