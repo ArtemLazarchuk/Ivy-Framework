@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Recommendations.Dialogs;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps.Recommendations;
@@ -21,6 +22,7 @@ public class ContentView(
     {
         var client = UseService<IClientProvider>();
         var showPlan = UseState<string?>(null);
+        var showNotesDialog = UseState(false);
         var showDeclineDialog = UseState<bool>(false);
         var declineReason = UseState<string?>("");
 
@@ -77,14 +79,7 @@ public class ContentView(
 
         // Action bar (secondary actions)
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
-            | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() =>
-            {
-                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "AcceptedWithNotes");
-                _jobService.StartJob("MakePlan", "-Description", _selected.Description, "-Project", _selected.Project);
-                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted with Notes");
-                _refresh();
-                GoToNext();
-            })
+            | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w").OnClick(() => showNotesDialog.Set(true))
             | new Button("View Plan").Icon(Icons.ExternalLink).Outline().ShortcutKey("d").OnClick(() =>
             {
                 var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
@@ -101,6 +96,19 @@ public class ContentView(
                 content: scrollableContent
             ).Size(Size.Full())
         ).Scroll(Scroll.None).Size(Size.Full());
+
+        var notesDialog = new AcceptWithNotesDialog(
+            showNotesDialog,
+            _selected,
+            notes =>
+            {
+                var description = $"[ORIGINAL RECOMMENDATION]\n{_selected.Description}\n\n[NOTES]\n{notes}";
+                _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "AcceptedWithNotes");
+                _jobService.StartJob("MakePlan", "-Description", description, "-Project", _selected.Project);
+                client.Toast($"Started MakePlan: {_selected.Title}", "Recommendation Accepted with Notes");
+                _refresh();
+                GoToNext();
+            });
 
         if (showDeclineDialog.Value)
         {
@@ -135,7 +143,8 @@ public class ContentView(
                             GoToNext();
                         })
                     )
-                ).Width(Size.Rem(40))
+                ).Width(Size.Rem(40)),
+                notesDialog
             );
         }
 
@@ -156,11 +165,12 @@ public class ContentView(
                     onClose: () => showPlan.Set(null),
                     content: sheetContent,
                     title: plan?.Title ?? folderName
-                ).Width(Size.Half()).Resizable()
+                ).Width(Size.Half()).Resizable(),
+                notesDialog
             );
         }
 
-        return mainLayout;
+        return new Fragment(mainLayout, notesDialog);
     }
 
     private void GoToNext()
