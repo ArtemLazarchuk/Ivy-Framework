@@ -565,8 +565,7 @@ public class PlanReaderService(ConfigService config)
 
     public int GetPendingRecommendationsCount()
     {
-        return GetRecommendations()
-            .Count(r => r.State.Equals("Pending", StringComparison.OrdinalIgnoreCase));
+        return ComputePlanCounts().PendingRecommendations;
     }
 
     public record PlanCountSnapshot(
