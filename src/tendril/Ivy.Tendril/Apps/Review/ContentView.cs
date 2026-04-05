@@ -37,7 +37,6 @@ public class ContentView(
         var openFile = UseState<string?>(null);
         var openCommit = UseState<string?>(null);
         var discardDialogOpen = UseState(false);
-        var helpDialogOpen = UseState(false);
         var suggestChangesOpen = UseState(false);
         var suggestChangesText = UseState("");
         var customPrOpen = UseState(false);
@@ -516,34 +515,6 @@ public class ContentView(
         // Discard confirmation dialog
         content |= new DiscardPlanDialog(discardDialogOpen, _selectedPlan, _planService, _refreshPlans);
 
-        // Keyboard shortcuts help dialog
-        if (helpDialogOpen.Value)
-        {
-            content |= new Dialog(
-                _ => helpDialogOpen.Set(false),
-                new DialogHeader("Keyboard Shortcuts"),
-                new DialogBody(
-                    Layout.Vertical().Gap(2)
-                        | Text.Muted("Navigate through plans and actions using these shortcuts:")
-                        | (Layout.Horizontal().Gap(2)
-                            | new Badge("p").Variant(BadgeVariant.Outline)
-                            | Text.Block("Previous plan"))
-                        | (Layout.Horizontal().Gap(2)
-                            | new Badge("n").Variant(BadgeVariant.Outline)
-                            | Text.Block("Next plan"))
-                        | (Layout.Horizontal().Gap(2)
-                            | new Badge("d").Variant(BadgeVariant.Outline)
-                            | Text.Block("Suggest changes"))
-                        | (Layout.Horizontal().Gap(2)
-                            | new Badge("?").Variant(BadgeVariant.Outline)
-                            | Text.Block("Show this help"))
-                ),
-                new DialogFooter(
-                    new Button("Close", _ => helpDialogOpen.Set(false), variant: ButtonVariant.Primary)
-                )
-            ).Width(Size.Rem(28));
-        }
-
         // Action bar
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
             | new Button("Suggest Changes").Icon(Icons.MessageSquare).Outline().OnClick(() =>
@@ -556,8 +527,6 @@ public class ContentView(
             })
             | new Button("Previous").Icon(Icons.ChevronLeft).Outline().OnClick(() => GoToPrevious()).ShortcutKey("p")
             | new Button("Next").Icon(Icons.ChevronRight, Align.Right).Outline().OnClick(() => GoToNext()).ShortcutKey("n")
-            | new Button().Icon(Icons.CircleQuestionMark).Ghost().OnClick(() => helpDialogOpen.Set(true)).ShortcutKey("?")
-                .Tooltip("Show keyboard shortcuts")
             | new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
                 new MenuItem("Custom PR", Icon: Icons.GitPullRequest, Tag: "CustomPR").OnSelect(() =>
                 {
