@@ -24,6 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestScripts\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ivy.Tendril\Ivy.Tendril.csproj" />
     <ProjectReference Include="..\..\Ivy\Ivy.csproj" />
   </ItemGroup>
