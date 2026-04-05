@@ -20,16 +20,21 @@ public class LevelsSettingsView : ViewBase
         var rows = levels.Select((level, i) => new LevelRow(i, level.Name, level.Badge)).ToList();
 
         var table = new TableBuilder<LevelRow>(rows)
-            .Header(t => t.Index, "Actions")
+            .Builder(t => t.Badge, f => f.Func<LevelRow, string>(badge =>
+                new Badge(badge).Variant(
+                    Enum.TryParse<BadgeVariant>(badge, out var v) ? v : BadgeVariant.Outline
+                )
+            ))
+            .Header(t => t.Index, "")
             .Builder(t => t.Index, f => f.Func<LevelRow, int>(idx =>
                 Layout.Horizontal().Gap(1)
-                    | new Button("Edit").Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Pencil).Outline().Small().OnClick(() =>
                     {
                         editIndex.Set(idx);
                         editName.Set(levels[idx].Name);
                         editBadge.Set(levels[idx].Badge);
                     })
-                    | new Button("Delete").Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Trash).Outline().Small().OnClick(() =>
                     {
                         var name = levels[idx].Name;
                         levels.RemoveAt(idx);
@@ -53,11 +58,6 @@ public class LevelsSettingsView : ViewBase
                             refreshToken.Refresh();
                         })
                         : new Spacer().Width(Size.Units(0)))
-            ))
-            .Builder(t => t.Badge, f => f.Func<LevelRow, string>(badge =>
-                new Badge(badge).Variant(
-                    Enum.TryParse<BadgeVariant>(badge, out var v) ? v : BadgeVariant.Outline
-                )
             ));
 
         var content = Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))

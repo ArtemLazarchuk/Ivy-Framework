@@ -21,15 +21,21 @@ public class PullRequestApp : ViewBase
             .OrderByDescending(p => p.Id)
             .ToList();
 
-        var rows = plans.SelectMany(plan => plan.Prs.Select((pr, i) => new PrRow
+        var rows = plans.SelectMany(plan =>
         {
-            Id = $"{plan.Id}-{i}",
-            PlanId = $"{plan.Id:D5}",
-            Repository = ExtractRepo(pr),
-            Pr = pr,
-            Plan = $"#{plan.Id:D5} {plan.Title}",
-            PlanFolderPath = plan.FolderPath
-        })).ToList();
+            var costValue = planService.GetPlanTotalCost(plan.FolderPath);
+            var cost = costValue > 0 ? $"${costValue:F2}" : "";
+            return plan.Prs.Select((pr, i) => new PrRow
+            {
+                Id = $"{plan.Id}-{i}",
+                PlanId = $"{plan.Id:D5}",
+                Repository = ExtractRepo(pr),
+                Pr = pr,
+                Plan = $"#{plan.Id:D5} {plan.Title}",
+                Cost = cost,
+                PlanFolderPath = plan.FolderPath
+            });
+        }).ToList();
 
         var dataTable = rows.AsQueryable()
             .ToDataTable(idSelector: t => t.Id)
@@ -38,8 +44,10 @@ public class PullRequestApp : ViewBase
             .Height(Size.Full())
             .Header(t => t.PlanId, "Plan ID")
             .Header(t => t.Repository, "Repository")
+            .Header(t => t.Cost, "Cost")
             .Header(t => t.Pr, "PR")
             .Header(t => t.Plan, "Plan")
+            .Width(t => t.Cost, Size.Px(80))
             .Renderer(t => t.PlanId, new LinkDisplayRenderer())
             .Renderer(t => t.Pr, new LinkDisplayRenderer())
             .SortDirection(t => t.PlanId, SortDirection.Descending)

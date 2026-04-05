@@ -480,6 +480,7 @@ public class JobService
             var sessionId = job.SessionId;
             var jobArgs = job.Args;
             var jobType = job.Type;
+            var jobId = job.Id;
 
             _ = Task.Run(async () =>
             {
@@ -489,9 +490,18 @@ public class JobService
                 try
                 {
                     var costCalc = _modelPricingService.CalculateSessionCost(sessionId);
-                    if (costCalc.TotalCost > 0 && jobArgs.Length > 0)
+                    if (costCalc.TotalCost > 0)
                     {
-                        LogCostToCsv(jobArgs[0], jobType, costCalc.TotalTokens, costCalc.TotalCost);
+                        if (_jobs.TryGetValue(jobId, out var j))
+                        {
+                            j.Cost = (decimal)costCalc.TotalCost;
+                            JobsChanged?.Invoke();
+                        }
+
+                        if (jobArgs.Length > 0)
+                        {
+                            LogCostToCsv(jobArgs[0], jobType, costCalc.TotalTokens, costCalc.TotalCost);
+                        }
                     }
                 }
                 catch { /* Best-effort cost tracking */ }

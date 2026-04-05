@@ -1,3 +1,5 @@
+using System.Reflection;
+
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 
@@ -298,5 +300,55 @@ public class RecommendationServiceTests : IDisposable
             .ToList();
 
         Assert.Equal(2, filtered.Count);
+    }
+
+    [Fact]
+    public void GetRecommendations_CachesResultForTwoMinutes()
+    {
+        var yaml = "- title: Cached Item\n  description: Desc\n  state: Pending\n";
+        CreatePlanWithRecommendations("01650-CacheTest", yaml);
+
+        // First call computes and caches
+        var result1 = _service.GetRecommendations();
+        Assert.Single(result1);
+
+        // Add a new recommendation file on disk
+        var yaml2 = "- title: New Item\n  description: Desc2\n  state: Pending\n";
+        CreatePlanWithRecommendations("01651-CacheTest2", yaml2);
+
+        // Second call within cache window returns cached value (still 1 item)
+        var result2 = _service.GetRecommendations();
+        Assert.Single(result2);
+        Assert.Same(result1, result2);
+
+        // Simulate cache expiration by setting _recommendationsCacheTime to 3 minutes ago
+        var cacheTimeField = typeof(PlanReaderService).GetField("_recommendationsCacheTime", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        cacheTimeField.SetValue(_service, DateTime.UtcNow.AddMinutes(-3));
+
+        // Third call after expiration recomputes (now sees both items)
+        var result3 = _service.GetRecommendations();
+        Assert.Equal(2, result3.Count);
+        Assert.NotSame(result1, result3);
+    }
+
+    [Fact]
+    public void UpdateRecommendationState_InvalidatesCache()
+    {
+        var yaml = "- title: Fix bug\n  description: Found a bug\n  state: Pending\n";
+        CreatePlanWithRecommendations("01652-CacheInvalidate", yaml);
+
+        // Prime the cache
+        var result1 = _service.GetRecommendations();
+        Assert.Single(result1);
+        Assert.Equal("Pending", result1[0].State);
+
+        // Update state (should invalidate cache)
+        _service.UpdateRecommendationState("01652-CacheInvalidate", "Fix bug", "Accepted");
+
+        // Next call should recompute and reflect the updated state
+        var result2 = _service.GetRecommendations();
+        Assert.Single(result2);
+        Assert.Equal("Accepted", result2[0].State);
+        Assert.NotSame(result1, result2);
     }
 }

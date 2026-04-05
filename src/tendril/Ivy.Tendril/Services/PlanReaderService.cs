@@ -11,14 +11,24 @@ public class PlanReaderService(ConfigService config)
 {
     private readonly ConfigService _config = config;
 
+    // Cache for GetHourlyTokenBurn results
+    private List<HourlyTokenBurn>? _hourlyBurnCache;
+    private DateTime? _hourlyBurnCacheTime;
+    private static readonly TimeSpan HourlyBurnCacheExpiration = TimeSpan.FromMinutes(2);
+
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
+
+    // Cache for GetRecommendations results
+    private List<Recommendation>? _recommendationsCache;
+    private DateTime? _recommendationsCacheTime;
+    private static readonly TimeSpan RecommendationsCacheExpiration = TimeSpan.FromMinutes(2);
 
     public static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
         .Build();
 
-    private static readonly ISerializer YamlSerializer = new SerializerBuilder()
+    public static readonly ISerializer YamlSerializer = new SerializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
 
@@ -511,6 +521,23 @@ public class PlanReaderService(ConfigService config)
     /// </remarks>
     public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
     {
+        if (_hourlyBurnCache != null &&
+            _hourlyBurnCacheTime != null &&
+            DateTime.UtcNow - _hourlyBurnCacheTime.Value < HourlyBurnCacheExpiration)
+        {
+            return _hourlyBurnCache;
+        }
+
+        var result = ComputeHourlyTokenBurn(days);
+
+        _hourlyBurnCache = result;
+        _hourlyBurnCacheTime = DateTime.UtcNow;
+
+        return result;
+    }
+
+    private List<HourlyTokenBurn> ComputeHourlyTokenBurn(int days)
+    {
         var cutoff = DateTime.UtcNow.AddDays(-days);
         var buckets = new Dictionary<(DateTime Hour, string Project), (decimal Cost, int Tokens)>();
 
@@ -618,6 +645,23 @@ public class PlanReaderService(ConfigService config)
     /// </remarks>
     /// <returns>List of all recommendations ordered by date (most recent first).</returns>
     public List<Recommendation> GetRecommendations()
+    {
+        if (_recommendationsCache != null &&
+            _recommendationsCacheTime != null &&
+            DateTime.UtcNow - _recommendationsCacheTime.Value < RecommendationsCacheExpiration)
+        {
+            return _recommendationsCache;
+        }
+
+        var result = ComputeRecommendations();
+
+        _recommendationsCache = result;
+        _recommendationsCacheTime = DateTime.UtcNow;
+
+        return result;
+    }
+
+    private List<Recommendation> ComputeRecommendations()
     {
         var recommendations = new List<Recommendation>();
 
@@ -766,6 +810,10 @@ public class PlanReaderService(ConfigService config)
             item.DeclineReason = declineReason;
         }
         FileHelper.WriteAllText(recommendationsPath, YamlSerializer.Serialize(items));
+
+        // Invalidate cache after state change
+        _recommendationsCache = null;
+        _recommendationsCacheTime = null;
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)

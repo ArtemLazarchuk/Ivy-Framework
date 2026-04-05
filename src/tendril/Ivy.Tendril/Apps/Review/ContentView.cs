@@ -1,11 +1,10 @@
 using Ivy;
 using Ivy.Core;
 using Ivy.Tendril.Apps.Plans;
+using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Apps.Review.Dialogs;
 using Ivy.Tendril.Services;
 using Ivy.Widgets.DiffView;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ivy.Tendril.Apps.Review;
 
@@ -40,29 +39,6 @@ public class ContentView(
         var suggestChangesOpen = UseState(false);
         var suggestChangesText = UseState("");
         var customPrOpen = UseState(false);
-        var customPrApprove = UseState(true);
-        var customPrMerge = UseState(true);
-        var customPrDeleteBranch = UseState(true);
-        var customPrIncludeArtifacts = UseState(true);
-        var customPrAssignee = UseState<string?>(null);
-        var customPrComment = UseState("");
-
-        UseEffect(() =>
-        {
-            if (!customPrApprove.Value)
-            {
-                customPrMerge.Set(false);
-                customPrDeleteBranch.Set(false);
-            }
-        }, customPrApprove);
-
-        UseEffect(() =>
-        {
-            if (!customPrMerge.Value)
-            {
-                customPrDeleteBranch.Set(false);
-            }
-        }, customPrMerge);
 
         var githubService = UseService<GithubService>();
         var assigneesQuery = UseQuery<string[], string>(
@@ -433,81 +409,9 @@ public class ContentView(
             if (fileLinkSheet != null) content |= fileLinkSheet;
         }
 
-        // Suggest Changes dialog
-        if (suggestChangesOpen.Value)
-        {
-            content |= new Dialog(
-                _ => { suggestChangesText.Set(""); suggestChangesOpen.Set(false); },
-                new DialogHeader($"Suggest Changes for #{_selectedPlan.Id}"),
-                new DialogBody(
-                    Layout.Vertical()
-                        | Text.P("Describe the changes needed for this plan.")
-                        | suggestChangesText.ToTextareaInput("Enter change instructions...").Rows(6).AutoFocus()
-                ),
-                new DialogFooter(
-                    new Button("Cancel").Outline().OnClick(() => { suggestChangesText.Set(""); suggestChangesOpen.Set(false); }),
-                    new Button("Submit Changes").Primary().OnClick(() =>
-                    {
-                        if (!string.IsNullOrWhiteSpace(suggestChangesText.Value))
-                        {
-                            var currentContent = _planService.ReadLatestRevision(_selectedPlan.FolderName);
-                            var comments = string.Join("\n", suggestChangesText.Value
-                                .Split('\n')
-                                .Select(line => $">> {line}"));
-                            _planService.SavePlan(_selectedPlan.FolderName, currentContent + "\n\n" + comments + "\n");
-                        }
-                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Updating);
-                        _jobService.StartJob("UpdatePlan", _selectedPlan.FolderPath);
-                        _refreshPlans();
-                        suggestChangesText.Set("");
-                        suggestChangesOpen.Set(false);
-                    })
-                )
-            ).Width(Size.Rem(30));
-        }
-
-        // Custom PR dialog
-        if (customPrOpen.Value)
-        {
-            content |= new Dialog(
-                _ => { customPrOpen.Set(false); },
-                new DialogHeader($"Custom PR for #{_selectedPlan.Id}"),
-                new DialogBody(
-                    Layout.Vertical().Gap(2)
-                        | customPrApprove.ToBoolInput("Approve").AutoFocus()
-                        | customPrMerge.ToBoolInput("Merge").Disabled(!customPrApprove.Value)
-                        | customPrDeleteBranch.ToBoolInput("Delete Branch").Disabled(!customPrMerge.Value || !customPrApprove.Value)
-                        | customPrIncludeArtifacts.ToBoolInput("Include Artifacts")
-                        | customPrAssignee.ToSelectInput((assigneesQuery.Value ?? Array.Empty<string>()).ToOptions())
-                            .Nullable().WithField().Label("Assignee")
-                        | customPrComment.ToTextareaInput("Comment").Rows(3)
-                ),
-                new DialogFooter(
-                    new Button("Cancel").Outline().OnClick(() => customPrOpen.Set(false)),
-                    new Button("Create PR").Primary().OnClick(() =>
-                    {
-                        var options = new Dictionary<string, object>
-                        {
-                            ["approve"] = customPrApprove.Value,
-                            ["merge"] = customPrMerge.Value && customPrApprove.Value,
-                            ["deleteBranch"] = customPrDeleteBranch.Value && customPrMerge.Value && customPrApprove.Value,
-                            ["includeArtifacts"] = customPrIncludeArtifacts.Value,
-                            ["assignee"] = customPrAssignee.Value ?? "",
-                            ["comment"] = customPrComment.Value
-                        };
-                        var serializer = new SerializerBuilder()
-                            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                            .Build();
-                        var optionsPath = Path.Combine(_selectedPlan.FolderPath, ".custom-pr-options.yaml");
-                        File.WriteAllText(optionsPath, serializer.Serialize(options));
-                        _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
-                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
-                        _refreshPlans();
-                        customPrOpen.Set(false);
-                    }).WithConfetti(AnimationTrigger.Click)
-                )
-            ).Width(Size.Rem(30));
-        }
+        // Dialogs
+        content |= new UpdatePlanDialog(suggestChangesOpen, suggestChangesText, _selectedPlan, _jobService, _planService, _refreshPlans);
+        content |= new CustomPrDialog(customPrOpen, _selectedPlan, _jobService, _planService, _refreshPlans, assigneesQuery);
 
         // Discard confirmation dialog
         content |= new DiscardPlanDialog(discardDialogOpen, _selectedPlan, _planService, _refreshPlans);
@@ -527,12 +431,6 @@ public class ContentView(
             | new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
                 new MenuItem("Custom PR", Icon: Icons.GitPullRequest, Tag: "CustomPR").OnSelect(() =>
                 {
-                    customPrApprove.Set(true);
-                    customPrMerge.Set(true);
-                    customPrDeleteBranch.Set(true);
-                    customPrIncludeArtifacts.Set(true);
-                    customPrAssignee.Set(null);
-                    customPrComment.Set("");
                     customPrOpen.Set(true);
                 }),
                 new MenuItem("Set Completed", Icon: Icons.CircleCheck, Tag: "SetCompleted").OnSelect(() =>

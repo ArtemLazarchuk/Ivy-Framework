@@ -15,7 +15,8 @@ public class OnboardingApp : ViewBase
         new("1", selectedIndex > 0 ? Icons.Check : null, "Welcome"),
         new("2", selectedIndex > 1 ? Icons.Check : null, "Software Check"),
         new("3", selectedIndex > 2 ? Icons.Check : null, "Tendril Home"),
-        new("4", selectedIndex > 3 ? Icons.Check : null, "Complete")
+        new("4", selectedIndex > 3 ? Icons.Check : null, "Project Setup"),
+        new("5", selectedIndex > 4 ? Icons.Check : null, "Complete")
     ];
 
     private object GetStepViews(IState<int> stepperIndex) => stepperIndex.Value switch
@@ -23,7 +24,8 @@ public class OnboardingApp : ViewBase
         0 => new WelcomeStepView(stepperIndex),
         1 => new SoftwareCheckStepView(stepperIndex),
         2 => new TendrilHomeStepView(stepperIndex),
-        3 => new CompleteStepView(stepperIndex),
+        3 => new ProjectSetupStepView(stepperIndex),
+        4 => new CompleteStepView(stepperIndex),
         _ => throw new ArgumentOutOfRangeException()
     };
 
@@ -51,7 +53,8 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
     public override object? Build()
     {
         return Layout.Vertical()
-               | Text.H1("Welcome to Ivy Tendril")
+               | new Image("/tendril/assets/Tendril.svg").Width(Size.Units(20)).Height(Size.Auto())
+               | Text.H1("Welcome to Tendril")
                | Text.Markdown(
                    "Ivy Tendril is a coding orchestrator.\n\n" +
                    "To get started, we need to set up a few things:\n" +
@@ -273,6 +276,92 @@ public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
     }
 }
 
+public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
+{
+    public override object? Build()
+    {
+        var config = UseService<ConfigService>();
+        var projectName = UseState("");
+        var projectColor = UseState("");
+        var repoPaths = UseState(new List<string>());
+        var newRepoPath = UseState("");
+        var error = UseState<string?>(null);
+
+        var colorOptions = new List<string>
+        {
+            "", "Red", "Orange", "Amber", "Yellow", "Lime", "Green", "Emerald", "Teal",
+            "Cyan", "Sky", "Blue", "Indigo", "Violet", "Purple", "Fuchsia", "Pink", "Rose",
+            "Slate", "Gray", "Zinc", "Neutral", "Stone"
+        };
+
+        var reposLayout = Layout.Vertical().Gap(2);
+        var currentRepos = repoPaths.Value;
+        for (var i = 0; i < currentRepos.Count; i++)
+        {
+            var ri = i;
+            reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                | Text.Block(currentRepos[ri]).Width(Size.Grow())
+                | new Button().Icon(Icons.Trash).Ghost().Small().OnClick(() =>
+                {
+                    var list = new List<string>(repoPaths.Value);
+                    list.RemoveAt(ri);
+                    repoPaths.Set(list);
+                });
+        }
+
+        reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+            | newRepoPath.ToTextInput("Repository path...").Width(Size.Grow())
+            | new Button("Add").Outline().Small().OnClick(() =>
+            {
+                if (!string.IsNullOrWhiteSpace(newRepoPath.Value))
+                {
+                    var list = new List<string>(repoPaths.Value) { newRepoPath.Value };
+                    repoPaths.Set(list);
+                    newRepoPath.Set("");
+                }
+            });
+
+        return Layout.Vertical().Gap(4)
+               | Text.H2("Project Setup")
+               | Text.Muted("Set up your first project. You can add more projects later in Settings.")
+               | (error.Value != null ? Text.Danger(error.Value) : null!)
+               | projectName.ToTextInput("Project name...").WithField().Label("Project Name")
+               | projectColor.ToSelectInput(colorOptions).Nullable().WithField().Label("Color")
+               | (Layout.Vertical().Gap(2)
+                   | Text.Block("Repositories").Bold()
+                   | Text.Muted("Add at least one repository path for this project.")
+                   | reposLayout)
+               | (Layout.Horizontal().Gap(2)
+                   | new Button("Skip for now").Outline().Large()
+                       .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
+                   | new Button("Next").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
+                       .OnClick(() =>
+                       {
+                           if (string.IsNullOrWhiteSpace(projectName.Value))
+                           {
+                               error.Set("Please enter a project name.");
+                               return;
+                           }
+                           if (repoPaths.Value.Count == 0)
+                           {
+                               error.Set("Please add at least one repository path.");
+                               return;
+                           }
+
+                           var project = new ProjectConfig
+                           {
+                               Name = projectName.Value.Trim(),
+                               Color = projectColor.Value,
+                               Repos = repoPaths.Value.Select(p => new RepoRef { Path = p, PrRule = "default" }).ToList()
+                           };
+                           config.SetPendingProject(project);
+                           error.Set(null);
+                           stepperIndex.Set(stepperIndex.Value + 1);
+                       })
+                 );
+    }
+}
+
 public class CompleteStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object? Build()
@@ -359,6 +448,14 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
 
                 // Mark onboarding complete (this reloads config from the file we just wrote)
                 config.CompleteOnboarding(tendrilHome);
+
+                // Add pending project if one was configured
+                var pendingProject = config.GetPendingProject();
+                if (pendingProject != null)
+                {
+                    config.Settings.Projects.Add(pendingProject);
+                    config.SaveSettings();
+                }
 
                 // Navigate to SetupApp
                 navigator.Navigate<SetupApp>();

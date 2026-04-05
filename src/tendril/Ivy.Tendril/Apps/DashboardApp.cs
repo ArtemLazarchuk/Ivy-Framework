@@ -61,6 +61,9 @@ public class DashboardApp : ViewBase
 
             var dayCost = completedOrFailedPlans.Sum(p => planService.GetPlanTotalCost(p.FolderPath));
             var dayTokens = completedOrFailedPlans.Sum(p => planService.GetPlanTotalTokens(p.FolderPath));
+            var costPerPlan = dayCompletedCount > 0 && dayCost > 0
+                ? $"${dayCost / dayCompletedCount:F2}"
+                : "";
 
             return new DashboardDayRow
             {
@@ -71,6 +74,7 @@ public class DashboardApp : ViewBase
                 PrsMerged = prsMerged,
                 Failed = dayFailedCount,
                 Cost = dayCost > 0 ? $"${dayCost:F2}" : "",
+                CostPerPlan = costPerPlan,
                 Tokens = dayTokens > 0 ? FormatTokens(dayTokens) : ""
             };
         }).ToList();
@@ -86,6 +90,7 @@ public class DashboardApp : ViewBase
             .Header(t => t.PrsMerged, "PRs Merged")
             .Header(t => t.Failed, "Failed")
             .Header(t => t.Cost, "Cost")
+            .Header(t => t.CostPerPlan, "Cost/Plan")
             .Header(t => t.Tokens, "Tokens")
             .Hidden(t => t.SortDate)
             .Config(c =>
@@ -198,5 +203,6 @@ public class DashboardDayRow
     public int PrsMerged { get; set; }
     public int Failed { get; set; }
     public string Cost { get; set; } = "";
+    public string CostPerPlan { get; set; } = "";
     public string Tokens { get; set; } = "";
 }

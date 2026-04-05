@@ -9,22 +9,23 @@ public class GeneralSettingsView : ViewBase
         var config = UseService<ConfigService>();
         var client = UseService<IClientProvider>();
         var agentCommand = UseState(config.Settings.AgentCommand);
+        var planTemplate = UseState(config.Settings.PlanTemplate);
 
         var form = Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
             | Text.Block("General Settings").Bold()
             | agentCommand.ToTextInput("Agent command...")
                 .WithField().Label("Agent Command")
-            | Layout.Horizontal().Gap(2)
-                | new Button("Save").Primary().OnClick(() =>
-                {
-                    config.Settings.AgentCommand = agentCommand.Value;
-                    config.SaveSettings();
-                    client.Toast("Settings saved successfully", "Saved");
-                })
-                | new Button("Reset").Outline().OnClick(() =>
-                {
-                    agentCommand.Set(config.Settings.AgentCommand);
-                });
+            | planTemplate.ToCodeInput("Plan template...")
+                .Language(Languages.Markdown)
+                .Height(Size.Units(40))
+                .WithField().Label("Plan Template")
+            | new Button("Save").Primary().OnClick(() =>
+            {
+                config.Settings.AgentCommand = agentCommand.Value;
+                config.Settings.PlanTemplate = planTemplate.Value;
+                config.SaveSettings();
+                client.Toast("Settings saved successfully", "Saved");
+            });
 
         return form;
     }
