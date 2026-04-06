@@ -30,7 +30,6 @@ export const TextInputWidget: React.FC<TextInputWidgetProps> = ({
   autoFocus,
   dictation,
   dictationUploadUrl,
-  dictationLanguage: _dictationLanguage,
   dictationTranscription,
   dictationTranscriptionVersion,
   "data-testid": dataTestId,
