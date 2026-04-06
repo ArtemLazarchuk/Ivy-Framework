@@ -36,6 +36,7 @@ public class OnboardingApp : ViewBase
 
         return Layout.TopCenter() |
                (Layout.Vertical().Margin(0, 20).Width(150)
+                | new Image("/tendril/assets/Tendril.svg").Width(Size.Units(20)).Height(Size.Auto())
                 | new Stepper(OnSelect, stepperIndex.Value, steps).Width(Size.Full())
                 | GetStepViews(stepperIndex)
                );
@@ -53,7 +54,6 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
     public override object? Build()
     {
         return Layout.Vertical()
-               | new Image("/tendril/assets/Tendril.svg").Width(Size.Units(20)).Height(Size.Auto())
                | Text.H1("Welcome to Tendril")
                | Text.Markdown(
                    "Ivy Tendril is a coding orchestrator.\n\n" +
