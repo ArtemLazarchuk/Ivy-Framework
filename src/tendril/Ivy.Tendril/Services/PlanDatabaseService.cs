@@ -431,18 +431,45 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
 
     public List<PlanFile> SearchPlans(string query)
     {
-<<<<<<< HEAD
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT p.Id, p.Title, p.Project, p.Level, p.State, p.FolderPath, p.FolderName,
-                   p.YamlRaw, p.RevisionCount, p.LatestRevisionContent, p.Created, p.Updated
-            FROM Plans p
-            INNER JOIN PlanSearch fts ON fts.rowid = p.Id
-            WHERE PlanSearch MATCH @query
-            ORDER BY rank, p.Id
-            """;
-        cmd.Parameters.AddWithValue("@query", query);
+        lock (_lock)
+        {
+            // Try FTS5 first
+            using var ftsCmd = _connection.CreateCommand();
+            ftsCmd.CommandText = """
+                SELECT p.Id, p.Title, p.Project, p.Level, p.State, p.FolderPath, p.FolderName,
+                       p.YamlRaw, p.RevisionCount, p.LatestRevisionContent, p.Created, p.Updated
+                FROM Plans p
+                INNER JOIN PlanSearch fts ON fts.rowid = p.Id
+                WHERE PlanSearch MATCH @query
+                ORDER BY rank, p.Id
+                """;
+            ftsCmd.Parameters.AddWithValue("@query", query);
 
+            var plans = ExecuteSearchQuery(ftsCmd);
+
+            // If FTS5 returns no results, fall back to LIKE for substring matching
+            if (plans.Count == 0)
+            {
+                var search = $"%{query}%";
+                using var likeCmd = _connection.CreateCommand();
+                likeCmd.CommandText = """
+                    SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
+                           YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
+                    FROM Plans
+                    WHERE Title LIKE @search OR LatestRevisionContent LIKE @search
+                          OR CAST(Id AS TEXT) LIKE @search OR Project LIKE @search
+                    ORDER BY Id
+                    """;
+                likeCmd.Parameters.AddWithValue("@search", search);
+                plans = ExecuteSearchQuery(likeCmd);
+            }
+
+            return plans;
+        }
+    }
+
+    private List<PlanFile> ExecuteSearchQuery(SqliteCommand cmd)
+    {
         var planIds = new List<int>();
         var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
             string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
@@ -450,65 +477,41 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
-=======
-        lock (_lock)
->>>>>>> origin/main
         {
-            var search = $"%{query}%";
-            using var cmd = _connection.CreateCommand();
-            cmd.CommandText = """
-                SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
-                       YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
-                FROM Plans
-                WHERE Title LIKE @search OR LatestRevisionContent LIKE @search
-                      OR CAST(Id AS TEXT) LIKE @search OR Project LIKE @search
-                ORDER BY Id
-                """;
-            cmd.Parameters.AddWithValue("@search", search);
-
-            var planIds = new List<int>();
-            var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
-                string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
-                string LatestContent, string Created, string Updated)>();
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                var planId = reader.GetInt32(0);
-                planIds.Add(planId);
-                rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
-                    reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
-                    reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
-            }
-
-            if (rawPlans.Count == 0)
-                return [];
-
-            var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
-            var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
-            var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
-            var allVerifications = BatchGetVerifications(planIds);
-            var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
-            var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
-
-            var plans = new List<PlanFile>();
-            foreach (var row in rawPlans)
-            {
-                var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
-                    row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
-                    row.Created, row.Updated,
-                    allRepos.GetValueOrDefault(row.Id, []),
-                    allCommits.GetValueOrDefault(row.Id, []),
-                    allPrs.GetValueOrDefault(row.Id, []),
-                    allVerifications.GetValueOrDefault(row.Id, []),
-                    allRelatedPlans.GetValueOrDefault(row.Id, []),
-                    allDependsOn.GetValueOrDefault(row.Id, []));
-                if (plan != null)
-                    plans.Add(plan);
-            }
-
-            return plans;
+            var planId = reader.GetInt32(0);
+            planIds.Add(planId);
+            rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
+                reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
         }
+
+        if (rawPlans.Count == 0)
+            return [];
+
+        var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
+        var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
+        var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
+        var allVerifications = BatchGetVerifications(planIds);
+        var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
+        var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
+
+        var plans = new List<PlanFile>();
+        foreach (var row in rawPlans)
+        {
+            var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
+                row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
+                row.Created, row.Updated,
+                allRepos.GetValueOrDefault(row.Id, []),
+                allCommits.GetValueOrDefault(row.Id, []),
+                allPrs.GetValueOrDefault(row.Id, []),
+                allVerifications.GetValueOrDefault(row.Id, []),
+                allRelatedPlans.GetValueOrDefault(row.Id, []),
+                allDependsOn.GetValueOrDefault(row.Id, []));
+            if (plan != null)
+                plans.Add(plan);
+        }
+
+        return plans;
     }
 
     public void UpsertPlan(PlanFile plan)

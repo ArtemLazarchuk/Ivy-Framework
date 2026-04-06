@@ -326,11 +326,13 @@ public class PlanDatabaseServiceTests : IDisposable
             cmd.ExecuteNonQuery();
         }
 
-        Assert.Empty(_db.SearchPlans("fulltext"));
+        // FTS5 phrase matching should fail when index is cleared (no LIKE fallback for phrases)
+        Assert.Empty(_db.SearchPlans("\"Find me via fulltext\""));
 
         _db.RebuildFtsIndex();
 
-        Assert.Single(_db.SearchPlans("fulltext"));
+        // After rebuild, FTS5 phrase matching works again
+        Assert.Single(_db.SearchPlans("\"Find me via fulltext\""));
     }
 
     [Fact]
@@ -417,5 +419,33 @@ public class PlanDatabaseServiceTests : IDisposable
         // Verify schema is complete by exercising multiple tables
         var counts = _db.ComputePlanCounts();
         Assert.Equal(1, counts.Drafts);
+    }
+
+    [Fact]
+    public void SearchPlans_FallbackToLikeForPartialSubstring()
+    {
+        _db.UpsertPlan(CreateTestPlan(1500, "Widget Feature",
+            latestContent: "Add new widget with button"));
+
+        // FTS5 won't match partial substring "idg"
+        // Should fall back to LIKE and find "Widget"
+        var results = _db.SearchPlans("idg");
+        Assert.Single(results);
+        Assert.Equal("Widget Feature", results[0].Title);
+    }
+
+    [Fact]
+    public void SearchPlans_PrefersFts5OverLike()
+    {
+        _db.UpsertPlan(CreateTestPlan(1500, "Widget Feature",
+            latestContent: "widget widget widget"));
+        _db.UpsertPlan(CreateTestPlan(1501, "Button Widget",
+            latestContent: "Single widget mention"));
+
+        // FTS5 should match and rank by term frequency
+        var results = _db.SearchPlans("widget");
+        Assert.Equal(2, results.Count);
+        // Higher term frequency ranks first in FTS5
+        Assert.Equal(1500, results[0].Id);
     }
 }
