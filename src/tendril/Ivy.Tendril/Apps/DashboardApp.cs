@@ -49,12 +49,12 @@ public class DashboardApp : ViewBase
             : 0;
 
         var statsRow = Layout.Horizontal().Gap(2).Padding(2)
-            | BuildStatCard(totalCount, "Total Plans")
-            | BuildStatCard(draftCount, "Draft")
-            | BuildStatCard(inProgressCount, "In Progress")
-            | BuildStatCard(reviewCount, "Ready for Review")
-            | BuildStatCard(completedCount, "Completed")
-            | BuildStatCard(failedCount, "Failed")
+            | BuildStatCard(totalCount.ToString(), "Total Plans")
+            | BuildStatCard(draftCount.ToString(), "Draft")
+            | BuildStatCard(inProgressCount.ToString(), "In Progress")
+            | BuildStatCard(reviewCount.ToString(), "Ready for Review")
+            | BuildStatCard(completedCount.ToString(), "Completed")
+            | BuildStatCard(failedCount.ToString(), "Failed")
             | BuildStatCard($"${avgCost:F2}", "Avg Cost/Plan");
 
         var today = DateTime.UtcNow.Date;
@@ -203,11 +203,6 @@ public class DashboardApp : ViewBase
         return tokens >= 1_000_000 ? $"{tokens / 1_000_000.0:F1}M"
              : tokens >= 1_000 ? $"{tokens / 1_000.0:F0}K"
              : tokens.ToString();
-    }
-
-    private static object BuildStatCard(int count, string label)
-    {
-        return BuildStatCard(count.ToString(), label);
     }
 
     private static object BuildStatCard(string value, string label)
