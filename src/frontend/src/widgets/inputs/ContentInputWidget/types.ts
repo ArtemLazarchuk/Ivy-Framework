@@ -34,6 +34,7 @@ export interface ContentInputWidgetProps {
   accept?: string;
   maxFileSize?: number;
   maxFiles?: number;
+  shortcutKey?: string;
   files?: FileItem[];
   "data-testid"?: string;
 }
