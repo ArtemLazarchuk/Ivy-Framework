@@ -484,12 +484,17 @@ public class PlanDatabaseService : IPlanDatabaseService
         deleteCmd.Parameters.AddWithValue("@planId", planId);
         deleteCmd.ExecuteNonQuery();
 
+        if (values.Count == 0) return;
+
+        using var insertCmd = _connection.CreateCommand();
+        insertCmd.CommandText = $"INSERT INTO {table} (PlanId, {column}) VALUES (@planId, @value)";
+        insertCmd.Parameters.AddWithValue("@planId", planId);
+        insertCmd.Parameters.AddWithValue("@value", string.Empty);
+
         foreach (var value in values)
         {
-            using var insertCmd = _connection.CreateCommand();
-            insertCmd.CommandText = $"INSERT INTO {table} (PlanId, {column}) VALUES (@planId, @value)";
-            insertCmd.Parameters.AddWithValue("@planId", planId);
-            insertCmd.Parameters.AddWithValue("@value", value);
+            insertCmd.Parameters["@planId"].Value = planId;
+            insertCmd.Parameters["@value"].Value = value;
             insertCmd.ExecuteNonQuery();
         }
     }
@@ -501,13 +506,19 @@ public class PlanDatabaseService : IPlanDatabaseService
         deleteCmd.Parameters.AddWithValue("@planId", planId);
         deleteCmd.ExecuteNonQuery();
 
+        if (verifications.Count == 0) return;
+
+        using var insertCmd = _connection.CreateCommand();
+        insertCmd.CommandText = "INSERT INTO Verifications (PlanId, Name, Status) VALUES (@planId, @name, @status)";
+        insertCmd.Parameters.AddWithValue("@planId", planId);
+        insertCmd.Parameters.AddWithValue("@name", string.Empty);
+        insertCmd.Parameters.AddWithValue("@status", string.Empty);
+
         foreach (var v in verifications)
         {
-            using var insertCmd = _connection.CreateCommand();
-            insertCmd.CommandText = "INSERT INTO Verifications (PlanId, Name, Status) VALUES (@planId, @name, @status)";
-            insertCmd.Parameters.AddWithValue("@planId", planId);
-            insertCmd.Parameters.AddWithValue("@name", v.Name);
-            insertCmd.Parameters.AddWithValue("@status", v.Status);
+            insertCmd.Parameters["@planId"].Value = planId;
+            insertCmd.Parameters["@name"].Value = v.Name;
+            insertCmd.Parameters["@status"].Value = v.Status;
             insertCmd.ExecuteNonQuery();
         }
     }

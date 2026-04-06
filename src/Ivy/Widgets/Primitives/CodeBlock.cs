@@ -33,6 +33,8 @@ public enum Languages
     Yaml,
     [Description("CSV")]
     Csv,
+    [Description("PowerShell")]
+    Powershell,
 }
 
 /// <summary>
