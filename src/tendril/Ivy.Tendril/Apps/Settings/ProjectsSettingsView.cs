@@ -76,8 +76,18 @@ public class ProjectsSettingsView : ViewBase
             {
                 var ri = i;
                 var repo = currentRepos[ri];
+                var expandedPath = Environment.ExpandEnvironmentVariables(repo.Path);
+                var pathExists = Directory.Exists(expandedPath);
+
+                var pathText = Text.Block(repo.Path).Width(Size.Grow());
+                if (!pathExists) pathText = pathText.Color(Colors.Red);
+
                 reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                    | Text.Block(repo.Path).Width(Size.Grow())
+                    | (!pathExists
+                        ? (object)new Icon(Icons.TriangleAlert, Colors.Warning).Small()
+                            .WithTooltip($"Path does not exist: {expandedPath}")
+                        : new Spacer().Width(Size.Units(4)))
+                    | pathText
                     | new Badge(repo.PrRule).Variant(BadgeVariant.Outline)
                     | new Button().Icon(Icons.Trash).Ghost().Small().OnClick(() =>
                     {
