@@ -90,7 +90,7 @@ public class AreaChartBuilder<TSource>(
             throw new InvalidOperationException("At least one measure is required.");
         }
 
-        var lineChartData = UseState(ImmutableArray.Create<Dictionary<string, object>>);
+        var areaChartData = UseState(ImmutableArray.Create<Dictionary<string, object>>);
         var loading = UseState(true);
 
         UseEffect(async () =>
@@ -114,7 +114,7 @@ public class AreaChartBuilder<TSource>(
                 }
 
                 var results = await pivotBuilder.ExecuteAsync();
-                lineChartData.Set([.. results]);
+                areaChartData.Set([.. results]);
             }
             finally
             {
@@ -130,7 +130,7 @@ public class AreaChartBuilder<TSource>(
         var resolvedDesigner = style ?? AreaChartStyleHelpers.GetStyle<TSource>(AreaChartStyles.Default);
 
         var scaffolded = resolvedDesigner.Design(
-            lineChartData.Value.ToExpando(),
+            areaChartData.Value.ToExpando(),
             dimension,
             _measures.ToArray()
         );
