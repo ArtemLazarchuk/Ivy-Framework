@@ -91,7 +91,7 @@ public class DashboardApp : ViewBase
                 Failed = dayFailedCount,
                 Cost = dayCost > 0 ? $"${dayCost:F2}" : "",
                 CostPerPlan = costPerPlan,
-                Tokens = dayTokens > 0 ? FormatTokens(dayTokens) : ""
+                Tokens = dayTokens > 0 ? FormatHelper.FormatTokens(dayTokens) : ""
             };
         }).ToList();
 
@@ -196,13 +196,6 @@ public class DashboardApp : ViewBase
             header: statsRow,
             content: content
         );
-    }
-
-    private static string FormatTokens(int tokens)
-    {
-        return tokens >= 1_000_000 ? $"{tokens / 1_000_000.0:F1}M"
-             : tokens >= 1_000 ? $"{tokens / 1_000.0:F0}K"
-             : tokens.ToString();
     }
 
     private static object BuildStatCard(string value, string label)
