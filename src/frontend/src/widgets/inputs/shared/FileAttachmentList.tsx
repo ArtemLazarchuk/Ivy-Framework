@@ -182,7 +182,7 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
       density === Densities.Small ? "h-3 w-3" : density === Densities.Large ? "h-5 w-5" : "h-4 w-4";
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 slim-scrollbar">
         {/* Client-side uploading files */}
         {uploadProgress &&
           Array.from(uploadProgress.entries()).map(([clientId, progress]) =>
