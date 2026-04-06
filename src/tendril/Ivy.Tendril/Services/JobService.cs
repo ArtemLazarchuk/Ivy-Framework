@@ -28,9 +28,6 @@ public class JobService : IJobService
     public event Action? JobsChanged;
     public event Action<JobNotification>? NotificationReady;
 
-    [Obsolete("Use NotificationReady event instead. Will be removed in a future version.")]
-    public ConcurrentQueue<JobNotification> PendingNotifications { get; } = new();
-
     private static readonly string PromptsRoot =
         Path.GetFullPath(Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", ".promptwares"));
 
@@ -62,7 +59,9 @@ public class JobService : IJobService
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
         _staleOutputTimeout = TimeSpan.FromMinutes(configService.Settings.StaleOutputTimeout);
         _maxConcurrentJobs = configService.Settings.MaxConcurrentJobs;
-        _jobSlotSemaphore = new SemaphoreSlim(Math.Max(1, _maxConcurrentJobs), Math.Max(1, _maxConcurrentJobs));
+        _jobSlotSemaphore = _maxConcurrentJobs > 0
+            ? new SemaphoreSlim(_maxConcurrentJobs, _maxConcurrentJobs)
+            : new SemaphoreSlim(0, 1);
         _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
     }
 
@@ -78,7 +77,9 @@ public class JobService : IJobService
         _jobTimeout = jobTimeout;
         _staleOutputTimeout = staleOutputTimeout;
         _maxConcurrentJobs = maxConcurrentJobs;
-        _jobSlotSemaphore = new SemaphoreSlim(Math.Max(1, maxConcurrentJobs), Math.Max(1, maxConcurrentJobs));
+        _jobSlotSemaphore = maxConcurrentJobs > 0
+            ? new SemaphoreSlim(maxConcurrentJobs, maxConcurrentJobs)
+            : new SemaphoreSlim(0, 1);
         _inboxPath = inboxPath;
         _planReaderService = planReaderService;
         _telemetryService = telemetryService;
@@ -225,6 +226,29 @@ public class JobService : IJobService
         return id;
     }
 
+    /// <summary>
+    /// Creates a job in "Running" state without launching a real process.
+    /// Used by tests to exercise CompleteJob without background monitor races.
+    /// </summary>
+    internal string CreateTestJob(string type, params string[] args)
+    {
+        var id = $"job-{Interlocked.Increment(ref _counter):D3}";
+        var job = new JobItem
+        {
+            Id = id,
+            Type = type,
+            PlanFile = args.Length > 0 ? args[0] : type,
+            Status = "Running",
+            StartedAt = DateTime.UtcNow,
+            ScriptPath = "",
+            Args = args,
+            TimeoutCts = new CancellationTokenSource(),
+        };
+        _jobs[id] = job;
+        _jobSlotSemaphore.Wait(0); // Acquire slot so CompleteJob can release it
+        return id;
+    }
+
     private void LaunchJob(JobItem job)
     {
         var id = job.Id;
@@ -262,7 +286,7 @@ public class JobService : IJobService
         job.SessionId = Guid.NewGuid().ToString();
 
         psi.Environment["TENDRIL_JOB_ID"] = id;
-        psi.Environment["TENDRIL_URL"] = "http://localhost:5010";
+        psi.Environment["TENDRIL_URL"] = Environment.GetEnvironmentVariable("TENDRIL_URL") ?? "http://localhost:5010";
         psi.Environment["TENDRIL_SHARED"] = SharedRoot;
         psi.Environment["TENDRIL_SESSION_ID"] = job.SessionId;
         if (_configService != null)
@@ -279,7 +303,7 @@ public class JobService : IJobService
                 job.LastOutputAt = DateTime.UtcNow;
                 if (!e.Data.Contains("\"type\":\"heartbeat\""))
                 {
-                    job.OutputLines.Add(e.Data);
+                    job.OutputLines.Enqueue(e.Data);
                 }
             }
         };
@@ -287,7 +311,7 @@ public class JobService : IJobService
         {
             if (e.Data != null)
             {
-                job.OutputLines.Add($"[stderr] {e.Data}");
+                job.OutputLines.Enqueue($"[stderr] {e.Data}");
                 job.LastOutputAt = DateTime.UtcNow;
             }
         };
@@ -323,7 +347,7 @@ public class JobService : IJobService
 
             if (timedOut)
             {
-                try { process.Kill(entireProcessTree: true); } catch { }
+                try { process.Kill(entireProcessTree: true); } catch { /* Process may have already exited */ }
                 CompleteJob(id, exitCode: null, timedOut: true, staleOutput: false);
                 return;
             }
@@ -362,21 +386,21 @@ public class JobService : IJobService
                     var condPsi = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "pwsh",
-                        Arguments = $"-NoProfile -Command \"{hook.Condition}\"",
+                        Arguments = $"-NoProfile -EncodedCommand {EncodeForPowerShell(hook.Condition)}",
                         WorkingDirectory = string.IsNullOrEmpty(planFolder) ? "." : planFolder,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
                         CreateNoWindow = true,
                     };
-                    var condProc = System.Diagnostics.Process.Start(condPsi);
+                    using var condProc = System.Diagnostics.Process.Start(condPsi);
                     var condOutput = condProc?.StandardOutput.ReadToEnd().Trim() ?? "";
                     condProc?.WaitForExit(10000);
 
                     if (condProc?.ExitCode != 0 ||
                         condOutput.Equals("False", StringComparison.OrdinalIgnoreCase))
                     {
-                        job.OutputLines.Add($"[hook:{hook.Name}] Condition not met, skipping");
+                        job.OutputLines.Enqueue($"[hook:{hook.Name}] Condition not met, skipping");
                         continue;
                     }
                 }
@@ -385,7 +409,7 @@ public class JobService : IJobService
                 var actionPsi = new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = "pwsh",
-                    Arguments = $"-NoProfile -Command \"{hook.Action}\"",
+                    Arguments = $"-NoProfile -EncodedCommand {EncodeForPowerShell(hook.Action)}",
                     WorkingDirectory = string.IsNullOrEmpty(planFolder) ? "." : planFolder,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -398,22 +422,22 @@ public class JobService : IJobService
                 actionPsi.Environment["TENDRIL_PLAN_FOLDER"] = planFolder;
                 actionPsi.Environment["TENDRIL_CONFIG"] = _configService.ConfigPath;
 
-                var actionProc = System.Diagnostics.Process.Start(actionPsi);
+                using var actionProc = System.Diagnostics.Process.Start(actionPsi);
                 var output = actionProc?.StandardOutput.ReadToEnd().Trim() ?? "";
                 var stderr = actionProc?.StandardError.ReadToEnd().Trim() ?? "";
                 actionProc?.WaitForExit(30000);
 
                 if (!string.IsNullOrEmpty(output))
-                    job.OutputLines.Add($"[hook:{hook.Name}] {output}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] {output}");
                 if (!string.IsNullOrEmpty(stderr))
-                    job.OutputLines.Add($"[hook:{hook.Name}] [stderr] {stderr}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] [stderr] {stderr}");
 
                 if (actionProc?.ExitCode != 0)
-                    job.OutputLines.Add($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
             }
             catch (Exception ex)
             {
-                job.OutputLines.Add($"[hook:{hook.Name}] Error: {ex.Message}");
+                job.OutputLines.Enqueue($"[hook:{hook.Name}] Error: {ex.Message}");
             }
         }
     }
@@ -443,7 +467,7 @@ public class JobService : IJobService
                 {
                     // Stale output detected — cancel the timeout CTS to trigger the main monitor
                     job.StaleOutputDetected = true;
-                    try { job.Process?.Kill(entireProcessTree: true); } catch { }
+                    try { job.Process?.Kill(entireProcessTree: true); } catch { /* Process may have already exited */ }
                     CompleteJob(id, exitCode: null, timedOut: true, staleOutput: true);
                     break;
                 }
@@ -467,7 +491,7 @@ public class JobService : IJobService
         else
         {
             var success = exitCode == 0;
-            job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines);
+            job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines.ToList());
             job.Status = success ? "Completed" : "Failed";
         }
 
@@ -560,8 +584,8 @@ public class JobService : IJobService
 
         var wasRunning = job.Status == "Running";
         job.CancellationRequested = true;
-        try { job.TimeoutCts?.Cancel(); } catch { }
-        try { job.Process?.Kill(entireProcessTree: true); } catch { }
+        try { job.TimeoutCts?.Cancel(); } catch { /* CTS may already be disposed */ }
+        try { job.Process?.Kill(entireProcessTree: true); } catch { /* Process may have already exited */ }
         job.Status = "Stopped";
         job.CompletedAt = DateTime.UtcNow;
         if (job.StartedAt.HasValue)
@@ -644,6 +668,12 @@ public class JobService : IJobService
 
             LaunchJob(queuedJob);
         }
+    }
+
+    private static string EncodeForPowerShell(string command)
+    {
+        var bytes = System.Text.Encoding.Unicode.GetBytes(command);
+        return Convert.ToBase64String(bytes);
     }
 
     internal static string ExtractFailureReason(List<string> outputLines)
@@ -767,7 +797,7 @@ public class JobService : IJobService
             if (!created && !duplicate)
             {
                 // Agent exited 0 but didn't create a plan or detect a duplicate — flag it
-                job.OutputLines.Add("[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
+                job.OutputLines.Enqueue("[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
                 job.Status = "Failed";
                 job.StatusMessage = "No plan created";
             }
@@ -915,7 +945,7 @@ public class JobService : IJobService
                 $"updated: {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}");
             FileHelper.WriteAllText(planYamlPath, content);
         }
-        catch { }
+        catch { /* Don't let state reset failures crash job completion */ }
     }
 
     private void SendNativeNotification()

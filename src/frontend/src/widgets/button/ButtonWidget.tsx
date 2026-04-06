@@ -17,13 +17,13 @@ import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BorderRadius, getColor, getWidth } from "@/lib/styles";
 import { Densities } from "@/types/density";
-import {
-  parseShortcut,
-  formatShortcutForDisplay,
-  keyToCode,
-} from "@/widgets/inputs/TextInputWidget/utils/shortcut";
+import { parseShortcut, formatShortcutForDisplay, keyToCode } from "@/lib/shortcut";
 
 const ButtonWithTooltip = withTooltip(Button);
+
+// Debounce state for keyboard shortcuts to prevent duplicate triggers during UI transitions
+const recentShortcuts = new Map<string, number>();
+const DEBOUNCE_MS = 300;
 
 interface ButtonWidgetProps {
   id: string;
@@ -213,6 +213,14 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
         event.code === expectedCode;
 
       if (isShortcutPressed) {
+        const now = Date.now();
+        const lastTrigger = recentShortcuts.get(id) || 0;
+
+        if (now - lastTrigger < DEBOUNCE_MS) {
+          return; // Ignore rapid-fire triggers
+        }
+
+        recentShortcuts.set(id, now);
         event.preventDefault();
         if (!effectiveUrl) {
           eventHandler("OnClick", id, []);
@@ -231,6 +239,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      recentShortcuts.delete(id);
     };
   }, [shortcutKey, disabled, id, effectiveUrl, eventHandler]);
 

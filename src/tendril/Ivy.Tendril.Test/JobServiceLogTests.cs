@@ -13,7 +13,7 @@ public class JobServiceLogTests
         try
         {
             var configService = new ConfigService(new TendrilSettings(), tempDir);
-            var planReaderService = new PlanReaderService(configService);
+            var planReaderService = new PlanReaderService(configService, Microsoft.Extensions.Logging.Abstractions.NullLogger<PlanReaderService>.Instance);
             var jobService = new JobService(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), planReaderService: planReaderService);
 
             var sessionId = Guid.NewGuid().ToString();
@@ -53,7 +53,7 @@ public class JobServiceLogTests
         try
         {
             var configService = new ConfigService(new TendrilSettings(), tempDir);
-            var planReaderService = new PlanReaderService(configService);
+            var planReaderService = new PlanReaderService(configService, Microsoft.Extensions.Logging.Abstractions.NullLogger<PlanReaderService>.Instance);
             var jobService = new JobService(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), planReaderService: planReaderService);
 
             var job = new JobItem

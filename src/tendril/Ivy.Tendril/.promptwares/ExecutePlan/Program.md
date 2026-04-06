@@ -410,3 +410,4 @@ You are running in non-interactive mode and CANNOT ask questions. If you are uns
 - All `file:///` paths in plans should be converted to Windows paths when needed
 - Do NOT commit artifact files (screenshots, images) to the repo. Test artifacts belong in `<PlanFolder>/artifacts/` only — MakePr handles uploading them to persistent storage.
 - Private npm packages (like `@ivy-interactive/ivy-design-system`) require authentication via `.npmrc`. The Setup-WorktreeFrontend.ps1 tool handles this automatically. Credentials come from NPM_TOKEN env var or .NET user secrets (Npm:RegistryToken).
+- Do NOT use `subst` to create drive letter mappings for worktree paths. The plans directory is already symlinked to a short path to avoid long-path issues. Using `subst` creates phantom drives that are never cleaned up.

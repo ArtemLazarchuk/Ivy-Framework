@@ -29,31 +29,6 @@ public class InputWidgetTests
         public object? GetValueAsObject() => Value;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     [Theory]
     [InlineData(typeof(short), (short)1)]
     [InlineData(typeof(short?), null)]

@@ -145,7 +145,7 @@ Create `<ArtifactsDir>/sample/.ivy/tests/` directory with:
 
 **playwright.config.ts** — Chromium only, single worker, no retries, viewport `{ width: 1920, height: 1920 }` (set in both `use` and `projects[0].use`), uses `process.env.APP_PORT`
 
-**IMPORTANT:** Screenshots must be written to `<ArtifactsDir>/screenshots/` (sibling to `sample/`), not inside `sample/`.
+**IMPORTANT:** Screenshots must be written to `<ArtifactsDir>/screenshots/` (sibling to `sample/`), not inside `sample/`. Since `projectRoot` resolves to `<ArtifactsDir>/sample/`, use `path.resolve(projectRoot, '..', 'screenshots')` (single `..`) — NOT double `..` which goes above `<ArtifactsDir>`.
 
 **test-utils.ts** — process tracking utility for cleanup on timeout/crash:
 

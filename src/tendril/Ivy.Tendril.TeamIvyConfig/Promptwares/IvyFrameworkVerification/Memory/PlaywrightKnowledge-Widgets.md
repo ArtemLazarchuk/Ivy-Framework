@@ -55,6 +55,16 @@ DataTable uses Glide Data Grid — renders as `<canvas>`, NOT HTML `<table>`.
 - `state.ToSliderInput()` renders as Radix UI slider with `role="slider"`, NOT `<input type="range">`
 - Keyboard: ArrowRight/Left (step), Home/End (min/max)
 
+### ContentInput
+
+- `state.ToContentInput(uploadContext)` — requires `IState<UploadContext>` from `UseUpload(MemoryStreamUploadHandler.Create(filesState))`
+- `.ShortcutKey("Ctrl+Enter")` renders `<kbd>` badge in bottom toolbar when not focused
+- **macOS shortcut key mapping**: `parseShortcut("Ctrl+X")` maps `Ctrl` to `meta` (Cmd key) on macOS. In Playwright tests, use `Meta+Enter` (not `Control+Enter`) on macOS to trigger `Ctrl+Enter` shortcuts. Detect with `process.platform === 'darwin'`.
+- kbd badge locator: `page.locator('kbd')`
+- When `shortcutKey` is set, the inline `Ctrl/Cmd+Enter` handler is disabled — only the global `useEffect` listener fires
+- `.Invalid("message")` renders as `InvalidIcon` (info icon with `data-invalid-icon="true"`) in top-right corner, NOT visible text. The message is shown in a Radix tooltip on hover. To test: `page.locator('[data-invalid-icon="true"]').first().hover()` then assert tooltip text with `.first()` (Radix creates duplicate tooltip DOM elements). Invalid also adds `border-destructive` CSS class to the wrapper.
+- `.Small()` / `.Medium()` / `.Large()` density variants scale textarea size, toolbar padding, paperclip icon, and shortcut badge proportionally
+
 ### TextInput / TextareaInput
 
 - `state.ToTextareaInput()` → `<textarea>`, `state.ToTextInput()` → `role="textbox"`
@@ -91,6 +101,7 @@ DataTable uses Glide Data Grid — renders as `<canvas>`, NOT HTML `<table>`.
 
 - `.ToDialog()`, `.WithConfirm()`, `.ToSheet()` all render as `<div role="dialog">`, NOT HTML `<dialog>`
 - **NEVER** use `page.locator("dialog")` — use `page.getByRole("dialog", { name: "Title" })` or `[role='dialog']`
+- **Sheet title strict mode**: `.WithSheet(title: "My Sheet")` renders the title as both button text ("Open My Sheet") and `<h2>` heading inside the sheet. `getByText("My Sheet")` matches both → strict mode violation. Use `getByRole('heading', { name: 'My Sheet' })` for the sheet heading.
 - `.WithConfirm("message", "title")` always uses **"Ok"** and **"Cancel"** buttons (hardcoded)
 - Edit sheets use "Save" button; create dialogs use entity action name (e.g., "Create")
 - `[Required]` fields render labels as "FieldName *" — `getByText("Code", { exact: true })` won't match "Code *"; use input element locators
