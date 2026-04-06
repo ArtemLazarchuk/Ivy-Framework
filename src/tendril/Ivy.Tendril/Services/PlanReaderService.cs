@@ -28,6 +28,12 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     private DateTime? _planCountsCacheTime;
     private static readonly TimeSpan PlanCountsCacheExpiration = TimeSpan.FromMinutes(2);
 
+    private void InvalidatePlanCountsCache()
+    {
+        _planCountsCache = null;
+        _planCountsCacheTime = null;
+    }
+
     public static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
@@ -79,6 +85,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                     updated = Regex.Replace(updated, @"(?m)^updated:\s*.*$",
                         $"updated: {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}");
                     FileHelper.WriteAllText(planYamlPath, updated);
+                    InvalidatePlanCountsCache();
                 }
             }
             catch (Exception ex)
@@ -210,6 +217,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         planYaml.Updated = DateTime.UtcNow;
 
         FileHelper.WriteAllText(planYamlPath, YamlSerializer.Serialize(planYaml));
+        InvalidatePlanCountsCache();
     }
 
     /// <summary>
@@ -234,6 +242,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
             var planYaml = YamlDeserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
             planYaml.Updated = DateTime.UtcNow;
             FileHelper.WriteAllText(planYamlPath, YamlSerializer.Serialize(planYaml));
+            InvalidatePlanCountsCache();
         }
     }
 
@@ -435,6 +444,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                 var planYaml = YamlDeserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                 planYaml.Updated = DateTime.UtcNow;
                 FileHelper.WriteAllText(planYamlPath, YamlSerializer.Serialize(planYaml));
+                InvalidatePlanCountsCache();
             }
         }
     }
@@ -846,8 +856,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         // Invalidate caches after state change
         _recommendationsCache = null;
         _recommendationsCacheTime = null;
-        _planCountsCache = null;
-        _planCountsCacheTime = null;
+        InvalidatePlanCountsCache();
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
