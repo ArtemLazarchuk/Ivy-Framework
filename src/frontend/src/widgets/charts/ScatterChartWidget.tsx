@@ -385,7 +385,7 @@ const ScatterChartWidget: React.FC<ScatterChartWidgetProps> = ({
   // Memoize option configuration
   const option = useMemo(
     () => ({
-      grid: generateEChartGrid(cartesianGrid, !!toolbox && toolbox.enabled !== false),
+      grid: generateEChartGrid(cartesianGrid, !!toolbox && toolbox.enabled !== false, yAxis),
       xAxis: generateScatterXAxis(xAxis, {
         mutedForeground: themeColors.mutedForeground,
         fontSans: themeColors.fontSans,
