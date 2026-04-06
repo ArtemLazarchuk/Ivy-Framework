@@ -6,16 +6,19 @@ import { Densities } from "@/types/density";
 import { FileItem, FileUploadStatus } from "./types";
 import { formatBytes } from "../file-input-validation";
 
-const compactContainerVariant = cva("flex flex-nowrap overflow-x-auto flex-1 min-w-0", {
-  variants: {
-    density: {
-      Small: "gap-1 py-1",
-      Medium: "gap-2 py-1.5",
-      Large: "gap-2 py-2",
+const compactContainerVariant = cva(
+  "flex flex-nowrap overflow-x-auto flex-1 min-w-0 slim-scrollbar",
+  {
+    variants: {
+      density: {
+        Small: "gap-1 py-1",
+        Medium: "gap-2 py-1.5",
+        Large: "gap-2 py-2",
+      },
     },
+    defaultVariants: { density: "Medium" },
   },
-  defaultVariants: { density: "Medium" },
-});
+);
 
 const compactItemVariant = cva(
   "flex items-center border border-muted-foreground/25 rounded-md bg-muted/30",
