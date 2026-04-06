@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using VerifyCS = Microsoft.CodeAnalysis.CSharp.Testing.XUnit.AnalyzerVerifier<
     Ivy.Analyser.Analyzers.HookUsageAnalyzer>;
