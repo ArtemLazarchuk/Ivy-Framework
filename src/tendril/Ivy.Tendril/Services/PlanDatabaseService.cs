@@ -7,7 +7,7 @@ namespace Ivy.Tendril.Services;
 
 public class PlanDatabaseService : IPlanDatabaseService, IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private SqliteConnection _connection;
     private readonly object _lock = new();
 
     private static readonly HashSet<string> AllowedTableColumns = new(StringComparer.Ordinal)
@@ -26,6 +26,36 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
     {
         _connection = new SqliteConnection($"Data Source={databasePath};Mode=ReadWriteCreate");
         _connection.Open();
+
+        // Check database integrity before use
+        var isCorrupted = false;
+        try
+        {
+            using var integrityCmd = _connection.CreateCommand();
+            integrityCmd.CommandText = "PRAGMA integrity_check";
+            var integrityResult = integrityCmd.ExecuteScalar()?.ToString();
+            isCorrupted = integrityResult != "ok";
+        }
+        catch (SqliteException)
+        {
+            isCorrupted = true;
+        }
+
+        if (isCorrupted)
+        {
+            // Corruption detected - release file handles and delete the database
+            SqliteConnection.ClearPool(_connection);
+            _connection.Dispose();
+            File.Delete(databasePath);
+            if (File.Exists(databasePath + "-wal"))
+                File.Delete(databasePath + "-wal");
+            if (File.Exists(databasePath + "-shm"))
+                File.Delete(databasePath + "-shm");
+
+            // Reopen clean database
+            _connection = new SqliteConnection($"Data Source={databasePath};Mode=ReadWriteCreate");
+            _connection.Open();
+        }
 
         using var pragmaCmd = _connection.CreateCommand();
         pragmaCmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;";

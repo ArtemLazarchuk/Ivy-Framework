@@ -289,4 +289,53 @@ public class PlanDatabaseServiceTests : IDisposable
         Assert.Equal("Tendril", burn[0].Project);
         Assert.Equal(60000, burn[0].Tokens);
     }
+
+    [Fact]
+    public void Constructor_DetectsAndHandlesCorruptedDatabase()
+    {
+        var corruptDbPath = Path.Combine(Path.GetTempPath(), $"tendril-corrupt-{Guid.NewGuid()}.db");
+        try
+        {
+            // Write invalid data to simulate a corrupted database file
+            File.WriteAllBytes(corruptDbPath, new byte[] { 0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD });
+
+            // Constructor should detect corruption and recreate the database
+            using var db = new PlanDatabaseService(corruptDbPath);
+
+            // Verify the service initialized successfully — tables exist and we can query
+            var plans = db.GetPlans();
+            Assert.Empty(plans);
+
+            // Verify we can insert and retrieve data (schema was created)
+            var plan = CreateTestPlan(9999, "Post-Corruption Plan");
+            db.UpsertPlan(plan);
+            var result = db.GetPlanById(9999);
+            Assert.NotNull(result);
+            Assert.Equal("Post-Corruption Plan", result.Title);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(corruptDbPath)) File.Delete(corruptDbPath);
+            if (File.Exists(corruptDbPath + "-wal")) File.Delete(corruptDbPath + "-wal");
+            if (File.Exists(corruptDbPath + "-shm")) File.Delete(corruptDbPath + "-shm");
+        }
+    }
+
+    [Fact]
+    public void Constructor_PassesIntegrityCheckForHealthyDatabase()
+    {
+        // The _db created in the constructor should work fine with a clean database
+        // Verify it's fully functional (implicit integrity check passed)
+        var plan = CreateTestPlan(8888, "Healthy DB Plan");
+        _db.UpsertPlan(plan);
+
+        var result = _db.GetPlanById(8888);
+        Assert.NotNull(result);
+        Assert.Equal("Healthy DB Plan", result.Title);
+
+        // Verify schema is complete by exercising multiple tables
+        var counts = _db.ComputePlanCounts();
+        Assert.Equal(1, counts.Drafts);
+    }
 }
