@@ -387,15 +387,15 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                var hourStr = reader.GetString(0);
+                var hourStr = reader.GetString(reader.GetOrdinal("Hour"));
                 if (DateTime.TryParse(hourStr, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var hour))
                 {
                     result.Add(new HourlyTokenBurn
                     {
                         Hour = DateTime.SpecifyKind(hour, DateTimeKind.Utc),
-                        Project = reader.GetString(1),
-                        Cost = Convert.ToDecimal(reader.GetDouble(2), CultureInfo.InvariantCulture),
-                        Tokens = reader.GetInt32(3)
+                        Project = reader.GetString(reader.GetOrdinal("Project")),
+                        Cost = Convert.ToDecimal(reader.GetDouble(reader.GetOrdinal("TotalCost")), CultureInfo.InvariantCulture),
+                        Tokens = reader.GetInt32(reader.GetOrdinal("TotalTokens"))
                     });
                 }
             }
