@@ -27,14 +27,6 @@ public class ContentView(
     private readonly IConfigService _config = config;
     private readonly IGitService _gitService = gitService;
 
-    private static readonly Dictionary<string, BadgeVariant> VerificationStatusBadgeVariants = new()
-    {
-        ["Pass"] = BadgeVariant.Success,
-        ["Fail"] = BadgeVariant.Destructive,
-        ["Pending"] = BadgeVariant.Outline,
-        ["Skipped"] = BadgeVariant.Outline
-    };
-
     public override object? Build()
     {
         var client = UseService<IClientProvider>();
@@ -147,7 +139,7 @@ public class ContentView(
 
             verificationsTable |= new TableRow(
                 new TableCell(new Badge(v.Status).Variant(
-                    VerificationStatusBadgeVariants.TryGetValue(v.Status, out var variant)
+                    StatusMappings.VerificationStatusBadgeVariants.TryGetValue(v.Status, out var variant)
                         ? variant
                         : BadgeVariant.Outline)),
                 new TableCell(nameCell)
