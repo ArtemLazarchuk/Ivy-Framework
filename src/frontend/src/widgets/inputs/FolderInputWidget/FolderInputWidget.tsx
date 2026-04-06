@@ -103,6 +103,14 @@ export const FolderInputWidget: React.FC<FolderInputWidgetProps> = ({
           disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
         )}
         onClick={handleBrowse}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleBrowse();
+          }
+        }}
+        role="button"
+        aria-label="Browse for folder"
         onBlur={() => {
           if (hasOnBlur) handleEvent("OnBlur", id, []);
         }}
