@@ -44,9 +44,9 @@ public class PlanCountsService : IPlanCountsService
         var jobs = _jobService.GetJobs();
 
         return new PlanCounts(
-            Drafts: snapshot.Drafts,
+            Drafts: snapshot.Drafts + snapshot.Failed,
             ActiveJobs: jobs.Count(j => j.Status == "Running" || j.Status == "Queued"),
-            Reviews: snapshot.ReadyForReview + snapshot.Failed,
+            Reviews: snapshot.ReadyForReview,
             Icebox: snapshot.Icebox,
             Recommendations: snapshot.PendingRecommendations
         );
