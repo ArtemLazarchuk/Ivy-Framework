@@ -331,6 +331,7 @@ ivy-widget {
 
 /* Slim scrollbar for compact inline areas (~4px) */
 .slim-scrollbar::-webkit-scrollbar {
+  width: 4px;
   height: 4px;
 }
 .slim-scrollbar::-webkit-scrollbar-track {

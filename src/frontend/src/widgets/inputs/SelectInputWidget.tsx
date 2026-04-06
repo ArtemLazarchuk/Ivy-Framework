@@ -859,7 +859,7 @@ const CheckboxVariant: React.FC<SelectInputWidgetProps> = ({
               <div
                 className={cn(
                   "flex flex-col gap-4",
-                  filteredOptions.length > 6 ? "max-h-48 overflow-y-auto pr-2 -mr-2" : "",
+                  filteredOptions.length > 6 ? "max-h-48 overflow-y-auto slim-scrollbar" : "",
                 )}
                 data-testid={dataTestId}
               >
