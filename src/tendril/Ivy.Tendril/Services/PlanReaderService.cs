@@ -70,6 +70,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                         $"updated: {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}");
                     FileHelper.WriteAllText(planYamlPath, updated);
                     InvalidatePlanCountsCache();
+                    _recommendationsCache = null;
+                    _recommendationsCacheTime = null;
                 }
             }
             catch (Exception ex)
@@ -202,6 +204,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
 
         FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
         InvalidatePlanCountsCache();
+        _recommendationsCache = null;
+        _recommendationsCacheTime = null;
     }
 
     /// <summary>
