@@ -23,6 +23,11 @@ public class PlanReaderService(ConfigService config) : IPlanReaderService
     private DateTime? _recommendationsCacheTime;
     private static readonly TimeSpan RecommendationsCacheExpiration = TimeSpan.FromMinutes(2);
 
+    // Cache for ComputePlanCounts results
+    private PlanCountSnapshot? _planCountsCache;
+    private DateTime? _planCountsCacheTime;
+    private static readonly TimeSpan PlanCountsCacheExpiration = TimeSpan.FromMinutes(2);
+
     public static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
@@ -745,9 +750,27 @@ public class PlanReaderService(ConfigService config) : IPlanReaderService
     /// <summary>
     /// Efficiently computes plan counts by status and pending recommendation count
     /// using regex-based state extraction instead of full YAML deserialization.
+    /// Results are cached for 2 minutes to reduce disk I/O during dashboard polling.
     /// </summary>
     /// <returns>A <see cref="PlanCountSnapshot"/> with counts for each status category and pending recommendations.</returns>
     public PlanCountSnapshot ComputePlanCounts()
+    {
+        if (_planCountsCache != null &&
+            _planCountsCacheTime != null &&
+            DateTime.UtcNow - _planCountsCacheTime.Value < PlanCountsCacheExpiration)
+        {
+            return _planCountsCache;
+        }
+
+        var result = ComputePlanCountsInternal();
+
+        _planCountsCache = result;
+        _planCountsCacheTime = DateTime.UtcNow;
+
+        return result;
+    }
+
+    private PlanCountSnapshot ComputePlanCountsInternal()
     {
         int drafts = 0, reviews = 0, failed = 0, icebox = 0, pendingRecs = 0;
 
@@ -820,9 +843,11 @@ public class PlanReaderService(ConfigService config) : IPlanReaderService
         }
         FileHelper.WriteAllText(recommendationsPath, YamlSerializer.Serialize(items));
 
-        // Invalidate cache after state change
+        // Invalidate caches after state change
         _recommendationsCache = null;
         _recommendationsCacheTime = null;
+        _planCountsCache = null;
+        _planCountsCacheTime = null;
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
