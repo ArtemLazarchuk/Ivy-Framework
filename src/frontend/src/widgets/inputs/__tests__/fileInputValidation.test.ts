@@ -31,6 +31,14 @@ describe("formatBytes", () => {
     // 10240 bytes = 10 KB, should show no decimals
     expect(formatBytes(10240)).toBe("10 KB");
   });
+
+  it("formats negative bytes as 0 B", () => {
+    expect(formatBytes(-1024)).toBe("0 B");
+  });
+
+  it("formats negative fractional bytes as 0 B", () => {
+    expect(formatBytes(-0.5)).toBe("0 B");
+  });
 });
 
 // ---------------------------------------------------------------------------
