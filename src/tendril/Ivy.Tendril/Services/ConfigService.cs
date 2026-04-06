@@ -201,6 +201,8 @@ public class ConfigService : IConfigService
     public string ConfigPath => _configPath;
     public string PlanFolder => string.IsNullOrEmpty(_tendrilHome) ? "" : Path.Combine(_tendrilHome, "Plans");
     public List<ProjectConfig> Projects => _settings.Projects;
+    // Levels are returned in the order defined in config.yaml (not sorted).
+    // Users can reorder levels in the Settings UI, and the order is preserved.
     public List<LevelConfig> Levels => _settings.Levels;
     public string[] LevelNames => _settings.Levels.Select(l => l.Name).ToArray();
     public EditorConfig Editor => _settings.Editor;
