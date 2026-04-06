@@ -17,6 +17,19 @@ public class SidebarView(
     private readonly IState<string?> _textFilter = textFilter;
     private readonly IConfigService _config = config;
 
+    private static readonly Dictionary<PlanStatus, BadgeVariant> PlanStatusBadgeVariants = new()
+    {
+        [PlanStatus.Building] = BadgeVariant.Info,
+        [PlanStatus.Updating] = BadgeVariant.Info,
+        [PlanStatus.Executing] = BadgeVariant.Info,
+        [PlanStatus.ReadyForReview] = BadgeVariant.Success,
+        [PlanStatus.Failed] = BadgeVariant.Destructive,
+        [PlanStatus.Draft] = BadgeVariant.Outline,
+        [PlanStatus.Completed] = BadgeVariant.Success,
+        [PlanStatus.Skipped] = BadgeVariant.Outline,
+        [PlanStatus.Icebox] = BadgeVariant.Outline
+    };
+
     public override object Build()
     {
         var filteredPlans = PlanFilters.ApplyFilters(_plans, _projectFilter.Value, _levelFilter.Value, _textFilter.Value);
@@ -45,12 +58,9 @@ public class SidebarView(
         var content = new List(filteredPlans.Select(plan =>
         {
             var clickablePlan = plan;
-            var stateBadgeVariant = plan.Status switch
-            {
-                PlanStatus.Building or PlanStatus.Updating => BadgeVariant.Info,
-                PlanStatus.ReadyForReview => BadgeVariant.Success,
-                _ => BadgeVariant.Outline
-            };
+            var stateBadgeVariant = PlanStatusBadgeVariants.TryGetValue(plan.Status, out var variant)
+                ? variant
+                : BadgeVariant.Outline;
 
             var badges = Layout.Horizontal().Gap(1);
             if (plan.Status != PlanStatus.Draft)
