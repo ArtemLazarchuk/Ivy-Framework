@@ -1,11 +1,12 @@
+using System.Threading.Tasks;
 using Ivy.Analyser.Analyzers;
 using Xunit;
 
-using Verifier = Ivy.Analyser.Tests.CSharpCodeFixVerifier<
+using Verifier = Ivy.Analyser.Test.CSharpCodeFixVerifier<
     Ivy.Analyser.Analyzers.UseServiceInterfaceAnalyzer,
     Ivy.Analyser.Analyzers.UseServiceInterfaceCodeFixProvider>;
 
-namespace Ivy.Analyser.Tests
+namespace Ivy.Analyser.Test
 {
     public class UseServiceInterfaceCodeFixProviderTests
     {

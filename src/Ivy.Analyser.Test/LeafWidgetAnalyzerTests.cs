@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
-using VerifyCS = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    Ivy.Analyser.Analyzers.LeafWidgetAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+using VerifyCS = Ivy.Analyser.Test.CSharpAnalyzerVerifier<
+    Ivy.Analyser.Analyzers.LeafWidgetAnalyzer>;
 
 namespace Ivy.Analyser.Test;
 

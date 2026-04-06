@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
 using Xunit;
 
-using Verifier = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixVerifier<
+using Verifier = Ivy.Analyser.Test.CSharpCodeFixVerifier<
     Ivy.Analyser.Analyzers.AppConstructorAnalyzer,
-    Ivy.Analyser.Analyzers.AppConstructorCodeFixProvider,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+    Ivy.Analyser.Analyzers.AppConstructorCodeFixProvider>;
 
 namespace Ivy.Analyser.Test
 {
