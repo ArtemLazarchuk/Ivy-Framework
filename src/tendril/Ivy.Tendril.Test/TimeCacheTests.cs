@@ -75,4 +75,102 @@ public class TimeCacheTests
 
         Assert.False(cache.IsValid);
     }
+
+    [Fact]
+    public async Task GetOrComputeAsync_CallsComputeOnFirstAccess()
+    {
+        var cache = new TimeCache<int>(TimeSpan.FromMinutes(1));
+        int callCount = 0;
+
+        var result = await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            callCount++;
+            return 42;
+        });
+
+        Assert.Equal(42, result);
+        Assert.Equal(1, callCount);
+    }
+
+    [Fact]
+    public async Task GetOrComputeAsync_ReturnsCachedValueWithinExpiration()
+    {
+        var cache = new TimeCache<int>(TimeSpan.FromSeconds(1));
+        int callCount = 0;
+
+        await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            callCount++;
+            return 42;
+        });
+
+        var result = await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            callCount++;
+            return 99;
+        });
+
+        Assert.Equal(42, result);
+        Assert.Equal(1, callCount);
+    }
+
+    [Fact]
+    public async Task GetOrComputeAsync_RecomputesAfterExpiration()
+    {
+        var cache = new TimeCache<int>(TimeSpan.FromMilliseconds(100));
+        int callCount = 0;
+
+        await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            callCount++;
+            return 42;
+        });
+
+        await Task.Delay(150);
+
+        var result = await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            callCount++;
+            return 99;
+        });
+
+        Assert.Equal(99, result);
+        Assert.Equal(2, callCount);
+    }
+
+    [Fact]
+    public async Task GetOrComputeAsync_PropagatesExceptions()
+    {
+        var cache = new TimeCache<int>(TimeSpan.FromMinutes(1));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await cache.GetOrComputeAsync(async () =>
+            {
+                await Task.Delay(10);
+                throw new InvalidOperationException("Test exception");
+            }));
+
+        Assert.False(cache.IsValid);
+    }
+
+    [Fact]
+    public async Task GetOrComputeAsync_WorksWithGetOrCompute()
+    {
+        var cache = new TimeCache<int>(TimeSpan.FromMinutes(1));
+
+        await cache.GetOrComputeAsync(async () =>
+        {
+            await Task.Delay(10);
+            return 42;
+        });
+
+        var result = cache.GetOrCompute(() => 99);
+
+        Assert.Equal(42, result);
+    }
 }
