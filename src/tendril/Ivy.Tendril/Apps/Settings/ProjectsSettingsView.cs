@@ -22,6 +22,9 @@ public class ProjectsSettingsView : ViewBase
         var newRepoPath = UseState("");
         var newRepoPrRule = UseState("default");
         var repoPathError = UseState<string?>(null);
+        var editingRepoIndex = UseState<int?>(-1);
+        var editingRepoPath = UseState("");
+        var editingRepoError = UseState<string?>(null);
 
         var projects = config.Settings.Projects;
         var allVerifications = config.Settings.Verifications.Select(v => v.Name).ToList();
@@ -78,23 +81,77 @@ public class ProjectsSettingsView : ViewBase
                 var repo = currentRepos[ri];
                 var expandedPath = Environment.ExpandEnvironmentVariables(repo.Path);
                 var pathExists = Directory.Exists(expandedPath);
+                var isEditing = editingRepoIndex.Value == ri;
 
-                var pathText = Text.Block(repo.Path).Width(Size.Grow());
-                if (!pathExists) pathText = pathText.Color(Colors.Red);
+                if (isEditing)
+                {
+                    reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                        | (!pathExists
+                            ? (object)new Icon(Icons.TriangleAlert, Colors.Warning).Small()
+                                .WithTooltip($"Path does not exist: {expandedPath}")
+                            : new Spacer().Width(Size.Units(4)))
+                        | editingRepoPath.ToTextInput("Repository path...").Width(Size.Grow())
+                        | new Badge(repo.PrRule).Variant(BadgeVariant.Outline)
+                        | new Button().Icon(Icons.Check).Ghost().Small().OnClick(() =>
+                        {
+                            var newPath = editingRepoPath.Value;
+                            if (string.IsNullOrWhiteSpace(newPath))
+                            {
+                                editingRepoError.Set("Path cannot be empty");
+                                return;
+                            }
 
-                reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                    | (!pathExists
-                        ? (object)new Icon(Icons.TriangleAlert, Colors.Warning).Small()
-                            .WithTooltip($"Path does not exist: {expandedPath}")
-                        : new Spacer().Width(Size.Units(4)))
-                    | pathText
-                    | new Badge(repo.PrRule).Variant(BadgeVariant.Outline)
-                    | new Button().Icon(Icons.Trash).Ghost().Small().OnClick(() =>
-                    {
-                        var list = new List<RepoRef>(editRepos.Value);
-                        list.RemoveAt(ri);
-                        editRepos.Set(list);
-                    });
+                            var expandedNewPath = Environment.ExpandEnvironmentVariables(newPath);
+                            if (!Directory.Exists(expandedNewPath))
+                            {
+                                editingRepoError.Set($"Directory does not exist: {expandedNewPath}");
+                                return;
+                            }
+
+                            var list = new List<RepoRef>(editRepos.Value);
+                            list[ri] = new RepoRef { Path = newPath, PrRule = repo.PrRule };
+                            editRepos.Set(list);
+                            editingRepoIndex.Set(-1);
+                            editingRepoError.Set(null);
+                        })
+                        | new Button().Icon(Icons.X).Ghost().Small().OnClick(() =>
+                        {
+                            editingRepoIndex.Set(-1);
+                            editingRepoError.Set(null);
+                        });
+                }
+                else
+                {
+                    var pathText = Text.Block(repo.Path).Width(Size.Grow());
+                    if (!pathExists) pathText = pathText.Color(Colors.Red);
+
+                    reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                        | (!pathExists
+                            ? (object)new Icon(Icons.TriangleAlert, Colors.Warning).Small()
+                                .WithTooltip($"Path does not exist: {expandedPath}")
+                            : new Spacer().Width(Size.Units(4)))
+                        | pathText
+                        | new Badge(repo.PrRule).Variant(BadgeVariant.Outline)
+                        | new Button().Icon(Icons.Pencil).Ghost().Small()
+                            .OnClick(() =>
+                            {
+                                editingRepoIndex.Set(ri);
+                                editingRepoPath.Set(repo.Path);
+                                editingRepoError.Set(null);
+                            })
+                            .WithTooltip("Edit path")
+                        | new Button().Icon(Icons.Trash).Ghost().Small().OnClick(() =>
+                        {
+                            var list = new List<RepoRef>(editRepos.Value);
+                            list.RemoveAt(ri);
+                            editRepos.Set(list);
+                        });
+                }
+            }
+
+            if (editingRepoError.Value != null)
+            {
+                reposLayout |= Text.Danger(editingRepoError.Value);
             }
 
             if (repoPathError.Value != null)
@@ -164,7 +221,7 @@ public class ProjectsSettingsView : ViewBase
             }
 
             content |= new Dialog(
-                _ => editIndex.Set(-1),
+                _ => { editIndex.Set(-1); editingRepoIndex.Set(-1); editingRepoError.Set(null); },
                 new DialogHeader(isNew ? "Add Project" : $"Edit Project: {editName.Value}"),
                 new DialogBody(
                     Layout.Vertical().Gap(4)
@@ -180,7 +237,7 @@ public class ProjectsSettingsView : ViewBase
                             | verificationsLayout)
                 ),
                 new DialogFooter(
-                    new Button("Cancel").Outline().OnClick(() => editIndex.Set(-1)),
+                    new Button("Cancel").Outline().OnClick(() => { editIndex.Set(-1); editingRepoIndex.Set(-1); editingRepoError.Set(null); }),
                     new Button(isNew ? "Add" : "Save").Primary().OnClick(() =>
                     {
                         if (string.IsNullOrWhiteSpace(editName.Value)) return;
@@ -194,6 +251,8 @@ public class ProjectsSettingsView : ViewBase
                         if (isNew) projects.Add(project);
                         config.SaveSettings();
                         editIndex.Set(-1);
+                        editingRepoIndex.Set(-1);
+                        editingRepoError.Set(null);
                         refreshToken.Refresh();
                         client.Toast($"Project '{editName.Value}' saved", "Saved");
                     })
