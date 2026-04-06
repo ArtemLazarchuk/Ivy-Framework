@@ -290,7 +290,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
     {
         var config = UseService<IConfigService>();
         var projectName = UseState("");
-        var projectColor = UseState("");
+        var projectColor = UseState<Colors?>(null);
         var repoPaths = UseState(new List<string>());
         var newRepoPath = UseState("");
         var projectContext = UseState("");
@@ -328,7 +328,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                | Text.Muted("Set up your first project. You can add more projects later in Settings.")
                | (error.Value != null ? Text.Danger(error.Value) : null!)
                | projectName.ToTextInput("Project name...").WithField().Label("Project Name")
-               | projectColor.ToColorInput().Variant(ColorInputVariant.TextAndPicker).Nullable().WithField().Label("Color")
+               | projectColor.ToSelectInput().WithField().Label("Color")
                | projectContext.ToTextareaInput("Project context or prompt for AI agents (optional)...")
                    .Rows(4)
                    .WithField()
@@ -357,7 +357,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                            var project = new ProjectConfig
                            {
                                Name = projectName.Value.Trim(),
-                               Color = projectColor.Value,
+                               Color = projectColor.Value?.ToString() ?? "",
                                Repos = repoPaths.Value.Select(p => new RepoRef { Path = p, PrRule = "default" }).ToList(),
                                Context = projectContext.Value?.Trim() ?? ""
                            };
