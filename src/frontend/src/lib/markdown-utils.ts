@@ -12,32 +12,34 @@ export interface GitHubAlertStyle {
 export const githubAlertStyles: Record<GitHubAlertType, GitHubAlertStyle> = {
   NOTE: {
     icon: "Info",
-    className: "border-cyan/20 bg-cyan/10 text-foreground",
-    iconColor: "text-cyan",
+    className: "border-cyan/20 bg-cyan/10 text-foreground dark:border-cyan/30 dark:bg-cyan/10",
+    iconColor: "",
     title: "Note",
   },
   TIP: {
-    icon: "Lightbulb",
-    className: "border-emerald/20 bg-emerald/10 text-foreground",
-    iconColor: "text-emerald",
+    icon: "CircleCheck",
+    className:
+      "border-emerald/20 bg-emerald/10 text-foreground dark:border-emerald/30 dark:bg-emerald/10",
+    iconColor: "text-emerald dark:text-emerald-light",
     title: "Tip",
   },
   IMPORTANT: {
-    icon: "MessageSquare",
-    className: "border-purple/20 bg-purple/10 text-foreground",
-    iconColor: "text-purple",
+    icon: "CircleAlert",
+    className: "border-amber/20 bg-amber/10 text-foreground dark:border-amber/30 dark:bg-amber/10",
+    iconColor: "text-amber dark:text-amber-light",
     title: "Important",
   },
   WARNING: {
-    icon: "TriangleAlert",
-    className: "border-amber/20 bg-amber/10 text-foreground",
-    iconColor: "text-amber",
+    icon: "CircleAlert",
+    className: "border-amber/20 bg-amber/10 text-foreground dark:border-amber/30 dark:bg-amber/10",
+    iconColor: "text-amber dark:text-amber-light",
     title: "Warning",
   },
   CAUTION: {
-    icon: "OctagonAlert",
-    className: "border-destructive/20 bg-destructive/10 text-foreground",
-    iconColor: "text-destructive",
+    icon: "CircleAlert",
+    className:
+      "border-destructive/20 bg-destructive/10 text-foreground dark:border-destructive/30 dark:bg-destructive/10",
+    iconColor: "text-destructive dark:text-destructive-light",
     title: "Caution",
   },
 };
@@ -104,9 +106,9 @@ export function parseGitHubAlert(children: React.ReactNode): ParsedGitHubAlert |
   if (!React.isValidElement(firstChild)) return null;
 
   // react-markdown renders blockquote children as <p> elements
-  // The type could be 'p' string or a component
+  // The type could be 'p' string, a component function, or a memo object
   const elementType = firstChild.type;
-  if (typeof elementType !== "string" && typeof elementType !== "function") return null;
+  if (!elementType) return null;
 
   const firstProps = firstChild.props as { children?: React.ReactNode };
   const textContent = extractTextContent(firstProps.children);
