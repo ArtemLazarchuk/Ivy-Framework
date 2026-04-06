@@ -14,7 +14,7 @@ public class PlanReaderServiceGetPlanTests : IDisposable
 
         var settings = new TendrilSettings();
         var configService = new ConfigService(settings, _tempDir);
-        _service = new PlanReaderService(configService);
+        _service = new PlanReaderService(configService, Microsoft.Extensions.Logging.Abstractions.NullLogger<PlanReaderService>.Instance);
     }
 
     public void Dispose()

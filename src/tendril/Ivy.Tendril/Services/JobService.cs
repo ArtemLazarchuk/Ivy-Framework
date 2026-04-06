@@ -303,7 +303,7 @@ public class JobService : IJobService
                 job.LastOutputAt = DateTime.UtcNow;
                 if (!e.Data.Contains("\"type\":\"heartbeat\""))
                 {
-                    job.OutputLines.Add(e.Data);
+                    job.OutputLines.Enqueue(e.Data);
                 }
             }
         };
@@ -311,7 +311,7 @@ public class JobService : IJobService
         {
             if (e.Data != null)
             {
-                job.OutputLines.Add($"[stderr] {e.Data}");
+                job.OutputLines.Enqueue($"[stderr] {e.Data}");
                 job.LastOutputAt = DateTime.UtcNow;
             }
         };
@@ -386,21 +386,21 @@ public class JobService : IJobService
                     var condPsi = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "pwsh",
-                        Arguments = $"-NoProfile -Command \"{hook.Condition}\"",
+                        Arguments = $"-NoProfile -EncodedCommand {EncodeForPowerShell(hook.Condition)}",
                         WorkingDirectory = string.IsNullOrEmpty(planFolder) ? "." : planFolder,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
                         CreateNoWindow = true,
                     };
-                    var condProc = System.Diagnostics.Process.Start(condPsi);
+                    using var condProc = System.Diagnostics.Process.Start(condPsi);
                     var condOutput = condProc?.StandardOutput.ReadToEnd().Trim() ?? "";
                     condProc?.WaitForExit(10000);
 
                     if (condProc?.ExitCode != 0 ||
                         condOutput.Equals("False", StringComparison.OrdinalIgnoreCase))
                     {
-                        job.OutputLines.Add($"[hook:{hook.Name}] Condition not met, skipping");
+                        job.OutputLines.Enqueue($"[hook:{hook.Name}] Condition not met, skipping");
                         continue;
                     }
                 }
@@ -409,7 +409,7 @@ public class JobService : IJobService
                 var actionPsi = new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = "pwsh",
-                    Arguments = $"-NoProfile -Command \"{hook.Action}\"",
+                    Arguments = $"-NoProfile -EncodedCommand {EncodeForPowerShell(hook.Action)}",
                     WorkingDirectory = string.IsNullOrEmpty(planFolder) ? "." : planFolder,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -422,22 +422,22 @@ public class JobService : IJobService
                 actionPsi.Environment["TENDRIL_PLAN_FOLDER"] = planFolder;
                 actionPsi.Environment["TENDRIL_CONFIG"] = _configService.ConfigPath;
 
-                var actionProc = System.Diagnostics.Process.Start(actionPsi);
+                using var actionProc = System.Diagnostics.Process.Start(actionPsi);
                 var output = actionProc?.StandardOutput.ReadToEnd().Trim() ?? "";
                 var stderr = actionProc?.StandardError.ReadToEnd().Trim() ?? "";
                 actionProc?.WaitForExit(30000);
 
                 if (!string.IsNullOrEmpty(output))
-                    job.OutputLines.Add($"[hook:{hook.Name}] {output}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] {output}");
                 if (!string.IsNullOrEmpty(stderr))
-                    job.OutputLines.Add($"[hook:{hook.Name}] [stderr] {stderr}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] [stderr] {stderr}");
 
                 if (actionProc?.ExitCode != 0)
-                    job.OutputLines.Add($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
+                    job.OutputLines.Enqueue($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
             }
             catch (Exception ex)
             {
-                job.OutputLines.Add($"[hook:{hook.Name}] Error: {ex.Message}");
+                job.OutputLines.Enqueue($"[hook:{hook.Name}] Error: {ex.Message}");
             }
         }
     }
@@ -491,7 +491,7 @@ public class JobService : IJobService
         else
         {
             var success = exitCode == 0;
-            job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines);
+            job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines.ToList());
             job.Status = success ? "Completed" : "Failed";
         }
 
@@ -670,6 +670,12 @@ public class JobService : IJobService
         }
     }
 
+    private static string EncodeForPowerShell(string command)
+    {
+        var bytes = System.Text.Encoding.Unicode.GetBytes(command);
+        return Convert.ToBase64String(bytes);
+    }
+
     internal static string ExtractFailureReason(List<string> outputLines)
     {
         if (outputLines.Count == 0)
@@ -791,7 +797,7 @@ public class JobService : IJobService
             if (!created && !duplicate)
             {
                 // Agent exited 0 but didn't create a plan or detect a duplicate — flag it
-                job.OutputLines.Add("[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
+                job.OutputLines.Enqueue("[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
                 job.Status = "Failed";
                 job.StatusMessage = "No plan created";
             }

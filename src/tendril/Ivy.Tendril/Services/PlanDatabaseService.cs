@@ -4,9 +4,22 @@ using Microsoft.Data.Sqlite;
 
 namespace Ivy.Tendril.Services;
 
-public class PlanDatabaseService : IPlanDatabaseService
+public class PlanDatabaseService : IPlanDatabaseService, IDisposable
 {
     private readonly SqliteConnection _connection;
+    private readonly object _lock = new();
+
+    private static readonly HashSet<string> AllowedTableColumns = new(StringComparer.Ordinal)
+    {
+        "Repos", "RepoPath", "Commits", "CommitHash", "PullRequests", "PrUrl",
+        "RelatedPlans", "RelatedPlanPath", "DependsOn", "DependsOnPlanPath", "Verifications"
+    };
+
+    private static void ValidateIdentifier(string name)
+    {
+        if (!AllowedTableColumns.Contains(name))
+            throw new ArgumentException($"Invalid SQL identifier: {name}");
+    }
 
     public PlanDatabaseService(string databasePath)
     {
@@ -131,108 +144,115 @@ public class PlanDatabaseService : IPlanDatabaseService
 
     public List<PlanFile> GetPlans(PlanStatus? statusFilter = null)
     {
-        var sql = """
-            SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
-                   YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
-            FROM Plans
-            """;
-
-        if (statusFilter.HasValue)
-            sql += " WHERE State = @state";
-
-        sql += " ORDER BY Id";
-
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = sql;
-
-        if (statusFilter.HasValue)
-            cmd.Parameters.AddWithValue("@state", statusFilter.Value.ToString());
-
-        // Collect plan rows first
-        var planRows = new List<(int Id, SqliteDataReader Reader)>();
-        var planIds = new List<int>();
-        var plans = new List<PlanFile>();
-
-        using var reader = cmd.ExecuteReader();
-        var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
-            string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
-            string LatestContent, string Created, string Updated)>();
-
-        while (reader.Read())
+        lock (_lock)
         {
-            var planId = reader.GetInt32(0);
-            planIds.Add(planId);
-            rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
-                reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
-                reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
-        }
+            var sql = """
+                SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
+                       YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
+                FROM Plans
+                """;
 
-        if (rawPlans.Count == 0)
+            if (statusFilter.HasValue)
+                sql += " WHERE State = @state";
+
+            sql += " ORDER BY Id";
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = sql;
+
+            if (statusFilter.HasValue)
+                cmd.Parameters.AddWithValue("@state", statusFilter.Value.ToString());
+
+            var planIds = new List<int>();
+            var plans = new List<PlanFile>();
+
+            using var reader = cmd.ExecuteReader();
+            var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
+                string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
+                string LatestContent, string Created, string Updated)>();
+
+            while (reader.Read())
+            {
+                var planId = reader.GetInt32(0);
+                planIds.Add(planId);
+                rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
+                    reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
+            }
+
+            if (rawPlans.Count == 0)
+                return plans;
+
+            var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
+            var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
+            var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
+            var allVerifications = BatchGetVerifications(planIds);
+            var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
+            var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
+
+            foreach (var row in rawPlans)
+            {
+                var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
+                    row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
+                    row.Created, row.Updated,
+                    allRepos.GetValueOrDefault(row.Id, []),
+                    allCommits.GetValueOrDefault(row.Id, []),
+                    allPrs.GetValueOrDefault(row.Id, []),
+                    allVerifications.GetValueOrDefault(row.Id, []),
+                    allRelatedPlans.GetValueOrDefault(row.Id, []),
+                    allDependsOn.GetValueOrDefault(row.Id, []));
+                if (plan != null)
+                    plans.Add(plan);
+            }
+
             return plans;
-
-        // Batch-fetch all child table data
-        var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
-        var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
-        var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
-        var allVerifications = BatchGetVerifications(planIds);
-        var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
-        var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
-
-        foreach (var row in rawPlans)
-        {
-            var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
-                row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
-                row.Created, row.Updated,
-                allRepos.GetValueOrDefault(row.Id, []),
-                allCommits.GetValueOrDefault(row.Id, []),
-                allPrs.GetValueOrDefault(row.Id, []),
-                allVerifications.GetValueOrDefault(row.Id, []),
-                allRelatedPlans.GetValueOrDefault(row.Id, []),
-                allDependsOn.GetValueOrDefault(row.Id, []));
-            if (plan != null)
-                plans.Add(plan);
         }
-
-        return plans;
     }
 
     public PlanFile? GetPlanByFolder(string folderPath)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
-                   YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
-            FROM Plans WHERE FolderPath = @folderPath
-            """;
-        cmd.Parameters.AddWithValue("@folderPath", folderPath);
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
+                       YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
+                FROM Plans WHERE FolderPath = @folderPath
+                """;
+            cmd.Parameters.AddWithValue("@folderPath", folderPath);
 
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
-            return BuildPlanFile(reader.GetInt32(0), reader);
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+                return BuildPlanFile(reader.GetInt32(0), reader);
 
-        return null;
+            return null;
+        }
     }
 
     public PlanFile? GetPlanById(int planId)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
-                   YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
-            FROM Plans WHERE Id = @id
-            """;
-        cmd.Parameters.AddWithValue("@id", planId);
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
+                       YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
+                FROM Plans WHERE Id = @id
+                """;
+            cmd.Parameters.AddWithValue("@id", planId);
 
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
-            return BuildPlanFile(planId, reader);
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+                return BuildPlanFile(planId, reader);
 
-        return null;
+            return null;
+        }
     }
 
     /// <summary>
     /// Builds a PlanFile for a single plan query. Fetches child tables individually.
     /// For bulk queries, use BuildPlanFileFromRow with pre-fetched child data instead.
+    /// Must be called within _lock.
     /// </summary>
     private PlanFile? BuildPlanFile(int planId, SqliteDataReader reader)
     {
@@ -268,6 +288,8 @@ public class PlanDatabaseService : IPlanDatabaseService
 
     private List<string> GetListForPlan(int planId, string table, string column)
     {
+        ValidateIdentifier(table);
+        ValidateIdentifier(column);
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = $"SELECT {column} FROM {table} WHERE PlanId = @planId";
         cmd.Parameters.AddWithValue("@planId", planId);
@@ -292,9 +314,10 @@ public class PlanDatabaseService : IPlanDatabaseService
         return list;
     }
 
-    /// <summary>Batch-fetches a string child table for multiple plan IDs in one query.</summary>
     private Dictionary<int, List<string>> BatchGetList(List<int> planIds, string table, string column)
     {
+        ValidateIdentifier(table);
+        ValidateIdentifier(column);
         var result = new Dictionary<int, List<string>>();
         if (planIds.Count == 0) return result;
 
@@ -316,7 +339,6 @@ public class PlanDatabaseService : IPlanDatabaseService
         return result;
     }
 
-    /// <summary>Batch-fetches verifications for multiple plan IDs in one query.</summary>
     private Dictionary<int, List<PlanVerificationEntry>> BatchGetVerifications(List<int> planIds)
     {
         var result = new Dictionary<int, List<PlanVerificationEntry>>();
@@ -342,200 +364,224 @@ public class PlanDatabaseService : IPlanDatabaseService
 
     public PlanReaderService.PlanCountSnapshot ComputePlanCounts()
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT
-                COALESCE(SUM(CASE WHEN State = 'Draft' THEN 1 ELSE 0 END), 0),
-                COALESCE(SUM(CASE WHEN State = 'ReadyForReview' THEN 1 ELSE 0 END), 0),
-                COALESCE(SUM(CASE WHEN State = 'Failed' THEN 1 ELSE 0 END), 0),
-                COALESCE(SUM(CASE WHEN State = 'Icebox' THEN 1 ELSE 0 END), 0),
-                (SELECT COUNT(*) FROM Recommendations WHERE State = 'Pending')
-            FROM Plans
-            """;
-
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
+        lock (_lock)
         {
-            return new PlanReaderService.PlanCountSnapshot(
-                reader.GetInt32(0),
-                reader.GetInt32(1),
-                reader.GetInt32(2),
-                reader.GetInt32(3),
-                reader.GetInt32(4)
-            );
-        }
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT
+                    COALESCE(SUM(CASE WHEN State = 'Draft' THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN State = 'ReadyForReview' THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN State = 'Failed' THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN State = 'Icebox' THEN 1 ELSE 0 END), 0),
+                    (SELECT COUNT(*) FROM Recommendations WHERE State = 'Pending')
+                FROM Plans
+                """;
 
-        return new PlanReaderService.PlanCountSnapshot(0, 0, 0, 0, 0);
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return new PlanReaderService.PlanCountSnapshot(
+                    reader.GetInt32(0),
+                    reader.GetInt32(1),
+                    reader.GetInt32(2),
+                    reader.GetInt32(3),
+                    reader.GetInt32(4)
+                );
+            }
+
+            return new PlanReaderService.PlanCountSnapshot(0, 0, 0, 0, 0);
+        }
     }
 
     public decimal GetPlanTotalCost(int planId)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT COALESCE(SUM(Cost), 0) FROM Costs WHERE PlanId = @planId";
-        cmd.Parameters.AddWithValue("@planId", planId);
-        var result = cmd.ExecuteScalar();
-        return result != null ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : 0m;
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT COALESCE(SUM(Cost), 0) FROM Costs WHERE PlanId = @planId";
+            cmd.Parameters.AddWithValue("@planId", planId);
+            var result = cmd.ExecuteScalar();
+            return result != null ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : 0m;
+        }
     }
 
     public int GetPlanTotalTokens(int planId)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT COALESCE(SUM(Tokens), 0) FROM Costs WHERE PlanId = @planId";
-        cmd.Parameters.AddWithValue("@planId", planId);
-        var result = cmd.ExecuteScalar();
-        return result != null ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : 0;
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT COALESCE(SUM(Tokens), 0) FROM Costs WHERE PlanId = @planId";
+            cmd.Parameters.AddWithValue("@planId", planId);
+            var result = cmd.ExecuteScalar();
+            return result != null ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : 0;
+        }
     }
 
     public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
     {
-        var cutoff = DateTime.UtcNow.AddDays(-days);
-
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT
-                strftime('%Y-%m-%d %H:00:00', c.LogTimestamp) as Hour,
-                p.Project,
-                SUM(c.Cost) as TotalCost,
-                SUM(c.Tokens) as TotalTokens
-            FROM Costs c
-            JOIN Plans p ON p.Id = c.PlanId
-            WHERE c.LogTimestamp IS NOT NULL AND c.LogTimestamp >= @cutoff
-            GROUP BY Hour, p.Project
-            ORDER BY Hour, p.Project
-            """;
-        cmd.Parameters.AddWithValue("@cutoff", cutoff.ToString("O", CultureInfo.InvariantCulture));
-
-        var result = new List<HourlyTokenBurn>();
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        lock (_lock)
         {
-            var hourStr = reader.GetString(0);
-            if (DateTime.TryParse(hourStr, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var hour))
-            {
-                result.Add(new HourlyTokenBurn
-                {
-                    Hour = DateTime.SpecifyKind(hour, DateTimeKind.Utc),
-                    Project = reader.GetString(1),
-                    Cost = Convert.ToDecimal(reader.GetDouble(2), CultureInfo.InvariantCulture),
-                    Tokens = reader.GetInt32(3)
-                });
-            }
-        }
+            var cutoff = DateTime.UtcNow.AddDays(-days);
 
-        return result;
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT
+                    strftime('%Y-%m-%d %H:00:00', c.LogTimestamp) as Hour,
+                    p.Project,
+                    SUM(c.Cost) as TotalCost,
+                    SUM(c.Tokens) as TotalTokens
+                FROM Costs c
+                JOIN Plans p ON p.Id = c.PlanId
+                WHERE c.LogTimestamp IS NOT NULL AND c.LogTimestamp >= @cutoff
+                GROUP BY Hour, p.Project
+                ORDER BY Hour, p.Project
+                """;
+            cmd.Parameters.AddWithValue("@cutoff", cutoff.ToString("O", CultureInfo.InvariantCulture));
+
+            var result = new List<HourlyTokenBurn>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var hourStr = reader.GetString(0);
+                if (DateTime.TryParse(hourStr, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var hour))
+                {
+                    result.Add(new HourlyTokenBurn
+                    {
+                        Hour = DateTime.SpecifyKind(hour, DateTimeKind.Utc),
+                        Project = reader.GetString(1),
+                        Cost = Convert.ToDecimal(reader.GetDouble(2), CultureInfo.InvariantCulture),
+                        Tokens = reader.GetInt32(3)
+                    });
+                }
+            }
+
+            return result;
+        }
     }
 
     public List<Recommendation> GetRecommendations()
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT r.Title, r.Description, r.State, r.PlanId, r.PlanTitle,
-                   r.PlanFolderName, r.Project, r.Date, r.SourcePlanStatus, r.DeclineReason
-            FROM Recommendations r
-            ORDER BY r.Date DESC
-            """;
-
-        var result = new List<Recommendation>();
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        lock (_lock)
         {
-            if (!Enum.TryParse<PlanStatus>(reader.GetString(8), ignoreCase: true, out var sourceStatus))
-                sourceStatus = PlanStatus.Draft;
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT r.Title, r.Description, r.State, r.PlanId, r.PlanTitle,
+                       r.PlanFolderName, r.Project, r.Date, r.SourcePlanStatus, r.DeclineReason
+                FROM Recommendations r
+                ORDER BY r.Date DESC
+                """;
 
-            result.Add(new Recommendation(
-                Title: reader.GetString(0),
-                Description: reader.GetString(1),
-                State: reader.GetString(2),
-                PlanId: reader.GetInt32(3).ToString("D5"),
-                PlanTitle: reader.GetString(4),
-                PlanFolderName: reader.GetString(5),
-                Project: reader.GetString(6),
-                Date: DateTime.Parse(reader.GetString(7), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
-                SourcePlanStatus: sourceStatus,
-                DeclineReason: reader.IsDBNull(9) ? null : reader.GetString(9)
-            ));
+            var result = new List<Recommendation>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!Enum.TryParse<PlanStatus>(reader.GetString(8), ignoreCase: true, out var sourceStatus))
+                    sourceStatus = PlanStatus.Draft;
+
+                result.Add(new Recommendation(
+                    Title: reader.GetString(0),
+                    Description: reader.GetString(1),
+                    State: reader.GetString(2),
+                    PlanId: reader.GetInt32(3).ToString("D5"),
+                    PlanTitle: reader.GetString(4),
+                    PlanFolderName: reader.GetString(5),
+                    Project: reader.GetString(6),
+                    Date: DateTime.Parse(reader.GetString(7), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
+                    SourcePlanStatus: sourceStatus,
+                    DeclineReason: reader.IsDBNull(9) ? null : reader.GetString(9)
+                ));
+            }
+
+            return result;
         }
-
-        return result;
     }
 
     public int GetPendingRecommendationsCount()
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Recommendations WHERE State = 'Pending'";
-        return Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM Recommendations WHERE State = 'Pending'";
+            return Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
     }
 
     public List<PlanFile> SearchPlans(string query)
     {
-        var search = $"%{query}%";
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
-                   YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
-            FROM Plans
-            WHERE Title LIKE @search OR LatestRevisionContent LIKE @search
-                  OR CAST(Id AS TEXT) LIKE @search OR Project LIKE @search
-            ORDER BY Id
-            """;
-        cmd.Parameters.AddWithValue("@search", search);
-
-        var planIds = new List<int>();
-        var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
-            string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
-            string LatestContent, string Created, string Updated)>();
-
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        lock (_lock)
         {
-            var planId = reader.GetInt32(0);
-            planIds.Add(planId);
-            rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
-                reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
-                reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
+            var search = $"%{query}%";
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                SELECT Id, Title, Project, Level, State, FolderPath, FolderName,
+                       YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated
+                FROM Plans
+                WHERE Title LIKE @search OR LatestRevisionContent LIKE @search
+                      OR CAST(Id AS TEXT) LIKE @search OR Project LIKE @search
+                ORDER BY Id
+                """;
+            cmd.Parameters.AddWithValue("@search", search);
+
+            var planIds = new List<int>();
+            var rawPlans = new List<(int Id, string Title, string Project, string Level, string State,
+                string FolderPath, string FolderName, string YamlRaw, int RevisionCount,
+                string LatestContent, string Created, string Updated)>();
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var planId = reader.GetInt32(0);
+                planIds.Add(planId);
+                rawPlans.Add((planId, reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
+                    reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11)));
+            }
+
+            if (rawPlans.Count == 0)
+                return [];
+
+            var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
+            var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
+            var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
+            var allVerifications = BatchGetVerifications(planIds);
+            var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
+            var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
+
+            var plans = new List<PlanFile>();
+            foreach (var row in rawPlans)
+            {
+                var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
+                    row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
+                    row.Created, row.Updated,
+                    allRepos.GetValueOrDefault(row.Id, []),
+                    allCommits.GetValueOrDefault(row.Id, []),
+                    allPrs.GetValueOrDefault(row.Id, []),
+                    allVerifications.GetValueOrDefault(row.Id, []),
+                    allRelatedPlans.GetValueOrDefault(row.Id, []),
+                    allDependsOn.GetValueOrDefault(row.Id, []));
+                if (plan != null)
+                    plans.Add(plan);
+            }
+
+            return plans;
         }
-
-        if (rawPlans.Count == 0)
-            return [];
-
-        var allRepos = BatchGetList(planIds, "Repos", "RepoPath");
-        var allCommits = BatchGetList(planIds, "Commits", "CommitHash");
-        var allPrs = BatchGetList(planIds, "PullRequests", "PrUrl");
-        var allVerifications = BatchGetVerifications(planIds);
-        var allRelatedPlans = BatchGetList(planIds, "RelatedPlans", "RelatedPlanPath");
-        var allDependsOn = BatchGetList(planIds, "DependsOn", "DependsOnPlanPath");
-
-        var plans = new List<PlanFile>();
-        foreach (var row in rawPlans)
-        {
-            var plan = BuildPlanFileFromRow(row.Id, row.Title, row.Project, row.Level, row.State,
-                row.FolderPath, row.FolderName, row.YamlRaw, row.RevisionCount, row.LatestContent,
-                row.Created, row.Updated,
-                allRepos.GetValueOrDefault(row.Id, []),
-                allCommits.GetValueOrDefault(row.Id, []),
-                allPrs.GetValueOrDefault(row.Id, []),
-                allVerifications.GetValueOrDefault(row.Id, []),
-                allRelatedPlans.GetValueOrDefault(row.Id, []),
-                allDependsOn.GetValueOrDefault(row.Id, []));
-            if (plan != null)
-                plans.Add(plan);
-        }
-
-        return plans;
     }
 
     public void UpsertPlan(PlanFile plan)
     {
-        using var transaction = _connection.BeginTransaction();
-        try
+        lock (_lock)
         {
-            UpsertPlanInternal(plan, transaction);
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
+            using var transaction = _connection.BeginTransaction();
+            try
+            {
+                UpsertPlanInternal(plan, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
     }
 
@@ -560,6 +606,7 @@ public class PlanDatabaseService : IPlanDatabaseService
                 LatestRevisionContent = excluded.LatestRevisionContent,
                 Created = excluded.Created,
                 Updated = excluded.Updated
+            WHERE excluded.Updated >= Plans.Updated
             """;
 
         cmd.Parameters.AddWithValue("@id", plan.Id);
@@ -588,6 +635,8 @@ public class PlanDatabaseService : IPlanDatabaseService
 
     private void SyncChildTable(int planId, string table, string column, List<string> values, SqliteTransaction? transaction = null)
     {
+        ValidateIdentifier(table);
+        ValidateIdentifier(column);
         using var deleteCmd = _connection.CreateCommand();
         deleteCmd.Transaction = transaction;
         deleteCmd.CommandText = $"DELETE FROM {table} WHERE PlanId = @planId";
@@ -638,132 +687,199 @@ public class PlanDatabaseService : IPlanDatabaseService
 
     public void DeletePlan(int planId)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM Plans WHERE Id = @id";
-        cmd.Parameters.AddWithValue("@id", planId);
-        cmd.ExecuteNonQuery();
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "DELETE FROM Plans WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@id", planId);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    public void UpdatePlanState(int planId, PlanStatus state)
+    {
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "UPDATE Plans SET State = @state, Updated = @updated WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@state", state.ToString());
+            cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+            cmd.Parameters.AddWithValue("@id", planId);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    public void UpdatePlanContent(int planId, string latestRevisionContent, int revisionCount)
+    {
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "UPDATE Plans SET LatestRevisionContent = @content, RevisionCount = @count, Updated = @updated WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@content", latestRevisionContent);
+            cmd.Parameters.AddWithValue("@count", revisionCount);
+            cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+            cmd.Parameters.AddWithValue("@id", planId);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    public void UpdateRecommendationState(int planId, string recommendationTitle, string newState, string? declineReason)
+    {
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                UPDATE Recommendations SET State = @state, DeclineReason = @reason
+                WHERE PlanId = @planId AND Title = @title
+                """;
+            cmd.Parameters.AddWithValue("@state", newState);
+            cmd.Parameters.AddWithValue("@reason", (object?)declineReason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@planId", planId);
+            cmd.Parameters.AddWithValue("@title", recommendationTitle);
+            cmd.ExecuteNonQuery();
+        }
     }
 
     public void UpsertCosts(int planId, List<CostEntry> costs)
     {
-        using var deleteCmd = _connection.CreateCommand();
-        deleteCmd.CommandText = "DELETE FROM Costs WHERE PlanId = @planId";
-        deleteCmd.Parameters.AddWithValue("@planId", planId);
-        deleteCmd.ExecuteNonQuery();
-
-        if (costs.Count == 0) return;
-
-        using var insertCmd = _connection.CreateCommand();
-        insertCmd.CommandText = """
-            INSERT INTO Costs (PlanId, Promptware, Tokens, Cost, LogTimestamp)
-            VALUES (@planId, @promptware, @tokens, @cost, @logTimestamp)
-            """;
-        insertCmd.Parameters.AddWithValue("@planId", planId);
-        insertCmd.Parameters.AddWithValue("@promptware", string.Empty);
-        insertCmd.Parameters.AddWithValue("@tokens", 0);
-        insertCmd.Parameters.AddWithValue("@cost", 0.0);
-        insertCmd.Parameters.AddWithValue("@logTimestamp", DBNull.Value);
-
-        foreach (var cost in costs)
+        lock (_lock)
         {
-            insertCmd.Parameters["@planId"].Value = planId;
-            insertCmd.Parameters["@promptware"].Value = cost.Promptware;
-            insertCmd.Parameters["@tokens"].Value = cost.Tokens;
-            insertCmd.Parameters["@cost"].Value = (double)cost.Cost;
-            insertCmd.Parameters["@logTimestamp"].Value = cost.LogTimestamp.HasValue
-                ? cost.LogTimestamp.Value.ToString("O", CultureInfo.InvariantCulture)
-                : DBNull.Value;
-            insertCmd.ExecuteNonQuery();
+            using var deleteCmd = _connection.CreateCommand();
+            deleteCmd.CommandText = "DELETE FROM Costs WHERE PlanId = @planId";
+            deleteCmd.Parameters.AddWithValue("@planId", planId);
+            deleteCmd.ExecuteNonQuery();
+
+            if (costs.Count == 0) return;
+
+            using var insertCmd = _connection.CreateCommand();
+            insertCmd.CommandText = """
+                INSERT INTO Costs (PlanId, Promptware, Tokens, Cost, LogTimestamp)
+                VALUES (@planId, @promptware, @tokens, @cost, @logTimestamp)
+                """;
+            insertCmd.Parameters.AddWithValue("@planId", planId);
+            insertCmd.Parameters.AddWithValue("@promptware", string.Empty);
+            insertCmd.Parameters.AddWithValue("@tokens", 0);
+            insertCmd.Parameters.AddWithValue("@cost", 0.0);
+            insertCmd.Parameters.AddWithValue("@logTimestamp", DBNull.Value);
+
+            foreach (var cost in costs)
+            {
+                insertCmd.Parameters["@planId"].Value = planId;
+                insertCmd.Parameters["@promptware"].Value = cost.Promptware;
+                insertCmd.Parameters["@tokens"].Value = cost.Tokens;
+                insertCmd.Parameters["@cost"].Value = (double)cost.Cost;
+                insertCmd.Parameters["@logTimestamp"].Value = cost.LogTimestamp.HasValue
+                    ? cost.LogTimestamp.Value.ToString("O", CultureInfo.InvariantCulture)
+                    : DBNull.Value;
+                insertCmd.ExecuteNonQuery();
+            }
         }
     }
 
     public void UpsertRecommendations(int planId, string folderName, List<RecommendationYaml> recommendations,
         string project, string planTitle, DateTime updated, PlanStatus status)
     {
-        using var deleteCmd = _connection.CreateCommand();
-        deleteCmd.CommandText = "DELETE FROM Recommendations WHERE PlanId = @planId";
-        deleteCmd.Parameters.AddWithValue("@planId", planId);
-        deleteCmd.ExecuteNonQuery();
-
-        if (recommendations.Count == 0) return;
-
-        using var insertCmd = _connection.CreateCommand();
-        insertCmd.CommandText = """
-            INSERT INTO Recommendations (PlanId, Title, Description, State, DeclineReason,
-                                         PlanTitle, PlanFolderName, Project, Date, SourcePlanStatus)
-            VALUES (@planId, @title, @description, @state, @declineReason,
-                    @planTitle, @planFolderName, @project, @date, @sourcePlanStatus)
-            """;
-        insertCmd.Parameters.AddWithValue("@planId", planId);
-        insertCmd.Parameters.AddWithValue("@title", string.Empty);
-        insertCmd.Parameters.AddWithValue("@description", string.Empty);
-        insertCmd.Parameters.AddWithValue("@state", string.Empty);
-        insertCmd.Parameters.AddWithValue("@declineReason", DBNull.Value);
-        insertCmd.Parameters.AddWithValue("@planTitle", string.Empty);
-        insertCmd.Parameters.AddWithValue("@planFolderName", string.Empty);
-        insertCmd.Parameters.AddWithValue("@project", string.Empty);
-        insertCmd.Parameters.AddWithValue("@date", string.Empty);
-        insertCmd.Parameters.AddWithValue("@sourcePlanStatus", string.Empty);
-
-        foreach (var rec in recommendations)
+        lock (_lock)
         {
-            insertCmd.Parameters["@planId"].Value = planId;
-            insertCmd.Parameters["@title"].Value = rec.Title;
-            insertCmd.Parameters["@description"].Value = rec.Description;
-            insertCmd.Parameters["@state"].Value = string.IsNullOrWhiteSpace(rec.State) ? "Pending" : rec.State;
-            insertCmd.Parameters["@declineReason"].Value = (object?)rec.DeclineReason ?? DBNull.Value;
-            insertCmd.Parameters["@planTitle"].Value = planTitle;
-            insertCmd.Parameters["@planFolderName"].Value = folderName;
-            insertCmd.Parameters["@project"].Value = project;
-            insertCmd.Parameters["@date"].Value = updated.ToString("O", CultureInfo.InvariantCulture);
-            insertCmd.Parameters["@sourcePlanStatus"].Value = status.ToString();
-            insertCmd.ExecuteNonQuery();
+            using var deleteCmd = _connection.CreateCommand();
+            deleteCmd.CommandText = "DELETE FROM Recommendations WHERE PlanId = @planId";
+            deleteCmd.Parameters.AddWithValue("@planId", planId);
+            deleteCmd.ExecuteNonQuery();
+
+            if (recommendations.Count == 0) return;
+
+            using var insertCmd = _connection.CreateCommand();
+            insertCmd.CommandText = """
+                INSERT INTO Recommendations (PlanId, Title, Description, State, DeclineReason,
+                                             PlanTitle, PlanFolderName, Project, Date, SourcePlanStatus)
+                VALUES (@planId, @title, @description, @state, @declineReason,
+                        @planTitle, @planFolderName, @project, @date, @sourcePlanStatus)
+                """;
+            insertCmd.Parameters.AddWithValue("@planId", planId);
+            insertCmd.Parameters.AddWithValue("@title", string.Empty);
+            insertCmd.Parameters.AddWithValue("@description", string.Empty);
+            insertCmd.Parameters.AddWithValue("@state", string.Empty);
+            insertCmd.Parameters.AddWithValue("@declineReason", DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@planTitle", string.Empty);
+            insertCmd.Parameters.AddWithValue("@planFolderName", string.Empty);
+            insertCmd.Parameters.AddWithValue("@project", string.Empty);
+            insertCmd.Parameters.AddWithValue("@date", string.Empty);
+            insertCmd.Parameters.AddWithValue("@sourcePlanStatus", string.Empty);
+
+            foreach (var rec in recommendations)
+            {
+                insertCmd.Parameters["@planId"].Value = planId;
+                insertCmd.Parameters["@title"].Value = rec.Title;
+                insertCmd.Parameters["@description"].Value = rec.Description;
+                insertCmd.Parameters["@state"].Value = string.IsNullOrWhiteSpace(rec.State) ? "Pending" : rec.State;
+                insertCmd.Parameters["@declineReason"].Value = (object?)rec.DeclineReason ?? DBNull.Value;
+                insertCmd.Parameters["@planTitle"].Value = planTitle;
+                insertCmd.Parameters["@planFolderName"].Value = folderName;
+                insertCmd.Parameters["@project"].Value = project;
+                insertCmd.Parameters["@date"].Value = updated.ToString("O", CultureInfo.InvariantCulture);
+                insertCmd.Parameters["@sourcePlanStatus"].Value = status.ToString();
+                insertCmd.ExecuteNonQuery();
+            }
         }
     }
 
     public void BulkUpsertPlans(List<PlanFile> plans)
     {
-        using var transaction = _connection.BeginTransaction();
-        try
+        lock (_lock)
         {
-            foreach (var plan in plans)
-                UpsertPlanInternal(plan, transaction);
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
+            if (plans.Count == 0) return;
+
+            using var transaction = _connection.BeginTransaction();
+            try
+            {
+                foreach (var plan in plans)
+                    UpsertPlanInternal(plan, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
     }
 
     public long GetDatabaseSize()
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()";
-        var result = cmd.ExecuteScalar();
-        return result != null ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : 0;
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()";
+            var result = cmd.ExecuteScalar();
+            return result != null ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : 0;
+        }
     }
 
     public DateTime GetLastSyncTime()
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT Value FROM SyncMetadata WHERE Key = 'LastSyncTime'";
-        var result = cmd.ExecuteScalar();
-        if (result is string s && DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var dt))
-            return dt;
-        return DateTime.MinValue;
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT Value FROM SyncMetadata WHERE Key = 'LastSyncTime'";
+            var result = cmd.ExecuteScalar();
+            if (result is string s && DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var dt))
+                return dt;
+            return DateTime.MinValue;
+        }
     }
 
     public void SetLastSyncTime(DateTime time)
     {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO SyncMetadata (Key, Value) VALUES ('LastSyncTime', @value)
-            ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value
-            """;
-        cmd.Parameters.AddWithValue("@value", time.ToString("O", CultureInfo.InvariantCulture));
-        cmd.ExecuteNonQuery();
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                INSERT INTO SyncMetadata (Key, Value) VALUES ('LastSyncTime', @value)
+                ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value
+                """;
+            cmd.Parameters.AddWithValue("@value", time.ToString("O", CultureInfo.InvariantCulture));
+            cmd.ExecuteNonQuery();
+        }
     }
 
     public void Dispose()

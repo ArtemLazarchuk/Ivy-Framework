@@ -2,7 +2,7 @@ namespace Ivy.Tendril.Services;
 
 public record PlanCounts(int Drafts, int ActiveJobs, int Reviews, int Icebox, int Recommendations);
 
-public class PlanCountsService : IPlanCountsService
+public class PlanCountsService : IPlanCountsService, IDisposable
 {
     private readonly IPlanReaderService _planReaderService;
     private readonly IJobService _jobService;

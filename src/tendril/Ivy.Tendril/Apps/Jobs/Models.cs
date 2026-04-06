@@ -19,7 +19,7 @@ public record JobItem
     // Process handle for non-interactive execution
     public System.Diagnostics.Process? Process { get; set; }
     public string? StatusMessage { get; set; }
-    public List<string> OutputLines { get; set; } = new();
+    public System.Collections.Concurrent.ConcurrentQueue<string> OutputLines { get; set; } = new();
     public DateTime? LastOutputAt { get; set; }
     public CancellationTokenSource? TimeoutCts { get; set; }
     public bool StaleOutputDetected { get; set; }

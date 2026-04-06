@@ -20,7 +20,7 @@ public class PlanCountsServiceTests : IDisposable
 
         var settings = new TendrilSettings();
         var configService = new ConfigService(settings, _tempDir);
-        _planReader = new PlanReaderService(configService);
+        _planReader = new PlanReaderService(configService, Microsoft.Extensions.Logging.Abstractions.NullLogger<PlanReaderService>.Instance);
         _jobService = new FakeJobService();
         _planWatcher = new FakePlanWatcherService();
     }
