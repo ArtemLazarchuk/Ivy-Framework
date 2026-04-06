@@ -16,7 +16,19 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     private readonly TimeCache<PlanCountSnapshot> _planCountsCache = new(TimeSpan.FromMinutes(2));
     private readonly TimeCache<Dictionary<string, (decimal Cost, int Tokens)>> _planCostCache = new(TimeSpan.FromSeconds(90));
 
+    private IPlanDatabaseService? _database;
+    private volatile bool _useDatabaseForReads;
+
     public string PlansDirectory => _config.PlanFolder;
+
+    /// <summary>
+    /// Enables database-backed reads. Called by the sync service after initial sync completes.
+    /// </summary>
+    internal void EnableDatabaseReads(IPlanDatabaseService database)
+    {
+        _database = database;
+        _useDatabaseForReads = true;
+    }
 
     /// <summary>
     /// On startup, reset any plans stuck in transient states (Building, Executing, Updating)
@@ -114,11 +126,30 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     }
 
     /// <summary>
-    /// Retrieves all plans from the plans directory, optionally filtered by status.
+    /// Retrieves all plans, optionally filtered by status.
+    /// Delegates to database when available, otherwise reads from file system.
     /// </summary>
-    /// <param name="statusFilter">Optional status to filter by. If <c>null</c>, returns all plans.</param>
-    /// <returns>List of plans ordered by ID, or an empty list if the plans directory does not exist or parsing fails.</returns>
     public List<PlanFile> GetPlans(PlanStatus? statusFilter = null)
+    {
+        if (_useDatabaseForReads && _database != null)
+        {
+            try
+            {
+                return _database.GetPlans(statusFilter);
+            }
+            catch
+            {
+                // Fall back to file system on database errors
+            }
+        }
+
+        return GetPlansFromFileSystem(statusFilter);
+    }
+
+    /// <summary>
+    /// Always reads plans from the file system. Used by the sync service to populate the database.
+    /// </summary>
+    internal List<PlanFile> GetPlansFromFileSystem(PlanStatus? statusFilter = null)
     {
         try
         {
@@ -145,11 +176,22 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
 
     /// <summary>
     /// Retrieves a single plan by its folder path.
+    /// Delegates to database when available, otherwise reads from file system.
     /// </summary>
-    /// <param name="folderPath">Absolute path to the plan folder.</param>
-    /// <returns>The parsed <see cref="PlanFile"/>, or <c>null</c> if the folder does not exist or parsing fails.</returns>
     public PlanFile? GetPlanByFolder(string folderPath)
     {
+        if (_useDatabaseForReads && _database != null)
+        {
+            try
+            {
+                return _database.GetPlanByFolder(folderPath);
+            }
+            catch
+            {
+                // Fall back to file system
+            }
+        }
+
         if (!Directory.Exists(folderPath)) return null;
         return ParsePlanFolder(folderPath);
     }
@@ -541,8 +583,22 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// Correlates <c>costs.csv</c> entries with log file timestamps to determine when tokens were consumed.
     /// Plans without both a costs file and a logs directory are skipped.
     /// </remarks>
-    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7) =>
-        _hourlyBurnCache.GetOrCompute(() => ComputeHourlyTokenBurn(days));
+    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
+    {
+        if (_useDatabaseForReads && _database != null)
+        {
+            try
+            {
+                return _database.GetHourlyTokenBurn(days);
+            }
+            catch
+            {
+                // Fall back to file system
+            }
+        }
+
+        return _hourlyBurnCache.GetOrCompute(() => ComputeHourlyTokenBurn(days));
+    }
 
     private List<HourlyTokenBurn> ComputeHourlyTokenBurn(int days)
     {
@@ -652,8 +708,22 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// without full deserialization.
     /// </remarks>
     /// <returns>List of all recommendations ordered by date (most recent first).</returns>
-    public List<Recommendation> GetRecommendations() =>
-        _recommendationsCache.GetOrCompute(ComputeRecommendations);
+    public List<Recommendation> GetRecommendations()
+    {
+        if (_useDatabaseForReads && _database != null)
+        {
+            try
+            {
+                return _database.GetRecommendations();
+            }
+            catch
+            {
+                // Fall back to file system
+            }
+        }
+
+        return _recommendationsCache.GetOrCompute(ComputeRecommendations);
+    }
 
     private List<Recommendation> ComputeRecommendations()
     {
@@ -733,8 +803,22 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// Results are cached for 2 minutes to reduce disk I/O during dashboard polling.
     /// </summary>
     /// <returns>A <see cref="PlanCountSnapshot"/> with counts for each status category and pending recommendations.</returns>
-    public PlanCountSnapshot ComputePlanCounts() =>
-        _planCountsCache.GetOrCompute(ComputePlanCountsInternal);
+    public PlanCountSnapshot ComputePlanCounts()
+    {
+        if (_useDatabaseForReads && _database != null)
+        {
+            try
+            {
+                return _database.ComputePlanCounts();
+            }
+            catch
+            {
+                // Fall back to file system
+            }
+        }
+
+        return _planCountsCache.GetOrCompute(ComputePlanCountsInternal);
+    }
 
     private PlanCountSnapshot ComputePlanCountsInternal()
     {

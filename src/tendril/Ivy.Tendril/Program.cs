@@ -60,6 +60,23 @@ server.Services.AddSingleton<PlanReaderService>(sp =>
     return planService;
 });
 server.Services.AddSingleton<IPlanReaderService>(sp => sp.GetRequiredService<PlanReaderService>());
+
+// SQLite database service
+server.Services.AddSingleton<IPlanDatabaseService>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfigService>();
+    var dbPath = Path.Combine(cfg.TendrilHome, "tendril.db");
+    return new PlanDatabaseService(dbPath);
+});
+server.Services.AddSingleton<PlanDatabaseSyncService>(sp =>
+{
+    var planReader = sp.GetRequiredService<PlanReaderService>();
+    var database = sp.GetRequiredService<IPlanDatabaseService>();
+    var watcher = sp.GetRequiredService<IPlanWatcherService>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    return new PlanDatabaseSyncService(planReader, database, watcher,
+        loggerFactory.CreateLogger<PlanDatabaseSyncService>());
+});
 server.Services.AddSingleton<ITelemetryService>(sp =>
 {
     var config = sp.GetRequiredService<IConfigService>();
@@ -102,6 +119,10 @@ server.UseWebApplication(app =>
     // Eagerly resolve watcher services so their FileSystemWatchers start immediately
     app.Services.GetRequiredService<PlanWatcherService>();
     app.Services.GetRequiredService<IInboxWatcherService>();
+
+    // Start database sync in background
+    var syncService = app.Services.GetRequiredService<PlanDatabaseSyncService>();
+    Task.Run(syncService.PerformInitialSync);
     app.Services.GetRequiredService<TelemetryService>().TrackAppStarted();
     app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");
 });
