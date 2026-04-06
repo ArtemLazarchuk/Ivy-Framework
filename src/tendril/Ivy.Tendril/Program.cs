@@ -123,7 +123,7 @@ server.UseWebApplication(app =>
         Environment.SetEnvironmentVariable("TENDRIL_URL", serverUrl);
 
     // Eagerly resolve watcher services so their FileSystemWatchers start immediately
-    app.Services.GetRequiredService<PlanWatcherService>();
+    app.Services.GetRequiredService<IPlanWatcherService>();
     app.Services.GetRequiredService<IInboxWatcherService>();
 
     // Start database sync in background
