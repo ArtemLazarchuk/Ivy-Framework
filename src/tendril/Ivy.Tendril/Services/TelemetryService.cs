@@ -96,6 +96,24 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
         }
     }
 
+    public void TrackPlanStateTransition(int planId, string fromState, string toState)
+    {
+        try
+        {
+            _client?.Capture(_distinctId, "plan_state_transition", new Dictionary<string, object>
+            {
+                ["plan_id"] = planId,
+                ["from_state"] = fromState,
+                ["to_state"] = toState
+            });
+            _logger?.LogDebug("Tracked plan_state_transition event: {PlanId} {FromState} -> {ToState}", planId, fromState, toState);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to track plan_state_transition event");
+        }
+    }
+
     public async Task FlushAsync()
     {
         if (_client == null) return;

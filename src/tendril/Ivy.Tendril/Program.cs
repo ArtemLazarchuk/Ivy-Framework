@@ -61,7 +61,8 @@ server.Services.AddSingleton<PlanReaderService>(sp =>
 {
     var planService = new PlanReaderService(
         sp.GetRequiredService<IConfigService>(),
-        sp.GetRequiredService<ILogger<PlanReaderService>>());
+        sp.GetRequiredService<ILogger<PlanReaderService>>(),
+        sp.GetRequiredService<ITelemetryService>());
     planService.RepairPlans();
     planService.RecoverStuckPlans();
     return planService;

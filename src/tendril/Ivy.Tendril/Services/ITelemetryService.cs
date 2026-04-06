@@ -8,5 +8,6 @@ public interface ITelemetryService
     void TrackPlanCreated();
     void TrackPrCreated();
     void TrackJobCompleted(string jobType, JobStatus status, int? durationSeconds);
+    void TrackPlanStateTransition(int planId, string fromState, string toState);
     Task FlushAsync();
 }
