@@ -22,7 +22,7 @@ public class ContentView(
     public override object? Build()
     {
         var client = UseService<IClientProvider>();
-        var config = UseService<ConfigService>();
+        var config = UseService<IConfigService>();
         var showPlan = UseState<string?>(null);
         var openFile = UseState<string?>(null);
         var showNotesDialog = UseState(false);
