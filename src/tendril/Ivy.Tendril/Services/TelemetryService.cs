@@ -39,11 +39,16 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
         }
     }
 
-    public void TrackAppStarted()
+    public void TrackAppStarted(AppStartContext context)
     {
         try
         {
-            _client?.Capture(_distinctId, "app_started");
+            _client?.Capture(_distinctId, "app_started", new Dictionary<string, object>
+            {
+                ["version"] = context.Version,
+                ["project_count"] = context.ProjectCount,
+                ["llm_configured"] = context.LlmConfigured
+            });
             _logger?.LogDebug("Tracked app_started event");
         }
         catch (Exception ex)
@@ -52,12 +57,17 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
         }
     }
 
-    public void TrackPlanCreated()
+    public void TrackPlanCreated(PlanCreatedContext context)
     {
         try
         {
-            _client?.Capture(_distinctId, "plan_created");
-            _logger?.LogDebug("Tracked plan_created event");
+            _client?.Capture(_distinctId, "plan_created", new Dictionary<string, object>
+            {
+                ["project"] = context.Project,
+                ["level"] = context.Level,
+                ["duration_seconds"] = context.DurationSeconds ?? 0
+            });
+            _logger?.LogDebug("Tracked plan_created event for project {Project}", context.Project);
         }
         catch (Exception ex)
         {
@@ -65,12 +75,17 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
         }
     }
 
-    public void TrackPrCreated()
+    public void TrackPrCreated(PrCreatedContext context)
     {
         try
         {
-            _client?.Capture(_distinctId, "pr_created");
-            _logger?.LogDebug("Tracked pr_created event");
+            _client?.Capture(_distinctId, "pr_created", new Dictionary<string, object>
+            {
+                ["project"] = context.Project,
+                ["repo_url"] = context.RepoUrl,
+                ["duration_seconds"] = context.DurationSeconds ?? 0
+            });
+            _logger?.LogDebug("Tracked pr_created event for project {Project}", context.Project);
         }
         catch (Exception ex)
         {
