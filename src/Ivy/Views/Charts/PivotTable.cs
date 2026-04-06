@@ -180,6 +180,36 @@ public class PivotTable<T>
             return filled;
         }
 
+        // Int gap filling
+        if (firstValue is int startInt && lastValue is int endInt)
+        {
+            var step = interval as int? ?? 1;
+            var lookup = result.ToDictionary(r => (int)r[dimensionName]);
+            var filled = new List<Dictionary<string, object>>();
+
+            for (var current = startInt; current <= endInt; current += step)
+            {
+                if (lookup.TryGetValue(current, out var existing))
+                {
+                    filled.Add(existing);
+                }
+                else
+                {
+                    var row = new Dictionary<string, object>
+                    {
+                        [dimensionName] = current
+                    };
+                    foreach (var measure in measures)
+                    {
+                        row[measure.Name] = 0;
+                    }
+                    filled.Add(row);
+                }
+            }
+
+            return filled;
+        }
+
         return result;
     }
 
