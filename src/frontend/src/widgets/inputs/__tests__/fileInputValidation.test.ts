@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { formatBytes, validateSingleFile, validateFileCount } from "../file-input-validation";
+import { validateSingleFile, validateFileCount } from "../file-input-validation";
+import { formatBytes } from "@/lib/formatters";
 
 // ---------------------------------------------------------------------------
 // formatBytes
