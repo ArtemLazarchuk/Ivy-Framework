@@ -54,7 +54,9 @@ server.Services.AddSingleton<GitService>();
 server.Services.AddSingleton<IGitService>(sp => sp.GetRequiredService<GitService>());
 server.Services.AddSingleton<PlanReaderService>(sp =>
 {
-    var planService = new PlanReaderService(sp.GetRequiredService<IConfigService>());
+    var planService = new PlanReaderService(
+        sp.GetRequiredService<IConfigService>(),
+        sp.GetRequiredService<ILogger<PlanReaderService>>());
     planService.RepairPlans();
     planService.RecoverStuckPlans();
     return planService;

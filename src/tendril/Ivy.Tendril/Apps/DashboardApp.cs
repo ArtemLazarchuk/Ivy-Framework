@@ -52,7 +52,7 @@ public class DashboardApp : ViewBase
             | BuildStatCard(totalCount, "Total Plans")
             | BuildStatCard(draftCount, "Draft")
             | BuildStatCard(inProgressCount, "In Progress")
-            | BuildStatCard(reviewCount, "Ready for Review")
+            | BuildStatCard(reviewCount, "Ready for Review", zeroSubtitle: "All clear")
             | BuildStatCard(completedCount, "Completed")
             | BuildStatCard(failedCount, "Failed")
             | BuildStatCard($"${avgCost:F2}", "Avg Cost/Plan");
@@ -103,7 +103,7 @@ public class DashboardApp : ViewBase
             .Header(t => t.Date, "Date")
             .Header(t => t.Created, "Created")
             .Header(t => t.Completed, "Completed")
-            .Header(t => t.PrsMerged, "PRs Merged")
+            .Header(t => t.PrsMerged, "PRs / Merged")
             .Header(t => t.Failed, "Failed")
             .Header(t => t.Cost, "Cost")
             .Header(t => t.CostPerPlan, "Cost/Plan")
@@ -130,7 +130,7 @@ public class DashboardApp : ViewBase
             projectData.Select(p => new ProgressSegment(
                 Value: p.Count,
                 Color: configService.GetProjectColor(p.Project),
-                Label: p.Project
+                Label: $"{p.Project} ({p.Count})"
             )).ToArray()
         )
         .Selected(selectedProject.Value != null
@@ -204,8 +204,16 @@ public class DashboardApp : ViewBase
              : tokens.ToString();
     }
 
-    private static object BuildStatCard(int count, string label)
+    private static object BuildStatCard(int count, string label, string? zeroSubtitle = null)
     {
+        if (count == 0 && zeroSubtitle != null)
+        {
+            return Layout.Vertical().Padding(1)
+                | Text.Block(count.ToString()).Bold()
+                | Text.Muted(label)
+                | Text.Muted(zeroSubtitle).Italic();
+        }
+
         return BuildStatCard(count.ToString(), label);
     }
 

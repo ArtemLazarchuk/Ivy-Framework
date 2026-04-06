@@ -1,4 +1,7 @@
 using System.Net;
+using System.Reactive.Subjects;
+using System.Runtime.CompilerServices;
+using Ivy.Test.TestHelpers;
 
 namespace Ivy.Test;
 
@@ -83,19 +86,27 @@ public class DictationTests
         Assert.Throws<ArgumentException>(() => new AzureSpeechTranscriptionService("region", ""));
     }
 
-    private class MockHttpHandler(string responseContent, HttpStatusCode statusCode) : HttpMessageHandler
+    private class MockState<T>(T value) : IState<T>
     {
-        public HttpRequestMessage? LastRequest { get; private set; }
-        public Uri? LastRequestUri { get; private set; }
+        private readonly Subject<T> _subject = new();
+        public T Value { get; set; } = value;
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        [OverloadResolutionPriority(1)]
+        public T Set(T value) { Value = value; return Value; }
+        public T Set(Func<T, T> setter) { Value = setter(Value); return Value; }
+        public T Reset() => Set(default(T)!);
+        public Type GetStateType() => typeof(T);
+
+        public IDisposable Subscribe(IObserver<T> observer)
         {
-            LastRequest = request;
-            LastRequestUri = request.RequestUri;
-            return new HttpResponseMessage(statusCode)
-            {
-                Content = new StringContent(responseContent)
-            };
+            observer.OnNext(Value);
+            return _subject.Subscribe(observer);
         }
+
+        public void Dispose() => _subject.Dispose();
+        public IDisposable SubscribeAny(Action action) => _subject.Subscribe(_ => action());
+        public IDisposable SubscribeAny(Action<object?> action) => _subject.Subscribe(x => action(x));
+        public IEffectTrigger ToTrigger() => EffectTrigger.OnStateChange(this);
+        public object? GetValueAsObject() => Value;
     }
 }

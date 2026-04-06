@@ -415,6 +415,7 @@ new DiffView().Diff(diff) with
 | Layout.Gap() | `Size` param | `bool` or `int` param |
 | RefreshToken | `.Trigger()` | `.Refresh()` or `.Refresh(returnValue)` |
 | CodeInput | Direct instantiation | `.ToCodeInput()` on `IState<string>`, or use `Markdown` with fenced code block |
+| TextInput | `.Label()` | `.Placeholder()` — `.Label()` is `AxisExtensions.Label<T>` which requires `AxisBase<T>`, not `TextInputBase` |
 
 ### App Attribute: `group` Not `path`
 ❌ **`[App(path: new[] { "Tests" })]`** — CS1739

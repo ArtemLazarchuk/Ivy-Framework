@@ -96,7 +96,7 @@ public class JobServiceFailureReasonTests
         var service = new JobService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10));
         var id = service.StartJob("ExecutePlan", Path.GetTempPath());
         var job = service.GetJob(id)!;
-        job.OutputLines.Add("[stderr] something went wrong");
+        job.OutputLines.Enqueue("[stderr] something went wrong");
 
         service.CompleteJob(id, exitCode: 1);
 

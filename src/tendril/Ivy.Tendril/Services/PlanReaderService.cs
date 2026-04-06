@@ -1,12 +1,14 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 using Ivy.Tendril.Apps.Plans;
 
 namespace Ivy.Tendril.Services;
 
-public class PlanReaderService(IConfigService config) : IPlanReaderService
+public class PlanReaderService(IConfigService config, ILogger<PlanReaderService> logger) : IPlanReaderService
 {
     private readonly IConfigService _config = config;
+    private readonly ILogger<PlanReaderService> _logger = logger;
 
     private readonly TimeCache<List<HourlyTokenBurn>> _hourlyBurnCache = new(TimeSpan.FromMinutes(2));
 
@@ -212,20 +214,26 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <param name="newState">The target state to transition to.</param>
     public void TransitionState(string folderName, PlanStatus newState)
     {
-        var folderPath = Path.Combine(PlansDirectory, folderName);
-        var planYamlPath = Path.Combine(folderPath, "plan.yaml");
+        // Update database first for instant UI feedback.
+        var planId = ExtractPlanId(folderName);
+        if (planId.HasValue && _database != null)
+            _database.UpdatePlanState(planId.Value, newState);
 
-        if (!File.Exists(planYamlPath)) return;
-
-        var yaml = FileHelper.ReadAllText(planYamlPath);
-        var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
-
-        planYaml.State = newState.ToString();
-        planYaml.Updated = DateTime.UtcNow;
-
-        FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
         _planCountsCache.Invalidate();
         _recommendationsCache.Invalidate();
+
+        // Write to disk in background for durability.
+        WriteFileInBackground(() =>
+        {
+            var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
+            if (!File.Exists(planYamlPath)) return;
+
+            var yaml = FileHelper.ReadAllText(planYamlPath);
+            var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
+            planYaml.State = newState.ToString();
+            planYaml.Updated = DateTime.UtcNow;
+            FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+        });
     }
 
     /// <summary>
@@ -235,23 +243,36 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <param name="content">Markdown content of the new revision.</param>
     public void SaveRevision(string folderName, string content)
     {
-        var revisionsDir = Path.Combine(PlansDirectory, folderName, "revisions");
-        Directory.CreateDirectory(revisionsDir);
-
-        var nextNumber = GetNextRevisionNumber(revisionsDir);
-        var revisionPath = Path.Combine(revisionsDir, $"{nextNumber:D3}.md");
-        File.WriteAllText(revisionPath, content);
-
-        // Update the updated timestamp in plan.yaml
-        var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
-        if (File.Exists(planYamlPath))
+        // Update database first for instant UI feedback.
+        var planId = ExtractPlanId(folderName);
+        if (planId.HasValue && _database != null)
         {
-            var yaml = FileHelper.ReadAllText(planYamlPath);
-            var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
-            planYaml.Updated = DateTime.UtcNow;
-            FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
-            _planCountsCache.Invalidate();
+            var plan = _database.GetPlanById(planId.Value);
+            var newCount = (plan?.RevisionCount ?? 0) + 1;
+            _database.UpdatePlanContent(planId.Value, content, newCount);
         }
+
+        _planCountsCache.Invalidate();
+
+        // Write to disk in background for durability.
+        WriteFileInBackground(() =>
+        {
+            var revisionsDir = Path.Combine(PlansDirectory, folderName, "revisions");
+            Directory.CreateDirectory(revisionsDir);
+
+            var nextNumber = GetNextRevisionNumber(revisionsDir);
+            var revisionPath = Path.Combine(revisionsDir, $"{nextNumber:D3}.md");
+            File.WriteAllText(revisionPath, content);
+
+            var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
+            if (File.Exists(planYamlPath))
+            {
+                var yaml = FileHelper.ReadAllText(planYamlPath);
+                var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
+                planYaml.Updated = DateTime.UtcNow;
+                FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+            }
+        });
     }
 
     /// <summary>
@@ -260,6 +281,27 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <param name="folderName">Name of the plan folder.</param>
     /// <returns>The markdown content of the latest revision, or <see cref="string.Empty"/> if no revisions exist.</returns>
     public string ReadLatestRevision(string folderName)
+    {
+        // Read from database when available for maximum performance.
+        if (_useDatabaseForReads && _database != null)
+        {
+            var planId = ExtractPlanId(folderName);
+            if (planId.HasValue)
+            {
+                var plan = _database.GetPlanById(planId.Value);
+                if (plan != null)
+                    return plan.LatestRevisionContent;
+            }
+        }
+
+        return ReadLatestRevisionFromFileSystem(folderName);
+    }
+
+    /// <summary>
+    /// Always reads from the file system. Used by ParsePlanFolder during sync
+    /// to avoid circular reads from the database.
+    /// </summary>
+    private string ReadLatestRevisionFromFileSystem(string folderName)
     {
         var revisionsDir = Path.Combine(PlansDirectory, folderName, "revisions");
         if (!Directory.Exists(revisionsDir)) return string.Empty;
@@ -335,16 +377,23 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// </remarks>
     public void DeletePlan(string folderName)
     {
+        // Delete from database first for instant UI feedback.
+        var planId = ExtractPlanId(folderName);
+        if (planId.HasValue && _database != null)
+            _database.DeletePlan(planId.Value);
+
+        _planCountsCache.Invalidate();
+        _recommendationsCache.Invalidate();
+
+        // Delete folder in background (can be slow due to git worktree removal).
         var folderPath = Path.Combine(PlansDirectory, folderName);
-        if (!Directory.Exists(folderPath)) return;
-
-        // Remove git worktrees before deleting, otherwise Directory.Delete
-        // fails on Windows with UnauthorizedAccessException due to locked files.
-        RemoveWorktrees(folderPath);
-
-        // Clear read-only attributes that git may have set, then delete.
-        ClearReadOnlyAttributes(folderPath);
-        Directory.Delete(folderPath, recursive: true);
+        WriteFileInBackground(() =>
+        {
+            if (!Directory.Exists(folderPath)) return;
+            RemoveWorktrees(folderPath);
+            ClearReadOnlyAttributes(folderPath);
+            Directory.Delete(folderPath, recursive: true);
+        });
     }
 
     private static void RemoveWorktrees(string planFolderPath)
@@ -434,27 +483,40 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <param name="content">The updated markdown content to write.</param>
     public void UpdateLatestRevision(string folderName, string content)
     {
-        var revisionsDir = Path.Combine(PlansDirectory, folderName, "revisions");
-        if (!Directory.Exists(revisionsDir)) return;
-
-        var latestFile = Directory.GetFiles(revisionsDir, "*.md")
-            .OrderByDescending(f => f)
-            .FirstOrDefault();
-
-        if (latestFile != null)
+        // Update database first for instant UI feedback.
+        var planId = ExtractPlanId(folderName);
+        if (planId.HasValue && _database != null)
         {
-            File.WriteAllText(latestFile, content);
-
-            var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
-            if (File.Exists(planYamlPath))
-            {
-                var yaml = FileHelper.ReadAllText(planYamlPath);
-                var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
-                planYaml.Updated = DateTime.UtcNow;
-                FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
-                _planCountsCache.Invalidate();
-            }
+            var plan = _database.GetPlanById(planId.Value);
+            _database.UpdatePlanContent(planId.Value, content, plan?.RevisionCount ?? 1);
         }
+
+        _planCountsCache.Invalidate();
+
+        // Write to disk in background for durability.
+        WriteFileInBackground(() =>
+        {
+            var revisionsDir = Path.Combine(PlansDirectory, folderName, "revisions");
+            if (!Directory.Exists(revisionsDir)) return;
+
+            var latestFile = Directory.GetFiles(revisionsDir, "*.md")
+                .OrderByDescending(f => f)
+                .FirstOrDefault();
+
+            if (latestFile != null)
+            {
+                File.WriteAllText(latestFile, content);
+
+                var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
+                if (File.Exists(planYamlPath))
+                {
+                    var yaml = FileHelper.ReadAllText(planYamlPath);
+                    var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
+                    planYaml.Updated = DateTime.UtcNow;
+                    FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+                }
+            }
+        });
     }
 
     private PlanFile? ParsePlanFolder(string folderPath)
@@ -476,7 +538,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                 status = PlanStatus.Draft;
 
             var metadata = new PlanMetadata(id, planYaml.Project ?? "", planYaml.Level ?? "NiceToHave", planYaml.Title ?? "", status, planYaml.Repos ?? new(), planYaml.Commits ?? new(), planYaml.Prs ?? new(), planYaml.Verifications ?? new(), planYaml.RelatedPlans ?? new(), planYaml.DependsOn ?? new(), planYaml.Created, planYaml.Updated);
-            var latestContent = ReadLatestRevision(folderName);
+            var latestContent = ReadLatestRevisionFromFileSystem(folderName);
 
             var revisionsDir = Path.Combine(folderPath, "revisions");
             var revisionCount = Directory.Exists(revisionsDir)
@@ -873,27 +935,34 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <param name="declineReason">Optional reason for declining the recommendation.</param>
     public void UpdateRecommendationState(string planFolderName, string recommendationTitle, string newState, string? declineReason = null)
     {
-        var recommendationsPath = Path.Combine(PlansDirectory, planFolderName, "artifacts", "recommendations.yaml");
-        if (!File.Exists(recommendationsPath)) return;
+        // Update database first for instant UI feedback.
+        var planId = ExtractPlanId(planFolderName);
+        if (planId.HasValue && _database != null)
+            _database.UpdateRecommendationState(planId.Value, recommendationTitle, newState, declineReason);
 
-        var yaml = FileHelper.ReadAllText(recommendationsPath);
-        var items = YamlHelper.Deserializer.Deserialize<List<RecommendationYaml>>(yaml);
-        if (items == null) return;
-
-        var item = items.FirstOrDefault(r => r.Title == recommendationTitle);
-        if (item == null) return;
-
-        item.State = newState;
-        if (newState == "Declined" && !string.IsNullOrWhiteSpace(declineReason))
-        {
-            item.DeclineReason = declineReason;
-        }
-        FileHelper.WriteAllText(recommendationsPath, YamlHelper.Serializer.Serialize(items));
-
-        // Invalidate caches after state change
         _recommendationsCache.Invalidate();
         _hourlyBurnCache.Invalidate();
         _planCountsCache.Invalidate();
+
+        // Write to disk in background for durability.
+        WriteFileInBackground(() =>
+        {
+            var recommendationsPath = Path.Combine(PlansDirectory, planFolderName, "artifacts", "recommendations.yaml");
+            if (!File.Exists(recommendationsPath)) return;
+
+            var yaml = FileHelper.ReadAllText(recommendationsPath);
+            var items = YamlHelper.Deserializer.Deserialize<List<RecommendationYaml>>(yaml);
+            if (items == null) return;
+
+            var item = items.FirstOrDefault(r => r.Title == recommendationTitle);
+            if (item == null) return;
+
+            item.State = newState;
+            if (newState == "Declined" && !string.IsNullOrWhiteSpace(declineReason))
+                item.DeclineReason = declineReason;
+
+            FileHelper.WriteAllText(recommendationsPath, YamlHelper.Serializer.Serialize(items));
+        });
     }
 
     public void InvalidateCaches()
@@ -901,6 +970,23 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         _planCountsCache.Invalidate();
         _recommendationsCache.Invalidate();
         _hourlyBurnCache.Invalidate();
+        _planCostCache.Invalidate();
+    }
+
+    /// <summary>
+    /// Runs a file write operation in the background (fire-and-forget).
+    /// The database is the primary data source; file writes are for durability only.
+    /// </summary>
+    private void WriteFileInBackground(Action action)
+    {
+        Task.Run(() =>
+        {
+            try { action(); }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Background file write failed");
+            }
+        });
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)

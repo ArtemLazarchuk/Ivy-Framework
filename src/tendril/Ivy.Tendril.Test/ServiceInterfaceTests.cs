@@ -23,7 +23,7 @@ public class ServiceInterfaceTests : IDisposable
     {
         var settings = new TendrilSettings();
         var config = new ConfigService(settings, _tempDir);
-        var service = new PlanReaderService(config);
+        var service = new PlanReaderService(config, Microsoft.Extensions.Logging.Abstractions.NullLogger<PlanReaderService>.Instance);
 
         Assert.IsAssignableFrom<IPlanReaderService>(service);
     }
