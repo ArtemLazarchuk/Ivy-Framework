@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useEventHandler } from "@/components/event-handler";
 import { hasFileSystemAccess } from "./browserSupport";
-import { uploadFile, acceptToPickerTypes } from "./shared";
+import { uploadFileWithProgress, acceptToPickerTypes } from "./shared";
 import { validateFileWithToast } from "@/widgets/inputs/file-input-validation";
 import { EMPTY_ARRAY } from "@/lib/constants";
 
@@ -60,7 +60,8 @@ export const FileDialogWidget: React.FC<FileDialogWidgetProps> = ({
         // Upload files then fire event
         try {
           for (const file of validFiles) {
-            await uploadFile(uploadUrl, file);
+            const { promise } = uploadFileWithProgress(uploadUrl, file);
+            await promise;
           }
           if (hasOnFilesSelected) {
             handleEvent("OnFilesSelected", id, [validFiles.map(fileToInfo)]);
