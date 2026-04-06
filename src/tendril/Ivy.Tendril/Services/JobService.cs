@@ -55,7 +55,7 @@ public class JobService : IJobService
         _jobTimeout = TimeSpan.FromMinutes(configService.Settings.JobTimeout);
         _staleOutputTimeout = TimeSpan.FromMinutes(configService.Settings.StaleOutputTimeout);
         _maxConcurrentJobs = configService.Settings.MaxConcurrentJobs;
-        _jobSlotSemaphore = new SemaphoreSlim(_maxConcurrentJobs, Math.Max(1, _maxConcurrentJobs));
+        _jobSlotSemaphore = new SemaphoreSlim(Math.Max(1, _maxConcurrentJobs), Math.Max(1, _maxConcurrentJobs));
         _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
     }
 
@@ -65,7 +65,7 @@ public class JobService : IJobService
         _jobTimeout = jobTimeout;
         _staleOutputTimeout = staleOutputTimeout;
         _maxConcurrentJobs = maxConcurrentJobs;
-        _jobSlotSemaphore = new SemaphoreSlim(maxConcurrentJobs, Math.Max(1, maxConcurrentJobs));
+        _jobSlotSemaphore = new SemaphoreSlim(Math.Max(1, maxConcurrentJobs), Math.Max(1, maxConcurrentJobs));
         _inboxPath = inboxPath;
     }
 
