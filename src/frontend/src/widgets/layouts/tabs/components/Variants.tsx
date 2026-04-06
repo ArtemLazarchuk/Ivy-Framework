@@ -29,7 +29,7 @@ interface ContentVariantProps {
   setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
   setActiveTabId: React.Dispatch<React.SetStateAction<string | null>>;
   safeEvent: (
-    name: "OnSelect" | "OnClose" | "OnRefresh" | "OnReorder" | "OnAddButtonClick",
+    name: "OnSelect" | "OnClose" | "OnCloseOthers" | "OnRefresh" | "OnReorder" | "OnAddButtonClick",
     args: unknown[],
   ) => void;
   dropdownMenu: React.ReactNode;
@@ -61,7 +61,7 @@ interface TabsVariantProps {
   isUserInitiatedChangeRef: React.MutableRefObject<boolean>;
   setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
   safeEvent: (
-    name: "OnSelect" | "OnClose" | "OnRefresh" | "OnReorder" | "OnAddButtonClick",
+    name: "OnSelect" | "OnClose" | "OnCloseOthers" | "OnRefresh" | "OnReorder" | "OnAddButtonClick",
     args: unknown[],
   ) => void;
   renderTabContent: (tabWidget: React.ReactElement) => React.ReactNode;
