@@ -3,6 +3,8 @@ namespace Ivy.Tendril.Services;
 /// <summary>
 /// Generic time-based cache that stores a value with an expiration time.
 /// Thread-safe for single-writer scenarios (typical for service instances).
+///
+/// Use GetOrCompute for synchronous computations and GetOrComputeAsync for async operations.
 /// </summary>
 /// <typeparam name="T">Type of cached value. Use nullable types for optional data.</typeparam>
 public class TimeCache<T>
@@ -31,6 +33,26 @@ public class TimeCache<T>
         }
 
         var result = compute();
+        _value = result;
+        _timestamp = DateTime.UtcNow;
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the cached value if still valid, otherwise computes and caches a new value asynchronously.
+    /// </summary>
+    /// <param name="computeAsync">Async function to compute the value if cache is expired.</param>
+    /// <returns>The cached or newly computed value.</returns>
+    public async Task<T> GetOrComputeAsync(Func<Task<T>> computeAsync)
+    {
+        if (_value != null &&
+            _timestamp != null &&
+            DateTime.UtcNow - _timestamp.Value < _expiration)
+        {
+            return _value;
+        }
+
+        var result = await computeAsync();
         _value = result;
         _timestamp = DateTime.UtcNow;
         return result;
