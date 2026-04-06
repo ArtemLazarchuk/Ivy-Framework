@@ -256,6 +256,7 @@ const CameraInputWidget: React.FC<CameraInputWidgetProps> = ({
             className={cn("flex flex-col items-center gap-2", !disabled && "cursor-pointer")}
             onClick={disabled ? undefined : startCamera}
             role="button"
+            aria-label="Start camera"
             tabIndex={disabled ? -1 : 0}
             onKeyDown={(e) => {
               if (disabled) return;

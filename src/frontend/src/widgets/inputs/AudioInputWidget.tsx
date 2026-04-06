@@ -267,6 +267,7 @@ export const AudioInputWidget: React.FC<AudioInputWidgetProps> = ({
               }
         }
         role="button"
+        aria-label={recording ? "Stop recording" : "Start recording"}
         tabIndex={disabled ? -1 : 0}
         onBlur={(e) => {
           if (disabled) return;
