@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Ivy.Core;
 
 namespace Ivy.Samples.Shared.Apps.Widgets.Layouts;
 
@@ -50,12 +51,16 @@ public class TabsApp : SampleBase
             | width.ToSliderInput().Min(0f).Max(1f).WithLabel("Width")
             | Text.H2("Variants")
             | Text.H3("Tabs variant")
-            | new TabsLayout(OnTabSelect, OnTabClose, null, null, selectedIndex.Value, OnTabCloseOthers,
+            | (new TabsLayout(OnTabSelect, OnTabClose, null, null, selectedIndex.Value,
                 tabs.Value.ToArray()
             ).Variant(TabsVariant.Tabs).Width(Size.Fraction((float)width.Value)).AddButton("+", OnAddButtonClick)
+                with
+            { OnCloseOthers = ((Action<Event<TabsLayout, int>>)OnTabCloseOthers).ToEventHandler() })
             | Text.H3("Content variant")
-            | new TabsLayout(OnTabSelect, OnTabClose, null, null, selectedIndex.Value, OnTabCloseOthers,
+            | (new TabsLayout(OnTabSelect, OnTabClose, null, null, selectedIndex.Value,
                 tabs.Value.ToArray()
-            ).Variant(TabsVariant.Content).Width(Size.Fraction((float)width.Value)).AddButton("+", OnAddButtonClick);
+            ).Variant(TabsVariant.Content).Width(Size.Fraction((float)width.Value)).AddButton("+", OnAddButtonClick)
+                with
+            { OnCloseOthers = ((Action<Event<TabsLayout, int>>)OnTabCloseOthers).ToEventHandler() });
     }
 }

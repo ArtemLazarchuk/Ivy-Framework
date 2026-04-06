@@ -150,7 +150,7 @@ public class TabView : ViewBase
             selectedIndex.Set(@event.Value);
         }
 
-        var tabs = new TabsLayout(OnTabSelect, null, null, null, selectedIndex.Value, null,
+        var tabs = new TabsLayout(OnTabSelect, null, null, null, selectedIndex.Value,
             _tabs.ToArray()
         ).Variant(_variant).Width(_width).Height(_height).RemoveParentPadding(_removeParentPadding).Padding(_padding);
         if (_testId != null) tabs.TestId = _testId;

@@ -16,13 +16,12 @@ public enum TabsVariant
 public record TabsLayout : WidgetBase<TabsLayout>
 {
     [OverloadResolutionPriority(1)]
-    public TabsLayout(Func<Event<TabsLayout, int>, ValueTask>? onSelect, Func<Event<TabsLayout, int>, ValueTask>? onClose, Func<Event<TabsLayout, int>, ValueTask>? onRefresh, Func<Event<TabsLayout, int[]>, ValueTask>? onReorder, int? selectedIndex, Func<Event<TabsLayout, int>, ValueTask>? onCloseOthers = null, params Tab[] tabs) : base(tabs.Cast<object>().ToArray())
+    public TabsLayout(Func<Event<TabsLayout, int>, ValueTask>? onSelect, Func<Event<TabsLayout, int>, ValueTask>? onClose, Func<Event<TabsLayout, int>, ValueTask>? onRefresh, Func<Event<TabsLayout, int[]>, ValueTask>? onReorder, int? selectedIndex, params Tab[] tabs) : base(tabs.Cast<object>().ToArray())
     {
         OnSelect = onSelect.ToEventHandler();
         OnClose = onClose.ToEventHandler();
         OnRefresh = onRefresh.ToEventHandler();
         OnReorder = onReorder.ToEventHandler();
-        OnCloseOthers = onCloseOthers.ToEventHandler();
         SelectedIndex = selectedIndex;
     }
 
@@ -34,16 +33,13 @@ public record TabsLayout : WidgetBase<TabsLayout>
 
     public TabsLayout(Action<Event<TabsLayout, int>>? onSelect, Action<Event<TabsLayout, int>>? onClose,
         Action<Event<TabsLayout, int>>? onRefresh, Action<Event<TabsLayout, int[]>>? onReorder, int? selectedIndex,
-        Action<Event<TabsLayout, int>>? onCloseOthers = null,
         params Tab[] tabs)
         : this(
             onSelect?.ToValueTask(),
             onClose?.ToValueTask(),
             onRefresh?.ToValueTask(),
             onReorder?.ToValueTask(),
-            selectedIndex,
-            onCloseOthers?.ToValueTask(),
-            tabs)
+            selectedIndex, tabs)
     {
     }
 

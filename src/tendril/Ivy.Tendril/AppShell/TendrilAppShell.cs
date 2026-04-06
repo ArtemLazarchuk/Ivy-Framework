@@ -392,7 +392,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
             }
             else
             {
-                body = new TabsLayout(OnTabSelect, OnTabClose, OnTabRefresh, OnTabReorder, selectedIndex.Value, null,
+                body = new TabsLayout(OnTabSelect, OnTabClose, OnTabRefresh, OnTabReorder, selectedIndex.Value,
                     tabs.Value.ToArray().Select(e => e.ToTab()).ToArray()
                 ).RemoveParentPadding().Variant(TabsVariant.Tabs).Padding(0);
             }
