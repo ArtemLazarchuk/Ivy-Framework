@@ -547,22 +547,8 @@ public class JobService : IJobService
 
         if (isSuccess && job.Type == "MakePr")
         {
-            var planFolder = job.Args.Length > 0 ? job.Args[0] : "";
-            var repoUrl = "";
-            if (Directory.Exists(planFolder))
-            {
-                var planYamlPath = Path.Combine(planFolder, "plan.yaml");
-                if (File.Exists(planYamlPath))
-                {
-                    var yaml = FileHelper.ReadAllText(planYamlPath);
-                    var prMatch = Regex.Match(yaml, @"(?m)^- (https://github\.com/.+/pull/\d+)$");
-                    if (prMatch.Success) repoUrl = prMatch.Groups[1].Value.Trim();
-                }
-            }
-
             _telemetryService?.TrackPrCreated(new PrCreatedContext(
                 Project: job.Project,
-                RepoUrl: repoUrl,
                 DurationSeconds: job.DurationSeconds));
         }
 

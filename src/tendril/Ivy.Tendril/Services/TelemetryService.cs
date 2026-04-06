@@ -82,7 +82,6 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
             _client?.Capture(_distinctId, "pr_created", new Dictionary<string, object>
             {
                 ["project"] = context.Project,
-                ["repo_url"] = context.RepoUrl,
                 ["duration_seconds"] = context.DurationSeconds ?? 0
             });
             _logger?.LogDebug("Tracked pr_created event for project {Project}", context.Project);

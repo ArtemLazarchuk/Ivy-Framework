@@ -24,5 +24,4 @@ public record PlanCreatedContext(
 
 public record PrCreatedContext(
     string Project,
-    string RepoUrl,
     int? DurationSeconds);
