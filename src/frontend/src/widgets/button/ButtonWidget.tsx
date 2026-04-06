@@ -24,6 +24,23 @@ const ButtonWithTooltip = withTooltip(Button);
 // Debounce state for keyboard shortcuts to prevent duplicate triggers during UI transitions
 const recentShortcuts = new Map<string, number>();
 const DEBOUNCE_MS = 300;
+const SWEEP_INTERVAL_MS = 5 * DEBOUNCE_MS; // 1500ms
+let sweepTimerId: number | null = null;
+
+// Periodic sweep to remove stale entries as defense-in-depth
+// This catches any entries missed by the unmount cleanup (e.g., error boundaries, race conditions)
+function startSweepIfNeeded() {
+  if (sweepTimerId !== null) return;
+
+  sweepTimerId = window.setInterval(() => {
+    const now = Date.now();
+    for (const [id, timestamp] of recentShortcuts.entries()) {
+      if (now - timestamp > SWEEP_INTERVAL_MS) {
+        recentShortcuts.delete(id);
+      }
+    }
+  }, SWEEP_INTERVAL_MS);
+}
 
 interface ButtonWidgetProps {
   id: string;
@@ -183,6 +200,8 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
 
   useEffect(() => {
     if (!shortcutKey || disabled) return;
+
+    startSweepIfNeeded(); // Ensure sweep timer is running
 
     const shortcutObj = parseShortcut(shortcutKey);
     if (!shortcutObj) return;
