@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using PostHog;
 
 namespace Ivy.Tendril.Services;
@@ -39,12 +40,12 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
         _client?.Capture(_distinctId, "pr_created");
     }
 
-    public void TrackJobCompleted(string jobType, string status, int? durationSeconds)
+    public void TrackJobCompleted(string jobType, JobStatus status, int? durationSeconds)
     {
         _client?.Capture(_distinctId, "job_completed", new Dictionary<string, object>
         {
             ["job_type"] = jobType,
-            ["status"] = status,
+            ["status"] = status.ToString(),
             ["duration_seconds"] = durationSeconds ?? 0
         });
     }
