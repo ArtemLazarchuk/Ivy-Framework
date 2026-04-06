@@ -36,7 +36,14 @@ public class DashboardApp : ViewBase
         var completedOrFailedPlans = filteredPlans
             .Where(p => p.Status is PlanStatus.Completed or PlanStatus.Failed or PlanStatus.ReadyForReview)
             .ToList();
-        var totalCost = completedOrFailedPlans.Sum(p => planService.GetPlanTotalCost(p.FolderPath));
+
+        // Pre-compute costs and tokens once per plan to avoid duplicate I/O
+        var costCache = completedOrFailedPlans
+            .ToDictionary(p => p.FolderPath, p => planService.GetPlanTotalCost(p.FolderPath));
+        var tokenCache = completedOrFailedPlans
+            .ToDictionary(p => p.FolderPath, p => planService.GetPlanTotalTokens(p.FolderPath));
+
+        var totalCost = costCache.Values.Sum();
         var avgCost = completedOrFailedPlans.Count > 0
             ? totalCost / completedOrFailedPlans.Count
             : 0;
@@ -68,8 +75,8 @@ public class DashboardApp : ViewBase
                 .Where(p => p.Updated.Date == day && p.Status is PlanStatus.Completed or PlanStatus.Failed or PlanStatus.ReadyForReview)
                 .ToList();
 
-            var dayCost = completedOrFailedPlans.Sum(p => planService.GetPlanTotalCost(p.FolderPath));
-            var dayTokens = completedOrFailedPlans.Sum(p => planService.GetPlanTotalTokens(p.FolderPath));
+            var dayCost = completedOrFailedPlans.Sum(p => costCache.GetValueOrDefault(p.FolderPath, 0m));
+            var dayTokens = completedOrFailedPlans.Sum(p => tokenCache.GetValueOrDefault(p.FolderPath, 0));
             var costPerPlan = dayCompletedCount > 0 && dayCost > 0
                 ? $"${dayCost / dayCompletedCount:F2}"
                 : "";
