@@ -151,66 +151,52 @@ public class PivotTable<T>
         var firstValue = result[0][dimensionName];
         var lastValue = result[^1][dimensionName];
 
-        if (firstValue is DateTime startTime && lastValue is DateTime endTime)
+        return firstValue switch
         {
-            var step = interval as TimeSpan? ?? TimeSpan.FromHours(1);
-            var lookup = result.ToDictionary(r => (DateTime)r[dimensionName]);
-            var filled = new List<Dictionary<string, object>>();
+            DateTime startTime when lastValue is DateTime endTime =>
+                FillGaps(result, dimensionName, measures, startTime, endTime,
+                    interval as TimeSpan? ?? TimeSpan.FromHours(1)),
 
-            for (var current = startTime; current <= endTime; current += step)
+            int startInt when lastValue is int endInt =>
+                FillGaps(result, dimensionName, measures, startInt, endInt,
+                    interval as int? ?? 1),
+
+            _ => result
+        };
+    }
+
+    private static List<Dictionary<string, object>> FillGaps<TValue>(
+        List<Dictionary<string, object>> result,
+        string dimensionName,
+        IList<Measure<T>> measures,
+        TValue start,
+        TValue end,
+        dynamic step) where TValue : struct
+    {
+        var lookup = result.ToDictionary(r => (TValue)r[dimensionName]);
+        var filled = new List<Dictionary<string, object>>();
+
+        for (dynamic current = start; current <= end; current += step)
+        {
+            if (lookup.TryGetValue((TValue)current, out var existing))
             {
-                if (lookup.TryGetValue(current, out var existing))
-                {
-                    filled.Add(existing);
-                }
-                else
-                {
-                    var row = new Dictionary<string, object>
-                    {
-                        [dimensionName] = current
-                    };
-                    foreach (var measure in measures)
-                    {
-                        row[measure.Name] = 0;
-                    }
-                    filled.Add(row);
-                }
+                filled.Add(existing);
             }
-
-            return filled;
+            else
+            {
+                var row = new Dictionary<string, object>
+                {
+                    [dimensionName] = current
+                };
+                foreach (var measure in measures)
+                {
+                    row[measure.Name] = 0;
+                }
+                filled.Add(row);
+            }
         }
 
-        // Int gap filling
-        if (firstValue is int startInt && lastValue is int endInt)
-        {
-            var step = interval as int? ?? 1;
-            var lookup = result.ToDictionary(r => (int)r[dimensionName]);
-            var filled = new List<Dictionary<string, object>>();
-
-            for (var current = startInt; current <= endInt; current += step)
-            {
-                if (lookup.TryGetValue(current, out var existing))
-                {
-                    filled.Add(existing);
-                }
-                else
-                {
-                    var row = new Dictionary<string, object>
-                    {
-                        [dimensionName] = current
-                    };
-                    foreach (var measure in measures)
-                    {
-                        row[measure.Name] = 0;
-                    }
-                    filled.Add(row);
-                }
-            }
-
-            return filled;
-        }
-
-        return result;
+        return filled;
     }
 
     private static Expression ReplaceParameter(Expression expr, ParameterExpression oldParam,
