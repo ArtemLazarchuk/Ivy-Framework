@@ -178,6 +178,7 @@ public class DashboardApp : ViewBase
                         new YAxis("Tokens").Orientation(YAxis.Orientations.Right).Hide(),
                     ]
                 })
+            .FillGaps(TimeSpan.FromHours(1))
             .Dimension("Hour", e => e.Hour.ToString("MM/dd HH"))
             .Measure("Cost ($)", e => e.Sum(f => (double)f.Cost))
             .Measure("Tokens", e => e.Sum(f => (double)f.Tokens))
