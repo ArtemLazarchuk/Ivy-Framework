@@ -42,7 +42,7 @@ public class PullRequestApp : ViewBase
             .RefreshToken(refreshToken)
             .Width(Size.Full())
             .Height(Size.Full())
-            .Header(t => t.PlanId, "Plan ID")
+            .Header(t => t.PlanId, "Plan")
             .Header(t => t.Repository, "Repository")
             .Header(t => t.Cost, "Cost")
             .Header(t => t.Pr, "PR")
