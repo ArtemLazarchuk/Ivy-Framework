@@ -4,7 +4,7 @@ import { cva } from "class-variance-authority";
 import { Button } from "@/components/ui/button";
 import { Densities } from "@/types/density";
 import { FileItem, FileUploadStatus } from "./types";
-import { formatBytes } from "../file-input-validation";
+import { formatBytes } from "@/lib/formatters";
 
 const compactContainerVariant = cva(
   "flex flex-nowrap overflow-x-auto flex-1 min-w-0 slim-scrollbar",
