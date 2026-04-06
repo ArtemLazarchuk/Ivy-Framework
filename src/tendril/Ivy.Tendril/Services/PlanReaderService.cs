@@ -31,6 +31,11 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         _planCountsCacheTime = null;
     }
 
+    // Cache for GetPlanTotalCost/GetPlanTotalTokens results
+    private Dictionary<string, (decimal Cost, int Tokens)>? _planCostCache;
+    private DateTime? _planCostCacheTime;
+    private static readonly TimeSpan PlanCostCacheExpiration = TimeSpan.FromSeconds(90);
+
     public string PlansDirectory => _config.PlanFolder;
 
     /// <summary>
@@ -465,10 +470,64 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
 
     /// <summary>
     /// Calculates the total cost for a plan by summing all entries in its <c>costs.csv</c> file.
+    /// Results are cached for 90 seconds to reduce file I/O during dashboard polling.
     /// </summary>
     /// <param name="folderPath">Absolute path to the plan folder.</param>
     /// <returns>Total cost in dollars, or <c>0</c> if no costs file exists.</returns>
     public decimal GetPlanTotalCost(string folderPath)
+    {
+        if (_planCostCache != null &&
+            _planCostCacheTime != null &&
+            DateTime.UtcNow - _planCostCacheTime.Value < PlanCostCacheExpiration &&
+            _planCostCache.TryGetValue(folderPath, out var cached))
+        {
+            return cached.Cost;
+        }
+
+        var cost = ComputePlanCost(folderPath);
+        var tokens = ComputePlanTokens(folderPath);
+        EnsurePlanCostCache();
+        _planCostCache![folderPath] = (cost, tokens);
+
+        return cost;
+    }
+
+    /// <summary>
+    /// Calculates the total token usage for a plan by summing all entries in its <c>costs.csv</c> file.
+    /// Results are cached for 90 seconds to reduce file I/O during dashboard polling.
+    /// </summary>
+    /// <param name="folderPath">Absolute path to the plan folder.</param>
+    /// <returns>Total token count, or <c>0</c> if no costs file exists.</returns>
+    public int GetPlanTotalTokens(string folderPath)
+    {
+        if (_planCostCache != null &&
+            _planCostCacheTime != null &&
+            DateTime.UtcNow - _planCostCacheTime.Value < PlanCostCacheExpiration &&
+            _planCostCache.TryGetValue(folderPath, out var cached))
+        {
+            return cached.Tokens;
+        }
+
+        var cost = ComputePlanCost(folderPath);
+        var tokens = ComputePlanTokens(folderPath);
+        EnsurePlanCostCache();
+        _planCostCache![folderPath] = (cost, tokens);
+
+        return tokens;
+    }
+
+    private void EnsurePlanCostCache()
+    {
+        if (_planCostCache == null ||
+            _planCostCacheTime == null ||
+            DateTime.UtcNow - _planCostCacheTime.Value >= PlanCostCacheExpiration)
+        {
+            _planCostCache = new Dictionary<string, (decimal, int)>();
+            _planCostCacheTime = DateTime.UtcNow;
+        }
+    }
+
+    private static decimal ComputePlanCost(string folderPath)
     {
         var costsPath = Path.Combine(folderPath, "costs.csv");
         if (!File.Exists(costsPath)) return 0m;
@@ -488,12 +547,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         return total;
     }
 
-    /// <summary>
-    /// Calculates the total token usage for a plan by summing all entries in its <c>costs.csv</c> file.
-    /// </summary>
-    /// <param name="folderPath">Absolute path to the plan folder.</param>
-    /// <returns>Total token count, or <c>0</c> if no costs file exists.</returns>
-    public int GetPlanTotalTokens(string folderPath)
+    private static int ComputePlanTokens(string folderPath)
     {
         var costsPath = Path.Combine(folderPath, "costs.csv");
         if (!File.Exists(costsPath)) return 0;
