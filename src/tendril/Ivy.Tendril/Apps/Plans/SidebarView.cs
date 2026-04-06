@@ -17,8 +17,10 @@ public class SidebarView(
     private readonly IState<string?> _textFilter = textFilter;
     private readonly IConfigService _config = config;
 
-    public object BuildHeader()
+    public override object Build()
     {
+        var filteredPlans = PlanFilters.ApplyFilters(_plans, _projectFilter.Value, _levelFilter.Value, _textFilter.Value);
+
         var levelOptions = _config.LevelNames;
 
         var levelFilteredPlans = _plans.AsEnumerable();
@@ -31,7 +33,7 @@ public class SidebarView(
             .Select(g => new Option<string>($"{g.Key} ({g.Count()})", g.Key))
             .ToArray<IAnyOption>();
 
-        return Layout.Vertical()
+        var header = Layout.Vertical()
             | _textFilter.ToSearchInput().Placeholder("Search plans...")
             | new Expandable(
                 header: "Filters",
@@ -39,13 +41,8 @@ public class SidebarView(
                     | _projectFilter.ToSelectInput(projectCounts).Placeholder("All Projects").Nullable().WithField().Label("Project")
                     | _levelFilter.ToSelectInput(levelOptions.ToOptions()).Placeholder("All Levels").Nullable().WithField().Label("Level")
             ).Open(false).Ghost();
-    }
 
-    public override object Build()
-    {
-        var filteredPlans = PlanFilters.ApplyFilters(_plans, _projectFilter.Value, _levelFilter.Value, _textFilter.Value);
-
-        return new List(filteredPlans.Select(plan =>
+        var content = new List(filteredPlans.Select(plan =>
         {
             var clickablePlan = plan;
             var stateBadgeVariant = plan.Status switch
@@ -55,15 +52,17 @@ public class SidebarView(
                 _ => BadgeVariant.Outline
             };
 
-            var content = Layout.Horizontal().Gap(1);
+            var badges = Layout.Horizontal().Gap(1);
             if (plan.Status != PlanStatus.Draft)
-                content |= new Badge(plan.Status.ToString()).Variant(stateBadgeVariant).Small();
-            content |= new Badge(plan.Project).Variant(BadgeVariant.Outline).Small().WithProjectColor(_config, plan.Project);
-            content |= new Badge(plan.Level).Variant(_config.GetBadgeVariant(plan.Level)).Small();
+                badges |= new Badge(plan.Status.ToString()).Variant(stateBadgeVariant).Small();
+            badges |= new Badge(plan.Project).Variant(BadgeVariant.Outline).Small().WithProjectColor(_config, plan.Project);
+            badges |= new Badge(plan.Level).Variant(_config.GetBadgeVariant(plan.Level)).Small();
 
             return new ListItem($"#{plan.Id} {plan.Title}")
-                .Content(content)
+                .Content(badges)
                 .OnClick(() => _selectedPlanState.Set(clickablePlan));
         }));
+
+        return new HeaderLayout(header, content);
     }
 }

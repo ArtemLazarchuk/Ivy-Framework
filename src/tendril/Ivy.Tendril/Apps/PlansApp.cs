@@ -64,8 +64,7 @@ public class PlansApp : ViewBase
 
         return new SidebarLayout(
             mainContent: new ContentView(selectedPlanState.Value, filteredPlans, selectedPlanState, planService, jobService, RefreshPlans, configService),
-            sidebarContent: sidebar,
-            sidebarHeader: sidebar.BuildHeader()
+            sidebarContent: sidebar
         );
     }
 }
