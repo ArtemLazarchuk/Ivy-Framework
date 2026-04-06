@@ -16,6 +16,7 @@ public class TrashApp : ViewBase
         var selectedFile = UseState<string?>(null);
         var confirmDelete = UseState(false);
         var searchFilter = UseState<string?>("");
+        var openFile = UseState<string?>(null);
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromSeconds(10));
 
@@ -103,7 +104,9 @@ public class TrashApp : ViewBase
                 });
 
             var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200)))
-                | new Markdown(selected.Content);
+                | new Markdown(selected.Content)
+                    .DangerouslyAllowLocalFiles()
+                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
             mainContent = new HeaderLayout(
                 header: header,
@@ -122,6 +125,18 @@ public class TrashApp : ViewBase
                 sidebarHeader: sidebarHeader
             )
         };
+
+        if (openFile.Value is { } filePath)
+        {
+            var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
+                filePath,
+                () => openFile.Set(null),
+                [],
+                configService.Editor.Command,
+                configService.Editor.Label);
+            if (fileLinkSheet is not null)
+                elements.Add(fileLinkSheet);
+        }
 
         if (confirmDelete.Value && selected is not null)
         {

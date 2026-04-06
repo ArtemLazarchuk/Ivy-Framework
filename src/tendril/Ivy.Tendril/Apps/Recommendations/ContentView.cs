@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.Recommendations.Dialogs;
 using Ivy.Tendril.Services;
 
@@ -21,7 +22,9 @@ public class ContentView(
     public override object? Build()
     {
         var client = UseService<IClientProvider>();
+        var config = UseService<ConfigService>();
         var showPlan = UseState<string?>(null);
+        var openFile = UseState<string?>(null);
         var showNotesDialog = UseState(false);
         var showDeclineDialog = UseState<bool>(false);
         var declineReason = UseState<string?>("");
@@ -157,17 +160,34 @@ public class ContentView(
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
                 : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
-                    .DangerouslyAllowLocalFiles();
+                    .DangerouslyAllowLocalFiles()
+                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
-            return new Fragment(
-                mainLayout,
-                new Sheet(
-                    onClose: () => showPlan.Set(null),
-                    content: sheetContent,
-                    title: plan?.Title ?? folderName
-                ).Width(Size.Half()).Resizable(),
-                notesDialog
-            );
+            var planSheet = new Sheet(
+                onClose: () => showPlan.Set(null),
+                content: sheetContent,
+                title: plan?.Title ?? folderName
+            ).Width(Size.Half()).Resizable();
+
+            var repoPaths = plan?.GetEffectiveRepoPaths(config) ?? [];
+            var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
+                openFile.Value,
+                () => openFile.Set(null),
+                repoPaths,
+                config.Editor.Command,
+                config.Editor.Label);
+
+            if (fileLinkSheet is not null)
+            {
+                return new Fragment(
+                    mainLayout,
+                    planSheet,
+                    fileLinkSheet,
+                    notesDialog
+                );
+            }
+
+            return new Fragment(mainLayout, planSheet, notesDialog);
         }
 
         return new Fragment(mainLayout, notesDialog);
