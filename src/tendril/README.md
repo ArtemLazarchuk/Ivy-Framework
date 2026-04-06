@@ -18,10 +18,14 @@ Tendril is a terminal UI application built on [Ivy Framework](https://github.com
 
 ## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
+### For Running Tendril
 - [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
+- [GitHub CLI](https://cli.github.com/) (`gh`)
 - PowerShell
 - Git
+
+### For Development
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
 
 ## Setup
 

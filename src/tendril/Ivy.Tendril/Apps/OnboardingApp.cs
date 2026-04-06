@@ -78,7 +78,7 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
             isChecking.Set(true);
             var results = new Dictionary<string, bool>();
 
-            results["dotnet"] = await CheckCommand("dotnet", "--version");
+            results["gh"] = await CheckCommand("gh", "--version");
             results["claude"] = await CheckCommand("claude", "--version");
             results["git"] = await CheckCommand("git", "--version");
             results["powershell"] = await CheckCommand("pwsh", "-Version")
@@ -90,7 +90,7 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
         }
 
         var allRequiredPassed = checkResults.Value != null
-            && checkResults.Value["dotnet"]
+            && checkResults.Value["gh"]
             && checkResults.Value["claude"]
             && checkResults.Value["git"]
             && checkResults.Value["powershell"];
@@ -99,8 +99,8 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                | Text.H2("Required Software")
                | Text.Markdown(
                    "Tendril requires the following software to be installed:\n\n" +
-                   "- **.NET 10.0 SDK** - For running the application\n" +
                    "- **Claude CLI** - For AI agent orchestration\n" +
+                   "- **GitHub CLI** - For PR creation and GitHub integration\n" +
                    "- **Git** - For version control\n" +
                    "- **PowerShell** - For running scripts and hooks\n\n" +
                    "**Optional:**\n" +
@@ -109,9 +109,9 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                | (checkResults.Value != null
                    ? (Layout.Vertical()
                       | Text.H3("Results")
-                      | (checkResults.Value["dotnet"]
-                          ? Text.Success("\u2713 .NET SDK is installed")
-                          : Text.Danger("\u2717 .NET SDK not found - Install from https://dotnet.microsoft.com/download"))
+                      | (checkResults.Value["gh"]
+                          ? Text.Success("\u2713 GitHub CLI is installed")
+                          : Text.Danger("\u2717 GitHub CLI not found - Install from https://cli.github.com/"))
                       | (checkResults.Value["claude"]
                           ? Text.Success("\u2713 Claude CLI is installed")
                           : Text.Danger("\u2717 Claude CLI not found - Install from https://docs.anthropic.com/en/docs/claude-code"))
