@@ -139,7 +139,11 @@ server.UseWebApplication(app =>
     var syncService = app.Services.GetRequiredService<PlanDatabaseSyncService>();
     Task.Run(syncService.PerformInitialSync);
     var telemetryService = app.Services.GetRequiredService<TelemetryService>();
-    telemetryService.TrackAppStarted();
+    var appVersion = typeof(TendrilAppShell).Assembly.GetName().Version!.ToString(3);
+    telemetryService.TrackAppStarted(new AppStartContext(
+        Version: appVersion,
+        ProjectCount: configService.Settings.Projects.Count,
+        LlmConfigured: configService.Settings.Llm?.ApiKey != null));
     _ = Task.Run(async () => await telemetryService.FlushAsync());
     app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");
 });
