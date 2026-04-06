@@ -27,6 +27,9 @@ public class JobService : IJobService
     public event Action? JobsChanged;
     public event Action<JobNotification>? NotificationReady;
 
+    [Obsolete("Use NotificationReady event instead. Will be removed in a future version.")]
+    public ConcurrentQueue<JobNotification> PendingNotifications { get; } = new();
+
     private static readonly string PromptsRoot =
         Path.GetFullPath(Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", ".promptwares"));
 
