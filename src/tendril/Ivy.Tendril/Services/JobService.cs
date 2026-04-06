@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 
@@ -10,7 +11,7 @@ public record JobNotification(string Title, string Message, bool IsSuccess);
 public class JobService : IJobService
 {
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
-    private readonly ConcurrentQueue<string> _jobQueue = new();
+    private readonly Channel<string> _jobQueue = Channel.CreateUnbounded<string>();
     private int _counter;
     private readonly IPlanReaderService? _planReaderService;
     private readonly IConfigService? _configService;
@@ -215,7 +216,7 @@ public class JobService : IJobService
         {
             job.Status = "Queued";
             job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
-            _jobQueue.Enqueue(id);
+            _jobQueue.Writer.TryWrite(id);
             RaiseJobsChanged();
             return id;
         }
@@ -621,13 +622,13 @@ public class JobService : IJobService
 
     private void ProcessJobQueue()
     {
-        while (_jobQueue.TryPeek(out var queuedId))
+        while (_jobQueue.Reader.TryPeek(out var queuedId))
         {
             // Try to acquire a job slot (non-blocking)
             if (!_jobSlotSemaphore.Wait(0))
                 break;
 
-            if (!_jobQueue.TryDequeue(out queuedId))
+            if (!_jobQueue.Reader.TryRead(out queuedId))
             {
                 // Failed to dequeue — release the slot we just acquired
                 _jobSlotSemaphore.Release();
