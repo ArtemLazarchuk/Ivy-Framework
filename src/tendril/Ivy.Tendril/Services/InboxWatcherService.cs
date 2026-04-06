@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace Ivy.Tendril.Services;
 
-public class InboxWatcherService : IDisposable
+public class InboxWatcherService : IInboxWatcherService, IDisposable
 {
     private readonly IJobService _jobService;
     private readonly FileSystemWatcher? _watcher;

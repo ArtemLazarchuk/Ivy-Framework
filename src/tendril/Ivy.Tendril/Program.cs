@@ -96,11 +96,12 @@ server.Services.AddSingleton<InboxWatcherService>(sp =>
     var jobService = sp.GetRequiredService<IJobService>();
     return new InboxWatcherService(config, jobService);
 });
+server.Services.AddSingleton<IInboxWatcherService>(sp => sp.GetRequiredService<InboxWatcherService>());
 server.UseWebApplication(app =>
 {
     // Eagerly resolve watcher services so their FileSystemWatchers start immediately
     app.Services.GetRequiredService<PlanWatcherService>();
-    app.Services.GetRequiredService<InboxWatcherService>();
+    app.Services.GetRequiredService<IInboxWatcherService>();
     app.Services.GetRequiredService<TelemetryService>().TrackAppStarted();
     app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");
 });
