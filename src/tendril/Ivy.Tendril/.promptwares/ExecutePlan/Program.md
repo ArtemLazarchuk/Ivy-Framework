@@ -101,6 +101,41 @@ After reading the plan revision, scan it for code validation markers to detect s
 
 **Note:** This step runs against the original repo (before worktrees are created), since it validates whether the plan's assumptions about the codebase are still accurate.
 
+### 1.8. Auto-Commit Uncommitted Changes
+
+Before creating worktrees, check each repo for uncommitted changes and automatically commit them. This prevents silent data loss when worktrees are created from `origin/<default-branch>` and later merged back.
+
+For each repo listed in `plan.yaml` `repos` (or the project's repos from `config.yaml` if empty):
+
+```bash
+cd <repo-path>
+
+# Check for uncommitted changes (staged, unstaged, or untracked)
+if [[ -n $(git status --porcelain) ]]; then
+  echo "Found uncommitted changes in $(pwd), auto-committing..."
+  git status --short
+  
+  # Stage all changes
+  git add -A
+  
+  # Create commit with timestamp
+  git commit -m "WIP: Auto-commit before plan execution [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+  
+  # Push to remote so worktrees created from origin/<default-branch> include these changes
+  git push origin $(git branch --show-current)
+  
+  echo "Changes committed and pushed successfully"
+fi
+```
+
+**Rationale:**
+- Worktrees branch from `origin/<default-branch>` (Step 2), so unpushed local changes won't be in the worktree base
+- When the PR merges and MakePr pulls main back, `git pull` would overwrite any uncommitted local changes
+- Auto-committing and pushing ensures all local work is preserved and visible to worktrees
+- The `WIP:` prefix makes auto-commits easily identifiable for later cleanup (squash/amend)
+
+**Note:** This step runs in the original repo directories, before worktree creation.
+
 ### 2. Create Worktrees
 
 For each repo listed in `plan.yaml` `repos` (or the project's repos from `config.yaml` if empty):
