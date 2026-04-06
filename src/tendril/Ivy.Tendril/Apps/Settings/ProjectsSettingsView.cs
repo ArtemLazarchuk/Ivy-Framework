@@ -60,7 +60,7 @@ public class ProjectsSettingsView : ViewBase
                     : new Spacer()
             ));
 
-        var content = Layout.Vertical().Gap(4).Padding(4)
+        var content = Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
             | Text.Block("Projects").Bold()
             | table
             | new Button("Add Project").Icon(Icons.Plus).Outline().OnClick(() =>
