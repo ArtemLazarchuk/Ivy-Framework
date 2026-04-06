@@ -52,7 +52,7 @@ public class DashboardApp : ViewBase
             | BuildStatCard(totalCount, "Total Plans")
             | BuildStatCard(draftCount, "Draft")
             | BuildStatCard(inProgressCount, "In Progress")
-            | BuildStatCard(reviewCount, "Ready for Review", zeroSubtitle: "All clear")
+            | BuildStatCard(reviewCount, "Ready for Review")
             | BuildStatCard(completedCount, "Completed")
             | BuildStatCard(failedCount, "Failed")
             | BuildStatCard($"${avgCost:F2}", "Avg Cost/Plan");
@@ -205,16 +205,8 @@ public class DashboardApp : ViewBase
              : tokens.ToString();
     }
 
-    private static object BuildStatCard(int count, string label, string? zeroSubtitle = null)
+    private static object BuildStatCard(int count, string label)
     {
-        if (count == 0 && zeroSubtitle != null)
-        {
-            return Layout.Vertical().Padding(1)
-                | Text.Block(count.ToString()).Bold()
-                | Text.Muted(label)
-                | Text.Muted(zeroSubtitle).Italic();
-        }
-
         return BuildStatCard(count.ToString(), label);
     }
 
