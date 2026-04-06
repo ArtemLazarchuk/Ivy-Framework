@@ -185,9 +185,11 @@ public class DashboardApp : ViewBase
             .Width(Size.Full());
 
         var content = Layout.Vertical().Gap(2)
-            | new Box(projectProgress).Padding(5)
             | dataTable
-            | combinedChart;
+            | new Card(
+                header: new Box(projectProgress).Padding(2),
+                content: combinedChart
+            );
 
         return new HeaderLayout(
             header: statsRow,
