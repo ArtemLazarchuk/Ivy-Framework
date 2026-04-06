@@ -21,7 +21,7 @@ public class CreateIssueDialog(
 
     public override object? Build()
     {
-        var githubService = UseService<GithubService>();
+        var githubService = UseService<IGithubService>();
         var assigneesQuery = UseQuery<string[], string>(
             _selectedRepoState.Value ?? "",
             async (repoName, ct) =>

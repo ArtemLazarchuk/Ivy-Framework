@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Ivy.Tendril.Services;
 
-public class GithubService(IConfigService config)
+public class GithubService(IConfigService config) : IGithubService
 {
     private readonly IConfigService _config = config;
     private readonly Dictionary<string, List<string>> _assigneeCache = new();

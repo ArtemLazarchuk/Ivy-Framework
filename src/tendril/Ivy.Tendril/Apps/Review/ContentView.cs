@@ -16,7 +16,7 @@ public class ContentView(
     IJobService jobService,
     Action refreshPlans,
     IConfigService config,
-    GitService gitService) : ViewBase
+    IGitService gitService) : ViewBase
 {
     private readonly PlanFile? _selectedPlan = selectedPlan;
     private readonly List<PlanFile> _allPlans = allPlans;
@@ -25,7 +25,7 @@ public class ContentView(
     private readonly IJobService _jobService = jobService;
     private readonly Action _refreshPlans = refreshPlans;
     private readonly IConfigService _config = config;
-    private readonly GitService _gitService = gitService;
+    private readonly IGitService _gitService = gitService;
 
     public override object? Build()
     {
@@ -40,7 +40,7 @@ public class ContentView(
         var suggestChangesText = UseState("");
         var customPrOpen = UseState(false);
 
-        var githubService = UseService<GithubService>();
+        var githubService = UseService<IGithubService>();
         var assigneesQuery = UseQuery<string[], string>(
             _selectedPlan?.Project ?? "",
             async (_, ct) =>

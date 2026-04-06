@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Ivy.Tendril.Services;
 
-public class GitService
+public class GitService : IGitService
 {
     public string? GetCommitTitle(string repoPath, string commitHash)
     {

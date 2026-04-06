@@ -47,7 +47,9 @@ if (configService.Settings.Llm is { } llmConfig && !string.IsNullOrEmpty(llmConf
 }
 
 server.Services.AddSingleton<GithubService>();
+server.Services.AddSingleton<IGithubService>(sp => sp.GetRequiredService<GithubService>());
 server.Services.AddSingleton<GitService>();
+server.Services.AddSingleton<IGitService>(sp => sp.GetRequiredService<GitService>());
 server.Services.AddSingleton<PlanReaderService>(sp =>
 {
     var planService = new PlanReaderService(sp.GetRequiredService<IConfigService>());

@@ -12,7 +12,7 @@ public class ReviewApp : ViewBase
         var planService = UseService<IPlanReaderService>();
         var jobService = UseService<IJobService>();
         var configService = UseService<IConfigService>();
-        var gitService = UseService<GitService>();
+        var gitService = UseService<IGitService>();
         var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
         var textFilter = UseState<string?>("");
