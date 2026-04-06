@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 
 namespace Ivy.Tendril.Apps;
@@ -35,17 +36,17 @@ internal static class StatusMappings
     };
 
     /// <summary>
-    /// Maps job status strings to color values for consistent styling.
+    /// Maps job status to color for consistent styling.
     /// </summary>
-    public static readonly Dictionary<string, Colors> JobStatusColors = new()
+    public static readonly Dictionary<JobStatus, Colors> JobStatusColors = new()
     {
-        ["Running"] = Colors.Blue,
-        ["Completed"] = Colors.Green,
-        ["Failed"] = Colors.Red,
-        ["Timeout"] = Colors.Red,
-        ["Queued"] = Colors.Amber,
-        ["Pending"] = Colors.Amber,
-        ["Stopped"] = Colors.Gray,
-        ["Blocked"] = Colors.Orange
+        [JobStatus.Running] = Colors.Blue,
+        [JobStatus.Completed] = Colors.Green,
+        [JobStatus.Failed] = Colors.Red,
+        [JobStatus.Timeout] = Colors.Red,
+        [JobStatus.Queued] = Colors.Amber,
+        [JobStatus.Pending] = Colors.Amber,
+        [JobStatus.Stopped] = Colors.Gray,
+        [JobStatus.Blocked] = Colors.Orange
     };
 }

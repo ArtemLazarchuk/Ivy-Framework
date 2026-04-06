@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Test;
@@ -30,7 +31,7 @@ public class JobServiceConcurrencyTests
         var job = service.GetJob(id);
 
         Assert.NotNull(job);
-        Assert.Equal("Queued", job.Status);
+        Assert.Equal(JobStatus.Queued, job.Status);
         Assert.Contains("max 0 concurrent jobs", job.StatusMessage);
     }
 
@@ -49,7 +50,7 @@ public class JobServiceConcurrencyTests
             var id = service.StartJob("MakePlan", "-Description", "Test Job");
             var job = service.GetJob(id);
             Assert.NotNull(job);
-            Assert.NotEqual("Queued", job.Status);
+            Assert.NotEqual(JobStatus.Queued, job.Status);
         }
         catch
         {
@@ -69,7 +70,7 @@ public class JobServiceConcurrencyTests
 
         var jobs = service.GetJobs();
         Assert.Equal(2, jobs.Count);
-        Assert.All(jobs, j => Assert.Equal("Queued", j.Status));
+        Assert.All(jobs, j => Assert.Equal(JobStatus.Queued, j.Status));
     }
 
     [Fact]
@@ -84,6 +85,6 @@ public class JobServiceConcurrencyTests
 
         var job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Stopped", job.Status);
+        Assert.Equal(JobStatus.Stopped, job.Status);
     }
 }

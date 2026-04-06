@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Test;
@@ -19,7 +20,7 @@ public class JobServiceTimeoutTests
         var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
         var job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Running", job.Status);
+        Assert.Equal(JobStatus.Running, job.Status);
 
         JobNotification? notification = null;
         service.NotificationReady += n => notification = n;
@@ -28,7 +29,7 @@ public class JobServiceTimeoutTests
 
         job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Timeout", job.Status);
+        Assert.Equal(JobStatus.Timeout, job.Status);
         Assert.Contains("30 minute timeout", job.StatusMessage);
         Assert.NotNull(job.CompletedAt);
         Assert.NotNull(job.DurationSeconds);
@@ -51,7 +52,7 @@ public class JobServiceTimeoutTests
 
         var job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Timeout", job.Status);
+        Assert.Equal(JobStatus.Timeout, job.Status);
         Assert.Contains("No output for 10 minutes", job.StatusMessage);
 
         Assert.NotNull(notification);
@@ -72,7 +73,7 @@ public class JobServiceTimeoutTests
 
         var job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Completed", job.Status);
+        Assert.Equal(JobStatus.Completed, job.Status);
         Assert.Null(job.StatusMessage);
 
         Assert.NotNull(notification);
@@ -93,7 +94,7 @@ public class JobServiceTimeoutTests
 
         var job = service.GetJob(id);
         Assert.NotNull(job);
-        Assert.Equal("Failed", job.Status);
+        Assert.Equal(JobStatus.Failed, job.Status);
 
         Assert.NotNull(notification);
         Assert.Equal("ExecutePlan Failed", notification.Title);
@@ -108,13 +109,13 @@ public class JobServiceTimeoutTests
 
         service.CompleteJob(id, exitCode: 0);
         var job = service.GetJob(id);
-        Assert.Equal("Completed", job!.Status);
+        Assert.Equal(JobStatus.Completed, job!.Status);
 
         // Try to complete again (e.g. from stale watchdog racing with normal completion)
         service.CompleteJob(id, exitCode: null, timedOut: true, staleOutput: true);
 
         job = service.GetJob(id);
-        Assert.Equal("Completed", job!.Status); // Should not change
+        Assert.Equal(JobStatus.Completed, job!.Status); // Should not change
     }
 
     [Fact]
@@ -128,7 +129,7 @@ public class JobServiceTimeoutTests
 
         service.StopJob(id);
 
-        Assert.Equal("Stopped", job.Status);
+        Assert.Equal(JobStatus.Stopped, job.Status);
         Assert.True(job.TimeoutCts!.IsCancellationRequested);
     }
 

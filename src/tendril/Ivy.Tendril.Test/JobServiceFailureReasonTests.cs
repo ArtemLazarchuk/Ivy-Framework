@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Test;
@@ -101,7 +102,7 @@ public class JobServiceFailureReasonTests
         service.CompleteJob(id, exitCode: 1);
 
         job = service.GetJob(id)!;
-        Assert.Equal("Failed", job.Status);
+        Assert.Equal(JobStatus.Failed, job.Status);
         Assert.NotNull(job.StatusMessage);
         Assert.Contains("something went wrong", job.StatusMessage);
     }
@@ -115,7 +116,7 @@ public class JobServiceFailureReasonTests
         service.CompleteJob(id, exitCode: 0);
 
         var job = service.GetJob(id)!;
-        Assert.Equal("Completed", job.Status);
+        Assert.Equal(JobStatus.Completed, job.Status);
         Assert.Null(job.StatusMessage);
     }
 }

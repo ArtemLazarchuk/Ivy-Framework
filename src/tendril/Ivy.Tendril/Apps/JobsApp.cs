@@ -41,7 +41,7 @@ public class JobsApp : ViewBase
 
         UseInterval(() =>
         {
-            if (jobService.GetJobs().Any(j => j.Status == "Running"))
+            if (jobService.GetJobs().Any(j => j.Status == JobStatus.Running))
             {
                 refreshToken.Refresh();
             }
@@ -75,7 +75,7 @@ public class JobsApp : ViewBase
             .Select(g => new ProgressSegment(
                 Value: g.Count,
                 Color: GetStatusColor(g.Status),
-                Label: g.Status
+                Label: g.Status.ToString()
             ))
             .ToArray();
 
@@ -107,7 +107,7 @@ public class JobsApp : ViewBase
             .Renderer(t => t.Status, new LabelsDisplayRenderer
             {
                 BadgeColorMapping = StatusMappings.JobStatusColors.ToDictionary(
-                    kvp => kvp.Key,
+                    kvp => kvp.Key.ToString(),
                     kvp => kvp.Value.ToString()
                 )
             })
@@ -171,7 +171,7 @@ public class JobsApp : ViewBase
                     }
                     else if (tag == "stop-job")
                     {
-                        if (job.Status is "Running" or "Queued")
+                        if (job.Status is JobStatus.Running or JobStatus.Queued)
                         {
                             jobService.StopJob(job.Id);
                             refreshToken.Refresh();
@@ -179,7 +179,7 @@ public class JobsApp : ViewBase
                     }
                     else if (tag == "rerun-job")
                     {
-                        if (job.Status is "Failed" or "Timeout" or "Stopped")
+                        if (job.Status is JobStatus.Failed or JobStatus.Timeout or JobStatus.Stopped)
                         {
                             if (job.Type is "ExecutePlan" or "ExpandPlan" && job.Args.Length > 0)
                             {
@@ -197,7 +197,7 @@ public class JobsApp : ViewBase
                     }
                     else if (tag == "delete-job")
                     {
-                        if (job.Status != "Running")
+                        if (job.Status != JobStatus.Running)
                         {
                             jobService.DeleteJob(job.Id);
                             refreshToken.Refresh();
@@ -265,7 +265,7 @@ public class JobsApp : ViewBase
 
     private static string FormatLastOutput(JobItem job)
     {
-        if (job.LastOutputAt.HasValue && job.Status == "Running")
+        if (job.LastOutputAt.HasValue && job.Status == JobStatus.Running)
         {
             var elapsed = DateTime.UtcNow - job.LastOutputAt.Value;
             return FormatTimeSpan(elapsed);
@@ -275,13 +275,13 @@ public class JobsApp : ViewBase
 
     private static string FormatTimer(JobItem job)
     {
-        if (job.Status == "Running" && job.StartedAt.HasValue)
+        if (job.Status == JobStatus.Running && job.StartedAt.HasValue)
         {
             var elapsed = DateTime.UtcNow - job.StartedAt.Value;
             return FormatTimeSpan(elapsed);
         }
 
-        if ((job.Status is "Completed" or "Failed" or "Timeout" or "Stopped") && job.DurationSeconds.HasValue)
+        if (job.Status is JobStatus.Completed or JobStatus.Failed or JobStatus.Timeout or JobStatus.Stopped && job.DurationSeconds.HasValue)
         {
             return FormatTimeSpan(TimeSpan.FromSeconds(job.DurationSeconds.Value));
         }
@@ -296,6 +296,6 @@ public class JobsApp : ViewBase
         return $"{span.Minutes}m {span.Seconds:D2}s";
     }
 
-    private static Colors GetStatusColor(string status) =>
+    private static Colors GetStatusColor(JobStatus status) =>
         StatusMappings.JobStatusColors.TryGetValue(status, out var color) ? color : Colors.Slate;
 }

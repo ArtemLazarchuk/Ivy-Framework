@@ -50,7 +50,7 @@ public class PlanCountsServiceTests : IDisposable
         File.WriteAllText(Path.Combine(artifactsDir, "recommendations.yaml"), yaml);
     }
 
-    private void AddJob(string id, string status)
+    private void AddJob(string id, JobStatus status)
     {
         _jobService.AddJob(id, status);
     }
@@ -108,9 +108,9 @@ public class PlanCountsServiceTests : IDisposable
         CreateRecommendations("00007-WithRecs", "- title: Fix something\n  description: |\n    Details here.\n  state: Pending\n");
 
         // Jobs
-        AddJob("job-1", "Running");
-        AddJob("job-2", "Queued");
-        AddJob("job-3", "Completed"); // should not count as active
+        AddJob("job-1", JobStatus.Running);
+        AddJob("job-2", JobStatus.Queued);
+        AddJob("job-3", JobStatus.Completed); // should not count as active
 
         using var service = CreateService();
 
@@ -124,12 +124,12 @@ public class PlanCountsServiceTests : IDisposable
     [Fact]
     public void ComputeCounts_WithRunningAndQueuedJobs_CountsActiveJobs()
     {
-        AddJob("job-running-1", "Running");
-        AddJob("job-running-2", "Running");
-        AddJob("job-queued-1", "Queued");
-        AddJob("job-completed-1", "Completed");
-        AddJob("job-failed-1", "Failed");
-        AddJob("job-pending-1", "Pending");
+        AddJob("job-running-1", JobStatus.Running);
+        AddJob("job-running-2", JobStatus.Running);
+        AddJob("job-queued-1", JobStatus.Queued);
+        AddJob("job-completed-1", JobStatus.Completed);
+        AddJob("job-failed-1", JobStatus.Failed);
+        AddJob("job-pending-1", JobStatus.Pending);
 
         using var service = CreateService();
 
@@ -165,7 +165,7 @@ public class PlanCountsServiceTests : IDisposable
         public ConcurrentQueue<JobNotification> PendingNotifications { get; } = new();
 #pragma warning restore CS0618
 
-        public void AddJob(string id, string status)
+        public void AddJob(string id, JobStatus status)
         {
             _jobs.Add(new JobItem { Id = id, Status = status });
         }

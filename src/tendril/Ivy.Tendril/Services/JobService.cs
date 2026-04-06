@@ -159,7 +159,7 @@ public class JobService : IJobService
             Type = type,
             PlanFile = planFile,
             Project = project,
-            Status = "Pending",
+            Status = JobStatus.Pending,
             ScriptPath = scriptPath,
             Args = args,
         };
@@ -198,7 +198,7 @@ public class JobService : IJobService
             var (ok, blockReason) = CheckDependencies(planFolder);
             if (!ok)
             {
-                job.Status = "Blocked";
+                job.Status = JobStatus.Blocked;
                 job.StatusMessage = blockReason;
                 job.CompletedAt = DateTime.UtcNow;
 
@@ -215,7 +215,7 @@ public class JobService : IJobService
         // Try to acquire a job slot
         if (!_jobSlotSemaphore.Wait(0))
         {
-            job.Status = "Queued";
+            job.Status = JobStatus.Queued;
             job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
             _jobQueue.Writer.TryWrite(id);
             RaiseJobsChanged();
@@ -238,7 +238,7 @@ public class JobService : IJobService
             Id = id,
             Type = type,
             PlanFile = args.Length > 0 ? args[0] : type,
-            Status = "Running",
+            Status = JobStatus.Running,
             StartedAt = DateTime.UtcNow,
             ScriptPath = "",
             Args = args,
@@ -256,7 +256,7 @@ public class JobService : IJobService
         var args = job.Args;
         var scriptPath = job.ScriptPath;
 
-        job.Status = "Running";
+        job.Status = JobStatus.Running;
         job.StartedAt = DateTime.UtcNow;
         job.StatusMessage = null;
 
@@ -418,7 +418,7 @@ public class JobService : IJobService
                 };
                 actionPsi.Environment["TENDRIL_JOB_ID"] = job.Id;
                 actionPsi.Environment["TENDRIL_JOB_TYPE"] = jobType;
-                actionPsi.Environment["TENDRIL_JOB_STATUS"] = job.Status;
+                actionPsi.Environment["TENDRIL_JOB_STATUS"] = job.Status.ToString();
                 actionPsi.Environment["TENDRIL_PLAN_FOLDER"] = planFolder;
                 actionPsi.Environment["TENDRIL_CONFIG"] = _configService.ConfigPath;
 
@@ -457,7 +457,7 @@ public class JobService : IJobService
                 break;
             }
 
-            if (!_jobs.TryGetValue(id, out var job) || job.Status != "Running")
+            if (!_jobs.TryGetValue(id, out var job) || job.Status != JobStatus.Running)
                 break;
 
             if (job.LastOutputAt.HasValue)
@@ -478,11 +478,11 @@ public class JobService : IJobService
     public void CompleteJob(string id, int? exitCode, bool timedOut = false, bool staleOutput = false)
     {
         if (!_jobs.TryGetValue(id, out var job)) return;
-        if (job.Status != "Running") return;
+        if (job.Status != JobStatus.Running) return;
 
         if (timedOut)
         {
-            job.Status = "Timeout";
+            job.Status = JobStatus.Timeout;
             var reason = staleOutput
                 ? $"No output for {(int)_staleOutputTimeout.TotalMinutes} minutes"
                 : $"Exceeded {(int)_jobTimeout.TotalMinutes} minute timeout";
@@ -492,7 +492,7 @@ public class JobService : IJobService
         {
             var success = exitCode == 0;
             job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines.ToList());
-            job.Status = success ? "Completed" : "Failed";
+            job.Status = success ? JobStatus.Completed : JobStatus.Failed;
         }
 
         job.CompletedAt = DateTime.UtcNow;
@@ -506,15 +506,15 @@ public class JobService : IJobService
         var planFolderForHooks = job.Args.Length > 0 ? job.Args[0] : "";
         RunHooks("after", job.Type, planFolderForHooks, job.Project, job);
 
-        var isSuccess = job.Status == "Completed";
-        var title = job.Status == "Timeout" ? $"{job.Type} Timed Out" : (isSuccess ? $"{job.Type} Completed" : $"{job.Type} Failed");
+        var isSuccess = job.Status == JobStatus.Completed;
+        var title = job.Status == JobStatus.Timeout ? $"{job.Type} Timed Out" : (isSuccess ? $"{job.Type} Completed" : $"{job.Type} Failed");
         var message = job.PlanFile ?? job.Type;
         if (!isSuccess && job.StatusMessage != null)
             message += $": {job.StatusMessage}";
         var completionNotification = new JobNotification(title, message, isSuccess);
         RaiseNotification(completionNotification);
 
-        if (job.Status is "Failed" or "Timeout")
+        if (job.Status is JobStatus.Failed or JobStatus.Timeout)
             ResetPlanState(job);
         else if (isSuccess && job.Type == "ExecutePlan")
             EnsurePlanStateTransitioned(job);
@@ -523,14 +523,14 @@ public class JobService : IJobService
         else if (isSuccess && job.Type == "MakePlan")
         {
             VerifyMakePlanResult(job);
-            if (job.Status == "Completed")
+            if (job.Status == JobStatus.Completed)
                 _telemetryService?.TrackPlanCreated();
         }
 
         if (isSuccess && job.Type == "MakePr")
             _telemetryService?.TrackPrCreated();
 
-        _telemetryService?.TrackJobCompleted(job.Type, job.Status, job.DurationSeconds);
+        _telemetryService?.TrackJobCompleted(job.Type, job.Status.ToString(), job.DurationSeconds);
 
         CleanupInboxFile(job);
         WriteJobLog(job);
@@ -574,7 +574,7 @@ public class JobService : IJobService
         // Try to start queued jobs now that a slot is free
         ProcessJobQueue();
 
-        if (!_jobs.Values.Any(j => j.Status == "Running"))
+        if (!_jobs.Values.Any(j => j.Status == JobStatus.Running))
             SendNativeNotification();
     }
 
@@ -582,11 +582,11 @@ public class JobService : IJobService
     {
         if (!_jobs.TryGetValue(id, out var job)) return;
 
-        var wasRunning = job.Status == "Running";
+        var wasRunning = job.Status == JobStatus.Running;
         job.CancellationRequested = true;
         try { job.TimeoutCts?.Cancel(); } catch { /* CTS may already be disposed */ }
         try { job.Process?.Kill(entireProcessTree: true); } catch { /* Process may have already exited */ }
-        job.Status = "Stopped";
+        job.Status = JobStatus.Stopped;
         job.CompletedAt = DateTime.UtcNow;
         if (job.StartedAt.HasValue)
             job.DurationSeconds = (int)(job.CompletedAt.Value - job.StartedAt.Value).TotalSeconds;
@@ -613,7 +613,7 @@ public class JobService : IJobService
     public void ClearCompletedJobs()
     {
         var completedIds = _jobs.Values
-            .Where(j => j.Status == "Completed")
+            .Where(j => j.Status == JobStatus.Completed)
             .Select(j => j.Id)
             .ToList();
         foreach (var id in completedIds)
@@ -625,7 +625,7 @@ public class JobService : IJobService
     public void ClearFailedJobs()
     {
         var failedIds = _jobs.Values
-            .Where(j => j.Status is "Failed" or "Timeout" or "Blocked")
+            .Where(j => j.Status is JobStatus.Failed or JobStatus.Timeout or JobStatus.Blocked)
             .Select(j => j.Id)
             .ToList();
         foreach (var id in failedIds)
@@ -659,7 +659,7 @@ public class JobService : IJobService
                 break;
             }
 
-            if (!_jobs.TryGetValue(queuedId, out var queuedJob) || queuedJob.Status != "Queued")
+            if (!_jobs.TryGetValue(queuedId, out var queuedJob) || queuedJob.Status != JobStatus.Queued)
             {
                 // Job was removed or state changed — release the slot
                 _jobSlotSemaphore.Release();
@@ -798,7 +798,7 @@ public class JobService : IJobService
             {
                 // Agent exited 0 but didn't create a plan or detect a duplicate — flag it
                 job.OutputLines.Enqueue("[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
-                job.Status = "Failed";
+                job.Status = JobStatus.Failed;
                 job.StatusMessage = "No plan created";
             }
         }
@@ -915,7 +915,7 @@ public class JobService : IJobService
     {
         return _jobs.Values.Any(j =>
             j.Type == "MakePlan" &&
-            j.Status == "Running" &&
+            j.Status == JobStatus.Running &&
             j.InboxFile != null &&
             j.InboxFile.Equals(filePath, StringComparison.OrdinalIgnoreCase));
     }
@@ -953,8 +953,8 @@ public class JobService : IJobService
         if (!OperatingSystem.IsWindows())
             return;
 
-        var completed = _jobs.Values.Count(j => j.Status == "Completed");
-        var failed = _jobs.Values.Count(j => j.Status is "Failed" or "Timeout");
+        var completed = _jobs.Values.Count(j => j.Status == JobStatus.Completed);
+        var failed = _jobs.Values.Count(j => j.Status is JobStatus.Failed or JobStatus.Timeout);
         var title = "Tendril \u2014 All Jobs Finished";
         var body = failed > 0
             ? $"{completed} completed, {failed} failed"
@@ -1013,13 +1013,13 @@ public class JobService : IJobService
             if (!string.IsNullOrEmpty(job.SessionId))
                 logContent += $"- **SessionId:** {job.SessionId}\n";
 
-            if (job.Status == "Timeout" && job.StatusMessage != null)
+            if (job.Status == JobStatus.Timeout && job.StatusMessage != null)
                 logContent += $"- **Timeout Reason:** {job.StatusMessage}\n";
 
             _planReaderService.AddLog(job.PlanFile, job.Type, logContent);
 
             // Persist raw output for failed/timeout jobs
-            if (job.Status is "Failed" or "Timeout" && job.OutputLines.Count > 0)
+            if (job.Status is JobStatus.Failed or JobStatus.Timeout && job.OutputLines.Count > 0)
             {
                 var planFolder = job.Args.Length > 0 ? job.Args[0] : null;
                 if (planFolder != null && Directory.Exists(planFolder))
