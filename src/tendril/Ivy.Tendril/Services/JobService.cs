@@ -12,10 +12,10 @@ public class JobService : IJobService
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
     private readonly ConcurrentQueue<string> _jobQueue = new();
     private int _counter;
-    private PlanReaderService? _planReaderService;
+    private IPlanReaderService? _planReaderService;
     private readonly IConfigService? _configService;
     private readonly ModelPricingService? _modelPricingService;
-    private TelemetryService? _telemetryService;
+    private ITelemetryService? _telemetryService;
     private readonly TimeSpan _jobTimeout;
     private readonly TimeSpan _staleOutputTimeout;
     private readonly int _maxConcurrentJobs;
@@ -69,12 +69,12 @@ public class JobService : IJobService
         _inboxPath = inboxPath;
     }
 
-    public void SetPlanReaderService(PlanReaderService planReaderService)
+    public void SetPlanReaderService(IPlanReaderService planReaderService)
     {
         _planReaderService = planReaderService;
     }
 
-    public void SetTelemetryService(TelemetryService telemetryService)
+    public void SetTelemetryService(ITelemetryService telemetryService)
     {
         _telemetryService = telemetryService;
     }

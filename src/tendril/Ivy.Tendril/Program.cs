@@ -58,16 +58,18 @@ server.Services.AddSingleton<PlanReaderService>(sp =>
     return planService;
 });
 server.Services.AddSingleton<IPlanReaderService>(sp => sp.GetRequiredService<PlanReaderService>());
-server.Services.AddSingleton<TelemetryService>(sp =>
+server.Services.AddSingleton<ITelemetryService>(sp =>
 {
     var config = sp.GetRequiredService<IConfigService>();
     return new TelemetryService(config.Settings.Telemetry);
 });
+server.Services.AddSingleton<TelemetryService>(sp =>
+    (TelemetryService)sp.GetRequiredService<ITelemetryService>());
 server.Services.AddSingleton<JobService>(sp =>
 {
     var jobService = new JobService(sp.GetRequiredService<IConfigService>(), sp.GetRequiredService<ModelPricingService>());
-    jobService.SetPlanReaderService(sp.GetRequiredService<PlanReaderService>());
-    jobService.SetTelemetryService(sp.GetRequiredService<TelemetryService>());
+    jobService.SetPlanReaderService(sp.GetRequiredService<IPlanReaderService>());
+    jobService.SetTelemetryService(sp.GetRequiredService<ITelemetryService>());
     return jobService;
 });
 server.Services.AddSingleton<IJobService>(sp => sp.GetRequiredService<JobService>());
