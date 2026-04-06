@@ -44,6 +44,21 @@ public class JobsApp : ViewBase
             return Disposable.Create(() => jobService.NotificationReady -= OnNotification);
         });
 
+        UseEffect(() =>
+        {
+            void OnJobsChanged() => refreshToken.Refresh();
+            jobService.JobsChanged += OnJobsChanged;
+            return Disposable.Create(() => jobService.JobsChanged -= OnJobsChanged);
+        });
+
+        UseInterval(() =>
+        {
+            if (jobService.GetJobs().Any(j => j.Status == "Running"))
+            {
+                refreshToken.Refresh();
+            }
+        }, TimeSpan.FromSeconds(5));
+
         var jobs = jobService.GetJobs();
         var rows = jobs.Select(j => new JobItemRow
         {
