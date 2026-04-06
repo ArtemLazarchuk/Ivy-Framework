@@ -8,35 +8,13 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
 {
     private readonly IConfigService _config = config;
 
-    // Cache for GetHourlyTokenBurn results
-    private List<HourlyTokenBurn>? _hourlyBurnCache;
-    private DateTime? _hourlyBurnCacheTime;
-    private static readonly TimeSpan HourlyBurnCacheExpiration = TimeSpan.FromMinutes(2);
+    private readonly TimeCache<List<HourlyTokenBurn>> _hourlyBurnCache = new(TimeSpan.FromMinutes(2));
 
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
 
-    // Cache for GetRecommendations results
-    private List<Recommendation>? _recommendationsCache;
-    private DateTime? _recommendationsCacheTime;
-    private static readonly TimeSpan RecommendationsCacheExpiration = TimeSpan.FromMinutes(2);
-
-    // Cache for ComputePlanCounts results
-    private PlanCountSnapshot? _planCountsCache;
-    private DateTime? _planCountsCacheTime;
-    private static readonly TimeSpan PlanCountsCacheExpiration = TimeSpan.FromMinutes(2);
-
-    private void InvalidatePlanCountsCache()
-    {
-        _planCountsCache = null;
-        _planCountsCacheTime = null;
-        _hourlyBurnCache = null;
-        _hourlyBurnCacheTime = null;
-    }
-
-    // Cache for GetPlanTotalCost/GetPlanTotalTokens results
-    private Dictionary<string, (decimal Cost, int Tokens)>? _planCostCache;
-    private DateTime? _planCostCacheTime;
-    private static readonly TimeSpan PlanCostCacheExpiration = TimeSpan.FromSeconds(90);
+    private readonly TimeCache<List<Recommendation>> _recommendationsCache = new(TimeSpan.FromMinutes(2));
+    private readonly TimeCache<PlanCountSnapshot> _planCountsCache = new(TimeSpan.FromMinutes(2));
+    private readonly TimeCache<Dictionary<string, (decimal Cost, int Tokens)>> _planCostCache = new(TimeSpan.FromSeconds(90));
 
     public string PlansDirectory => _config.PlanFolder;
 
@@ -71,9 +49,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                     updated = Regex.Replace(updated, @"(?m)^updated:\s*.*$",
                         $"updated: {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}");
                     FileHelper.WriteAllText(planYamlPath, updated);
-                    InvalidatePlanCountsCache();
-                    _recommendationsCache = null;
-                    _recommendationsCacheTime = null;
+                    _planCountsCache.Invalidate();
+                    _recommendationsCache.Invalidate();
                 }
             }
             catch (Exception ex)
@@ -205,9 +182,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         planYaml.Updated = DateTime.UtcNow;
 
         FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
-        InvalidatePlanCountsCache();
-        _recommendationsCache = null;
-        _recommendationsCacheTime = null;
+        _planCountsCache.Invalidate();
+        _recommendationsCache.Invalidate();
     }
 
     /// <summary>
@@ -232,7 +208,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
             var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
             planYaml.Updated = DateTime.UtcNow;
             FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
-            InvalidatePlanCountsCache();
+            _planCountsCache.Invalidate();
         }
     }
 
@@ -434,7 +410,7 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
                 var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                 planYaml.Updated = DateTime.UtcNow;
                 FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
-                InvalidatePlanCountsCache();
+                _planCountsCache.Invalidate();
             }
         }
     }
@@ -482,18 +458,15 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <returns>Total cost in dollars, or <c>0</c> if no costs file exists.</returns>
     public decimal GetPlanTotalCost(string folderPath)
     {
-        if (_planCostCache != null &&
-            _planCostCacheTime != null &&
-            DateTime.UtcNow - _planCostCacheTime.Value < PlanCostCacheExpiration &&
-            _planCostCache.TryGetValue(folderPath, out var cached))
+        var dict = _planCostCache.GetOrCompute(() => new Dictionary<string, (decimal, int)>());
+        if (dict.TryGetValue(folderPath, out var cached))
         {
             return cached.Cost;
         }
 
         var cost = ComputePlanCost(folderPath);
         var tokens = ComputePlanTokens(folderPath);
-        EnsurePlanCostCache();
-        _planCostCache![folderPath] = (cost, tokens);
+        dict[folderPath] = (cost, tokens);
 
         return cost;
     }
@@ -506,31 +479,17 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// <returns>Total token count, or <c>0</c> if no costs file exists.</returns>
     public int GetPlanTotalTokens(string folderPath)
     {
-        if (_planCostCache != null &&
-            _planCostCacheTime != null &&
-            DateTime.UtcNow - _planCostCacheTime.Value < PlanCostCacheExpiration &&
-            _planCostCache.TryGetValue(folderPath, out var cached))
+        var dict = _planCostCache.GetOrCompute(() => new Dictionary<string, (decimal, int)>());
+        if (dict.TryGetValue(folderPath, out var cached))
         {
             return cached.Tokens;
         }
 
         var cost = ComputePlanCost(folderPath);
         var tokens = ComputePlanTokens(folderPath);
-        EnsurePlanCostCache();
-        _planCostCache![folderPath] = (cost, tokens);
+        dict[folderPath] = (cost, tokens);
 
         return tokens;
-    }
-
-    private void EnsurePlanCostCache()
-    {
-        if (_planCostCache == null ||
-            _planCostCacheTime == null ||
-            DateTime.UtcNow - _planCostCacheTime.Value >= PlanCostCacheExpiration)
-        {
-            _planCostCache = new Dictionary<string, (decimal, int)>();
-            _planCostCacheTime = DateTime.UtcNow;
-        }
     }
 
     private static decimal ComputePlanCost(string folderPath)
@@ -582,22 +541,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// Correlates <c>costs.csv</c> entries with log file timestamps to determine when tokens were consumed.
     /// Plans without both a costs file and a logs directory are skipped.
     /// </remarks>
-    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
-    {
-        if (_hourlyBurnCache != null &&
-            _hourlyBurnCacheTime != null &&
-            DateTime.UtcNow - _hourlyBurnCacheTime.Value < HourlyBurnCacheExpiration)
-        {
-            return _hourlyBurnCache;
-        }
-
-        var result = ComputeHourlyTokenBurn(days);
-
-        _hourlyBurnCache = result;
-        _hourlyBurnCacheTime = DateTime.UtcNow;
-
-        return result;
-    }
+    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7) =>
+        _hourlyBurnCache.GetOrCompute(() => ComputeHourlyTokenBurn(days));
 
     private List<HourlyTokenBurn> ComputeHourlyTokenBurn(int days)
     {
@@ -707,22 +652,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// without full deserialization.
     /// </remarks>
     /// <returns>List of all recommendations ordered by date (most recent first).</returns>
-    public List<Recommendation> GetRecommendations()
-    {
-        if (_recommendationsCache != null &&
-            _recommendationsCacheTime != null &&
-            DateTime.UtcNow - _recommendationsCacheTime.Value < RecommendationsCacheExpiration)
-        {
-            return _recommendationsCache;
-        }
-
-        var result = ComputeRecommendations();
-
-        _recommendationsCache = result;
-        _recommendationsCacheTime = DateTime.UtcNow;
-
-        return result;
-    }
+    public List<Recommendation> GetRecommendations() =>
+        _recommendationsCache.GetOrCompute(ComputeRecommendations);
 
     private List<Recommendation> ComputeRecommendations()
     {
@@ -802,22 +733,8 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
     /// Results are cached for 2 minutes to reduce disk I/O during dashboard polling.
     /// </summary>
     /// <returns>A <see cref="PlanCountSnapshot"/> with counts for each status category and pending recommendations.</returns>
-    public PlanCountSnapshot ComputePlanCounts()
-    {
-        if (_planCountsCache != null &&
-            _planCountsCacheTime != null &&
-            DateTime.UtcNow - _planCountsCacheTime.Value < PlanCountsCacheExpiration)
-        {
-            return _planCountsCache;
-        }
-
-        var result = ComputePlanCountsInternal();
-
-        _planCountsCache = result;
-        _planCountsCacheTime = DateTime.UtcNow;
-
-        return result;
-    }
+    public PlanCountSnapshot ComputePlanCounts() =>
+        _planCountsCache.GetOrCompute(ComputePlanCountsInternal);
 
     private PlanCountSnapshot ComputePlanCountsInternal()
     {
@@ -893,11 +810,9 @@ public class PlanReaderService(IConfigService config) : IPlanReaderService
         FileHelper.WriteAllText(recommendationsPath, YamlHelper.Serializer.Serialize(items));
 
         // Invalidate caches after state change
-        _recommendationsCache = null;
-        _recommendationsCacheTime = null;
-        _hourlyBurnCache = null;
-        _hourlyBurnCacheTime = null;
-        InvalidatePlanCountsCache();
+        _recommendationsCache.Invalidate();
+        _hourlyBurnCache.Invalidate();
+        _planCountsCache.Invalidate();
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
