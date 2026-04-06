@@ -287,13 +287,6 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
         var newRepoPath = UseState("");
         var error = UseState<string?>(null);
 
-        var colorOptions = new List<string>
-        {
-            "", "Red", "Orange", "Amber", "Yellow", "Lime", "Green", "Emerald", "Teal",
-            "Cyan", "Sky", "Blue", "Indigo", "Violet", "Purple", "Fuchsia", "Pink", "Rose",
-            "Slate", "Gray", "Zinc", "Neutral", "Stone"
-        };
-
         var reposLayout = Layout.Vertical().Gap(2);
         var currentRepos = repoPaths.Value;
         for (var i = 0; i < currentRepos.Count; i++)
@@ -326,7 +319,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                | Text.Muted("Set up your first project. You can add more projects later in Settings.")
                | (error.Value != null ? Text.Danger(error.Value) : null!)
                | projectName.ToTextInput("Project name...").WithField().Label("Project Name")
-               | projectColor.ToSelectInput(colorOptions).Nullable().WithField().Label("Color")
+               | projectColor.ToColorInput().Variant(ColorInputVariant.TextAndPicker).Nullable().WithField().Label("Color")
                | (Layout.Vertical().Gap(2)
                    | Text.Block("Repositories").Bold()
                    | Text.Muted("Add at least one repository path for this project.")

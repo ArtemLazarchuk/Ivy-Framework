@@ -29,13 +29,6 @@ public class ProjectsSettingsView : ViewBase
         var projects = config.Settings.Projects;
         var allVerifications = config.Settings.Verifications.Select(v => v.Name).ToList();
 
-        var colorOptions = new List<string>
-        {
-            "", "Red", "Orange", "Amber", "Yellow", "Lime", "Green", "Emerald", "Teal",
-            "Cyan", "Sky", "Blue", "Indigo", "Violet", "Purple", "Fuchsia", "Pink", "Rose",
-            "Slate", "Gray", "Zinc", "Neutral", "Stone"
-        };
-
         var rows = projects.Select((p, i) => new ProjectRow(
             i, p.Name, p.Color, p.Repos.Count, p.Verifications.Count
         )).ToList();
@@ -226,7 +219,7 @@ public class ProjectsSettingsView : ViewBase
                 new DialogBody(
                     Layout.Vertical().Gap(4)
                         | editName.ToTextInput("Project name...").WithField().Label("Name")
-                        | editColor.ToSelectInput(colorOptions).Nullable().WithField().Label("Color")
+                        | editColor.ToColorInput().Variant(ColorInputVariant.TextAndPicker).Nullable().WithField().Label("Color")
                         | editSlackEmoji.ToTextInput(":emoji:").WithField().Label("Slack Emoji")
                         | editContext.ToTextareaInput("Project context...").Rows(4).WithField().Label("Context")
                         | (Layout.Vertical().Gap(2)
