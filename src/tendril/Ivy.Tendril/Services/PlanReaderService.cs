@@ -233,12 +233,9 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             var oldState = currentPlan?.Status.ToString() ?? "Unknown";
             _telemetryService?.TrackPlanStateTransition(planId.Value, oldState, newState.ToString());
 
-            // Flush immediately for critical terminal states to ensure event delivery
-            // before the process potentially exits.
-            if (newState is PlanStatus.Completed or PlanStatus.Failed or PlanStatus.ReadyForReview)
-            {
-                _ = Task.Run(async () => await _telemetryService?.FlushAsync()!);
-            }
+            // Flush telemetry events to ensure they reach PostHog
+            if (_telemetryService != null)
+                _ = Task.Run(async () => await _telemetryService.FlushAsync());
         }
 
         // Update database first for instant UI feedback.
