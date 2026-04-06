@@ -239,6 +239,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      recentShortcuts.delete(id);
     };
   }, [shortcutKey, disabled, id, effectiveUrl, eventHandler]);
 
