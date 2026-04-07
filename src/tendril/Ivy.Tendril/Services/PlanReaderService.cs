@@ -1034,6 +1034,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
                     switch (state.ToLowerInvariant())
                     {
                         case "draft": drafts++; break;
+                        case "blocked": drafts++; break;
                         case "readyforreview": reviews++; break;
                         case "failed": failed++; break;
                         case "icebox": icebox++; break;

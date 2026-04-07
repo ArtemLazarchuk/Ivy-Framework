@@ -10,7 +10,8 @@ public enum PlanStatus
     Failed,
     ReadyForReview,
     Skipped,
-    Icebox
+    Icebox,
+    Blocked
 }
 
 public record PlanMetadata(int Id, string Project, string Level, string Title, PlanStatus State, List<string> Repos, List<string> Commits, List<string> Prs, List<PlanVerificationEntry> Verifications, List<string> RelatedPlans, List<string> DependsOn, DateTime Created, DateTime Updated, string? InitialPrompt);

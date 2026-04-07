@@ -89,6 +89,19 @@ public class PlanReaderServiceComputePlanCountsTests : IDisposable
     }
 
     [Fact]
+    public void ComputePlanCounts_CountsBlockedPlansInDrafts()
+    {
+        CreatePlan("01030-Draft", "Draft");
+        CreatePlan("01031-Blocked1", "Blocked");
+        CreatePlan("01032-Blocked2", "Blocked");
+
+        var snapshot = _service.ComputePlanCounts();
+
+        // Blocked plans should count alongside drafts
+        Assert.Equal(3, snapshot.Drafts);
+    }
+
+    [Fact]
     public void ComputePlanCounts_MatchesIndividualMethods()
     {
         CreatePlan("01020-Draft", "Draft");

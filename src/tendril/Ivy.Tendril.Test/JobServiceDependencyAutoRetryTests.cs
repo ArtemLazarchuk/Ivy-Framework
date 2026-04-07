@@ -62,7 +62,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     public void RetryBlockedDependents_WhenDependencyCompletes_RequeuesBlockedPlan()
     {
         var planB = CreatePlanFolder("02100-PlanB", "Completed");
-        var planA = CreatePlanFolder("02101-PlanA", "Draft", dependsOn: ["02100-PlanB"]);
+        var planA = CreatePlanFolder("02101-PlanA", "Blocked", dependsOn: ["02100-PlanB"]);
 
         var service = CreateService();
         var startedJobs = new List<string>();
@@ -89,7 +89,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     {
         var planB = CreatePlanFolder("02200-PlanB", "Completed");
         var planC = CreatePlanFolder("02201-PlanC", "Executing"); // Not completed
-        var planA = CreatePlanFolder("02202-PlanA", "Draft", dependsOn: ["02200-PlanB", "02201-PlanC"]);
+        var planA = CreatePlanFolder("02202-PlanA", "Blocked", dependsOn: ["02200-PlanB", "02201-PlanC"]);
 
         var service = CreateService();
 
@@ -98,6 +98,55 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
 
         var jobs = service.GetJobs();
         Assert.DoesNotContain(jobs, j => j.Type == "ExecutePlan" && j.Args.Contains(planA));
+    }
+
+    [Fact]
+    public void RetryBlockedDependents_DoesNotScanDraftPlans_OnlyBlockedPlans()
+    {
+        var planB = CreatePlanFolder("02500-PlanB", "Completed");
+        // Create planA as Draft (not Blocked) — it should NOT be picked up
+        var planA = CreatePlanFolder("02501-PlanA", "Draft", dependsOn: ["02500-PlanB"]);
+
+        var service = CreateService();
+
+        var id = service.StartJob("CreateIssue", planB, "-Repo", "owner/repo", "-Assignee", "", "-Labels", "");
+        service.CompleteJob(id, exitCode: 0);
+
+        var jobs = service.GetJobs();
+        Assert.DoesNotContain(jobs, j => j.Type == "ExecutePlan" && j.Args.Contains(planA));
+    }
+
+    [Fact]
+    public void RetryBlockedDependents_TransitionsBlockedToDraft_WhenUnblocked()
+    {
+        var planB = CreatePlanFolder("02600-PlanB", "Completed");
+        var planA = CreatePlanFolder("02601-PlanA", "Blocked", dependsOn: ["02600-PlanB"]);
+
+        var service = CreateService();
+
+        var id = service.StartJob("CreateIssue", planB, "-Repo", "owner/repo", "-Assignee", "", "-Labels", "");
+        service.CompleteJob(id, exitCode: 0);
+
+        // Verify plan.yaml was updated to Draft
+        var planYamlContent = File.ReadAllText(Path.Combine(planA, "plan.yaml"));
+        Assert.Contains("state: Draft", planYamlContent);
+    }
+
+    [Fact]
+    public void ResetPlanStateToBlocked_WritesBlockedState()
+    {
+        // Create a plan with an unmet dependency
+        var depPlan = CreatePlanFolder("02700-DepPlan", "Executing"); // Not completed
+        var planA = CreatePlanFolder("02701-PlanA", "Draft", dependsOn: ["02700-DepPlan"]);
+
+        var service = CreateService();
+
+        // Start ExecutePlan — dependencies aren't met, so ResetPlanStateToBlocked should fire
+        service.StartJob("ExecutePlan", planA);
+
+        // Verify plan.yaml was updated to Blocked (not Draft)
+        var planYamlContent = File.ReadAllText(Path.Combine(planA, "plan.yaml"));
+        Assert.Contains("state: Blocked", planYamlContent);
     }
 
     [Fact]

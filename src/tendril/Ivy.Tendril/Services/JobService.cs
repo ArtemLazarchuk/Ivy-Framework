@@ -1018,12 +1018,13 @@ public class JobService : IJobService
             {
                 var planYaml = ReadPlanYaml(dir);
                 if (planYaml == null) continue;
-                if (!planYaml.State.Equals("Draft", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!planYaml.State.Equals("Blocked", StringComparison.OrdinalIgnoreCase)) continue;
                 if (!planYaml.DependsOn.Contains(completedFolderName, StringComparer.OrdinalIgnoreCase)) continue;
 
                 var (allMet, _) = CheckDependencies(dir);
                 if (allMet)
                 {
+                    SetPlanStateByFolder(dir, "Draft");
                     StartJob("ExecutePlan", dir);
                 }
             }
@@ -1060,7 +1061,7 @@ public class JobService : IJobService
         try
         {
             var planFolder = job.Args.Length > 0 ? job.Args[0] : "";
-            SetPlanStateByFolder(planFolder, "Draft");
+            SetPlanStateByFolder(planFolder, "Blocked");
         }
         catch { /* Don't let state reset failures crash job completion */ }
     }

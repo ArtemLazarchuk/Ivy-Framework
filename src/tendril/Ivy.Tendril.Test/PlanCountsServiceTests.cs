@@ -123,6 +123,19 @@ public class PlanCountsServiceTests : IDisposable
     }
 
     [Fact]
+    public void ComputeCounts_BlockedPlansCountAsDrafts()
+    {
+        CreatePlan("00010-DraftPlan", "Draft");
+        CreatePlan("00011-BlockedPlan1", "Blocked");
+        CreatePlan("00012-BlockedPlan2", "Blocked");
+
+        using var service = CreateService();
+
+        // Blocked plans should be counted together with drafts
+        Assert.Equal(3, service.Current.Drafts);
+    }
+
+    [Fact]
     public void ComputeCounts_WithRunningQueuedAndBlockedJobs_CountsActiveJobs()
     {
         AddJob("job-running-1", JobStatus.Running);

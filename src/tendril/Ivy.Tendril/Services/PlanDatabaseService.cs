@@ -371,7 +371,7 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = """
                 SELECT
-                    COALESCE(SUM(CASE WHEN State = 'Draft' THEN 1 ELSE 0 END), 0) AS DraftCount,
+                    COALESCE(SUM(CASE WHEN State IN ('Draft', 'Blocked') THEN 1 ELSE 0 END), 0) AS DraftCount,
                     COALESCE(SUM(CASE WHEN State = 'ReadyForReview' THEN 1 ELSE 0 END), 0) AS ReadyForReviewCount,
                     COALESCE(SUM(CASE WHEN State = 'Failed' THEN 1 ELSE 0 END), 0) AS FailedCount,
                     COALESCE(SUM(CASE WHEN State = 'Icebox' THEN 1 ELSE 0 END), 0) AS IceboxCount,
