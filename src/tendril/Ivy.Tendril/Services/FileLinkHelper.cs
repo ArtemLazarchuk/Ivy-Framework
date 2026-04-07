@@ -40,7 +40,7 @@ public static class FileLinkHelper
         {
             if (File.Exists(filePath))
             {
-                var fileContent = File.ReadAllText(filePath);
+                var fileContent = FileHelper.ReadAllText(filePath);
                 var language = FileApp.GetLanguage(ext);
                 sheetContent = new Markdown($"```{language.ToString().ToLowerInvariant()}\n{fileContent}\n```");
             }

@@ -272,7 +272,7 @@ public class ModelPricingService : IModelPricingService
 
     private void ProcessSessionFile(string filePath, ref double totalCost, ref int totalTokens)
     {
-        foreach (var line in File.ReadLines(filePath))
+        foreach (var line in FileHelper.ReadAllLines(filePath))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
 

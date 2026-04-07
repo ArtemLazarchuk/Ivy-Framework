@@ -535,7 +535,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
 
             // Read the .git file to find which repo this worktree belongs to.
             // Format: "gitdir: <path-to-repo>/.git/worktrees/<name>"
-            var gitContent = File.ReadAllText(gitFile).Trim();
+            var gitContent = FileHelper.ReadAllText(gitFile).Trim();
             var match = Regex.Match(gitContent, @"gitdir:\s*(.+)");
             if (!match.Success) continue;
 
@@ -632,7 +632,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
 
             if (latestFile != null)
             {
-                File.WriteAllText(latestFile, content);
+                FileHelper.WriteAllText(latestFile, content);
 
                 var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
                 if (File.Exists(planYamlPath))

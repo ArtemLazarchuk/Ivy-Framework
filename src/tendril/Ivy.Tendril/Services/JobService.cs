@@ -181,7 +181,7 @@ public class JobService : IJobService
                     var inboxProject = GetNamedArg(args, "-Project") ?? "[Auto]";
                     var pendingFile = Path.Combine(_inboxPath, $"pending-{id}.md.processing");
                     var content = $"---\nproject: {inboxProject}\n---\n{description}";
-                    File.WriteAllText(pendingFile, content);
+                    FileHelper.WriteAllText(pendingFile, content);
                     job.InboxFile = pendingFile;
                 }
                 catch { /* Best-effort — don't fail the job if we can't write the recovery file */ }

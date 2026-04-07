@@ -255,7 +255,7 @@ public class ContentView(
                     continue;
                 }
 
-                var report = File.ReadAllText(reportPath);
+                var report = FileHelper.ReadAllText(reportPath);
 
                 // Extract the Output section content
                 var outputMatch = System.Text.RegularExpressions.Regex.Match(
@@ -287,7 +287,7 @@ public class ContentView(
                 .FirstOrDefault();
             if (lastLog != null)
             {
-                var logContent = File.ReadAllText(lastLog);
+                var logContent = FileHelper.ReadAllText(lastLog);
                 var summaryMatch = System.Text.RegularExpressions.Regex.Match(
                     logContent, @"## Summary\s*\n([\s\S]*?)(?=\n## |\z)");
                 if (summaryMatch.Success)

@@ -82,7 +82,7 @@ public class InboxWatcherService : IInboxWatcherService, IDisposable
             if (!File.Exists(filePath))
                 return;
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await FileHelper.ReadAllTextAsync(filePath);
             var (project, description, sourcePath) = ParseContent(content);
 
             // Rename to .processing so the watcher/poller ignores it while the job runs
@@ -103,7 +103,7 @@ public class InboxWatcherService : IInboxWatcherService, IDisposable
                 if (!File.Exists(filePath))
                     return;
 
-                var content = await File.ReadAllTextAsync(filePath);
+                var content = await FileHelper.ReadAllTextAsync(filePath);
                 var (project, description, sourcePath) = ParseContent(content);
 
                 var processingPath = filePath + ".processing";

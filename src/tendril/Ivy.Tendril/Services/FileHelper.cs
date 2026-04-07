@@ -21,7 +21,7 @@ internal static class FileHelper
     {
         try
         {
-            foreach (var line in File.ReadLines(logFilePath))
+            foreach (var line in ReadAllLines(logFilePath))
             {
                 var match = CompletedTimestampRegex.Match(line);
                 if (match.Success && DateTime.TryParse(match.Groups[1].Value.Trim(),
@@ -90,6 +90,47 @@ internal static class FileHelper
             catch (IOException) when (attempt < MaxRetries)
             {
                 Thread.Sleep(RetryDelaysMs[attempt]);
+            }
+        }
+    }
+
+    public static async Task<string> ReadAllTextAsync(string path)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                await using (stream.ConfigureAwait(false))
+                {
+                    using var reader = new StreamReader(stream);
+                    return await reader.ReadToEndAsync().ConfigureAwait(false);
+                }
+            }
+            catch (IOException) when (attempt < MaxRetries)
+            {
+                await Task.Delay(RetryDelaysMs[attempt]).ConfigureAwait(false);
+            }
+        }
+    }
+
+    public static async Task WriteAllTextAsync(string path, string contents)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+                await using (stream.ConfigureAwait(false))
+                {
+                    await using var writer = new StreamWriter(stream);
+                    await writer.WriteAsync(contents).ConfigureAwait(false);
+                    return;
+                }
+            }
+            catch (IOException) when (attempt < MaxRetries)
+            {
+                await Task.Delay(RetryDelaysMs[attempt]).ConfigureAwait(false);
             }
         }
     }

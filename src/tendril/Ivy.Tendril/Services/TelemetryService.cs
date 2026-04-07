@@ -150,12 +150,12 @@ public class TelemetryService : ITelemetryService, IAsyncDisposable
 
         if (File.Exists(idFile))
         {
-            var existing = File.ReadAllText(idFile).Trim();
+            var existing = FileHelper.ReadAllText(idFile).Trim();
             if (!string.IsNullOrEmpty(existing)) return existing;
         }
 
         var newId = Guid.NewGuid().ToString();
-        File.WriteAllText(idFile, newId);
+        FileHelper.WriteAllText(idFile, newId);
         return newId;
     }
 

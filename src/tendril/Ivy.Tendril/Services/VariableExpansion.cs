@@ -30,7 +30,7 @@ public static class VariableExpansion
             }
 
             var csprojPath = csprojFiles[0];
-            var csprojContent = File.ReadAllText(csprojPath);
+            var csprojContent = FileHelper.ReadAllText(csprojPath);
 
             // Extract UserSecretsId from .csproj
             var match = Regex.Match(csprojContent, @"<UserSecretsId>([^<]+)</UserSecretsId>");

@@ -1,3 +1,5 @@
+using Ivy.Tendril.Services;
+
 namespace Ivy.Tendril.Apps;
 
 public record FileAppArgs(string Url);
@@ -61,7 +63,7 @@ public class FileApp : ViewBase
         {
             try
             {
-                var content = File.ReadAllText(url);
+                var content = FileHelper.ReadAllText(url);
                 contentState.Set(content);
                 errorState.Set(null);
             }

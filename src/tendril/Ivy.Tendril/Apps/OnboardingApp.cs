@@ -599,8 +599,8 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
 
                 if (File.Exists(exampleConfigPath))
                 {
-                    var exampleContent = await File.ReadAllTextAsync(exampleConfigPath);
-                    await File.WriteAllTextAsync(configPath, exampleContent);
+                    var exampleContent = await FileHelper.ReadAllTextAsync(exampleConfigPath);
+                    await FileHelper.WriteAllTextAsync(configPath, exampleContent);
                 }
                 else if (!File.Exists(configPath))
                 {
@@ -610,7 +610,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                                       "staleOutputTimeout: 10\n" +
                                       "projects: []\n" +
                                       "verifications: []\n";
-                    await File.WriteAllTextAsync(configPath, basicConfig);
+                    await FileHelper.WriteAllTextAsync(configPath, basicConfig);
                 }
 
                 // Set environment variable for current session
@@ -625,7 +625,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                         var exportLine = $"export TENDRIL_HOME=\"{tendrilHome}\"";
                         if (File.Exists(zshrc))
                         {
-                            var content = await File.ReadAllTextAsync(zshrc);
+                            var content = await FileHelper.ReadAllTextAsync(zshrc);
                             if (!content.Contains(exportLine))
                             {
                                 await File.AppendAllLinesAsync(zshrc, new[] { "", "# Tendril Home", exportLine });

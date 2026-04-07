@@ -101,7 +101,7 @@ public class ContentView(
         if (File.Exists(recommendationsPath))
         {
             recommendations = YamlHelper.Deserializer.Deserialize<List<RecommendationYaml>>(
-                File.ReadAllText(recommendationsPath)) ?? new();
+                FileHelper.ReadAllText(recommendationsPath)) ?? new();
         }
 
         // Summary tab content
@@ -111,7 +111,7 @@ public class ContentView(
         if (hasSummary)
         {
             var summaryLayout = Layout.Vertical().Gap(2);
-            summaryLayout |= new Markdown(File.ReadAllText(summaryPath)).DangerouslyAllowLocalFiles();
+            summaryLayout |= new Markdown(FileHelper.ReadAllText(summaryPath)).DangerouslyAllowLocalFiles();
             summaryTabContent = summaryLayout;
         }
         else
@@ -327,7 +327,7 @@ public class ContentView(
         {
             var reportPath = Path.Combine(_selectedPlan.FolderPath, "verification", $"{verName}.md");
             var reportContent = File.Exists(reportPath)
-                ? File.ReadAllText(reportPath)
+                ? FileHelper.ReadAllText(reportPath)
                 : $"No report found for {verName}.";
             content |= new Sheet(
                 onClose: () => openVerification.Set(null),
@@ -391,7 +391,7 @@ public class ContentView(
 
         if (openArtifact.Value is { } artifactPath)
         {
-            var fileContent = File.Exists(artifactPath) ? File.ReadAllText(artifactPath) : "File not found.";
+            var fileContent = File.Exists(artifactPath) ? FileHelper.ReadAllText(artifactPath) : "File not found.";
             var language = FileApp.GetLanguage(Path.GetExtension(artifactPath));
             var artifactSheetContent = new Markdown($"```{language.ToString().ToLowerInvariant()}\n{fileContent}\n```");
 

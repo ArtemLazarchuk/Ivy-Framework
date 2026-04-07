@@ -158,7 +158,7 @@ public class TrashApp : ViewBase
     {
         try
         {
-            var content = File.ReadAllText(filePath);
+            var content = FileHelper.ReadAllText(filePath);
             var fileName = Path.GetFileName(filePath);
 
             var date = DateTime.MinValue;

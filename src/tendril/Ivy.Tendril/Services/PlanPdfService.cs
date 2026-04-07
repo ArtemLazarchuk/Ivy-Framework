@@ -42,7 +42,7 @@ public class PlanPdfService
             content = $"# #{planId} {title}\n\n{content}";
         }
 
-        File.WriteAllText(inputPath, content);
+        FileHelper.WriteAllText(inputPath, content);
 
         var psi = new ProcessStartInfo
         {

@@ -78,7 +78,7 @@ public class CustomPrDialog(
                         .WithNamingConvention(CamelCaseNamingConvention.Instance)
                         .Build();
                     var optionsPath = Path.Combine(_selectedPlan.FolderPath, ".custom-pr-options.yaml");
-                    File.WriteAllText(optionsPath, serializer.Serialize(options));
+                    FileHelper.WriteAllText(optionsPath, serializer.Serialize(options));
                     _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
                     _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
                     _refreshPlans();
