@@ -27,7 +27,7 @@ public class DashboardApp : ViewBase
 
         // Statistics cards
         var totalCount = filteredPlans.Count;
-        var draftCount = filteredPlans.Count(p => p.Status == PlanStatus.Draft);
+        var draftCount = filteredPlans.Count(p => p.Status is PlanStatus.Draft or PlanStatus.Blocked);
         var inProgressCount = filteredPlans.Count(p => p.Status is PlanStatus.Building or PlanStatus.Executing or PlanStatus.Updating);
         var reviewCount = filteredPlans.Count(p => p.Status == PlanStatus.ReadyForReview);
         var completedCount = filteredPlans.Count(p => p.Status == PlanStatus.Completed);

@@ -21,7 +21,8 @@ internal static class StatusMappings
         [PlanStatus.Draft] = BadgeVariant.Outline,
         [PlanStatus.Completed] = BadgeVariant.Success,
         [PlanStatus.Skipped] = BadgeVariant.Outline,
-        [PlanStatus.Icebox] = BadgeVariant.Outline
+        [PlanStatus.Icebox] = BadgeVariant.Outline,
+        [PlanStatus.Blocked] = BadgeVariant.Warning
     };
 
     /// <summary>

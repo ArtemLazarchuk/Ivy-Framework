@@ -62,7 +62,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     public void RetryBlockedDependents_WhenDependencyCompletes_RequeuesBlockedPlan()
     {
         var planB = CreatePlanFolder("02100-PlanB", "Completed");
-        var planA = CreatePlanFolder("02101-PlanA", "Draft", dependsOn: ["02100-PlanB"]);
+        var planA = CreatePlanFolder("02101-PlanA", "Blocked", dependsOn: ["02100-PlanB"]);
 
         var service = CreateService();
         var startedJobs = new List<string>();
@@ -89,7 +89,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     {
         var planB = CreatePlanFolder("02200-PlanB", "Completed");
         var planC = CreatePlanFolder("02201-PlanC", "Executing"); // Not completed
-        var planA = CreatePlanFolder("02202-PlanA", "Draft", dependsOn: ["02200-PlanB", "02201-PlanC"]);
+        var planA = CreatePlanFolder("02202-PlanA", "Blocked", dependsOn: ["02200-PlanB", "02201-PlanC"]);
 
         var service = CreateService();
 
@@ -105,6 +105,21 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     {
         var planB = CreatePlanFolder("02300-PlanB", "Completed");
         var planA = CreatePlanFolder("02301-PlanA", "Building", dependsOn: ["02300-PlanB"]);
+
+        var service = CreateService();
+
+        var id = service.StartJob("CreateIssue", planB, "-Repo", "owner/repo", "-Assignee", "", "-Labels", "");
+        service.CompleteJob(id, exitCode: 0);
+
+        var jobs = service.GetJobs();
+        Assert.DoesNotContain(jobs, j => j.Type == "ExecutePlan" && j.Args.Contains(planA));
+    }
+
+    [Fact]
+    public void RetryBlockedDependents_WhenPlanInDraftState_DoesNotRequeue()
+    {
+        var planB = CreatePlanFolder("02300-PlanB", "Completed");
+        var planA = CreatePlanFolder("02302-PlanA", "Draft", dependsOn: ["02300-PlanB"]);
 
         var service = CreateService();
 
