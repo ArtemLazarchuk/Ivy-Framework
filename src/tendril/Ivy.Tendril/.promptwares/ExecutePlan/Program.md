@@ -276,7 +276,11 @@ cd src/frontend && npm run format && npm run lint:fix && cd ../..
 **C# files**:
 
 ```bash
-dotnet format
+# Get changed .cs files from this execution's commits
+CHANGED_CS=$(git diff --name-only --diff-filter=ACM HEAD~1 -- '*.cs' | tr '\n' ' ')
+if [ -n "$CHANGED_CS" ]; then
+  dotnet format --include $CHANGED_CS
+fi
 ```
 
 Commit messages should reference the plan ID:
