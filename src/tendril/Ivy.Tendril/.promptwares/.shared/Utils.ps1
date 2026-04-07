@@ -443,7 +443,7 @@ function InvokePromptwareAgent {
     $FirmwareValues["ClaudeSessionId"] = $sessionId
 
     $promptFile = PrepareFirmware $ScriptRoot $LogFile $ProgramFolder $FirmwareValues
-    $agent = GetAgentCommandFromConfig -Promptware $Promptware
+    $agent = GetAgentCommand -Promptware $Promptware
 
     # Determine coding agent provider
     $codingAgent = $agent.CodingAgent
@@ -585,7 +585,7 @@ function Stop-Heartbeat {
     }
 }
 
-function GetAgentCommandFromConfig {
+function GetAgentCommand {
     param([string]$Promptware = "")
 
     $configPath = $script:ConfigPath

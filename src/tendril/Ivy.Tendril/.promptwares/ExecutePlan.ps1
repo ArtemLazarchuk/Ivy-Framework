@@ -31,7 +31,7 @@ $promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder @{
     Project    = $planInfo.Project
 }
 
-$agent = GetAgentCommandFromConfig -Promptware "ExecutePlan"
+$agent = GetAgentCommand -Promptware "ExecutePlan"
 $sessionId = $env:TENDRIL_SESSION_ID
 if (-not $sessionId) {
     $sessionId = [guid]::NewGuid().ToString()
