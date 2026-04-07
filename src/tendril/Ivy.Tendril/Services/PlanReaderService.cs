@@ -206,6 +206,11 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             return m.Value;
         });
 
+        repaired = Regex.Replace(
+            repaired,
+            @"(?m)^(\s*)(repos|commits|prs|verifications|relatedPlans|dependsOn):\s*\r?\n(?!\s*-)",
+            "$1$2: []\n");
+
         return repaired;
     }
 
@@ -657,13 +662,22 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
         {
             var planYamlPath = Path.Combine(folderPath, "plan.yaml");
             var yamlContent = FileHelper.ReadAllText(planYamlPath);
+            PlanYaml? planYaml;
 
-            // Apply YAML repairs inline before parsing (handles agent-generated quirks)
-            var repaired = RepairPlanYaml(yamlContent);
-            if (repaired != yamlContent)
-                FileHelper.WriteAllText(planYamlPath, repaired);
+            try
+            {
+                planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yamlContent);
+            }
+            catch
+            {
+                // Fall back to the repair pass for malformed agent-generated YAML.
+                var repaired = RepairPlanYaml(yamlContent);
+                if (repaired != yamlContent)
+                    FileHelper.WriteAllText(planYamlPath, repaired);
 
-            var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(repaired);
+                planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(repaired);
+            }
+
             if (planYaml == null) return null;
 
             var folderName = Path.GetFileName(folderPath);
@@ -675,7 +689,22 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             if (!Enum.TryParse<PlanStatus>(planYaml.State, ignoreCase: true, out var status))
                 status = PlanStatus.Draft;
 
-            var metadata = new PlanMetadata(id, planYaml.Project ?? "", planYaml.Level ?? "NiceToHave", planYaml.Title ?? "", status, planYaml.Repos ?? new(), planYaml.Commits ?? new(), planYaml.Prs ?? new(), planYaml.Verifications ?? new(), planYaml.RelatedPlans ?? new(), planYaml.DependsOn ?? new(), planYaml.Created, planYaml.Updated, planYaml.InitialPrompt);
+            var metadata = new PlanMetadata(
+                id,
+                string.IsNullOrWhiteSpace(planYaml.Project) ? "" : planYaml.Project,
+                string.IsNullOrWhiteSpace(planYaml.Level) ? "NiceToHave" : planYaml.Level,
+                string.IsNullOrWhiteSpace(planYaml.Title) ? "" : planYaml.Title,
+                status,
+                planYaml.Repos ?? [],
+                planYaml.Commits ?? [],
+                planYaml.Prs ?? [],
+                planYaml.Verifications ?? [],
+                planYaml.RelatedPlans ?? [],
+                planYaml.DependsOn ?? [],
+                planYaml.Created,
+                planYaml.Updated,
+                planYaml.InitialPrompt
+            );
             var latestContent = ReadLatestRevisionFromFileSystem(folderName);
 
             var revisionsDir = Path.Combine(folderPath, "revisions");
@@ -1084,8 +1113,8 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
         _hourlyBurnCache.Invalidate();
         _planCountsCache.Invalidate();
 
-        // Write to disk in background for durability.
-        WriteFileInBackground(() =>
+        // Without a backing database, writes need to complete before the next read.
+        WriteFile(() =>
         {
             var recommendationsPath = Path.Combine(PlansDirectory, planFolderName, "artifacts", "recommendations.yaml");
             if (!File.Exists(recommendationsPath)) return;
@@ -1100,6 +1129,8 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             item.State = newState;
             if (newState == "Declined" && !string.IsNullOrWhiteSpace(declineReason))
                 item.DeclineReason = declineReason;
+            else
+                item.DeclineReason = null;
 
             FileHelper.WriteAllText(recommendationsPath, YamlHelper.Serializer.Serialize(items));
         });
@@ -1127,6 +1158,21 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
                 _logger.LogWarning(ex, "Background file write failed");
             }
         });
+    }
+
+    private void WriteFile(Action action)
+    {
+        if (_database == null)
+        {
+            try { action(); }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "File write failed");
+            }
+            return;
+        }
+
+        WriteFileInBackground(action);
     }
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
