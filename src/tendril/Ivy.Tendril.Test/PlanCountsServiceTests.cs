@@ -185,11 +185,11 @@ public class PlanCountsServiceTests : IDisposable
 
     private class FakePlanWatcherService : IPlanWatcherService
     {
-        public event Action? PlansChanged;
+        public event Action<string?>? PlansChanged;
 
-        public void RaisePlansChanged() => PlansChanged?.Invoke();
+        public void RaisePlansChanged() => PlansChanged?.Invoke(null);
 
-        public void NotifyChanged() => PlansChanged?.Invoke();
+        public void NotifyChanged(string? changedPlanFolder = null) => PlansChanged?.Invoke(changedPlanFolder);
 
         public void Dispose() { }
     }
