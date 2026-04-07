@@ -37,11 +37,11 @@ public class ProjectsSettingsView : ViewBase
             .Header(t => t.Index, "Actions")
             .Builder(t => t.Index, f => f.Func<ProjectRow, int>(idx =>
                 Layout.Horizontal().Gap(1)
-                    | new Button("Edit").Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Pencil).Outline().Small().OnClick(() =>
                     {
                         LoadProjectIntoEditor(projects[idx], idx);
                     })
-                    | new Button("Delete").Outline().Small().OnClick(() =>
+                    | new Button().Icon(Icons.Trash).Outline().Small().OnClick(() =>
                     {
                         deleteIndex.Set(idx);
                     })
