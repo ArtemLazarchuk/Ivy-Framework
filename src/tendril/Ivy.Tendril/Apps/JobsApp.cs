@@ -56,20 +56,20 @@ public class JobsApp : ViewBase
 
         var jobs = jobService.GetJobs();
         var rows = jobs.Select(j => new JobItemRow
-            {
-                Id = j.Id,
-                Status = j.Status,
-                PlanId = ExtractPlanId(j.PlanFile),
-                Plan = j.PlanFile,
-                Type = j.Type,
-                Project = j.Project,
-                Timer = FormatTimer(j),
-                Cost = j.Cost.HasValue ? $"${j.Cost.Value:F2}" : "",
-                Tokens = j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : "",
-                LastOutput = FormatLastOutput(j),
-                LastOutputTimestamp = j.LastOutputAt,
-                StatusMessage = j.StatusMessage ?? ""
-            })
+        {
+            Id = j.Id,
+            Status = j.Status,
+            PlanId = ExtractPlanId(j.PlanFile),
+            Plan = j.PlanFile,
+            Type = j.Type,
+            Project = j.Project,
+            Timer = FormatTimer(j),
+            Cost = j.Cost.HasValue ? $"${j.Cost.Value:F2}" : "",
+            Tokens = j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : "",
+            LastOutput = FormatLastOutput(j),
+            LastOutputTimestamp = j.LastOutputAt,
+            StatusMessage = j.StatusMessage ?? ""
+        })
             .OrderByDescending(r => r.LastOutputTimestamp ?? DateTime.MinValue)
             .ToList();
 

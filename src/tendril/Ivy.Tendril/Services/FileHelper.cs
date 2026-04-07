@@ -44,7 +44,7 @@ internal static class FileHelper
 
     public static string ReadAllText(string path)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -59,7 +59,7 @@ internal static class FileHelper
 
     public static string[] ReadAllLines(string path)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -77,7 +77,7 @@ internal static class FileHelper
 
     public static void WriteAllText(string path, string contents)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -93,7 +93,7 @@ internal static class FileHelper
 
     public static async Task<string> ReadAllTextAsync(string path)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -111,7 +111,7 @@ internal static class FileHelper
 
     public static async Task WriteAllTextAsync(string path, string contents)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -130,7 +130,7 @@ internal static class FileHelper
 
     public static void AppendAllText(string path, string contents)
     {
-        for (var attempt = 0;; attempt++)
+        for (var attempt = 0; ; attempt++)
             try
             {
                 using var stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);

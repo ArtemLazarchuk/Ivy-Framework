@@ -228,7 +228,7 @@ public class ContentView(
                         new TableCell("Status").IsHeader(),
                         new TableCell("Name").IsHeader()
                     )
-                    { IsHeader = true }
+                { IsHeader = true }
             );
             foreach (var v in _selectedPlan.Verifications)
             {
@@ -253,7 +253,7 @@ public class ContentView(
                         new TableCell("Commit").IsHeader(),
                         new TableCell("Message").IsHeader()
                     )
-                    { IsHeader = true }
+                { IsHeader = true }
             );
             foreach (var row in planData.CommitRows)
                 commitsTable |= new TableRow(
@@ -270,7 +270,7 @@ public class ContentView(
                             new TableCell("Repository").IsHeader(),
                             new TableCell("PR").IsHeader()
                         )
-                        { IsHeader = true }
+                    { IsHeader = true }
                 );
                 foreach (var pr in _selectedPlan.Prs)
                 {
@@ -298,7 +298,7 @@ public class ContentView(
                 {
                     var imageUrl = $"/ivy/local-file?path={Uri.EscapeDataString(file)}";
                     screenshotsLayout |= new Image(imageUrl)
-                            { ObjectFit = ImageFit.Contain, Alt = Path.GetFileName(file), Overlay = true }
+                    { ObjectFit = ImageFit.Contain, Alt = Path.GetFileName(file), Overlay = true }
                         .Height(Size.Units(15)).Width(Size.Units(22))
                         .BorderColor(Colors.Neutral)
                         .BorderStyle(BorderStyle.Solid)

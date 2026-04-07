@@ -196,7 +196,7 @@ public class ProjectsSettingsView : ViewBase
                                                    list.RemoveAll(v => v.Name == capturedName);
                                                else
                                                    list.Add(new ProjectVerificationRef
-                                                       { Name = capturedName, Required = false });
+                                                   { Name = capturedName, Required = false });
                                                editVerifications.Set(list);
                                            })
                                        | Text.Block(capturedName).Width(Size.Grow())
@@ -302,7 +302,7 @@ public class ProjectsSettingsView : ViewBase
                 new List<RepoRef>(project.Repos.Select(r => new RepoRef { Path = r.Path, PrRule = r.PrRule })));
             editVerifications.Set(new List<ProjectVerificationRef>(
                 project.Verifications.Select(v => new ProjectVerificationRef
-                    { Name = v.Name, Required = v.Required })));
+                { Name = v.Name, Required = v.Required })));
         }
     }
 
