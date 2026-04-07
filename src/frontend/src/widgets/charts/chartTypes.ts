@@ -117,13 +117,13 @@ export interface CartesianGridProps {
   y?: number | null;
 }
 
-export type LegendProps = {
+export interface LegendProps {
   align?: "Left" | "Center" | "Right";
   iconSize?: number;
   iconType?: string | null;
   layout?: "Horizontal" | "Vertical";
   verticalAlign?: "Top" | "Middle" | "Bottom";
-};
+}
 
 type ToolboxFeatureDataView = {
   show?: boolean;
