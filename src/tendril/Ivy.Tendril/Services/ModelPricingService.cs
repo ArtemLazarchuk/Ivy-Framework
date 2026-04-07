@@ -131,20 +131,127 @@ public class ModelPricingService : IModelPricingService
         return new CostCalculation { TotalTokens = totalTokens, TotalCost = totalCost };
     }
 
-    private static CostCalculation CalculateCodexCost(string sessionId)
+    private CostCalculation CalculateCodexCost(string sessionId)
     {
-        // Codex CLI does not yet expose session-level cost tracking files.
-        // Cost data will need to come from the OpenAI API usage endpoint once available.
-        // For now, return empty — costs will be tracked when OpenAI adds CLI usage logs.
-        return new CostCalculation();
+        var codexSessionsDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".codex", "sessions"
+        );
+
+        if (!Directory.Exists(codexSessionsDir)) return new CostCalculation();
+
+        var sessionFile = Directory.GetFiles(codexSessionsDir, "*.jsonl", SearchOption.AllDirectories)
+            .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).EndsWith(sessionId, StringComparison.OrdinalIgnoreCase));
+
+        if (sessionFile == null) return new CostCalculation();
+
+        return ParseCodexSessionFile(sessionFile);
     }
 
-    private static CostCalculation CalculateGeminiCost(string sessionId)
+    private CostCalculation CalculateGeminiCost(string sessionId)
     {
-        // Gemini CLI does not yet expose session-level cost tracking files.
-        // Cost data will need to come from GCP billing or Gemini API once available.
-        // For now, return empty — costs will be tracked when Google adds CLI usage logs.
-        return new CostCalculation();
+        var geminiDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".gemini", "tmp"
+        );
+
+        if (!Directory.Exists(geminiDir)) return new CostCalculation();
+
+        var sessionFile = Directory.GetFiles(geminiDir, "*.json", SearchOption.AllDirectories)
+            .FirstOrDefault(f => Path.GetFileName(f).Contains(sessionId, StringComparison.OrdinalIgnoreCase));
+
+        if (sessionFile == null) return new CostCalculation();
+
+        return ParseGeminiSessionFile(sessionFile);
+    }
+
+    internal CostCalculation ParseCodexSessionFile(string filePath)
+    {
+        var model = "o4-mini";
+        var totalInputTokens = 0;
+        var totalOutputTokens = 0;
+        var totalCachedTokens = 0;
+
+        foreach (var line in File.ReadLines(filePath))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(line);
+                var root = doc.RootElement;
+
+                var entryType = root.TryGetProperty("type", out var t) ? t.GetString() : null;
+
+                if (entryType == "turn_context" &&
+                    root.TryGetProperty("payload", out var turnPayload) &&
+                    turnPayload.TryGetProperty("model", out var turnModel))
+                {
+                    model = turnModel.GetString() ?? model;
+                }
+
+                if (entryType == "event_msg" &&
+                    root.TryGetProperty("payload", out var payload) &&
+                    payload.TryGetProperty("type", out var payloadType) &&
+                    payloadType.GetString() == "token_count" &&
+                    payload.TryGetProperty("info", out var info) &&
+                    info.ValueKind != System.Text.Json.JsonValueKind.Null &&
+                    info.TryGetProperty("total_token_usage", out var usage))
+                {
+                    totalInputTokens = usage.TryGetProperty("input_tokens", out var it) ? it.GetInt32() : 0;
+                    totalOutputTokens = usage.TryGetProperty("output_tokens", out var ot) ? ot.GetInt32() : 0;
+                    totalCachedTokens = usage.TryGetProperty("cached_input_tokens", out var ct) ? ct.GetInt32() : 0;
+                    var reasoningTokens = usage.TryGetProperty("reasoning_output_tokens", out var rt) ? rt.GetInt32() : 0;
+                    totalOutputTokens += reasoningTokens;
+                }
+            }
+            catch { /* Skip malformed lines */ }
+        }
+
+        var pricing = GetPricing(model);
+        var totalTokens = totalInputTokens + totalOutputTokens + totalCachedTokens;
+        var totalCost = totalInputTokens * pricing.Input * 1e-6
+                      + totalOutputTokens * pricing.Output * 1e-6
+                      + totalCachedTokens * pricing.CacheRead * 1e-6;
+
+        return new CostCalculation { TotalTokens = totalTokens, TotalCost = totalCost };
+    }
+
+    internal CostCalculation ParseGeminiSessionFile(string filePath)
+    {
+        var totalCost = 0.0;
+        var totalTokens = 0;
+
+        try
+        {
+            var json = File.ReadAllText(filePath);
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("messages", out var messages)) return new CostCalculation();
+
+            foreach (var msg in messages.EnumerateArray())
+            {
+                var msgType = msg.TryGetProperty("type", out var mt) ? mt.GetString() : null;
+                if (msgType != "gemini") continue;
+                if (!msg.TryGetProperty("tokens", out var tokens)) continue;
+
+                var model = msg.TryGetProperty("model", out var m) ? m.GetString() ?? "gemini-2.5-flash" : "gemini-2.5-flash";
+                var pricing = GetPricing(model);
+
+                var inputTokens = tokens.TryGetProperty("input", out var it) ? it.GetInt32() : 0;
+                var outputTokens = tokens.TryGetProperty("output", out var ot) ? ot.GetInt32() : 0;
+                var cachedTokens = tokens.TryGetProperty("cached", out var ct) ? ct.GetInt32() : 0;
+
+                totalTokens += inputTokens + outputTokens + cachedTokens;
+                totalCost += inputTokens * pricing.Input * 1e-6;
+                totalCost += outputTokens * pricing.Output * 1e-6;
+                totalCost += cachedTokens * pricing.CacheRead * 1e-6;
+            }
+        }
+        catch { /* Return empty on parse failure */ }
+
+        return new CostCalculation { TotalTokens = totalTokens, TotalCost = totalCost };
     }
 
     internal CostCalculation CalculateFromFile(string filePath)
