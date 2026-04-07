@@ -61,8 +61,8 @@ public class ContentView(
             openVerification.Value ?? "",
             async (name, ct) =>
             {
-                if (string.IsNullOrEmpty(name)) return "";
-                var path = Path.Combine(_selectedPlan!.FolderPath, "verification", $"{name}.md");
+                if (string.IsNullOrEmpty(name) || _selectedPlan is null) return "";
+                var path = Path.Combine(_selectedPlan.FolderPath, "verification", $"{name}.md");
                 return await Task.Run(() =>
                     File.Exists(path) ? FileHelper.ReadAllText(path) : $"No report found for {name}.", ct);
             },
