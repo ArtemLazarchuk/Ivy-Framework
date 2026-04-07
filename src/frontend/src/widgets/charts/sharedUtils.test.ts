@@ -59,6 +59,34 @@ describe("formatTickLabel - date formats", () => {
   });
 });
 
+describe("formatTickLabel - explicit kind", () => {
+  const testDate = Date.UTC(2026, 3, 7, 13, 30, 45); // 2026-04-07T13:30:45Z
+
+  it('treats "#,##0,,M" as number when kind is "Number"', () => {
+    expect(formatTickLabel(1000000, "#,##0,,M", "Number")).toBe("1M");
+  });
+
+  it('formats date explicitly when kind is "Date"', () => {
+    expect(formatTickLabel(testDate, "MM/dd HH", "Date")).toBe("04/07 13");
+  });
+
+  it('formats date via heuristic when kind is "Auto"', () => {
+    expect(formatTickLabel(testDate, "MM/dd HH", "Auto")).toBe("04/07 13");
+  });
+
+  it('formats number explicitly when kind is "Number"', () => {
+    expect(formatTickLabel(42.123, "N2", "Number")).toBe("42.12");
+  });
+
+  it("falls back to Auto behavior when kind is null", () => {
+    expect(formatTickLabel(5000000, "#,##0,,M", null)).toBe("5M");
+  });
+
+  it("falls back to Auto behavior when kind is undefined", () => {
+    expect(formatTickLabel(5000000, "#,##0,,M")).toBe("5M");
+  });
+});
+
 describe("generateYAxis", () => {
   describe("multi-axis charts skip largeSpread", () => {
     const multiYAxis = [

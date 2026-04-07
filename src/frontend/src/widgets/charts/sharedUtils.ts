@@ -70,13 +70,7 @@ export const getAxisDomainBound = (
   };
 };
 
-export const formatTickLabel = (
-  value: number | string,
-  formatter?: string | null,
-  timeZone?: string | null,
-) => {
-  if (!formatter) return String(value);
-
+const formatAsNumber = (value: number | string, formatter: string): string | null => {
   if (formatter.startsWith("C")) {
     const parts = formatter.split(":");
     const currency = parts.length > 1 ? parts[1] : "USD";
@@ -106,18 +100,52 @@ export const formatTickLabel = (
   if (formatter === "#,##0,K") {
     return (Number(value) / 1000).toFixed(0) + "K";
   }
-  if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
-    try {
-      const tz =
-        timeZone === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone : timeZone || "UTC";
-      const date = new TZDate(new Date(value), tz);
-      if (!isNaN(date.getTime())) {
-        return dateFnsFormat(date, formatter);
-      }
-    } catch {
-      // Fall through to String(value)
+  return null;
+};
+
+const formatAsDate = (
+  value: number | string,
+  formatter: string,
+  timeZone?: string | null,
+): string | null => {
+  try {
+    const tz =
+      timeZone === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone : timeZone || "UTC";
+    const date = new TZDate(new Date(value), tz);
+    if (!isNaN(date.getTime())) {
+      return dateFnsFormat(date, formatter);
     }
+  } catch {
+    // Fall through
   }
+  return null;
+};
+
+export const formatTickLabel = (
+  value: number | string,
+  formatter?: string | null,
+  kind?: "Auto" | "Number" | "Date" | null,
+  timeZone?: string | null,
+) => {
+  if (!formatter) return String(value);
+
+  if (kind === "Number") {
+    return formatAsNumber(value, formatter) ?? String(value);
+  }
+
+  if (kind === "Date") {
+    return formatAsDate(value, formatter, timeZone) ?? String(value);
+  }
+
+  // Auto or unspecified: use heuristic (check numeric first, then date regex)
+  const numResult = formatAsNumber(value, formatter);
+  if (numResult !== null) return numResult;
+
+  if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
+    const dateResult = formatAsDate(value, formatter, timeZone);
+    if (dateResult !== null) return dateResult;
+  }
+
   return String(value);
 };
 
@@ -372,7 +400,7 @@ export const generateXAxis = (
       formatter: isVertical
         ? (value: string | number) => {
             const formatted = axis.tickFormatter
-              ? formatTickLabel(value, axis.tickFormatter, axis.timeZone)
+              ? formatTickLabel(value, axis.tickFormatter, axis.tickFormatterKind, axis.timeZone)
               : String(value).length > 10
                 ? String(value)
                     .match(/.{1,10}/g)
@@ -383,7 +411,12 @@ export const generateXAxis = (
         : (value: number | string) => {
             let formatted: string;
             if (axis.tickFormatter) {
-              formatted = formatTickLabel(value, axis.tickFormatter, axis.timeZone);
+              formatted = formatTickLabel(
+                value,
+                axis.tickFormatter,
+                axis.tickFormatterKind,
+                axis.timeZone,
+              );
             } else {
               const numVal = Number(value);
               if (Math.abs(numVal) >= 1e9) formatted = (numVal / 1e9).toFixed(0) + "B";
@@ -466,7 +499,12 @@ export const generateYAxis = (
         formatter: (value: number) => {
           let formatted: string | number;
           if (axis.tickFormatter) {
-            formatted = formatTickLabel(value, axis.tickFormatter, axis.timeZone);
+            formatted = formatTickLabel(
+              value,
+              axis.tickFormatter,
+              axis.tickFormatterKind,
+              axis.timeZone,
+            );
           } else if (effectiveLargeSpread) {
             const unscaled = Math.sign(value) * (10 ** Math.abs(value) - 1);
             if (Math.abs(unscaled) >= 1e9) formatted = (unscaled / 1e9).toFixed(0) + "B";

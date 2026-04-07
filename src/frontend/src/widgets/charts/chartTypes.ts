@@ -73,6 +73,7 @@ export interface YAxisProps {
   hideTickLabels?: boolean;
   tickFormatter?: string | null;
   timeZone?: string | null;
+  tickFormatterKind?: "Auto" | "Number" | "Date" | null;
 }
 
 export interface XAxisProps {
@@ -102,6 +103,7 @@ export interface XAxisProps {
   hideTickLabels?: boolean;
   tickFormatter?: string | null;
   timeZone?: string | null;
+  tickFormatterKind?: "Auto" | "Number" | "Date" | null;
 }
 
 export interface CartesianGridProps {
