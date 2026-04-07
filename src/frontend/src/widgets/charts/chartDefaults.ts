@@ -50,7 +50,7 @@ export const PIE_DEFAULTS: Partial<PieProps> = {
 };
 
 // CartesianGrid defaults (CartesianGrid.cs)
-export const CARTESIAN_GRID_DEFAULTS: Partial<CartesianGridProps> = {
+export const CARTESIAN_GRID_DEFAULTS: CartesianGridProps = {
   horizontal: true,
   vertical: true,
 };
