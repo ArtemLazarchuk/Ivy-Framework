@@ -70,7 +70,7 @@ export const getAxisDomainBound = (
   };
 };
 
-export const formatTickLabel = (value: number | string, formatter?: string | null) => {
+export const formatTickLabel = (value: number | string, formatter?: string | null, timeZone?: string | null) => {
   if (!formatter) return String(value);
 
   if (formatter.startsWith("C")) {
@@ -104,7 +104,8 @@ export const formatTickLabel = (value: number | string, formatter?: string | nul
   }
   if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
     try {
-      const date = new TZDate(new Date(value), "UTC");
+      const tz = timeZone === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone : (timeZone || "UTC");
+      const date = new TZDate(new Date(value), tz);
       if (!isNaN(date.getTime())) {
         return dateFnsFormat(date, formatter);
       }
@@ -366,7 +367,7 @@ export const generateXAxis = (
       formatter: isVertical
         ? (value: string | number) => {
             const formatted = axis.tickFormatter
-              ? formatTickLabel(value, axis.tickFormatter)
+              ? formatTickLabel(value, axis.tickFormatter, axis.timeZone)
               : String(value).length > 10
                 ? String(value)
                     .match(/.{1,10}/g)
@@ -377,7 +378,7 @@ export const generateXAxis = (
         : (value: number | string) => {
             let formatted: string;
             if (axis.tickFormatter) {
-              formatted = formatTickLabel(value, axis.tickFormatter);
+              formatted = formatTickLabel(value, axis.tickFormatter, axis.timeZone);
             } else {
               const numVal = Number(value);
               if (Math.abs(numVal) >= 1e9) formatted = (numVal / 1e9).toFixed(0) + "B";
@@ -460,7 +461,7 @@ export const generateYAxis = (
         formatter: (value: number) => {
           let formatted: string | number;
           if (axis.tickFormatter) {
-            formatted = formatTickLabel(value, axis.tickFormatter);
+            formatted = formatTickLabel(value, axis.tickFormatter, axis.timeZone);
           } else if (effectiveLargeSpread) {
             const unscaled = Math.sign(value) * (10 ** Math.abs(value) - 1);
             if (Math.abs(unscaled) >= 1e9) formatted = (unscaled / 1e9).toFixed(0) + "B";

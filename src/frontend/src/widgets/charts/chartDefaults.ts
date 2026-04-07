@@ -109,6 +109,7 @@ export const X_AXIS_DEFAULTS: Partial<XAxisProps> = {
   hide: false,
   hideTickLabels: false,
   tickFormatter: undefined,
+  timeZone: undefined,
   height: 30,
   orientation: "Bottom",
 };
@@ -134,6 +135,7 @@ export const Y_AXIS_DEFAULTS: YAxisProps = {
   hide: false,
   hideTickLabels: false,
   tickFormatter: undefined,
+  timeZone: undefined,
   width: 60,
   orientation: "Left",
 };

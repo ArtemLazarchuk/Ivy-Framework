@@ -41,6 +41,22 @@ describe("formatTickLabel - date formats", () => {
   it('does not interfere with "#,##0,K" number format', () => {
     expect(formatTickLabel(5000, "#,##0,K")).toBe("5K");
   });
+
+  it("with explicit UTC timeZone produces same result as no timeZone", () => {
+    expect(formatTickLabel(testDate, "MM/dd HH", "UTC")).toBe(
+      formatTickLabel(testDate, "MM/dd HH"),
+    );
+  });
+
+  it('with timeZone "local" produces a valid formatted string', () => {
+    const result = formatTickLabel(testDate, "MM/dd HH", "local");
+    expect(result).toMatch(/^\d{2}\/\d{2} \d{2}$/);
+  });
+
+  it('with explicit IANA timezone "America/New_York" formats correctly', () => {
+    // 2026-04-07T13:30:45Z in America/New_York (UTC-4 in April) = 09:30
+    expect(formatTickLabel(testDate, "MM/dd HH", "America/New_York")).toBe("04/07 09");
+  });
 });
 
 describe("generateYAxis", () => {
