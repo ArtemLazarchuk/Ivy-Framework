@@ -74,8 +74,12 @@ public class ContentView(
             async (filePath, ct) =>
             {
                 if (string.IsNullOrEmpty(filePath)) return "";
+                var artifactsDir = Path.GetFullPath(Path.Combine(_selectedPlan!.FolderPath, "artifacts"));
+                var resolvedPath = Path.GetFullPath(filePath);
+                if (!resolvedPath.StartsWith(artifactsDir, StringComparison.OrdinalIgnoreCase))
+                    return "Access denied: file is outside the artifacts folder.";
                 return await Task.Run(() =>
-                    File.Exists(filePath) ? FileHelper.ReadAllText(filePath) : "File not found.", ct);
+                    File.Exists(resolvedPath) ? FileHelper.ReadAllText(resolvedPath) : "File not found.", ct);
             },
             initialValue: ""
         );
@@ -543,6 +547,13 @@ public class ContentView(
                 content
             ).Size(Size.Full())
         ).Scroll(Scroll.None).Size(Size.Full()).Key(_selectedPlan.Id);
+    }
+
+    internal static bool ValidateArtifactPath(string filePath, string planFolderPath)
+    {
+        var artifactsDir = Path.GetFullPath(Path.Combine(planFolderPath, "artifacts"));
+        var resolvedPath = Path.GetFullPath(filePath);
+        return resolvedPath.StartsWith(artifactsDir, StringComparison.OrdinalIgnoreCase);
     }
 
     private static Dictionary<string, List<string>> GetArtifacts(string folderPath)
