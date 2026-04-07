@@ -89,7 +89,7 @@ export const TOOLBOX_DEFAULTS: Partial<ToolboxProps> = {
 };
 
 // XAxis defaults (Axis.cs)
-export const X_AXIS_DEFAULTS: Partial<XAxisProps> = {
+export const X_AXIS_DEFAULTS: XAxisProps = {
   type: "Category",
   scale: "Auto",
   allowDecimals: true,

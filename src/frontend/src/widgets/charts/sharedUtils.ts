@@ -341,7 +341,7 @@ export const generateXAxis = (
   themeColors?: { mutedForeground: string; fontSans: string },
   cartesianGrid?: CartesianGridProps,
 ) => {
-  const axis = xAxis?.[0] || ({} as Partial<XAxisProps>);
+  const axis = xAxis?.[0] || ({} as XAxisProps);
   const allowDataOverflow = axis.allowDataOverflow ?? false;
 
   const minOpt = getAxisDomainBound("min", axis.domainMin, allowDataOverflow);
