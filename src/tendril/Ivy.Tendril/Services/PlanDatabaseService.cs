@@ -226,9 +226,7 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
             LatestContent: reader.GetString(o.LatestContent),
             Created: reader.GetString(o.Created),
             Updated: reader.GetString(o.Updated),
-            InitialPrompt: reader.IsDBNull(o.InitialPrompt)
-                ? null
-                : reader.GetString(o.InitialPrompt)
+            InitialPrompt: reader.GetStringOrNull(o.InitialPrompt)
         );
     }
 
@@ -523,7 +521,7 @@ public class PlanDatabaseService : IPlanDatabaseService, IDisposable
                     Project: reader.GetString(projectOrdinal),
                     Date: DateTime.Parse(reader.GetString(dateOrdinal), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
                     SourcePlanStatus: sourceStatus,
-                    DeclineReason: reader.IsDBNull(declineReasonOrdinal) ? null : reader.GetString(declineReasonOrdinal)
+                    DeclineReason: reader.GetStringOrNull(declineReasonOrdinal)
                 ));
             }
 
