@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { parseDiff, Diff, Hunk, type ChangeData } from "react-diff-view";
 import "react-diff-view/style/index.css";
+import "./custom-diff.css";
 import type { EventHandler } from "./types";
 import { getWidth, getHeight } from "./styles";
 
