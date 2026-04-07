@@ -361,6 +361,7 @@ export const generateXAxis = (
   const maxOpt = getAxisDomainBound("max", axis.domainMax, allowDataOverflow);
 
   return {
+    show: !axis.hide,
     position: axis.orientation?.toLowerCase() === "top" ? "top" : "bottom",
     type: isVertical ? "category" : "value",
     boundaryGap: chartType === "bar" ? true : false,
