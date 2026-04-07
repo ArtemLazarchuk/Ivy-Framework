@@ -42,13 +42,6 @@ public enum AxisDomain
     DataMax
 }
 
-public enum TickFormatterType
-{
-    Auto,
-    Number,
-    Date
-}
-
 public record AxisDomainValue
 {
     public AxisDomain? Symbol { get; init; }
