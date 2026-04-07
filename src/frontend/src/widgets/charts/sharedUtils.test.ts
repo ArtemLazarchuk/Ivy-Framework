@@ -215,7 +215,7 @@ describe("generateYAxis", () => {
 
 describe("generateXAxis", () => {
   const callGenerateXAxis = (axisProps: XAxisProps) =>
-    generateXAxis("line", ["A", "B", "C"], [axisProps as XAxisProps]);
+    generateXAxis("line", ["A", "B", "C"], [axisProps]);
 
   it("should return show: false when hide is true", () => {
     const result = callGenerateXAxis({ hide: true });
