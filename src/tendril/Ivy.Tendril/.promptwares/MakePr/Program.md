@@ -101,6 +101,33 @@ If no custom options or `comment` is empty, skip this step.
 - If `merge` is `true` but `deleteBranch` is `false`: merge without `--delete-branch` flag
 - If all flags are `true`: behave exactly like `yolo`
 
+**Merge conflict guard (applies to ALL merge paths below):**
+
+Before calling `gh pr merge`, check for merge conflicts:
+
+```bash
+# Poll mergeability (GitHub computes it asynchronously)
+for i in $(seq 1 6); do
+  MERGEABLE=$(gh pr view <pr-number> --repo <owner/repo> --json mergeable -q '.mergeable')
+  if [[ "$MERGEABLE" != "UNKNOWN" ]]; then break; fi
+  sleep 5
+done
+
+# Abort if conflicts or unknown
+if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
+  echo "ERROR: PR #<pr-number> has merge conflicts or mergeability is unknown (status: $MERGEABLE). Cannot merge."
+  exit 1
+fi
+```
+
+If the check fails, do NOT merge. Leave the PR open and fail the MakePr execution so the plan can be retried after conflict resolution.
+
+| Mergeable status | Action |
+|---|---|
+| `MERGEABLE` | Proceed with merge |
+| `CONFLICTING` | Fail with error, PR stays open |
+| `UNKNOWN` (after 30s timeout) | Fail conservatively |
+
 **If `yolo` (and no custom options overriding):**
 ```bash
 gh pr merge <pr-number> --repo <owner/repo> --merge --delete-branch --admin
