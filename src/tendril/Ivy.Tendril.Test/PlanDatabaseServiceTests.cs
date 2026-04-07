@@ -2,6 +2,8 @@ using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ivy.Tendril.Test;
 
@@ -13,7 +15,7 @@ public class PlanDatabaseServiceTests : IDisposable
     public PlanDatabaseServiceTests()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"tendril-test-{Guid.NewGuid()}.db");
-        _db = new PlanDatabaseService(_dbPath);
+        _db = new PlanDatabaseService(_dbPath, NullLogger<PlanDatabaseService>.Instance);
     }
 
     public void Dispose()
@@ -383,7 +385,7 @@ public class PlanDatabaseServiceTests : IDisposable
             File.WriteAllBytes(corruptDbPath, new byte[] { 0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD });
 
             // Constructor should detect corruption and recreate the database
-            using var db = new PlanDatabaseService(corruptDbPath);
+            using var db = new PlanDatabaseService(corruptDbPath, NullLogger<PlanDatabaseService>.Instance);
 
             // Verify the service initialized successfully — tables exist and we can query
             var plans = db.GetPlans();

@@ -3,6 +3,7 @@ using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Database;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace Ivy.Tendril.Services;
 
@@ -15,10 +16,12 @@ public class PlanDatabaseService : IPlanDatabaseService
     };
 
     private readonly SqliteConnection _connection;
+    private readonly ILogger<PlanDatabaseService> _logger;
     private readonly object _lock = new();
 
-    public PlanDatabaseService(string databasePath)
+    public PlanDatabaseService(string databasePath, ILogger<PlanDatabaseService> logger)
     {
+        _logger = logger;
         _connection = new SqliteConnection($"Data Source={databasePath};Mode=ReadWriteCreate");
         _connection.Open();
 
@@ -38,7 +41,7 @@ public class PlanDatabaseService : IPlanDatabaseService
 
         if (isCorrupted)
         {
-            // Corruption detected - release file handles and delete the database
+            _logger.LogWarning("Database corruption detected, recreating: {Path}", databasePath);
             SqliteConnection.ClearPool(_connection);
             _connection.Dispose();
             File.Delete(databasePath);
@@ -58,6 +61,7 @@ public class PlanDatabaseService : IPlanDatabaseService
 
         var migrator = new DatabaseMigrator(_connection);
         migrator.ApplyMigrations();
+        _logger.LogInformation("Database migrations applied");
     }
 
     public List<PlanFile> GetPlans(PlanStatus? statusFilter = null)
