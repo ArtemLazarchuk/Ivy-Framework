@@ -25,6 +25,8 @@ public class PullRequestApp : ViewBase
         {
             var costValue = planService.GetPlanTotalCost(plan.FolderPath);
             var cost = costValue > 0 ? $"${costValue:F2}" : "";
+            var tokenValue = planService.GetPlanTotalTokens(plan.FolderPath);
+            var tokens = tokenValue > 0 ? FormatHelper.FormatTokens(tokenValue) : "";
             return plan.Prs.Select((pr, i) => new PrRow
             {
                 Id = $"{plan.Id}-{i}",
@@ -33,6 +35,7 @@ public class PullRequestApp : ViewBase
                 Pr = pr,
                 Plan = $"#{plan.Id:D5} {plan.Title}",
                 Cost = cost,
+                Tokens = tokens,
                 PlanFolderPath = plan.FolderPath
             });
         }).ToList();
@@ -44,12 +47,14 @@ public class PullRequestApp : ViewBase
             .Height(Size.Full())
             .Header(t => t.Repository, "Repository")
             .Header(t => t.Cost, "Cost")
+            .Header(t => t.Tokens, "Tokens")
             .Header(t => t.Pr, "PR")
             .Header(t => t.Plan, "Plan")
             .Width(t => t.Repository, Size.Fraction(1 / 3f))
             .Width(t => t.Pr, Size.Fraction(1 / 3f))
             .Width(t => t.Plan, Size.Fraction(1 / 3f))
             .Width(t => t.Cost, Size.Px(90))
+            .Width(t => t.Tokens, Size.Px(90))
             .Renderer(t => t.Plan, new LinkDisplayRenderer())
             .Renderer(t => t.Pr, new LinkDisplayRenderer())
             .SortDirection(t => t.PlanId, SortDirection.Descending)
