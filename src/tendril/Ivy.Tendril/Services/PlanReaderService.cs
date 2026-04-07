@@ -211,7 +211,121 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             @"(?m)^(\s*)(repos|commits|prs|verifications|relatedPlans|dependsOn):\s*\r?\n(?!\s*-)",
             "$1$2: []\n");
 
-        return repaired;
+        return NormalizePlanYamlStructure(repaired);
+    }
+
+    private static string NormalizePlanYamlStructure(string yaml)
+    {
+        var topLevelKeys = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "state", "project", "level", "title", "sessionId",
+            "repos", "created", "updated", "initialPrompt",
+            "prs", "commits", "verifications", "relatedPlans", "dependsOn"
+        };
+        var listKeys = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "repos", "prs", "commits", "verifications", "relatedPlans", "dependsOn"
+        };
+
+        var normalized = yaml.Replace("\r\n", "\n");
+        var lines = normalized.Split('\n');
+        var output = new List<string>(lines.Length);
+        string? currentListKey = null;
+        var inVerificationItem = false;
+        var inBlockScalar = false;
+        string? currentBlockScalarKey = null;
+
+        static bool IsBlockScalarValue(string value)
+            => value is "|" or "|-" or ">" or ">-";
+
+        string? TryExtractTopLevelKey(string trimmedLine, out string normalizedLine)
+        {
+            normalizedLine = trimmedLine;
+
+            var keyMatch = Regex.Match(trimmedLine, @"^([A-Za-z][A-Za-z0-9]*):");
+            if (keyMatch.Success && topLevelKeys.Contains(keyMatch.Groups[1].Value))
+                return keyMatch.Groups[1].Value;
+
+            var quotedMatch = Regex.Match(trimmedLine, @"^'([A-Za-z][A-Za-z0-9]*):\s*(.*)'$");
+            if (!quotedMatch.Success || !topLevelKeys.Contains(quotedMatch.Groups[1].Value))
+                return null;
+
+            var key = quotedMatch.Groups[1].Value;
+            var value = quotedMatch.Groups[2].Value.Replace("''", "'");
+            normalizedLine = $"{key}: {value}".TrimEnd();
+            return key;
+        }
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.TrimEnd('\r');
+            var trimmed = line.TrimStart();
+
+            if (trimmed.Length == 0)
+            {
+                output.Add(inBlockScalar ? "  " : string.Empty);
+                continue;
+            }
+
+            var detectedKey = TryExtractTopLevelKey(trimmed, out var normalizedTopLevelLine);
+            if (inBlockScalar && detectedKey == null)
+            {
+                output.Add($"  {line}");
+                continue;
+            }
+
+            if (detectedKey != null)
+            {
+                var key = detectedKey;
+                currentListKey = listKeys.Contains(key) ? key : null;
+                inVerificationItem = false;
+                inBlockScalar = false;
+                currentBlockScalarKey = null;
+
+                if (currentListKey != null && Regex.IsMatch(normalizedTopLevelLine, @"^[A-Za-z][A-Za-z0-9]*:\s*\[\]\s*$"))
+                    output.Add($"{key}:");
+                else
+                    output.Add(normalizedTopLevelLine);
+
+                var scalarValue = normalizedTopLevelLine[(key.Length + 1)..].Trim();
+                if (IsBlockScalarValue(scalarValue))
+                {
+                    inBlockScalar = true;
+                    currentBlockScalarKey = key;
+                }
+
+                continue;
+            }
+
+            if (inBlockScalar)
+            {
+                output.Add($"  {line}");
+                continue;
+            }
+
+            if (currentListKey != null)
+            {
+                if (trimmed.StartsWith("-"))
+                {
+                    output.Add($"  {trimmed}");
+                    inVerificationItem = currentListKey == "verifications";
+                }
+                else if (currentListKey == "verifications" && inVerificationItem)
+                {
+                    output.Add($"    {trimmed}");
+                }
+                else
+                {
+                    output.Add($"  {trimmed}");
+                }
+
+                continue;
+            }
+
+            output.Add(trimmed);
+        }
+
+        return string.Join(Environment.NewLine, output);
     }
 
     /// <summary>
