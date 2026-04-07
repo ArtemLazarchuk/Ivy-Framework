@@ -111,30 +111,32 @@ public class PlanCountsServiceTests : IDisposable
         AddJob("job-1", JobStatus.Running);
         AddJob("job-2", JobStatus.Queued);
         AddJob("job-3", JobStatus.Completed); // should not count as active
+        AddJob("job-4", JobStatus.Blocked);   // should count as active
 
         using var service = CreateService();
 
         Assert.Equal(2, service.Current.Drafts);
-        Assert.Equal(2, service.Current.ActiveJobs);
+        Assert.Equal(3, service.Current.ActiveJobs);
         Assert.Equal(2, service.Current.Reviews); // 1 ReadyForReview + 1 Failed
         Assert.Equal(1, service.Current.Icebox);
         Assert.Equal(1, service.Current.Recommendations);
     }
 
     [Fact]
-    public void ComputeCounts_WithRunningAndQueuedJobs_CountsActiveJobs()
+    public void ComputeCounts_WithRunningQueuedAndBlockedJobs_CountsActiveJobs()
     {
         AddJob("job-running-1", JobStatus.Running);
         AddJob("job-running-2", JobStatus.Running);
         AddJob("job-queued-1", JobStatus.Queued);
+        AddJob("job-blocked-1", JobStatus.Blocked);
         AddJob("job-completed-1", JobStatus.Completed);
         AddJob("job-failed-1", JobStatus.Failed);
         AddJob("job-pending-1", JobStatus.Pending);
 
         using var service = CreateService();
 
-        // Only Running + Queued count as active
-        Assert.Equal(3, service.Current.ActiveJobs);
+        // Running + Queued + Blocked count as active
+        Assert.Equal(4, service.Current.ActiveJobs);
     }
 
     [Fact]

@@ -50,7 +50,7 @@ public class PlanCountsService : IPlanCountsService, IDisposable
 
         return new PlanCounts(
             Drafts: snapshot.Drafts,
-            ActiveJobs: jobs.Count(j => j.Status == JobStatus.Running || j.Status == JobStatus.Queued),
+            ActiveJobs: jobs.Count(j => j.Status is JobStatus.Running or JobStatus.Queued or JobStatus.Blocked),
             Reviews: snapshot.ReadyForReview + snapshot.Failed,
             Icebox: snapshot.Icebox,
             Recommendations: snapshot.PendingRecommendations
