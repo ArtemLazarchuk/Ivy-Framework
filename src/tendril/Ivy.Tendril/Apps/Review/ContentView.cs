@@ -57,6 +57,29 @@ public class ContentView(
         );
         var selectedTab = UseState(0);
 
+        var verificationReportQuery = UseQuery<string, string>(
+            openVerification.Value ?? "",
+            async (name, ct) =>
+            {
+                if (string.IsNullOrEmpty(name)) return "";
+                var path = Path.Combine(_selectedPlan!.FolderPath, "verification", $"{name}.md");
+                return await Task.Run(() =>
+                    File.Exists(path) ? FileHelper.ReadAllText(path) : $"No report found for {name}.", ct);
+            },
+            initialValue: ""
+        );
+
+        var artifactContentQuery = UseQuery<string, string>(
+            openArtifact.Value ?? "",
+            async (filePath, ct) =>
+            {
+                if (string.IsNullOrEmpty(filePath)) return "";
+                return await Task.Run(() =>
+                    File.Exists(filePath) ? FileHelper.ReadAllText(filePath) : "File not found.", ct);
+            },
+            initialValue: ""
+        );
+
         var planContentQuery = UseQuery<PlanContentData, string>(
             _selectedPlan?.FolderPath ?? "",
             async (folderPath, ct) =>
@@ -354,13 +377,11 @@ public class ContentView(
         // Sheet modals (outside TabsLayout so they render as overlays)
         if (openVerification.Value is { } verName)
         {
-            var reportPath = Path.Combine(_selectedPlan.FolderPath, "verification", $"{verName}.md");
-            var reportContent = File.Exists(reportPath)
-                ? FileHelper.ReadAllText(reportPath)
-                : $"No report found for {verName}.";
             content |= new Sheet(
                 onClose: () => openVerification.Set(null),
-                content: new Markdown(reportContent).DangerouslyAllowLocalFiles(),
+                content: verificationReportQuery.Loading
+                    ? (object)Text.Muted("Loading...")
+                    : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
                 title: verName
             ).Width(Size.Half()).Resizable();
         }
@@ -420,13 +441,12 @@ public class ContentView(
 
         if (openArtifact.Value is { } artifactPath)
         {
-            var fileContent = File.Exists(artifactPath) ? FileHelper.ReadAllText(artifactPath) : "File not found.";
             var language = FileApp.GetLanguage(Path.GetExtension(artifactPath));
-            var artifactSheetContent = new Markdown($"```{language.ToString().ToLowerInvariant()}\n{fileContent}\n```");
-
             content |= new Sheet(
                 onClose: () => openArtifact.Set(null),
-                content: artifactSheetContent,
+                content: artifactContentQuery.Loading
+                    ? (object)Text.Muted("Loading...")
+                    : new Markdown($"```{language.ToString().ToLowerInvariant()}\n{artifactContentQuery.Value}\n```"),
                 title: Path.GetFileName(artifactPath)
             ).Width(Size.Half()).Resizable();
         }
