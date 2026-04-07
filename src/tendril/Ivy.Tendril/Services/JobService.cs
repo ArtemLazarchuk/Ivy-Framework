@@ -545,7 +545,10 @@ public class JobService : IJobService
         else if (isSuccess && job.Type == "ExecutePlan")
             EnsurePlanStateTransitioned(job);
         else if (isSuccess && job.Type == "CreateIssue")
+        {
             SetPlanState(job, "Completed");
+            RetryBlockedDependents(job.Args.Length > 0 ? job.Args[0] : "");
+        }
         else if (isSuccess && job.Type == "MakePlan")
         {
             VerifyMakePlanResult(job);
@@ -569,6 +572,7 @@ public class JobService : IJobService
         {
             _telemetryService?.TrackPrCreated(new PrCreatedContext(
                 DurationSeconds: job.DurationSeconds));
+            RetryBlockedDependents(job.Args.Length > 0 ? job.Args[0] : "");
         }
 
         _telemetryService?.TrackJobCompleted(job.Type, job.Status, job.DurationSeconds);
@@ -1000,6 +1004,31 @@ public class JobService : IJobService
         {
             return (false, $"Dependency check failed: {ex.Message}");
         }
+    }
+
+    private void RetryBlockedDependents(string completedPlanFolder)
+    {
+        try
+        {
+            var completedFolderName = Path.GetFileName(completedPlanFolder);
+            var plansDir = _planReaderService?.PlansDirectory;
+            if (string.IsNullOrEmpty(plansDir) || !Directory.Exists(plansDir)) return;
+
+            foreach (var dir in Directory.GetDirectories(plansDir))
+            {
+                var planYaml = ReadPlanYaml(dir);
+                if (planYaml == null) continue;
+                if (!planYaml.State.Equals("Draft", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!planYaml.DependsOn.Contains(completedFolderName, StringComparer.OrdinalIgnoreCase)) continue;
+
+                var (allMet, _) = CheckDependencies(dir);
+                if (allMet)
+                {
+                    StartJob("ExecutePlan", dir);
+                }
+            }
+        }
+        catch { /* Don't let auto-retry failures crash job completion */ }
     }
 
     /// <summary>
