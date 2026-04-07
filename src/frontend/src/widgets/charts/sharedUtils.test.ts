@@ -142,8 +142,12 @@ describe("generateYAxis", () => {
 
   describe("new AxisBase properties", () => {
     // Single-element yAxis returns a single object, not an array
-    const callSingleYAxis = (props: Partial<YAxisProps>) =>
-      generateYAxis(false, undefined, 0, 100, [props as YAxisProps]) as Record<string, unknown>;
+    // Use `unknown` cast because YAxisProps types some fields as `null` instead of `string | null`
+    const callSingleYAxis = (props: Record<string, unknown>) =>
+      generateYAxis(false, undefined, 0, 100, [props as unknown as YAxisProps]) as Record<
+        string,
+        unknown
+      >;
 
     it("should return inverse: true when reversed is set", () => {
       const axis = callSingleYAxis({ reversed: true });
