@@ -113,7 +113,7 @@ const generateScatterXAxis = (
 };
 
 const generateScatterYAxis = (
-  yAxis?: Array<Partial<YAxisProps>>,
+  yAxis?: YAxisProps[],
   themeColors?: { mutedForeground: string; fontSans: string },
 ) => {
   const axisConfig = yAxis?.[0] || {};

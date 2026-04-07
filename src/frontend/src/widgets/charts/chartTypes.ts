@@ -46,33 +46,33 @@ export interface PieChartWidgetProps {
   toolbox?: ToolboxProps;
 }
 
-export type YAxisProps = {
-  allowDataOverflow: boolean;
-  allowDecimals: boolean;
-  allowDuplicatedCategory: boolean;
-  angle: number;
-  axisLine: boolean;
-  dataKey: string;
+export interface YAxisProps {
+  allowDataOverflow?: boolean;
+  allowDecimals?: boolean;
+  allowDuplicatedCategory?: boolean;
+  angle?: number;
+  axisLine?: boolean;
+  dataKey?: string;
   domainMin?: number | string | { value: number | string };
   domainMax?: number | string | { value: number | string };
-  hide: boolean;
-  includeHidden: boolean;
-  label: null;
-  minTickGap: number;
-  mirror: boolean;
-  name: null;
-  orientation: string;
-  reversed: boolean;
-  scale: string;
-  tickCount: number;
-  tickLine: boolean;
-  tickSize: number;
-  type: string;
-  unit: null;
-  width: number;
+  hide?: boolean;
+  includeHidden?: boolean;
+  label?: string | null;
+  minTickGap?: number;
+  mirror?: boolean;
+  name?: string | null;
+  orientation?: "Left" | "Right";
+  reversed?: boolean;
+  scale?: "Auto" | "Linear" | "Log" | "Time" | "Ordinal";
+  tickCount?: number;
+  tickLine?: boolean;
+  tickSize?: number;
+  type?: "Category" | "Number" | "Time";
+  unit?: string | null;
+  width?: number;
   hideTickLabels?: boolean;
   tickFormatter?: string | null;
-};
+}
 
 export interface XAxisProps {
   allowDataOverflow?: boolean;

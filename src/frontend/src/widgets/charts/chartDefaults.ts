@@ -114,7 +114,7 @@ export const X_AXIS_DEFAULTS: Partial<XAxisProps> = {
 };
 
 // YAxis defaults (Axis.cs)
-export const Y_AXIS_DEFAULTS: Partial<YAxisProps> = {
+export const Y_AXIS_DEFAULTS: YAxisProps = {
   type: "Number",
   scale: "Auto",
   allowDecimals: true,

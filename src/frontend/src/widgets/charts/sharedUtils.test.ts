@@ -48,7 +48,7 @@ describe("generateYAxis", () => {
     const multiYAxis = [
       { label: "Cost ($)", tickFormatter: "C2" },
       { label: "Tokens", orientation: "Right" },
-    ] as unknown as YAxisProps[];
+    ] as YAxisProps[];
 
     it("should not apply largeSpread min/max overrides when multiple Y-axes are configured", () => {
       const result = generateYAxis(

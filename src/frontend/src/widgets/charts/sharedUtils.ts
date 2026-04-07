@@ -431,7 +431,7 @@ export const generateYAxis = (
 ) => {
   const safeTransform = transformValue ?? ((v: number) => v);
 
-  const buildAxisConfig = (axis: Partial<YAxisProps>, skipLargeSpread: boolean = false) => {
+  const buildAxisConfig = (axis: YAxisProps, skipLargeSpread: boolean = false) => {
     const effectiveLargeSpread = largeSpread && !skipLargeSpread;
     const allowDataOverflow = axis.allowDataOverflow ?? false;
 
@@ -513,7 +513,7 @@ export const generateYAxis = (
     return yAxis.map((axis) => buildAxisConfig(axis, /* skipLargeSpread: */ true));
   }
 
-  return buildAxisConfig(yAxis?.[0] || ({} as Partial<YAxisProps>));
+  return buildAxisConfig(yAxis?.[0] || ({} as YAxisProps));
 };
 
 export const generateTooltip = (
