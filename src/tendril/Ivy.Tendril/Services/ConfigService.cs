@@ -86,7 +86,6 @@ public record LlmConfig
 public class TendrilSettings
 {
     public string CodingAgent { get; set; } = "claude";
-    public string AgentCommand { get; set; } = "claude";
     public int JobTimeout { get; set; } = 30;
     public int StaleOutputTimeout { get; set; } = 10;
     public int MaxConcurrentJobs { get; set; } = 5;
@@ -358,9 +357,8 @@ public class ConfigService : IConfigService
     {
         if (_settings == null) return;
 
-        // Expand coding agent and agent command
+        // Expand coding agent
         _settings.CodingAgent = VariableExpansion.ExpandVariables(_settings.CodingAgent, _tendrilHome);
-        _settings.AgentCommand = VariableExpansion.ExpandVariables(_settings.AgentCommand, _tendrilHome);
 
         // Expand plan template
         _settings.PlanTemplate = VariableExpansion.ExpandVariables(_settings.PlanTemplate, _tendrilHome);

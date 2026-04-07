@@ -605,7 +605,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                 else if (!File.Exists(configPath))
                 {
                     // Create a basic config.yaml only if it doesn't exist
-                    var basicConfig = "agentCommand: claude\n" +
+                    var basicConfig = "codingAgent: claude\n" +
                                       "jobTimeout: 30\n" +
                                       "staleOutputTimeout: 10\n" +
                                       "projects: []\n" +

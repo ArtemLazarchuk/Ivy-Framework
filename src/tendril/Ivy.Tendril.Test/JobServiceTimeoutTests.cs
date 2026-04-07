@@ -172,7 +172,7 @@ public class JobServiceTimeoutTests
     public void ConfigService_ParsesJobTimeoutSettings()
     {
         var yaml = @"
-agentCommand: claude
+codingAgent: claude
 jobTimeout: 45
 staleOutputTimeout: 15
 ";
@@ -190,7 +190,7 @@ staleOutputTimeout: 15
     public void ConfigService_DefaultsJobTimeoutWhenNotSpecified()
     {
         var yaml = @"
-agentCommand: claude
+codingAgent: claude
 ";
 
         var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()

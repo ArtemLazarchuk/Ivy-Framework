@@ -21,7 +21,7 @@ Tendril looks for `config.yaml` in the `TENDRIL_HOME` directory. If it doesn't e
 ## Structure
 
 ```yaml
-agentCommand: claude
+codingAgent: claude
 maxConcurrentJobs: 3
 
 projects:
@@ -43,8 +43,8 @@ coworkers:
 
 ## Key Fields
 
-### `agentCommand`
-The CLI command used to invoke Claude. Typically `claude`.
+### `codingAgent`
+The coding agent to use. Supported values: `claude`, `codex`, `gemini`.
 
 ### `maxConcurrentJobs`
 Maximum number of promptware jobs that can run simultaneously.

@@ -11,19 +11,15 @@ public class GeneralSettingsView : ViewBase
         var config = UseService<IConfigService>();
         var client = UseService<IClientProvider>();
         var codingAgent = UseState(config.Settings.CodingAgent ?? "claude");
-        var agentCommand = UseState(config.Settings.AgentCommand);
         var planTemplate = UseState(config.Settings.PlanTemplate);
 
         var hasChanges = codingAgent.Value != (config.Settings.CodingAgent ?? "claude")
-                         || agentCommand.Value != config.Settings.AgentCommand
                          || planTemplate.Value != config.Settings.PlanTemplate;
 
         var form = Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
             | Text.Block("General Settings").Bold()
             | codingAgent.ToSelectInput(CodingAgentOptions)
                 .WithField().Label("Coding Agent")
-            | agentCommand.ToTextInput("Agent command...")
-                .WithField().Label("Agent Command (Legacy)")
             | planTemplate.ToCodeInput("Plan template...")
                 .Language(Languages.Markdown)
                 .Height(Size.Units(40))
@@ -33,7 +29,6 @@ public class GeneralSettingsView : ViewBase
                 .OnClick(() =>
                 {
                     config.Settings.CodingAgent = codingAgent.Value;
-                    config.Settings.AgentCommand = agentCommand.Value;
                     config.Settings.PlanTemplate = planTemplate.Value;
                     config.SaveSettings();
                     client.Toast("Settings saved successfully", "Saved");
