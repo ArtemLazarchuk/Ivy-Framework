@@ -24,7 +24,7 @@ public class PlanDatabaseSyncServiceTests : IDisposable
         var settings = new TendrilSettings();
         var configService = new ConfigService(settings, _tempDir);
         _planReader = new PlanReaderService(configService, NullLogger<PlanReaderService>.Instance);
-        _database = new PlanDatabaseService(_dbPath);
+        _database = new PlanDatabaseService(_dbPath, NullLogger<PlanDatabaseService>.Instance);
         _watcher = new PlanWatcherService(configService);
         _syncService = new PlanDatabaseSyncService(
             _planReader, _database, _watcher,

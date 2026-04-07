@@ -62,7 +62,8 @@ public static class TendrilServer
         {
             var cfg = sp.GetRequiredService<IConfigService>();
             var dbPath = Path.Combine(cfg.TendrilHome, "tendril.db");
-            return new PlanDatabaseService(dbPath);
+            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<PlanDatabaseService>();
+            return new PlanDatabaseService(dbPath, logger);
         });
         server.Services.AddSingleton<PlanDatabaseSyncService>(sp =>
         {
