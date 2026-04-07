@@ -125,6 +125,18 @@ public class PlanDatabaseSyncServiceTests : IDisposable
     }
 
     [Fact]
+    public void PlanWatcher_WatchedFolders_IncludesArtifacts()
+    {
+        // Verify that PlanWatcherService watches the artifacts folder so that
+        // changes to recommendations.yaml trigger a sync event
+        var field = typeof(PlanWatcherService)
+            .GetField("WatchedFolders", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(field);
+        var watchedFolders = (HashSet<string>)field.GetValue(null)!;
+        Assert.Contains("artifacts", watchedFolders);
+    }
+
+    [Fact]
     public void PerformInitialSync_WithEmptyPlansDirectory_Succeeds()
     {
         _syncService.PerformInitialSync();

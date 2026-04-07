@@ -285,6 +285,7 @@ export interface LineChartWidgetProps {
   referenceAreas?: MarkArea[];
   referenceDots?: ReferenceDot[];
   colorScheme: ColorScheme;
+  layout?: "Horizontal" | "Vertical";
 }
 
 export interface ReferenceDot {
@@ -371,6 +372,7 @@ export interface ScatterChartWidgetProps {
   referenceAreas?: MarkArea[];
   referenceDots?: ReferenceDot[];
   colorScheme: ColorScheme;
+  layout?: "Horizontal" | "Vertical";
 }
 
 export type PolarGridTypes = "Polygon" | "Circle";

@@ -40,7 +40,7 @@ public class PlanWatcherService : IPlanWatcherService, IDisposable
         { "plan.yaml" };
 
     private static readonly HashSet<string> WatchedFolders = new(StringComparer.OrdinalIgnoreCase)
-        { "revisions", "logs", "verification" };
+        { "revisions", "logs", "verification", "artifacts" };
 
     private void OnFileEvent(object sender, FileSystemEventArgs e)
     {
@@ -55,7 +55,7 @@ public class PlanWatcherService : IPlanWatcherService, IDisposable
             return;
         }
 
-        // plan.yaml changed, or files in revisions/logs/verification
+        // plan.yaml changed, or files in watched folders (revisions/logs/verification/artifacts)
         if (WatchedFiles.Contains(fileName) || WatchedFolders.Contains(parentFolder))
         {
             var planFolder = ResolvePlanFolder(e.FullPath);
