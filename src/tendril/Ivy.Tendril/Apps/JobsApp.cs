@@ -64,6 +64,7 @@ public class JobsApp : ViewBase
             Project = j.Project,
             Timer = FormatTimer(j),
             Cost = j.Cost.HasValue ? $"${j.Cost.Value:F2}" : "",
+            Tokens = j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : "",
             LastOutput = FormatLastOutput(j),
             LastOutputTimestamp = j.LastOutputAt,
             StatusMessage = j.StatusMessage ?? ""
@@ -99,6 +100,7 @@ public class JobsApp : ViewBase
             .Header(t => t.Project, "Project")
             .Header(t => t.Timer, "Timer")
             .Header(t => t.Cost, "Cost")
+            .Header(t => t.Tokens, "Tokens")
             .Header(t => t.LastOutput, "Last Output")
             .Header(t => t.StatusMessage, "Status Message")
             .Width(t => t.Status, Size.Px(90))
@@ -109,6 +111,7 @@ public class JobsApp : ViewBase
             .Width(t => t.Timer, Size.Px(90))
             .Width(t => t.LastOutput, Size.Px(90))
             .Width(t => t.Cost, Size.Px(90))
+            .Width(t => t.Tokens, Size.Px(90))
             .Width(t => t.StatusMessage, Size.Fraction(0.5f))
             .Renderer(t => t.Status, new LabelsDisplayRenderer
             {

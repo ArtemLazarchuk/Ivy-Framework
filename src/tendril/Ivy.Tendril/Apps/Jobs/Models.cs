@@ -28,6 +28,7 @@ public record JobItem
     public string? SessionId { get; set; }
     public string Provider { get; init; } = "claude";
     public decimal? Cost { get; set; }
+    public int? Tokens { get; set; }
 
     // Process handle for non-interactive execution
     public System.Diagnostics.Process? Process { get; set; }
@@ -53,5 +54,6 @@ public record JobItemRow
     public string LastOutput { get; init; } = "";
     public DateTime? LastOutputTimestamp { get; init; }
     public string Cost { get; init; } = "";
+    public string Tokens { get; init; } = "";
     public string StatusMessage { get; init; } = "";
 }

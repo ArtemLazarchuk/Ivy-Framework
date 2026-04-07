@@ -579,6 +579,7 @@ public class JobService : IJobService
                         if (_jobs.TryGetValue(jobId, out var j))
                         {
                             j.Cost = (decimal)costCalc.TotalCost;
+                            j.Tokens = costCalc.TotalTokens;
                             RaiseJobsChanged();
                         }
 
