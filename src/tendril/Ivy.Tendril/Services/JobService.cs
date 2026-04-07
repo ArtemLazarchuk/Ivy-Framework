@@ -160,6 +160,7 @@ public class JobService : IJobService
             Status = JobStatus.Pending,
             ScriptPath = scriptPath,
             Args = args,
+            Provider = _configService?.Settings.CodingAgent ?? "claude",
         };
 
         // For MakePlan jobs: track the inbox file for crash recovery
@@ -563,6 +564,7 @@ public class JobService : IJobService
             var jobArgs = job.Args;
             var jobType = job.Type;
             var jobId = job.Id;
+            var provider = job.Provider;
 
             _ = Task.Run(async () =>
             {
@@ -571,7 +573,7 @@ public class JobService : IJobService
 
                 try
                 {
-                    var costCalc = _modelPricingService.CalculateSessionCost(sessionId);
+                    var costCalc = _modelPricingService.CalculateSessionCost(sessionId, provider);
                     if (costCalc.TotalCost > 0)
                     {
                         if (_jobs.TryGetValue(jobId, out var j))

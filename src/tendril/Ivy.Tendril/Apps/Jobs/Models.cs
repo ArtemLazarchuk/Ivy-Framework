@@ -26,6 +26,7 @@ public record JobItem
     public string[] Args { get; init; } = [];
     public bool CancellationRequested { get; set; }
     public string? SessionId { get; set; }
+    public string Provider { get; init; } = "claude";
     public decimal? Cost { get; set; }
 
     // Process handle for non-interactive execution

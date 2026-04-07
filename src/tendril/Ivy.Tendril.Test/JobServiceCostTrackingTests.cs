@@ -41,6 +41,52 @@ public class JobServiceCostTrackingTests
     }
 
     [Fact]
+    public void StartJob_SetsProviderFromConfig()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"tendril-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var settings = new TendrilSettings { CodingAgent = "codex" };
+            var configService = new ConfigService(settings, tempDir);
+            var service = new JobService(configService);
+
+            var id = service.StartJob("ExecutePlan", Path.GetTempPath());
+            var job = service.GetJob(id);
+
+            Assert.NotNull(job);
+            Assert.Equal("codex", job.Provider);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void StartJob_DefaultsProviderToClaude()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"tendril-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var settings = new TendrilSettings();
+            var configService = new ConfigService(settings, tempDir);
+            var service = new JobService(configService);
+
+            var id = service.StartJob("ExecutePlan", Path.GetTempPath());
+            var job = service.GetJob(id);
+
+            Assert.NotNull(job);
+            Assert.Equal("claude", job.Provider);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
     public async Task LaunchJob_PassesSessionIdToChildProcess()
     {
         // Arrange
