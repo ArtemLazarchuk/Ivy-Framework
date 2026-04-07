@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 
@@ -186,6 +187,60 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
 
         var jobs = service.GetJobs();
         Assert.DoesNotContain(jobs, j => j.Type == "ExecutePlan");
+    }
+
+    [Fact]
+    public void RetryBlockedDependents_SkipsDuplicateBlockedJobs()
+    {
+        // Create planC with an unmet dependency to generate a blocked job
+        var depPlan = CreatePlanFolder("02802-DepPlan", "Executing");
+        var planB = CreatePlanFolder("02800-PlanB", "Completed");
+        var planC = CreatePlanFolder("02803-PlanC", "Blocked", ["02802-DepPlan", "02800-PlanB"]);
+
+        var service = CreateService();
+
+        // Start ExecutePlan for planC — it will be blocked because DepPlan is not Completed
+        service.StartJob("ExecutePlan", planC);
+
+        var blockedJobsBefore = service.GetJobs().Count(j =>
+            j.Type == "ExecutePlan" &&
+            j.Status == JobStatus.Blocked &&
+            j.Args.Length > 0 &&
+            j.Args[0] == planC);
+        Assert.Equal(1, blockedJobsBefore);
+
+        // Complete a CreateIssue job for PlanB — triggers RetryBlockedDependents
+        // planC depends on both DepPlan (not met) and PlanB (met), so it stays blocked
+        // But the duplicate-job guard should prevent creating another blocked job entry
+        var id = service.StartJob("CreateIssue", planB, "-Repo", "owner/repo", "-Assignee", "", "-Labels", "");
+        service.CompleteJob(id, 0);
+
+        // Should still have exactly one blocked job for planC (not two)
+        var blockedJobsAfter = service.GetJobs().Count(j =>
+            j.Type == "ExecutePlan" &&
+            j.Status == JobStatus.Blocked &&
+            j.Args.Length > 0 &&
+            j.Args[0] == planC);
+        Assert.Equal(1, blockedJobsAfter);
+    }
+
+    [Fact]
+    public void RetryBlockedJobs_SuccessfulRetryDoesNotReBlock()
+    {
+        // Create a plan with a dependency that is completed (no PRs to check)
+        var depPlan = CreatePlanFolder("02900-DepPlan", "Completed");
+        var planA = CreatePlanFolder("02901-PlanA", "Draft", ["02900-DepPlan"]);
+
+        var service = CreateService();
+
+        // Start ExecutePlan — dependencies are met, so it should NOT be blocked
+        service.StartJob("ExecutePlan", planA);
+
+        // Verify the job is not blocked (deps are met, no redundant CheckDependencies to fail)
+        var jobs = service.GetJobs();
+        var planAJob = jobs.FirstOrDefault(j => j.Type == "ExecutePlan" && j.Args.Contains(planA));
+        Assert.NotNull(planAJob);
+        Assert.NotEqual(JobStatus.Blocked, planAJob.Status);
     }
 
     private class StubPlanReaderService : IPlanReaderService
