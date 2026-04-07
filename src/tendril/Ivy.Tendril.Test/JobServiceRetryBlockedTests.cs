@@ -305,6 +305,11 @@ public class JobServiceRetryBlockedTests
         {
         }
 
+        public DashboardStats GetDashboardData(string? projectFilter)
+        {
+            return new DashboardStats(0, 0, 0, 0, 0, 0, 0, [], []);
+        }
+
         public decimal GetPlanTotalCost(string folderPath)
         {
             return 0;
