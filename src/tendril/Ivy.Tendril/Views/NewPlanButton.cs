@@ -31,7 +31,7 @@ public class NewPlanButton : ViewBase
                 onCreatePlan: (description, project) =>
                 {
                     lastSelectedProject.Set(project);
-                    jobService.StartJob("MakePlan", "-Description", $"[FORCE] {description}", "-Project", project);
+                    jobService.StartJob("MakePlan", "-Description", $"{description} [FORCE]", "-Project", project);
                 },
                 onClose: () => dialogOpen.Set(false),
                 defaultProject: lastSelectedProject.Value
