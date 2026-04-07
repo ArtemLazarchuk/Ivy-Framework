@@ -7,7 +7,7 @@ param(
 
 $programFolder = GetProgramFolder $PSCommandPath
 $planYamlPath = ValidatePlanPath $PlanPath
-$planInfo = ReadPlanProject $planYamlPath
+$planInfo = ReadPlanYaml $planYamlPath
 
 $logFile = GetNextLogFile $programFolder
 $PlanPath | Set-Content $logFile
