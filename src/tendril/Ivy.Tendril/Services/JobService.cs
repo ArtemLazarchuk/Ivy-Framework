@@ -595,6 +595,12 @@ public class JobService : IJobService
 
         RaiseJobsChanged();
 
+        // After successful completion of jobs that may unblock dependencies
+        if (isSuccess && job.Type is "ExecutePlan" or "MakePr")
+        {
+            RetryBlockedJobs();
+        }
+
         // Try to start queued jobs now that a slot is free
         ProcessJobQueue();
 
@@ -656,6 +662,35 @@ public class JobService : IJobService
             _jobs.TryRemove(id, out _);
         if (failedIds.Count > 0)
             RaiseJobsChanged();
+    }
+
+    private void RetryBlockedJobs()
+    {
+        var blockedJobs = _jobs.Values
+            .Where(j => j.Status == JobStatus.Blocked && j.Type == "ExecutePlan")
+            .ToList();
+
+        foreach (var blockedJob in blockedJobs)
+        {
+            var planFolder = blockedJob.Args.Length > 0 ? blockedJob.Args[0] : "";
+            if (string.IsNullOrEmpty(planFolder)) continue;
+
+            var (ok, _) = CheckDependencies(planFolder);
+            if (ok)
+            {
+                // Remove the blocked job entry
+                _jobs.TryRemove(blockedJob.Id, out _);
+
+                // Re-start the job (this will re-check dependencies as a safety net)
+                StartJob(blockedJob.Type, blockedJob.Args);
+
+                var notification = new JobNotification(
+                    "Job Unblocked",
+                    $"{blockedJob.PlanFile}: dependencies now satisfied, auto-restarting",
+                    true);
+                RaiseNotification(notification);
+            }
+        }
     }
 
     public List<JobItem> GetJobs()
