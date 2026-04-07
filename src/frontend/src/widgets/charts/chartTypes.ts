@@ -104,18 +104,18 @@ export interface XAxisProps {
   timeZone?: string | null;
 }
 
-export type CartesianGridProps = {
-  fill: string | null;
-  fillOpacity: number | null;
-  height: number | null;
-  horizontal: boolean;
-  stroke: string | null;
-  strokeDashArray: string | null;
-  vertical: boolean;
-  width: number | null;
-  x: number | null;
-  y: number | null;
-};
+export interface CartesianGridProps {
+  fill?: string | null;
+  fillOpacity?: number | null;
+  height?: number | null;
+  horizontal?: boolean;
+  stroke?: string | null;
+  strokeDashArray?: string | null;
+  vertical?: boolean;
+  width?: number | null;
+  x?: number | null;
+  y?: number | null;
+}
 
 export type LegendProps = {
   align?: "Left" | "Center" | "Right";
