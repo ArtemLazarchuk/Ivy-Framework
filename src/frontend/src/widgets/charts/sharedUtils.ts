@@ -94,6 +94,26 @@ export const formatTickLabel = (value: number | string, formatter?: string | nul
       maximumFractionDigits: isNaN(fractionDigits) ? 2 : fractionDigits,
     }).format(Number(value));
   }
+  if (formatter === "MM/dd HH") {
+    const date = new Date(value);
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hour = String(date.getUTCHours()).padStart(2, "0");
+    return `${month}/${day} ${hour}`;
+  }
+  if (formatter === "MM/dd") {
+    const date = new Date(value);
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    return `${month}/${day}`;
+  }
+  if (formatter === "MMM dd") {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(value));
+  }
   if (formatter === "MMM yyyy") {
     return new Intl.DateTimeFormat(undefined, {
       month: "short",

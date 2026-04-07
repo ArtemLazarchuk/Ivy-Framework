@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { generateYAxis } from "./sharedUtils";
+import { formatTickLabel, generateYAxis } from "./sharedUtils";
 import type { YAxisProps } from "./chartTypes";
+
+describe("formatTickLabel - date formats", () => {
+  it("formats MM/dd HH correctly", () => {
+    const date = new Date("2026-03-31T07:00:00Z");
+    expect(formatTickLabel(date.getTime(), "MM/dd HH")).toBe("03/31 07");
+  });
+
+  it("formats MM/dd correctly", () => {
+    const date = new Date("2026-04-15T00:00:00Z");
+    expect(formatTickLabel(date.getTime(), "MM/dd")).toBe("04/15");
+  });
+
+  it("formats MMM dd correctly", () => {
+    const date = new Date("2026-04-15T00:00:00Z");
+    expect(formatTickLabel(date.getTime(), "MMM dd")).toContain("Apr");
+  });
+});
 
 describe("generateYAxis", () => {
   describe("multi-axis charts skip largeSpread", () => {
