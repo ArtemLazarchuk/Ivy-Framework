@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatTickLabel, generateYAxis } from "./sharedUtils";
-import type { YAxisProps } from "./chartTypes";
+import { formatTickLabel, generateXAxis, generateYAxis } from "./sharedUtils";
+import type { XAxisProps, YAxisProps } from "./chartTypes";
 
 describe("formatTickLabel - date formats", () => {
   // Use a fixed UTC date for predictable results
@@ -138,5 +138,118 @@ describe("generateYAxis", () => {
       const axis = result as { axisLabel: { formatter: (v: number) => string | number } };
       expect(axis.axisLabel.formatter(3)).toBe("999");
     });
+  });
+
+  describe("new AxisBase properties", () => {
+    // Single-element yAxis returns a single object, not an array
+    const callSingleYAxis = (props: Partial<YAxisProps>) =>
+      generateYAxis(false, undefined, 0, 100, [props as YAxisProps]) as Record<string, unknown>;
+
+    it("should return inverse: true when reversed is set", () => {
+      const axis = callSingleYAxis({ reversed: true });
+      expect(axis).toHaveProperty("inverse", true);
+    });
+
+    it("should return axisLine.show: false when axisLine is false", () => {
+      const axis = callSingleYAxis({ axisLine: false });
+      expect((axis as { axisLine: { show: boolean } }).axisLine.show).toBe(false);
+    });
+
+    it("should return axisTick.show: false when tickLine is false", () => {
+      const axis = callSingleYAxis({ tickLine: false });
+      expect((axis as { axisTick: { show: boolean } }).axisTick.show).toBe(false);
+    });
+
+    it("should return name when set", () => {
+      const axis = callSingleYAxis({ name: "Revenue" });
+      expect(axis).toHaveProperty("name", "Revenue");
+    });
+
+    it("should return axisLabel.rotate when angle is set", () => {
+      const axis = callSingleYAxis({ angle: 45 });
+      expect((axis as { axisLabel: { rotate: number } }).axisLabel.rotate).toBe(45);
+    });
+
+    it("should use tickCount as splitNumber when set", () => {
+      const axis = callSingleYAxis({ tickCount: 10 });
+      expect((axis as { splitNumber: number }).splitNumber).toBe(10);
+    });
+
+    it("should return axisTick.length when tickSize is set", () => {
+      const axis = callSingleYAxis({ tickSize: 12 });
+      expect((axis as { axisTick: { length: number } }).axisTick.length).toBe(12);
+    });
+
+    it("should append unit to formatted tick labels", () => {
+      const axis = callSingleYAxis({ unit: "%" });
+      const typed = axis as { axisLabel: { formatter: (v: number) => string | number } };
+      expect(typed.axisLabel.formatter(50)).toBe("50%");
+    });
+
+    it("should map scale Log to type log", () => {
+      const axis = callSingleYAxis({ scale: "Log" });
+      expect(axis).toHaveProperty("type", "log");
+    });
+  });
+});
+
+describe("generateXAxis", () => {
+  const callGenerateXAxis = (axisProps: Partial<XAxisProps>) =>
+    generateXAxis("line", ["A", "B", "C"], [axisProps as XAxisProps]);
+
+  it("should return show: false when hide is true", () => {
+    const result = callGenerateXAxis({ hide: true });
+    expect(result).toHaveProperty("show", false);
+  });
+
+  it("should return show: true by default", () => {
+    const result = callGenerateXAxis({});
+    expect(result).toHaveProperty("show", true);
+  });
+
+  it("should return inverse: true when reversed is true", () => {
+    const result = callGenerateXAxis({ reversed: true });
+    expect(result).toHaveProperty("inverse", true);
+  });
+
+  it("should return axisLine.show: false when axisLine is false", () => {
+    const result = callGenerateXAxis({ axisLine: false });
+    expect(result.axisLine.show).toBe(false);
+  });
+
+  it("should return axisTick.show: false when tickLine is false", () => {
+    const result = callGenerateXAxis({ tickLine: false });
+    expect(result.axisTick.show).toBe(false);
+  });
+
+  it("should return name when set", () => {
+    const result = callGenerateXAxis({ name: "Revenue" });
+    expect(result).toHaveProperty("name", "Revenue");
+  });
+
+  it("should return axisLabel.rotate when angle is set", () => {
+    const result = callGenerateXAxis({ angle: 45 });
+    expect(result.axisLabel.rotate).toBe(45);
+  });
+
+  it("should return splitNumber when tickCount is set", () => {
+    const result = callGenerateXAxis({ tickCount: 10 });
+    expect(result).toHaveProperty("splitNumber", 10);
+  });
+
+  it("should return axisTick.length when tickSize is set", () => {
+    const result = callGenerateXAxis({ tickSize: 12 });
+    expect(result.axisTick.length).toBe(12);
+  });
+
+  it("should map scale Log to type log", () => {
+    const result = callGenerateXAxis({ scale: "Log" });
+    expect(result).toHaveProperty("type", "log");
+  });
+
+  it("should append unit to formatted tick labels", () => {
+    const result = callGenerateXAxis({ unit: "kg" });
+    const formatted = result.axisLabel.formatter(500);
+    expect(formatted).toBe("500kg");
   });
 });

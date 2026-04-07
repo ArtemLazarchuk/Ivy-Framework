@@ -346,39 +346,53 @@ export const generateXAxis = (
   const minOpt = getAxisDomainBound("min", axis.domainMin, allowDataOverflow);
   const maxOpt = getAxisDomainBound("max", axis.domainMax, allowDataOverflow);
 
+  // Map scale to ECharts axis type when explicitly set
+  const scaleType = axis.scale && axis.scale !== "Auto" ? axis.scale.toLowerCase() : undefined;
+
   return {
     show: !axis.hide,
     position: axis.orientation?.toLowerCase() === "top" ? "top" : "bottom",
-    type: isVertical ? "category" : "value",
+    type: scaleType ?? (isVertical ? "category" : "value"),
     boundaryGap: chartType === "bar" ? true : false,
     data: isVertical ? categories : undefined,
+    inverse: axis.reversed ?? false,
+    ...(axis.name != null && { name: axis.name }),
     ...(minOpt !== undefined && { min: minOpt }),
     ...(maxOpt !== undefined && { max: maxOpt }),
+    ...(axis.tickCount != null && { splitNumber: axis.tickCount }),
     axisLabel: {
       show: axis.hideTickLabels ? false : true,
+      rotate: axis.angle ?? 0,
       formatter: isVertical
         ? (value: string | number) => {
-            if (axis.tickFormatter) {
-              return formatTickLabel(value, axis.tickFormatter);
-            }
-            const strVal = String(value);
-            return strVal.length > 10 ? strVal.match(/.{1,10}/g)?.join("\n") : strVal;
+            const formatted = axis.tickFormatter
+              ? formatTickLabel(value, axis.tickFormatter)
+              : String(value).length > 10
+                ? String(value)
+                    .match(/.{1,10}/g)
+                    ?.join("\n")
+                : String(value);
+            return axis.unit ? `${formatted}${axis.unit}` : formatted;
           }
         : (value: number | string) => {
+            let formatted: string;
             if (axis.tickFormatter) {
-              return formatTickLabel(value, axis.tickFormatter);
+              formatted = formatTickLabel(value, axis.tickFormatter);
+            } else {
+              const numVal = Number(value);
+              if (Math.abs(numVal) >= 1e9) formatted = (numVal / 1e9).toFixed(0) + "B";
+              else if (Math.abs(numVal) >= 1e6) formatted = (numVal / 1e6).toFixed(0) + "M";
+              else if (Math.abs(numVal) >= 1e3) formatted = (numVal / 1e3).toFixed(0) + "K";
+              else formatted = String(value);
             }
-            const numVal = Number(value);
-            if (Math.abs(numVal) >= 1e9) return (numVal / 1e9).toFixed(0) + "B";
-            if (Math.abs(numVal) >= 1e6) return (numVal / 1e6).toFixed(0) + "M";
-            if (Math.abs(numVal) >= 1e3) return (numVal / 1e3).toFixed(0) + "K";
-            return String(value);
+            return axis.unit ? `${formatted}${axis.unit}` : formatted;
           },
-      interval: "auto",
+      ...(axis.minTickGap != null && { interval: axis.minTickGap }),
+      ...(!axis.minTickGap && { interval: "auto" as const }),
       ...generateAxisLabelStyle(themeColors?.mutedForeground, themeColors?.fontSans),
     },
     axisLine: {
-      show: true,
+      show: axis.axisLine !== false,
       lineStyle: {
         type: "dashed",
         color: themeColors?.mutedForeground,
@@ -386,7 +400,8 @@ export const generateXAxis = (
       },
     },
     axisTick: {
-      show: true,
+      show: axis.tickLine !== false,
+      length: axis.tickSize ?? 6,
       lineStyle: {
         color: themeColors?.mutedForeground,
         opacity: 0.4,
@@ -428,36 +443,46 @@ export const generateYAxis = (
       if (maxOpt === undefined) maxOpt = safeTransform(maxValue);
     }
 
+    // Map scale to ECharts axis type when explicitly set
+    const scaleType = axis.scale && axis.scale !== "Auto" ? axis.scale.toLowerCase() : undefined;
+
     return {
       show: axis.hide ? false : true,
-      type: isVertical ? "value" : "category",
+      type: scaleType ?? (isVertical ? "value" : "category"),
       data: isVertical ? undefined : categories,
+      inverse: axis.reversed ?? false,
+      ...(axis.name != null && { name: axis.name }),
       ...(minOpt !== undefined && { min: minOpt }),
       ...(maxOpt !== undefined && { max: maxOpt }),
       axisLabel: {
         show: axis.hideTickLabels ? false : true,
+        rotate: axis.angle ?? 0,
         formatter: (value: number) => {
+          let formatted: string | number;
           if (axis.tickFormatter) {
-            return formatTickLabel(value, axis.tickFormatter);
-          }
-          if (effectiveLargeSpread) {
+            formatted = formatTickLabel(value, axis.tickFormatter);
+          } else if (effectiveLargeSpread) {
             const unscaled = Math.sign(value) * (10 ** Math.abs(value) - 1);
-            if (Math.abs(unscaled) >= 1e9) return (unscaled / 1e9).toFixed(0) + "B";
-            if (Math.abs(unscaled) >= 1e6) return (unscaled / 1e6).toFixed(0) + "M";
-            if (Math.abs(unscaled) >= 1e3) return (unscaled / 1e3).toFixed(0) + "K";
-            return unscaled.toFixed(0);
+            if (Math.abs(unscaled) >= 1e9) formatted = (unscaled / 1e9).toFixed(0) + "B";
+            else if (Math.abs(unscaled) >= 1e6) formatted = (unscaled / 1e6).toFixed(0) + "M";
+            else if (Math.abs(unscaled) >= 1e3) formatted = (unscaled / 1e3).toFixed(0) + "K";
+            else formatted = unscaled.toFixed(0);
+          } else {
+            if (Math.abs(value) >= 1e9) formatted = (value / 1e9).toFixed(0) + "B";
+            else if (Math.abs(value) >= 1e6) formatted = (value / 1e6).toFixed(0) + "M";
+            else if (Math.abs(value) >= 1e3) formatted = (value / 1e3).toFixed(0) + "K";
+            else formatted = value;
           }
-          if (Math.abs(value) >= 1e9) return (value / 1e9).toFixed(0) + "B";
-          if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(0) + "M";
-          if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(0) + "K";
-          return value;
+          return axis.unit ? `${formatted}${axis.unit}` : formatted;
         },
+        ...(axis.minTickGap != null && { interval: axis.minTickGap }),
+        ...(!axis.minTickGap && {}),
         ...generateAxisLabelStyle(themeColors?.mutedForeground, themeColors?.fontSans),
       },
-      splitNumber: effectiveLargeSpread ? 3 : 5,
+      splitNumber: axis.tickCount ?? (effectiveLargeSpread ? 3 : 5),
       position: axis.orientation === "Right" ? "right" : "left",
       axisLine: {
-        show: true,
+        show: axis.axisLine !== false,
         lineStyle: {
           type: "dashed",
           color: themeColors?.mutedForeground,
@@ -465,7 +490,8 @@ export const generateYAxis = (
         },
       },
       axisTick: {
-        show: true,
+        show: axis.tickLine !== false,
+        length: axis.tickSize ?? 6,
         lineStyle: {
           color: themeColors?.mutedForeground,
           opacity: 0.4,
