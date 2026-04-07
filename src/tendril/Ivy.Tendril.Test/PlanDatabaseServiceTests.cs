@@ -497,20 +497,32 @@ public class PlanDatabaseServiceTests : IDisposable
     {
         _db.UpsertJob(new JobItem
         {
-            Id = "job-001", Type = "ExecutePlan", PlanFile = "plan-a", Project = "Tendril",
-            Status = JobStatus.Completed, Provider = "claude",
+            Id = "job-001",
+            Type = "ExecutePlan",
+            PlanFile = "plan-a",
+            Project = "Tendril",
+            Status = JobStatus.Completed,
+            Provider = "claude",
             CompletedAt = new DateTime(2026, 4, 7, 10, 0, 0, DateTimeKind.Utc),
         });
         _db.UpsertJob(new JobItem
         {
-            Id = "job-003", Type = "ExecutePlan", PlanFile = "plan-c", Project = "Tendril",
-            Status = JobStatus.Completed, Provider = "claude",
+            Id = "job-003",
+            Type = "ExecutePlan",
+            PlanFile = "plan-c",
+            Project = "Tendril",
+            Status = JobStatus.Completed,
+            Provider = "claude",
             CompletedAt = new DateTime(2026, 4, 7, 12, 0, 0, DateTimeKind.Utc),
         });
         _db.UpsertJob(new JobItem
         {
-            Id = "job-002", Type = "MakePr", PlanFile = "plan-b", Project = "Tendril",
-            Status = JobStatus.Completed, Provider = "claude",
+            Id = "job-002",
+            Type = "MakePr",
+            PlanFile = "plan-b",
+            Project = "Tendril",
+            Status = JobStatus.Completed,
+            Provider = "claude",
             CompletedAt = new DateTime(2026, 4, 7, 11, 0, 0, DateTimeKind.Utc),
         });
 
@@ -526,10 +538,15 @@ public class PlanDatabaseServiceTests : IDisposable
     {
         var job = new JobItem
         {
-            Id = "job-001", Type = "ExecutePlan", PlanFile = "plan-a", Project = "Tendril",
-            Status = JobStatus.Completed, Provider = "claude",
+            Id = "job-001",
+            Type = "ExecutePlan",
+            PlanFile = "plan-a",
+            Project = "Tendril",
+            Status = JobStatus.Completed,
+            Provider = "claude",
             CompletedAt = new DateTime(2026, 4, 7, 10, 0, 0, DateTimeKind.Utc),
-            Cost = null, Tokens = null,
+            Cost = null,
+            Tokens = null,
         };
         _db.UpsertJob(job);
 
@@ -607,8 +624,12 @@ public class PlanDatabaseServiceTests : IDisposable
         // Verify Jobs table exists by inserting and querying.
         _db.UpsertJob(new JobItem
         {
-            Id = "migration-test", Type = "Test", PlanFile = "test", Project = "Test",
-            Status = JobStatus.Completed, Provider = "claude",
+            Id = "migration-test",
+            Type = "Test",
+            PlanFile = "test",
+            Project = "Test",
+            Status = JobStatus.Completed,
+            Provider = "claude",
         });
 
         var jobs = _db.GetRecentJobs();
