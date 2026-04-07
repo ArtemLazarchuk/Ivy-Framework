@@ -19,11 +19,11 @@ public class ProjectsSettingsView : ViewBase
         var editContext = UseState("");
         var editRepos = UseState(new List<RepoRef>());
         var editVerifications = UseState(new List<ProjectVerificationRef>());
-        var newRepoPath = UseState("");
+        var newRepoPath = UseState<string?>(null);
         var newRepoPrRule = UseState("default");
         var repoPathError = UseState<string?>(null);
         var editingRepoIndex = UseState<int?>(-1);
-        var editingRepoPath = UseState("");
+        var editingRepoPath = UseState<string?>(null);
         var editingRepoError = UseState<string?>(null);
 
         var projects = config.Settings.Projects;
@@ -89,7 +89,7 @@ public class ProjectsSettingsView : ViewBase
                             ? (object)new Icon(Icons.TriangleAlert, Colors.Warning).Small()
                                 .WithTooltip($"Path does not exist: {expandedPath}")
                             : new Spacer().Width(Size.Units(4)))
-                        | editingRepoPath.ToTextInput("Repository path...").Width(Size.Grow())
+                        | editingRepoPath.ToFolderInput("Select repository folder...", mode: FolderInputMode.FullPath).Width(Size.Grow())
                         | new Badge(repo.PrRule).Variant(BadgeVariant.Outline)
                         | new Button().Icon(Icons.Check).Ghost().Small().OnClick(() =>
                         {
@@ -159,7 +159,7 @@ public class ProjectsSettingsView : ViewBase
             }
 
             reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                | newRepoPath.ToTextInput("Repo path...").Width(Size.Grow())
+                | newRepoPath.ToFolderInput("Select repository folder...", mode: FolderInputMode.FullPath).Width(Size.Grow())
                 | newRepoPrRule.ToSelectInput(new List<string> { "default", "yolo" }).Width(Size.Units(20))
                 | new Button("Add").Outline().Small().OnClick(() =>
                 {
@@ -178,7 +178,7 @@ public class ProjectsSettingsView : ViewBase
                             new() { Path = newRepoPath.Value, PrRule = newRepoPrRule.Value }
                         };
                         editRepos.Set(list);
-                        newRepoPath.Set("");
+                        newRepoPath.Set(null);
                         newRepoPrRule.Set("default");
                         repoPathError.Set(null);
                     }

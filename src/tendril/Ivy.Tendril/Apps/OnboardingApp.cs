@@ -376,7 +376,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
         var config = UseService<IConfigService>();
         var projectName = UseState("");
         var repoPaths = UseState(new List<string>());
-        var newRepoPath = UseState("");
+        var newRepoPath = UseState<string?>(null);
         var projectContext = UseState("");
         var error = UseState<string?>(null);
         var verifications = UseState(new List<VerificationEntry>
@@ -406,14 +406,14 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
         }
 
         reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-            | newRepoPath.ToTextInput("Repository path...").Width(Size.Grow())
+            | newRepoPath.ToFolderInput("Select repository folder...", mode: FolderInputMode.FullPath).Width(Size.Grow())
             | new Button("Add").Outline().Small().OnClick(() =>
             {
                 if (!string.IsNullOrWhiteSpace(newRepoPath.Value))
                 {
                     var list = new List<string>(repoPaths.Value) { newRepoPath.Value };
                     repoPaths.Set(list);
-                    newRepoPath.Set("");
+                    newRepoPath.Set(null);
                 }
             });
 
