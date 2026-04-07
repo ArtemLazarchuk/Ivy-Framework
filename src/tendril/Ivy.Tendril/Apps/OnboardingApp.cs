@@ -59,16 +59,8 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
                | Text.H1("Welcome to Ivy Tendril")
                | Text.Markdown(
                    """
-                   
                    >[!NOTE]
-                   >Ivy Tendril is a coding orchestrator that uses an underlying coding agent such as Claude Code. With Tendril you can get a lot of work done really fast. This means using Tendril can consume a lot of credits in a short period.
-                   
-                   To get started, we need to set up a few things:
-                   - Check that you have all necessary software installed
-                   - Where to store your Tendril data
-                   - Define a first project
-
-                   Let's begin!
+                   >Ivy Tendril is a coding orchestrator that uses an underlying coding agent such as Claude Code, Codex or Gemini. With Tendril you can get a lot of work done really fast. This means using Tendril can consume a lot of credits in a short period.
                    """)
                | new Button("Get Started").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
                    .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1));

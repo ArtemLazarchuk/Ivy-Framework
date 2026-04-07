@@ -96,7 +96,7 @@ public class JobsApp : ViewBase
             .Header(t => t.Status, "Status")
             .Header(t => t.Type, "Type")
             .Header(t => t.PlanId, "Plan")
-            .Header(t => t.Plan, "Plan")
+            .Header(t => t.Plan, "Prompt")
             .Header(t => t.Project, "Project")
             .Header(t => t.Timer, "Timer")
             .Header(t => t.Cost, "Cost")
@@ -106,13 +106,13 @@ public class JobsApp : ViewBase
             .Width(t => t.Status, Size.Px(90))
             .Width(t => t.PlanId, Size.Px(90))
             .Width(t => t.Type, Size.Px(90))
-            .Width(t => t.Plan, Size.Fraction(0.5f))
+            .Width(t => t.Plan, Size.Auto())
             .Width(t => t.Project, Size.Px(90))
             .Width(t => t.Timer, Size.Px(90))
             .Width(t => t.LastOutput, Size.Px(90))
             .Width(t => t.Cost, Size.Px(90))
             .Width(t => t.Tokens, Size.Px(90))
-            .Width(t => t.StatusMessage, Size.Fraction(0.5f))
+            .Width(t => t.StatusMessage, Size.Auto())
             .Renderer(t => t.Status, new LabelsDisplayRenderer
             {
                 BadgeColorMapping = StatusMappings.JobStatusColors.ToDictionary(
