@@ -184,14 +184,12 @@ If the plan references other plans (from `[number]` syntax in args), add them to
 - If any repo path doesn't exist, fail with error: "Repository path does not exist: `<path>`. Check config.yaml project configuration."
 - This prevents creating plans targeting non-existent repo paths (e.g. a deprecated `Ivy-Tendril` repo when the code actually lives in `Ivy-Framework/src/tendril/`)
 
-**Interface extraction plans**: When creating plans that extract interfaces from concrete service types, perform an exhaustive consumer audit:
-1. Use grep to find ALL consumers across ALL resolution patterns:
-   - `UseService<ConcreteType>()`
-   - Constructor parameter injection: `ConcreteType paramName`
-   - Field/property declarations: `_concreteType` or `concreteType:`
-2. List EVERY consumer with file path and line number in the plan revision
-3. Validate count: grep results should match documented consumers
-4. Incomplete consumer lists cause follow-up plans during execution (see Memory/interface-extraction-consumer-audit.md)
+**Rename/refactor plans (caller enumeration)**: When creating plans that rename functions, change method signatures, extract interfaces, or otherwise require updating callers:
+1. Use `Grep` to search the **entire repo root** (not just the expected directory) for all usage patterns of the symbol being changed
+2. For interface extractions, also search DI-specific patterns: `UseService<ConcreteType>()`, constructor parameter injection, field/property declarations
+3. List EVERY caller with file path and line number in the plan revision
+4. Validate count: grep results must match documented callers
+5. Incomplete caller lists cause follow-up fixes during execution (see Memory/caller-audit-pattern.md)
 
 ### 4.5. Questions Section
 
