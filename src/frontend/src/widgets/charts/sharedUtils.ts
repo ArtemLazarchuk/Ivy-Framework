@@ -393,7 +393,7 @@ export const generateXAxis = (
       ...generateAxisLabelStyle(themeColors?.mutedForeground, themeColors?.fontSans),
     },
     axisLine: {
-      show: axis.axisLine !== false,
+      show: axis.axisLine === true,
       lineStyle: {
         type: "dashed",
         color: themeColors?.mutedForeground,
@@ -401,7 +401,7 @@ export const generateXAxis = (
       },
     },
     axisTick: {
-      show: axis.tickLine !== false,
+      show: axis.tickLine === true,
       length: axis.tickSize ?? 6,
       lineStyle: {
         color: themeColors?.mutedForeground,
@@ -483,7 +483,7 @@ export const generateYAxis = (
       splitNumber: axis.tickCount ?? (effectiveLargeSpread ? 3 : 5),
       position: axis.orientation === "Right" ? "right" : "left",
       axisLine: {
-        show: axis.axisLine !== false,
+        show: axis.axisLine === true,
         lineStyle: {
           type: "dashed",
           color: themeColors?.mutedForeground,
@@ -491,7 +491,7 @@ export const generateYAxis = (
         },
       },
       axisTick: {
-        show: axis.tickLine !== false,
+        show: axis.tickLine === true,
         length: axis.tickSize ?? 6,
         lineStyle: {
           color: themeColors?.mutedForeground,

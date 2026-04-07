@@ -87,7 +87,7 @@ const generateScatterXAxis = (
       fontFamily: themeColors?.fontSans,
     },
     axisLine: {
-      show: axisConfig.axisLine !== false,
+      show: axisConfig.axisLine === true,
       lineStyle: {
         type: "solid",
         color: themeColors?.mutedForeground,
@@ -95,7 +95,7 @@ const generateScatterXAxis = (
       },
     },
     axisTick: {
-      show: axisConfig.tickLine !== false,
+      show: axisConfig.tickLine === true,
       lineStyle: {
         color: themeColors?.mutedForeground,
         opacity: 0.4,
@@ -137,7 +137,7 @@ const generateScatterYAxis = (
       fontFamily: themeColors?.fontSans,
     },
     axisLine: {
-      show: axisConfig.axisLine !== false,
+      show: axisConfig.axisLine === true,
       lineStyle: {
         type: "solid",
         color: themeColors?.mutedForeground,
@@ -145,7 +145,7 @@ const generateScatterYAxis = (
       },
     },
     axisTick: {
-      show: axisConfig.tickLine !== false,
+      show: axisConfig.tickLine === true,
       lineStyle: {
         color: themeColors?.mutedForeground,
         opacity: 0.4,
