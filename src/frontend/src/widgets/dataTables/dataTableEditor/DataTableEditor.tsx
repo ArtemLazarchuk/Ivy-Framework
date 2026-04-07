@@ -108,6 +108,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     visibleRows,
     enableCellClickEvents: enableCellClickEvents ?? false,
     getCellContent,
+    arrowTableRef,
   });
 
   // Row hover and actions

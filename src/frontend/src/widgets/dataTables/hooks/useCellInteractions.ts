@@ -3,6 +3,7 @@ import { GridCell, GridCellKind, Item } from "@glideapps/glide-data-grid";
 import { useEventHandler } from "@/components/event-handler";
 import { validateLinkUrl, validateRedirectUrl } from "@/lib/url";
 import { DataColumn } from "../types/types";
+import * as arrow from "apache-arrow";
 
 interface UseCellInteractionsProps {
   widgetId: string;
@@ -10,6 +11,7 @@ interface UseCellInteractionsProps {
   visibleRows: number;
   enableCellClickEvents: boolean | undefined;
   getCellContent: (cell: Item) => GridCell;
+  arrowTableRef: React.RefObject<arrow.Table | null>;
 }
 
 /**
@@ -21,8 +23,42 @@ export const useCellInteractions = ({
   visibleRows,
   enableCellClickEvents,
   getCellContent,
+  arrowTableRef,
 }: UseCellInteractionsProps) => {
   const eventHandler = useEventHandler();
+
+  // Extract _hiddenKey value directly from Arrow table
+  const getHiddenKeyValue = useCallback(
+    (rowIndex: number): string | number | null => {
+      const table = arrowTableRef.current;
+      if (!table) return null;
+
+      const schema = table.schema;
+      if (!schema || !schema.fields) return null;
+
+      let hiddenKeyIndex = -1;
+      for (let i = 0; i < schema.fields.length; i++) {
+        const field = schema.fields[i];
+        if (field && field.name === "_hiddenKey") {
+          hiddenKeyIndex = i;
+          break;
+        }
+      }
+
+      if (hiddenKeyIndex === -1) return null;
+
+      const column = table.getChildAt(hiddenKeyIndex);
+      if (!column) return null;
+
+      const value = column.get(rowIndex);
+      if (value === null || value === undefined || value === "") {
+        return null;
+      }
+
+      return String(value);
+    },
+    [arrowTableRef],
+  );
 
   // Handle cell single-clicks (for backend events and link navigation)
   const handleCellClicked = useCallback(
@@ -61,6 +97,7 @@ export const useCellInteractions = ({
         };
 
         const cellValue = getCellValue(cellContent);
+        const rowId = getHiddenKeyValue(cell[1]);
 
         eventHandler("OnCellClick", widgetId, [
           {
@@ -68,6 +105,7 @@ export const useCellInteractions = ({
             columnIndex: cell[0],
             columnName: column?.name || "",
             cellValue: cellValue,
+            rowId: rowId,
           },
         ]);
       }
@@ -102,7 +140,15 @@ export const useCellInteractions = ({
       }
       // Do NOT prevent default - let selection happen normally!
     },
-    [enableCellClickEvents, eventHandler, widgetId, columns, getCellContent, visibleRows],
+    [
+      enableCellClickEvents,
+      eventHandler,
+      widgetId,
+      columns,
+      getCellContent,
+      visibleRows,
+      getHiddenKeyValue,
+    ],
   );
 
   // Handle cell double-clicks/activation (for editing)
@@ -132,6 +178,8 @@ export const useCellInteractions = ({
           cellValue = (cellContent as unknown as { data: unknown }).data;
         }
 
+        const rowId = getHiddenKeyValue(cell[1]);
+
         // Send activation event to backend as a single object matching CellClickEventArgs structure
         eventHandler("OnCellActivated", widgetId, [
           {
@@ -139,11 +187,20 @@ export const useCellInteractions = ({
             columnIndex: cell[0],
             columnName: column?.name || "",
             cellValue: cellValue,
+            rowId: rowId,
           },
         ]);
       }
     },
-    [enableCellClickEvents, eventHandler, widgetId, columns, getCellContent, visibleRows],
+    [
+      enableCellClickEvents,
+      eventHandler,
+      widgetId,
+      columns,
+      getCellContent,
+      visibleRows,
+      getHiddenKeyValue,
+    ],
   );
 
   return {
