@@ -7,7 +7,7 @@ param(
 
 $programFolder = GetProgramFolder $PSCommandPath
 $planYamlPath = ValidatePlanPath $PlanPath
-$planInfo = ReadPlanProject $planYamlPath
+$planInfo = ReadPlanYaml $planYamlPath
 
 # Verify plan is in Building state
 $currentState = if ($planInfo.Yaml.state) { $planInfo.Yaml.state } else { "Unknown" }

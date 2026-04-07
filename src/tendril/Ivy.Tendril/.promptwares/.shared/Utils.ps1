@@ -188,27 +188,6 @@ function WritePlanLog {
     Write-Host "Log written: $logPath" -ForegroundColor Green
 }
 
-function CollectArgs {
-    param(
-        [string[]]$Arguments,
-        [switch]$Optional
-    )
-
-    $Arguments = $Arguments | Where-Object { $_ -ne $null -and $_.Trim() -ne "" }
-    $joined = ($Arguments -join " ").Trim()
-
-    if ($joined -eq "" -and $Optional) {
-        return "(No Args)"
-    }
-
-    if ($joined -eq "") {
-        Write-Host "Error: No arguments provided." -ForegroundColor Red
-        exit 1
-    }
-
-    return $joined
-}
-
 function ValidatePlanPath {
     param([string]$PlanPath)
 
@@ -240,11 +219,11 @@ Returns a hashtable with three keys:
 - Yaml: Parsed YAML as hashtable/ordered dictionary
 
 .EXAMPLE
-$planInfo = ReadPlanProject "D:\Plans\01234-MyPlan\plan.yaml"
+$planInfo = ReadPlanYaml "D:\Plans\01234-MyPlan\plan.yaml"
 $projectName = $planInfo.Project  # "Tendril"
 $repos = $planInfo.Yaml.repos     # Array of repo paths
 #>
-function ReadPlanProject {
+function ReadPlanYaml {
     param([string]$PlanYamlPath)
 
     $content = Get-Content $PlanYamlPath -Raw
@@ -532,7 +511,7 @@ function InvokePromptwareAgent {
     }
 
     # Report cost for this session
-    $costData = ReportSessionCost $sessionId
+    $costData = GetSessionCost $sessionId
     if ($costData -and $PlanPath) {
         LogPlanCost $PlanPath $Action $costData.Tokens $costData.Cost
     }
@@ -672,7 +651,7 @@ function GetAgentCommand {
     }
 }
 
-function ReportSessionCost {
+function GetSessionCost {
     param([string]$SessionId)
 
     if (-not $SessionId) { return $null }
