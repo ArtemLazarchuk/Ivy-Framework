@@ -23,6 +23,7 @@ public class ContentView(
     {
         var client = UseService<IClientProvider>();
         var config = UseService<IConfigService>();
+        var copyToClipboard = UseClipboard();
         var showPlan = UseState<string?>(null);
         var openFile = UseState<string?>(null);
         var showNotesDialog = UseState(false);
@@ -46,8 +47,8 @@ public class ContentView(
 
         // Header with Accept action at right edge
         var header = Layout.Horizontal().Width(Size.Full()).Padding(1).Gap(2)
-            | Text.Block(_selected.Title).Bold()
-            | new Badge($"#{_selected.PlanId}").Variant(BadgeVariant.Outline)
+            | Text.Block($"#{_selected.PlanId} {_selected.Title}").Bold()
+            | new Badge(_selected.Project).Variant(BadgeVariant.Outline).WithProjectColor(config, _selected.Project)
             | new Spacer().Width(Size.Grow())
             | Text.Rich()
                 .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
@@ -90,7 +91,32 @@ public class ContentView(
                     showPlan.Set(fullPath);
             })
             | new Button("Previous").Icon(Icons.ChevronLeft).Outline().ShortcutKey("p").OnClick(() => GoToPrevious())
-            | new Button("Next").Icon(Icons.ChevronRight, Align.Right).Outline().ShortcutKey("n").OnClick(() => GoToNext());
+            | new Button("Next").Icon(Icons.ChevronRight, Align.Right).Outline().ShortcutKey("n").OnClick(() => GoToNext())
+            | new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
+                new MenuItem("Open in File Manager", Icon: Icons.FolderOpen, Tag: "OpenInExplorer").OnSelect(() =>
+                {
+                    var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
+                    if (Directory.Exists(fullPath))
+                        PlatformHelper.OpenInFileManager(fullPath);
+                }),
+                new MenuItem("Copy Path to Clipboard", Icon: Icons.ClipboardCopy, Tag: "CopyPath").OnSelect(() =>
+                {
+                    var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
+                    copyToClipboard(fullPath);
+                    client.Toast("Copied path to clipboard", "Path Copied");
+                }),
+                new MenuItem("Open plan.yaml", Icon: Icons.FileText, Tag: "OpenPlanYaml").OnSelect(() =>
+                {
+                    var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
+                    var yamlPath = Path.Combine(fullPath, "plan.yaml");
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = config.Editor.Command,
+                        Arguments = yamlPath,
+                        UseShellExecute = true
+                    });
+                })
+            );
 
         var mainLayout = new HeaderLayout(
             header: header,
