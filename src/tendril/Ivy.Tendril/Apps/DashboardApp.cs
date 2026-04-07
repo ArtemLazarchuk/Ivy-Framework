@@ -192,7 +192,7 @@ public class DashboardApp : ViewBase
                     ],
                     YAxis =
                     [
-                        new YAxis("Cost ($)").TickFormatter("C2").Hide(),
+                        new YAxis("Cost ($)").TickFormatter("C2", TickFormatterType.Number).Hide(),
                         new YAxis("Tokens").Orientation(YAxis.Orientations.Right).Hide()
                     ]
                 })

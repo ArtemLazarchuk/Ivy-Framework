@@ -59,31 +59,38 @@ describe("formatTickLabel - date formats", () => {
   });
 });
 
-describe("formatTickLabel - explicit kind", () => {
-  const testDate = Date.UTC(2026, 3, 7, 13, 30, 45); // 2026-04-07T13:30:45Z
+describe("formatTickLabel - explicit formatterType", () => {
+  const testDate = Date.UTC(2026, 3, 7, 13, 30, 45);
 
-  it('treats "#,##0,,M" as number when kind is "Number"', () => {
-    expect(formatTickLabel(1000000, "#,##0,,M", "Number")).toBe("1M");
+  it("with Number type, skips date detection and formats C2 as currency", () => {
+    const result = formatTickLabel(1234.5, "C2", null, "Number");
+    expect(result).toContain("1,234.50");
   });
 
-  it('formats date explicitly when kind is "Date"', () => {
-    expect(formatTickLabel(testDate, "MM/dd HH", "Date")).toBe("04/07 13");
+  it("with Number type, formats P0 as percent", () => {
+    const result = formatTickLabel(50, "P0", null, "Number");
+    expect(result).toContain("50%");
   });
 
-  it('formats date via heuristic when kind is "Auto"', () => {
-    expect(formatTickLabel(testDate, "MM/dd HH", "Auto")).toBe("04/07 13");
+  it("with Date type, skips numeric prefix checks and formats as date", () => {
+    const result = formatTickLabel(testDate, "MM/dd HH", null, "Date");
+    expect(result).toBe("04/07 13");
   });
 
-  it('formats number explicitly when kind is "Number"', () => {
-    expect(formatTickLabel(42.123, "N2", "Number")).toBe("42.12");
+  it("with Date type, returns string value for non-date-pattern format", () => {
+    // "C2" is not a date pattern, so Date type returns String(value)
+    const result = formatTickLabel(1234.5, "C2", null, "Date");
+    expect(result).toBe("1234.5");
   });
 
-  it("falls back to Auto behavior when kind is null", () => {
-    expect(formatTickLabel(5000000, "#,##0,,M", null)).toBe("5M");
+  it("with Auto type, preserves current behavior", () => {
+    expect(formatTickLabel(1234.5, "C2", null, "Auto")).toContain("1,234.50");
+    expect(formatTickLabel(testDate, "MM/dd HH", null, "Auto")).toBe("04/07 13");
   });
 
-  it("falls back to Auto behavior when kind is undefined", () => {
-    expect(formatTickLabel(5000000, "#,##0,,M")).toBe("5M");
+  it("with undefined type, preserves current behavior (same as Auto)", () => {
+    expect(formatTickLabel(1234.5, "C2")).toContain("1,234.50");
+    expect(formatTickLabel(testDate, "MM/dd HH")).toBe("04/07 13");
   });
 });
 

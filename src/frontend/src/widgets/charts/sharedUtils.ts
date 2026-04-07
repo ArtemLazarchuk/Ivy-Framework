@@ -70,83 +70,79 @@ export const getAxisDomainBound = (
   };
 };
 
-const formatAsNumber = (value: number | string, formatter: string): string | null => {
-  if (formatter.startsWith("C")) {
-    const parts = formatter.split(":");
-    const currency = parts.length > 1 ? parts[1] : "USD";
-    const fractionDigits = parseInt(parts[0].substring(1));
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: isNaN(fractionDigits) ? 0 : fractionDigits,
-    }).format(Number(value));
-  }
-  if (formatter.startsWith("P")) {
-    const fractionDigits = parseInt(formatter.substring(1));
-    return new Intl.NumberFormat(undefined, {
-      style: "percent",
-      maximumFractionDigits: isNaN(fractionDigits) ? 0 : fractionDigits,
-    }).format(Number(value) / 100);
-  }
-  if (formatter.startsWith("N") || formatter.startsWith("F")) {
-    const fractionDigits = parseInt(formatter.substring(1));
-    return new Intl.NumberFormat(undefined, {
-      maximumFractionDigits: isNaN(fractionDigits) ? 2 : fractionDigits,
-    }).format(Number(value));
-  }
-  if (formatter === "#,##0,,M") {
-    return (Number(value) / 1000000).toFixed(0) + "M";
-  }
-  if (formatter === "#,##0,K") {
-    return (Number(value) / 1000).toFixed(0) + "K";
-  }
-  return null;
-};
-
-const formatAsDate = (
-  value: number | string,
-  formatter: string,
-  timeZone?: string | null,
-): string | null => {
-  try {
-    const tz =
-      timeZone === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone : timeZone || "UTC";
-    const date = new TZDate(new Date(value), tz);
-    if (!isNaN(date.getTime())) {
-      return dateFnsFormat(date, formatter);
-    }
-  } catch {
-    // Fall through
-  }
-  return null;
-};
-
 export const formatTickLabel = (
   value: number | string,
   formatter?: string | null,
-  kind?: "Auto" | "Number" | "Date" | null,
   timeZone?: string | null,
+  formatterType?: "Auto" | "Number" | "Date" | null,
 ) => {
   if (!formatter) return String(value);
 
-  if (kind === "Number") {
-    return formatAsNumber(value, formatter) ?? String(value);
+  const type = formatterType ?? "Auto";
+
+  // Number formatting helpers
+  const tryNumberFormat = (): string | null => {
+    if (formatter.startsWith("C")) {
+      const parts = formatter.split(":");
+      const currency = parts.length > 1 ? parts[1] : "USD";
+      const fractionDigits = parseInt(parts[0].substring(1));
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+        maximumFractionDigits: isNaN(fractionDigits) ? 0 : fractionDigits,
+      }).format(Number(value));
+    }
+    if (formatter.startsWith("P")) {
+      const fractionDigits = parseInt(formatter.substring(1));
+      return new Intl.NumberFormat(undefined, {
+        style: "percent",
+        maximumFractionDigits: isNaN(fractionDigits) ? 0 : fractionDigits,
+      }).format(Number(value) / 100);
+    }
+    if (formatter.startsWith("N") || formatter.startsWith("F")) {
+      const fractionDigits = parseInt(formatter.substring(1));
+      return new Intl.NumberFormat(undefined, {
+        maximumFractionDigits: isNaN(fractionDigits) ? 2 : fractionDigits,
+      }).format(Number(value));
+    }
+    if (formatter === "#,##0,,M") {
+      return (Number(value) / 1000000).toFixed(0) + "M";
+    }
+    if (formatter === "#,##0,K") {
+      return (Number(value) / 1000).toFixed(0) + "K";
+    }
+    return null;
+  };
+
+  // Date formatting helper
+  const tryDateFormat = (): string | null => {
+    if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
+      try {
+        const tz =
+          timeZone === "local"
+            ? Intl.DateTimeFormat().resolvedOptions().timeZone
+            : timeZone || "UTC";
+        const date = new TZDate(new Date(value), tz);
+        if (!isNaN(date.getTime())) {
+          return dateFnsFormat(date, formatter);
+        }
+      } catch {
+        // Fall through
+      }
+    }
+    return null;
+  };
+
+  if (type === "Number") {
+    return tryNumberFormat() ?? String(value);
   }
 
-  if (kind === "Date") {
-    return formatAsDate(value, formatter, timeZone) ?? String(value);
+  if (type === "Date") {
+    return tryDateFormat() ?? String(value);
   }
 
-  // Auto or unspecified: use heuristic (check numeric first, then date regex)
-  const numResult = formatAsNumber(value, formatter);
-  if (numResult !== null) return numResult;
-
-  if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
-    const dateResult = formatAsDate(value, formatter, timeZone);
-    if (dateResult !== null) return dateResult;
-  }
-
-  return String(value);
+  // Auto: try number first, then date (original behavior)
+  return tryNumberFormat() ?? tryDateFormat() ?? String(value);
 };
 
 export const generateDataProps = (data: Record<string, unknown>[]) => {
@@ -400,7 +396,7 @@ export const generateXAxis = (
       formatter: isVertical
         ? (value: string | number) => {
             const formatted = axis.tickFormatter
-              ? formatTickLabel(value, axis.tickFormatter, axis.tickFormatterKind, axis.timeZone)
+              ? formatTickLabel(value, axis.tickFormatter, axis.timeZone, axis.tickFormatterType)
               : String(value).length > 10
                 ? String(value)
                     .match(/.{1,10}/g)
@@ -414,8 +410,8 @@ export const generateXAxis = (
               formatted = formatTickLabel(
                 value,
                 axis.tickFormatter,
-                axis.tickFormatterKind,
                 axis.timeZone,
+                axis.tickFormatterType,
               );
             } else {
               const numVal = Number(value);
@@ -502,8 +498,8 @@ export const generateYAxis = (
             formatted = formatTickLabel(
               value,
               axis.tickFormatter,
-              axis.tickFormatterKind,
               axis.timeZone,
+              axis.tickFormatterType,
             );
           } else if (effectiveLargeSpread) {
             const unscaled = Math.sign(value) * (10 ** Math.abs(value) - 1);
