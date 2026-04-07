@@ -589,7 +589,6 @@ function GetAgentCommandFromConfig {
     param([string]$Promptware = "")
 
     $configPath = $script:ConfigPath
-    $raw = "claude --print --verbose --output-format stream-json --dangerously-skip-permissions"
     $allowedTools = @()
     $codingAgent = "claude"
     $model = ""
@@ -603,19 +602,12 @@ function GetAgentCommandFromConfig {
                 $codingAgent = $config.codingAgent.ToLower()
             }
 
-            if ($config.agentCommand) {
-                $raw = $config.agentCommand
-            }
-
             if ($Promptware -and $config.promptwares.$Promptware) {
                 $pwConfig = $config.promptwares.$Promptware
 
                 # Apply model override
                 if ($pwConfig.model) {
                     $model = $pwConfig.model
-                    # Strip any existing --model from raw if we're overriding it
-                    $raw = $raw -replace '--model\s+\S+', ''
-                    $raw += " --model $($pwConfig.model)"
                 }
 
                 # Apply allowedTools with environment variable expansion
@@ -630,8 +622,22 @@ function GetAgentCommandFromConfig {
             }
         }
         catch {
-            Write-Host "Warning: Could not parse agentCommand from config.yaml" -ForegroundColor Yellow
+            Write-Host "Warning: Could not parse config.yaml" -ForegroundColor Yellow
         }
+    }
+
+    # Build command from codingAgent
+    $raw = switch ($codingAgent) {
+        "claude"  { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
+        "codex"   { "codex --print --verbose" }
+        "gemini"  { "gemini --print --verbose" }
+        default   { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
+    }
+
+    # Apply model override if set
+    if ($model) {
+        $raw = $raw -replace '--model\s+\S+', ''
+        $raw += " --model $model"
     }
 
     # Build args with quote-aware parsing

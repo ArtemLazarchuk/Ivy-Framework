@@ -48,7 +48,7 @@ Tendril is a terminal UI application built on [Ivy Framework](https://github.com
 
    Key fields:
    - `projects` -- List of projects with their repo paths, verifications, and context
-   - `agentCommand` -- The Claude CLI command used to run agents
+   - `codingAgent` -- The coding agent to use (claude, codex, or gemini)
 
 3. **Set `TENDRIL_HOME` environment variable**
 

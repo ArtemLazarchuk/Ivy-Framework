@@ -17,8 +17,6 @@ public class ConfigServiceTests
     public void Should_Parse_Projects_From_Config()
     {
         var yaml = @"
-agentCommand: claude
-
 projects:
   - name: TestProject
     repos:
@@ -65,7 +63,7 @@ projects:
     public void Should_Return_Empty_Projects_When_No_Section()
     {
         var yaml = @"
-agentCommand: claude
+codingAgent: claude
 ";
 
         var tempDir = CreateTempConfigFile(yaml);
@@ -89,8 +87,6 @@ agentCommand: claude
     public void Should_Find_Project_By_Name()
     {
         var yaml = @"
-agentCommand: claude
-
 projects:
   - name: IvyFramework
     repos:
@@ -134,8 +130,6 @@ projects:
     public void Should_Deserialize_ReviewActions()
     {
         var yaml = @"
-agentCommand: claude
-
 projects:
   - name: TestProject
     repos:
@@ -179,8 +173,6 @@ projects:
     public void Should_Default_ReviewActions_To_Empty_List()
     {
         var yaml = @"
-agentCommand: claude
-
 projects:
   - name: TestProject
     repos:
@@ -209,7 +201,7 @@ projects:
     public void Constructor_IgnoresUnknownYamlKeys()
     {
         var tempDir = CreateTempConfigFile(@"
-agentCommand: claude
+codingAgent: claude
 unknownKey: someValue
 projects:
   - name: Test
@@ -226,7 +218,7 @@ projects:
             var service = new ConfigService();
 
             Assert.NotNull(service.Settings);
-            Assert.Equal("claude", service.Settings.AgentCommand);
+            Assert.Equal("claude", service.Settings.CodingAgent);
             Assert.False(service.NeedsOnboarding);
         }
         finally
@@ -240,7 +232,7 @@ projects:
     public void SetTendrilHome_IgnoresUnknownYamlKeys()
     {
         var tempDir = CreateTempConfigFile(@"
-agentCommand: test-agent
+codingAgent: test-agent
 anotherUnknownKey: anotherValue
 projects:
   - name: TestProject
@@ -249,14 +241,14 @@ projects:
     verifications: []
 ");
 
-        var service = new ConfigService(new TendrilSettings { AgentCommand = "initial" }, "");
+        var service = new ConfigService(new TendrilSettings { CodingAgent = "initial" }, "");
 
         try
         {
             service.SetTendrilHome(tempDir);
 
             Assert.NotNull(service.Settings);
-            Assert.Equal("test-agent", service.Settings.AgentCommand);
+            Assert.Equal("test-agent", service.Settings.CodingAgent);
             Assert.Equal(tempDir, service.TendrilHome);
         }
         finally
@@ -269,7 +261,7 @@ projects:
     public void Constructor_And_SetTendrilHome_BehaviorIsConsistent()
     {
         var tempDir = CreateTempConfigFile(@"
-agentCommand: consistent-agent
+codingAgent: consistent-agent
 unknownField: ignored
 maxConcurrentJobs: 10
 projects: []
@@ -289,8 +281,8 @@ verifications: []
             serviceViaSetHome.SetTendrilHome(tempDir);
 
             // Both should succeed and load the same settings
-            Assert.Equal("consistent-agent", serviceViaConstructor.Settings.AgentCommand);
-            Assert.Equal("consistent-agent", serviceViaSetHome.Settings.AgentCommand);
+            Assert.Equal("consistent-agent", serviceViaConstructor.Settings.CodingAgent);
+            Assert.Equal("consistent-agent", serviceViaSetHome.Settings.CodingAgent);
 
             Assert.Equal(10, serviceViaConstructor.Settings.MaxConcurrentJobs);
             Assert.Equal(10, serviceViaSetHome.Settings.MaxConcurrentJobs);
@@ -320,7 +312,6 @@ verifications: []
     public void LoadSettings_MigratesHexColorsToSlate()
     {
         var tempDir = CreateTempConfigFile(@"
-agentCommand: claude
 projects:
   - name: TestProject
     color: '#9a3c3c'
@@ -350,7 +341,6 @@ projects:
     public void LoadSettings_PreservesValidEnumColors()
     {
         var tempDir = CreateTempConfigFile(@"
-agentCommand: claude
 projects:
   - name: TestProject
     color: Blue
