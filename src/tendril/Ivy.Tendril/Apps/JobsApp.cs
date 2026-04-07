@@ -217,6 +217,7 @@ public class JobsApp : ViewBase
                                 var folderName = Path.GetFileName(job.Args[0]);
                                 planService.TransitionState(folderName, Plans.PlanStatus.Updating);
                             }
+                            jobService.DeleteJob(job.Id);
                             jobService.StartJob(job.Type, job.Args);
                             refreshToken.Refresh();
                         }
