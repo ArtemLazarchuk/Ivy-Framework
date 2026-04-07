@@ -389,7 +389,7 @@ public class ContentView(
             ).Width(Size.Half()).Resizable();
         }
 
-        if (openCommit.Value is { } commitHash)
+        if (openCommit.Value is { } commitHash && _selectedPlan is not null)
         {
             var repoPaths2 = _selectedPlan.GetEffectiveRepoPaths(_config);
 
@@ -454,6 +454,7 @@ public class ContentView(
             ).Width(Size.Half()).Resizable();
         }
 
+        if (_selectedPlan is not null)
         {
             var fileRepoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(openFile.Value, () => openFile.Set(null), fileRepoPaths);
