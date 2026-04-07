@@ -109,6 +109,9 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
   ```
 
   The Trash directory is at `$env:TENDRIL_HOME/Trash`.
+
+  **Note:** When writing trash files, use `-Force` with `Set-Content` or `Out-File` to ensure synchronous writes, as the parent process checks for the file immediately after exit.
+
 - Read relevant source files to understand the codebase areas involved
 - **Search GitHub issues** before creating plans to avoid duplicates or workaround plans for features already being built. Example:
   ```bash
