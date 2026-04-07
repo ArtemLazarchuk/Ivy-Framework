@@ -187,13 +187,14 @@ public class DashboardApp : ViewBase
 
         var content = Layout.Vertical().Gap(2)
             | dataTable
-            | new Card(
-                header: new Box(projectProgress).Padding(2),
-                content: combinedChart
-            );
+            | combinedChart;
+
+        var header = Layout.Vertical()
+            | statsRow
+            | new Box(projectProgress).Padding(2, 2, 0, 2);
 
         return new HeaderLayout(
-            header: statsRow,
+            header: header,
             content: content
         );
     }
