@@ -3,19 +3,43 @@ import { formatTickLabel, generateYAxis } from "./sharedUtils";
 import type { YAxisProps } from "./chartTypes";
 
 describe("formatTickLabel - date formats", () => {
-  it("formats MM/dd HH correctly", () => {
-    const date = new Date("2026-03-31T07:00:00Z");
-    expect(formatTickLabel(date.getTime(), "MM/dd HH")).toBe("03/31 07");
+  // Use a fixed UTC date for predictable results
+  const testDate = Date.UTC(2026, 3, 7, 13, 30, 45); // 2026-04-07T13:30:45Z
+
+  it('formats "MM/dd HH" correctly', () => {
+    expect(formatTickLabel(testDate, "MM/dd HH")).toBe("04/07 13");
   });
 
-  it("formats MM/dd correctly", () => {
-    const date = new Date("2026-04-15T00:00:00Z");
-    expect(formatTickLabel(date.getTime(), "MM/dd")).toBe("04/15");
+  it('formats "MM/dd" correctly', () => {
+    expect(formatTickLabel(testDate, "MM/dd")).toBe("04/07");
   });
 
-  it("formats MMM dd correctly", () => {
-    const date = new Date("2026-04-15T00:00:00Z");
-    expect(formatTickLabel(date.getTime(), "MMM dd")).toContain("Apr");
+  it('formats "MMM dd" correctly', () => {
+    expect(formatTickLabel(testDate, "MMM dd")).toBe("Apr 07");
+  });
+
+  it('formats "MMM yyyy" correctly', () => {
+    expect(formatTickLabel(testDate, "MMM yyyy")).toBe("Apr 2026");
+  });
+
+  it('formats "yyyy-MM-dd" correctly', () => {
+    expect(formatTickLabel(testDate, "yyyy-MM-dd")).toBe("2026-04-07");
+  });
+
+  it('formats "MMM dd, yyyy" correctly', () => {
+    expect(formatTickLabel(testDate, "MMM dd, yyyy")).toBe("Apr 07, 2026");
+  });
+
+  it("handles invalid dates gracefully", () => {
+    expect(formatTickLabel("invalid", "MM/dd")).toBe("invalid");
+  });
+
+  it('does not interfere with "#,##0,,M" number format', () => {
+    expect(formatTickLabel(5000000, "#,##0,,M")).toBe("5M");
+  });
+
+  it('does not interfere with "#,##0,K" number format', () => {
+    expect(formatTickLabel(5000, "#,##0,K")).toBe("5K");
   });
 });
 

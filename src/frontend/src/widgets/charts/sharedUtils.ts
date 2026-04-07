@@ -14,6 +14,8 @@ import {
 } from "./chartTypes";
 import { ChartData } from "./chartTypes";
 import { generateTextStyle, generateAxisLabelStyle, type ChartThemeColors } from "./styles/theme";
+import { format as dateFnsFormat } from "date-fns";
+import { TZDate } from "@date-fns/tz";
 import {
   CARTESIAN_GRID_DEFAULTS,
   LEGEND_DEFAULTS,
@@ -94,37 +96,21 @@ export const formatTickLabel = (value: number | string, formatter?: string | nul
       maximumFractionDigits: isNaN(fractionDigits) ? 2 : fractionDigits,
     }).format(Number(value));
   }
-  if (formatter === "MM/dd HH") {
-    const date = new Date(value);
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    const hour = String(date.getUTCHours()).padStart(2, "0");
-    return `${month}/${day} ${hour}`;
-  }
-  if (formatter === "MM/dd") {
-    const date = new Date(value);
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    return `${month}/${day}`;
-  }
-  if (formatter === "MMM dd") {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    }).format(new Date(value));
-  }
-  if (formatter === "MMM yyyy") {
-    return new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      year: "numeric",
-    }).format(new Date(value));
-  }
   if (formatter === "#,##0,,M") {
     return (Number(value) / 1000000).toFixed(0) + "M";
   }
   if (formatter === "#,##0,K") {
     return (Number(value) / 1000).toFixed(0) + "K";
+  }
+  if (/(?:^|[^a-zA-Z])(?:yyyy|yy|MMMM|MMM|MM|dd|d|HH|hh|mm|ss)(?:[^a-zA-Z]|$)/.test(formatter)) {
+    try {
+      const date = new TZDate(new Date(value), "UTC");
+      if (!isNaN(date.getTime())) {
+        return dateFnsFormat(date, formatter);
+      }
+    } catch {
+      // Fall through to String(value)
+    }
   }
   return String(value);
 };
