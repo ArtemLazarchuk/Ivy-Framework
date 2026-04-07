@@ -445,35 +445,73 @@ function InvokePromptwareAgent {
     $promptFile = PrepareFirmware $ScriptRoot $LogFile $ProgramFolder $FirmwareValues
     $agent = GetAgentCommandFromConfig -Promptware $Promptware
 
-    # Pass --session-id when using claude CLI
-    if ($agent.Executable -eq "claude") {
-        $ExtraAgentArgs += @("--session-id", $sessionId)
-    }
+    # Determine coding agent provider
+    $codingAgent = $agent.CodingAgent
+    $sharedFolder = Get-SharedFolder -ScriptRoot $ScriptRoot
+    $invokeCodingAgentScript = Join-Path $sharedFolder "Invoke-CodingAgent.ps1"
 
     # Create raw output log
     $rawLogFile = [System.IO.Path]::ChangeExtension($LogFile, ".raw.jsonl")
 
-    Write-Host "Starting Agent..."
-    if ($Action) { SendStatusMessage "Running $Action" }
+    Write-Host "Starting Agent ($codingAgent)..."
+    if ($Action) { SendStatusMessage "Running $Action ($codingAgent)" }
     Push-Location $WorkDir
     $heartbeat = Start-Heartbeat
     try {
         $startTs = (Get-Date).ToUniversalTime().ToString("o")
-        Add-Content -Path $rawLogFile -Value "[tendril] Claude invocation started at $startTs" -Encoding UTF8
-        Add-Content -Path $rawLogFile -Value "[tendril] Command: $($agent.Executable) $($agent.Args -join ' ') $($ExtraAgentArgs -join ' ')" -Encoding UTF8
+        Add-Content -Path $rawLogFile -Value "[tendril] Agent invocation started at $startTs (provider: $codingAgent)" -Encoding UTF8
 
-        $output = & $agent.Executable @($agent.Args) @ExtraAgentArgs -- (Get-Content $promptFile -Raw) 2>&1 |
-        ForEach-Object {
-            $line = if ($_ -is [System.Management.Automation.ErrorRecord]) {
-                "[stderr] $_"
+        if ($codingAgent -ne "claude" -and (Test-Path $invokeCodingAgentScript)) {
+            # Use Invoke-CodingAgent.ps1 for non-Claude providers
+            $cliName = switch ($codingAgent) {
+                "codex" { "Codex" }
+                "gemini" { "Gemini" }
+                default { "Claude" }
             }
-            else {
-                "$_"
+
+            Add-Content -Path $rawLogFile -Value "[tendril] Command: Invoke-CodingAgent.ps1 -Cli $cliName -Model $($agent.Model)" -Encoding UTF8
+
+            $output = & $invokeCodingAgentScript `
+                -Cli $cliName `
+                -Model $agent.Model `
+                -PromptFile $promptFile `
+                -AllowedTools $agent.AllowedTools `
+                -SessionId $sessionId `
+                -WorkingDirectory $WorkDir `
+                -ExtraArgs $ExtraAgentArgs 2>&1 |
+            ForEach-Object {
+                $line = if ($_ -is [System.Management.Automation.ErrorRecord]) {
+                    "[stderr] $_"
+                }
+                else {
+                    "$_"
+                }
+                Add-Content -Path $rawLogFile -Value $line -Encoding UTF8
+                $_
             }
-            Add-Content -Path $rawLogFile -Value $line -Encoding UTF8
-            $_
+            $output | Write-Output
         }
-        $output | Write-Output
+        else {
+            # Use Claude CLI directly (original path)
+            if ($agent.Executable -eq "claude") {
+                $ExtraAgentArgs += @("--session-id", $sessionId)
+            }
+
+            Add-Content -Path $rawLogFile -Value "[tendril] Command: $($agent.Executable) $($agent.Args -join ' ') $($ExtraAgentArgs -join ' ')" -Encoding UTF8
+
+            $output = & $agent.Executable @($agent.Args) @ExtraAgentArgs -- (Get-Content $promptFile -Raw) 2>&1 |
+            ForEach-Object {
+                $line = if ($_ -is [System.Management.Automation.ErrorRecord]) {
+                    "[stderr] $_"
+                }
+                else {
+                    "$_"
+                }
+                Add-Content -Path $rawLogFile -Value $line -Encoding UTF8
+                $_
+            }
+            $output | Write-Output
+        }
     }
     finally {
         Stop-Heartbeat $heartbeat
@@ -553,10 +591,17 @@ function GetAgentCommandFromConfig {
     $configPath = $script:ConfigPath
     $raw = "claude --print --verbose --output-format stream-json --dangerously-skip-permissions"
     $allowedTools = @()
+    $codingAgent = "claude"
+    $model = ""
 
     if (Test-Path $configPath) {
         try {
             $config = Get-Content $configPath -Raw | ConvertFrom-Yaml
+
+            # Read codingAgent setting (claude|codex|gemini)
+            if ($config.codingAgent) {
+                $codingAgent = $config.codingAgent.ToLower()
+            }
 
             if ($config.agentCommand) {
                 $raw = $config.agentCommand
@@ -567,6 +612,7 @@ function GetAgentCommandFromConfig {
 
                 # Apply model override
                 if ($pwConfig.model) {
+                    $model = $pwConfig.model
                     # Strip any existing --model from raw if we're overriding it
                     $raw = $raw -replace '--model\s+\S+', ''
                     $raw += " --model $($pwConfig.model)"
@@ -612,7 +658,58 @@ function GetAgentCommandFromConfig {
     }
 
     return @{
-        Executable = $parts[0]
-        Args       = $cmdArgs
+        Executable   = $parts[0]
+        Args         = $cmdArgs
+        CodingAgent  = $codingAgent
+        Model        = $model
+        AllowedTools = $allowedTools
     }
+}
+
+function ReportSessionCost {
+    param([string]$SessionId)
+
+    if (-not $SessionId) { return $null }
+
+    # Currently only Claude tracks session costs via ~/.claude/projects/*.jsonl
+    # Codex and Gemini cost tracking will be added as their CLIs mature
+    try {
+        $tendrilUrl = $env:TENDRIL_URL
+        if ($tendrilUrl) {
+            $response = Invoke-RestMethod -Uri "$tendrilUrl/api/costs/session/$SessionId" -Method Get -ErrorAction SilentlyContinue
+            if ($response) {
+                return @{
+                    Tokens = $response.totalTokens
+                    Cost   = $response.totalCost
+                }
+            }
+        }
+    }
+    catch { }
+
+    return $null
+}
+
+function LogPlanCost {
+    param(
+        [string]$PlanPath,
+        [string]$Action,
+        [int]$Tokens,
+        [double]$Cost
+    )
+
+    if (-not $PlanPath -or (-not $Tokens -and -not $Cost)) { return }
+
+    $costsFile = Join-Path $PlanPath "costs.yaml"
+
+    $entry = @{
+        action    = $Action
+        timestamp = (Get-Date).ToUniversalTime().ToString("o")
+        tokens    = $Tokens
+        cost      = [math]::Round($Cost, 4)
+    }
+
+    $yamlEntry = "- action: $($entry.action)`n  timestamp: $($entry.timestamp)`n  tokens: $($entry.tokens)`n  cost: $($entry.cost)`n"
+
+    Add-Content -Path $costsFile -Value $yamlEntry -Encoding UTF8
 }

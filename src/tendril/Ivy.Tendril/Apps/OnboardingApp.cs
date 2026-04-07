@@ -14,18 +14,20 @@ public class OnboardingApp : ViewBase
     [
         new("1", selectedIndex > 0 ? Icons.Check : null, "Welcome"),
         new("2", selectedIndex > 1 ? Icons.Check : null, "Software Check"),
-        new("3", selectedIndex > 2 ? Icons.Check : null, "Tendril Home"),
-        new("4", selectedIndex > 3 ? Icons.Check : null, "Project Setup"),
-        new("5", selectedIndex > 4 ? Icons.Check : null, "Complete")
+        new("3", selectedIndex > 2 ? Icons.Check : null, "Coding Agent"),
+        new("4", selectedIndex > 3 ? Icons.Check : null, "Tendril Home"),
+        new("5", selectedIndex > 4 ? Icons.Check : null, "Project Setup"),
+        new("6", selectedIndex > 5 ? Icons.Check : null, "Complete")
     ];
 
     private static object GetStepViews(IState<int> stepperIndex) => stepperIndex.Value switch
     {
         0 => new WelcomeStepView(stepperIndex),
         1 => new SoftwareCheckStepView(stepperIndex),
-        2 => new TendrilHomeStepView(stepperIndex),
-        3 => new ProjectSetupStepView(stepperIndex),
-        4 => new CompleteStepView(stepperIndex),
+        2 => new CodingAgentStepView(stepperIndex),
+        3 => new TendrilHomeStepView(stepperIndex),
+        4 => new ProjectSetupStepView(stepperIndex),
+        5 => new CompleteStepView(stepperIndex),
         _ => throw new ArgumentOutOfRangeException()
     };
 
@@ -87,6 +89,8 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
             {
                 ["gh"] = await CheckCommand("gh", "--version"),
                 ["claude"] = await CheckCommand("claude", "--version"),
+                ["codex"] = await CheckCommand("codex", "--version"),
+                ["gemini"] = await CheckCommand("gemini", "--version"),
                 ["git"] = await CheckCommand("git", "--version"),
                 ["powershell"] = await CheckCommand("pwsh", "-Version")
                                  || await CheckCommand("powershell", "-Version"),
@@ -97,9 +101,12 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
             isChecking.Set(false);
         }
 
+        var hasAnyCodingAgent = checkResults.Value != null
+            && (checkResults.Value["claude"] || checkResults.Value["codex"] || checkResults.Value["gemini"]);
+
         var allRequiredPassed = checkResults.Value != null
             && checkResults.Value["gh"]
-            && checkResults.Value["claude"]
+            && hasAnyCodingAgent
             && checkResults.Value["git"]
             && checkResults.Value["powershell"];
 
@@ -107,7 +114,7 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                | Text.H2("Required Software")
                | Text.Markdown(
                    "Tendril requires the following software to be installed:\n\n" +
-                   "- **Claude CLI** - For AI agent orchestration\n" +
+                   "- **Coding Agent** - At least one of: Claude CLI, Codex CLI, or Gemini CLI\n" +
                    "- **GitHub CLI** - For PR creation and GitHub integration\n" +
                    "- **Git** - For version control\n" +
                    "- **PowerShell** - For running scripts and hooks\n\n" +
@@ -132,10 +139,24 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                           ),
                           new TableRow(
                               new TableCell("Claude CLI"),
-                              new TableCell(checkResults.Value["claude"] ? "\u2713 Installed" : "\u2717 Not Found"),
+                              new TableCell(checkResults.Value["claude"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
                               checkResults.Value["claude"]
                                   ? new TableCell("")
                                   : new TableCell("Install from https://docs.anthropic.com/en/docs/claude-code")
+                          ),
+                          new TableRow(
+                              new TableCell("Codex CLI"),
+                              new TableCell(checkResults.Value["codex"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
+                              checkResults.Value["codex"]
+                                  ? new TableCell("")
+                                  : new TableCell("Install from https://openai.com/index/codex/")
+                          ),
+                          new TableRow(
+                              new TableCell("Gemini CLI"),
+                              new TableCell(checkResults.Value["gemini"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
+                              checkResults.Value["gemini"]
+                                  ? new TableCell("")
+                                  : new TableCell("Install from https://github.com/google-gemini/gemini-cli")
                           ),
                           new TableRow(
                               new TableCell("Git"),
@@ -176,7 +197,7 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                            .Icon(Icons.ArrowRight, Align.Right)
                            .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
                        : Layout.Vertical()
-                         | Text.Warning("Please install missing required software before continuing.")
+                         | Text.Warning("Please install missing required software before continuing. At least one coding agent (Claude, Codex, or Gemini) must be installed.")
                          | (Layout.Horizontal().Gap(2)
                            | new Button("Check Again")
                                .Outline()
@@ -213,6 +234,41 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
         {
             return false;
         }
+    }
+}
+
+public class CodingAgentStepView(IState<int> stepperIndex) : ViewBase
+{
+    private static readonly string[] AgentOptions = ["claude", "codex", "gemini"];
+
+    public override object? Build()
+    {
+        var config = UseService<IConfigService>();
+        var selectedAgent = UseState(config.Settings.CodingAgent ?? "claude");
+
+        var description = selectedAgent.Value switch
+        {
+            "claude" => "Claude Code CLI — the most mature integration with full streaming support and cost tracking.",
+            "codex" => "OpenAI Codex CLI — supports full-auto mode. Cost tracking not yet available.",
+            "gemini" => "Google Gemini CLI — supports sandbox mode. Cost tracking not yet available.",
+            _ => ""
+        };
+
+        return Layout.Vertical()
+               | Text.H2("Choose Your Coding Agent")
+               | Text.Markdown(
+                   "Tendril supports multiple AI coding agents. Choose which one to use as your default.\n\n" +
+                   "You can change this later in Settings.")
+               | selectedAgent.ToSelectInput(AgentOptions)
+                   .Variant(SelectInputVariant.Toggle)
+                   .WithField().Label("Coding Agent")
+               | Text.Muted(description)
+               | new Button("Continue").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
+                   .OnClick(() =>
+                   {
+                       config.Settings.CodingAgent = selectedAgent.Value;
+                       stepperIndex.Set(stepperIndex.Value + 1);
+                   });
     }
 }
 

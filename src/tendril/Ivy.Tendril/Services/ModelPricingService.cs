@@ -84,7 +84,21 @@ public class ModelPricingService : IModelPricingService
             : new ModelPricing { Input = 15.0, Output = 75.0, CacheWrite = 18.75, CacheRead = 1.50 };
     }
 
-    public CostCalculation CalculateSessionCost(string sessionId)
+    public CostCalculation CalculateSessionCost(string sessionId) =>
+        CalculateSessionCost(sessionId, "claude");
+
+    public CostCalculation CalculateSessionCost(string sessionId, string provider)
+    {
+        return provider.ToLower() switch
+        {
+            "claude" => CalculateClaudeCost(sessionId),
+            "codex" => CalculateCodexCost(sessionId),
+            "gemini" => CalculateGeminiCost(sessionId),
+            _ => CalculateClaudeCost(sessionId)
+        };
+    }
+
+    private CostCalculation CalculateClaudeCost(string sessionId)
     {
         var claudeProjectsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -115,6 +129,22 @@ public class ModelPricingService : IModelPricingService
         }
 
         return new CostCalculation { TotalTokens = totalTokens, TotalCost = totalCost };
+    }
+
+    private static CostCalculation CalculateCodexCost(string sessionId)
+    {
+        // Codex CLI does not yet expose session-level cost tracking files.
+        // Cost data will need to come from the OpenAI API usage endpoint once available.
+        // For now, return empty — costs will be tracked when OpenAI adds CLI usage logs.
+        return new CostCalculation();
+    }
+
+    private static CostCalculation CalculateGeminiCost(string sessionId)
+    {
+        // Gemini CLI does not yet expose session-level cost tracking files.
+        // Cost data will need to come from GCP billing or Gemini API once available.
+        // For now, return empty — costs will be tracked when Google adds CLI usage logs.
+        return new CostCalculation();
     }
 
     internal CostCalculation CalculateFromFile(string filePath)
