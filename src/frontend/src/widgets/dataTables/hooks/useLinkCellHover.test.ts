@@ -14,7 +14,7 @@ describe("useLinkCellHover", () => {
   it("should detect link cells by kind", () => {
     expect(hookSource).toContain('"link-cell"');
     expect(hookSource).toContain("GridCellKind.Custom");
-    expect(hookSource).toContain('(cell.data as { kind?: string })?.kind === "link-cell"');
+    expect(hookSource).toContain('cellData?.kind === "link-cell"');
   });
 
   it("should clear tooltip when hovered cell is not a link cell", () => {
