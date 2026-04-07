@@ -2,7 +2,6 @@ using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ivy.Tendril.Test;
