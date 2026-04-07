@@ -388,7 +388,12 @@ public class JobService : IJobService
             NotificationReady?.Invoke(notification);
     }
 
-    private string StartJobInternal(string type, string[] args, string? inboxFilePath)
+    private string StartJobSkipDepCheck(string type, params string[] args)
+    {
+        return StartJobInternal(type, args, inboxFilePath: null, skipDependencyCheck: true);
+    }
+
+    private string StartJobInternal(string type, string[] args, string? inboxFilePath, bool skipDependencyCheck = false)
     {
         var id = $"job-{Interlocked.Increment(ref _counter):D3}";
         var scriptPath = ScriptPaths.GetValueOrDefault(type, "");
@@ -456,7 +461,7 @@ public class JobService : IJobService
         _jobs[id] = job;
 
         // Check dependencies for ExecutePlan jobs
-        if (type == "ExecutePlan")
+        if (type == "ExecutePlan" && !skipDependencyCheck)
         {
             var planFolder = args.Length > 0 ? args[0] : "";
             var (ok, blockReason) = CheckDependencies(planFolder);
@@ -762,8 +767,8 @@ public class JobService : IJobService
                 // Remove the blocked job entry
                 _jobs.TryRemove(blockedJob.Id, out _);
 
-                // Re-start the job (this will re-check dependencies as a safety net)
-                StartJob(blockedJob.Type, blockedJob.Args);
+                // Re-start the job — skip dependency check since we just verified
+                StartJobSkipDepCheck(blockedJob.Type, blockedJob.Args);
 
                 var notification = new JobNotification(
                     "Job Unblocked",
@@ -1066,11 +1071,19 @@ public class JobService : IJobService
                 if (!planYaml.State.Equals("Blocked", StringComparison.OrdinalIgnoreCase)) continue;
                 if (!planYaml.DependsOn.Contains(completedFolderName, StringComparer.OrdinalIgnoreCase)) continue;
 
+                // Skip if there's already a blocked or running job for this plan
+                var existingJob = _jobs.Values.Any(j =>
+                    j.Type == "ExecutePlan" &&
+                    j.Status is JobStatus.Blocked or JobStatus.Running or JobStatus.Queued &&
+                    j.Args.Length > 0 &&
+                    j.Args[0].Equals(dir, StringComparison.OrdinalIgnoreCase));
+                if (existingJob) continue;
+
                 var (allMet, _) = CheckDependencies(dir);
                 if (allMet)
                 {
                     SetPlanStateByFolder(dir, "Draft");
-                    StartJob("ExecutePlan", dir);
+                    StartJobSkipDepCheck("ExecutePlan", dir);
                 }
             }
         }
