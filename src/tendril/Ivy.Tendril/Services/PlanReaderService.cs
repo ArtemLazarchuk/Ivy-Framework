@@ -389,7 +389,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
 
             var nextNumber = GetNextRevisionNumber(revisionsDir);
             var revisionPath = Path.Combine(revisionsDir, $"{nextNumber:D3}.md");
-            File.WriteAllText(revisionPath, content);
+            FileHelper.WriteAllText(revisionPath, content);
 
             var planYamlPath = Path.Combine(PlansDirectory, folderName, "plan.yaml");
             if (File.Exists(planYamlPath))
@@ -437,7 +437,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             .OrderByDescending(f => f)
             .FirstOrDefault();
 
-        return latestFile != null ? File.ReadAllText(latestFile) : string.Empty;
+        return latestFile != null ? FileHelper.ReadAllText(latestFile) : string.Empty;
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
             {
                 var name = Path.GetFileNameWithoutExtension(f);
                 if (int.TryParse(name, out var num))
-                    return (Number: num, Content: File.ReadAllText(f), Modified: File.GetLastWriteTimeUtc(f));
+                    return (Number: num, Content: FileHelper.ReadAllText(f), Modified: File.GetLastWriteTimeUtc(f));
                 return (Number: -1, Content: "", Modified: DateTime.MinValue);
             })
             .Where(r => r.Number >= 0)
@@ -491,7 +491,7 @@ public class PlanReaderService(IConfigService config, ILogger<PlanReaderService>
         }
 
         var logPath = Path.Combine(logsDir, $"{nextNumber:D3}-{action}.md");
-        File.WriteAllText(logPath, content);
+        FileHelper.WriteAllText(logPath, content);
     }
 
     /// <summary>

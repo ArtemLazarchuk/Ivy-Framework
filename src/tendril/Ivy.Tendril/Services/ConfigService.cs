@@ -153,7 +153,7 @@ public class ConfigService : IConfigService
         {
             try
             {
-                var yaml = File.ReadAllText(_configPath);
+                var yaml = FileHelper.ReadAllText(_configPath);
                 // Quote unquoted %VAR% patterns that YAML rejects (% is a directive indicator)
                 yaml = Regex.Replace(yaml, @"(?m)(?<=:\s+)(%\w+%.*)$", "'$1'");
                 yaml = Regex.Replace(yaml, @"(?m)^(\s*-\s+)(%\w+%.*)$", "$1'$2'");
@@ -266,7 +266,7 @@ public class ConfigService : IConfigService
         if (needsSave && File.Exists(_configPath))
         {
             var yaml = YamlHelper.SerializerCompact.Serialize(_settings);
-            File.WriteAllText(_configPath, yaml);
+            FileHelper.WriteAllText(_configPath, yaml);
         }
     }
 
@@ -274,7 +274,7 @@ public class ConfigService : IConfigService
     {
         _levelNamesCache = null;
         var yaml = YamlHelper.SerializerCompact.Serialize(_settings);
-        File.WriteAllText(_configPath, yaml);
+        FileHelper.WriteAllText(_configPath, yaml);
     }
 
     // Onboarding support
@@ -317,7 +317,7 @@ public class ConfigService : IConfigService
         // Load config if it exists at the new path
         if (File.Exists(_configPath))
         {
-            var yaml = File.ReadAllText(_configPath);
+            var yaml = FileHelper.ReadAllText(_configPath);
             var loadedSettings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
             if (loadedSettings != null)
             {
