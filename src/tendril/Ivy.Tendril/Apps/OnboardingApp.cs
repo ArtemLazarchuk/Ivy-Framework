@@ -139,49 +139,49 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                              new TableCell(checkResults.Value["gh"] ? "\u2713 Installed" : "\u2717 Not Found"),
                              checkResults.Value["gh"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://cli.github.com/")
+                                 : new TableCell(new Button("Install").Inline().Url("https://cli.github.com/"))
                          ),
                          new TableRow(
                              new TableCell("Claude CLI"),
                              new TableCell(checkResults.Value["claude"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
                              checkResults.Value["claude"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://docs.anthropic.com/en/docs/claude-code")
+                                 : new TableCell(new Button("Install").Inline().Url("https://docs.anthropic.com/en/docs/claude-code"))
                          ),
                          new TableRow(
                              new TableCell("Codex CLI"),
                              new TableCell(checkResults.Value["codex"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
                              checkResults.Value["codex"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://openai.com/index/codex/")
+                                 : new TableCell(new Button("Install").Inline().Url("https://openai.com/index/codex/"))
                          ),
                          new TableRow(
                              new TableCell("Gemini CLI"),
                              new TableCell(checkResults.Value["gemini"] ? "\u2713 Installed" : "\u24d8 Not Installed"),
                              checkResults.Value["gemini"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://github.com/google-gemini/gemini-cli")
+                                 : new TableCell(new Button("Install").Inline().Url("https://github.com/google-gemini/gemini-cli"))
                          ),
                          new TableRow(
                              new TableCell("Git"),
                              new TableCell(checkResults.Value["git"] ? "\u2713 Installed" : "\u2717 Not Found"),
                              checkResults.Value["git"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://git-scm.com/downloads")
+                                 : new TableCell(new Button("Install").Inline().Url("https://git-scm.com/downloads"))
                          ),
                          new TableRow(
                              new TableCell("PowerShell"),
                              new TableCell(checkResults.Value["powershell"] ? "\u2713 Installed" : "\u2717 Not Found"),
                              checkResults.Value["powershell"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://github.com/PowerShell/PowerShell")
+                                 : new TableCell(new Button("Install").Inline().Url("https://github.com/PowerShell/PowerShell"))
                          ),
                          new TableRow(
                              new TableCell("Pandoc (Optional)"),
                              new TableCell(checkResults.Value["pandoc"] ? "\u2713 Installed" : "\u24d8 Not Found"),
                              checkResults.Value["pandoc"]
                                  ? new TableCell("")
-                                 : new TableCell("Install from https://pandoc.org/installing.html")
+                                 : new TableCell(new Button("Install").Inline().Url("https://pandoc.org/installing.html"))
                          )
                      ).Width(Size.Full())
                    : null!)
