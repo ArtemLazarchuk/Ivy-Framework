@@ -73,7 +73,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                | Text.H2("Project Setup")
                | Text.Muted("Set up your first project. You can add more projects later in Settings.")
                | (error.Value != null ? Text.Danger(error.Value) : null!)
-               | projectName.ToTextInput().WithField().Label("Project Name")
+               | projectName.ToTextInput().WithField().Required().Label("Project Name")
                | projectContext.ToTextareaInput()
                    .Rows(4)
                    .WithField()
