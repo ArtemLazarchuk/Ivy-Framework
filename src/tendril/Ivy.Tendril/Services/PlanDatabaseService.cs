@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Database;
@@ -512,31 +513,58 @@ public class PlanDatabaseService : IPlanDatabaseService
         }
     }
 
+    internal static string SanitizeFts5Query(string query)
+    {
+        // Replace path separators with spaces
+        var sanitized = query.Replace('/', ' ').Replace('\\', ' ');
+
+        // Remove grouping and prefix chars that cause parse errors
+        sanitized = sanitized.Replace("(", "").Replace(")", "").Replace("^", "");
+
+        // Remove bare asterisks (keep prefix wildcards like "button*")
+        sanitized = Regex.Replace(sanitized, @"(?<!\w)\*", "");
+
+        // Balance double quotes: if odd count, replace with spaces to separate adjacent words
+        if (sanitized.Count(c => c == '"') % 2 != 0)
+            sanitized = sanitized.Replace("\"", " ");
+
+        // Collapse whitespace and trim
+        sanitized = Regex.Replace(sanitized, @"\s+", " ").Trim();
+
+        return sanitized;
+    }
+
     public List<PlanFile> SearchPlans(string query)
     {
         lock (_lock)
         {
-            // Try FTS5 first
-            using var ftsCmd = _connection.CreateCommand();
-            ftsCmd.CommandText = """
-                                 SELECT p.Id, p.Title, p.Project, p.Level, p.State, p.FolderPath, p.FolderName,
-                                        p.YamlRaw, p.RevisionCount, p.LatestRevisionContent, p.Created, p.Updated, p.InitialPrompt, p.SourceUrl
-                                 FROM Plans p
-                                 INNER JOIN PlanSearch fts ON fts.rowid = p.Id
-                                 WHERE PlanSearch MATCH @query
-                                 ORDER BY rank, p.Id
-                                 """;
-            ftsCmd.Parameters.AddWithValue("@query", query);
+            // Try FTS5 first with sanitized query
+            var sanitizedQuery = SanitizeFts5Query(query);
 
-            List<PlanFile> plans;
-            try
+            List<PlanFile> plans = [];
+
+            if (!string.IsNullOrWhiteSpace(sanitizedQuery))
             {
-                plans = ExecuteSearchQuery(ftsCmd);
-            }
-            catch (Microsoft.Data.Sqlite.SqliteException)
-            {
-                // FTS5 syntax error (e.g. special characters like '/') — fall through to LIKE
-                plans = [];
+                using var ftsCmd = _connection.CreateCommand();
+                ftsCmd.CommandText = """
+                                     SELECT p.Id, p.Title, p.Project, p.Level, p.State, p.FolderPath, p.FolderName,
+                                            p.YamlRaw, p.RevisionCount, p.LatestRevisionContent, p.Created, p.Updated, p.InitialPrompt, p.SourceUrl
+                                     FROM Plans p
+                                     INNER JOIN PlanSearch fts ON fts.rowid = p.Id
+                                     WHERE PlanSearch MATCH @query
+                                     ORDER BY rank, p.Id
+                                     """;
+                ftsCmd.Parameters.AddWithValue("@query", sanitizedQuery);
+
+                try
+                {
+                    plans = ExecuteSearchQuery(ftsCmd);
+                }
+                catch (Microsoft.Data.Sqlite.SqliteException)
+                {
+                    // FTS5 syntax error — safety net for edge cases the sanitizer doesn't handle
+                    plans = [];
+                }
             }
 
             // If FTS5 returns no results, fall back to LIKE for substring matching

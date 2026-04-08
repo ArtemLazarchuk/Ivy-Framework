@@ -639,6 +639,81 @@ public class PlanDatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void SearchPlans_SanitizesSlashForFts5()
+    {
+        _db.UpsertPlan(CreateTestPlan(1600, "Fix issues for release",
+            latestContent: "Resolved 42 open issues before release"));
+
+        // "issues/42" contains a slash — sanitizer converts to "issues 42"
+        // FTS5 implicit AND matches both "issues" and "42" from title/content
+        var results = _db.SearchPlans("issues/42");
+        Assert.Single(results);
+        Assert.Equal("Fix issues for release", results[0].Title);
+    }
+
+    [Fact]
+    public void SearchPlans_SanitizesUnbalancedQuoteForFts5()
+    {
+        _db.UpsertPlan(CreateTestPlan(1600, "Button widget feature",
+            latestContent: "Add a button widget to the dashboard"));
+
+        // Unbalanced quote should be stripped, leaving "button widget"
+        var results = _db.SearchPlans("button\"widget");
+        Assert.Single(results);
+        Assert.Equal("Button widget feature", results[0].Title);
+    }
+
+    [Fact]
+    public void SearchPlans_SanitizesBareAsterisk()
+    {
+        _db.UpsertPlan(CreateTestPlan(1600, "Button component",
+            latestContent: "Add a button component"));
+
+        // Bare asterisk should be stripped, leaving "button"
+        var results = _db.SearchPlans("* button");
+        Assert.Single(results);
+        Assert.Equal("Button component", results[0].Title);
+    }
+
+    [Fact]
+    public void SanitizeFts5Query_ReplacesPathSeparators()
+    {
+        Assert.Equal("issues 42", PlanDatabaseService.SanitizeFts5Query("issues/42"));
+        Assert.Equal("path to file", PlanDatabaseService.SanitizeFts5Query("path\\to\\file"));
+    }
+
+    [Fact]
+    public void SanitizeFts5Query_RemovesGroupingChars()
+    {
+        Assert.Equal("hello world", PlanDatabaseService.SanitizeFts5Query("(hello) world^"));
+    }
+
+    [Fact]
+    public void SanitizeFts5Query_HandlesBareAsterisk()
+    {
+        Assert.Equal("button", PlanDatabaseService.SanitizeFts5Query("* button"));
+        // Prefix wildcard is preserved
+        Assert.Equal("button*", PlanDatabaseService.SanitizeFts5Query("button*"));
+    }
+
+    [Fact]
+    public void SanitizeFts5Query_BalancesQuotes()
+    {
+        // Odd quotes — all removed
+        Assert.Equal("button widget", PlanDatabaseService.SanitizeFts5Query("button\"widget"));
+        // Even quotes — preserved
+        Assert.Equal("\"button widget\"", PlanDatabaseService.SanitizeFts5Query("\"button widget\""));
+    }
+
+    [Fact]
+    public void SanitizeFts5Query_PreservesBooleanOperators()
+    {
+        Assert.Equal("button OR grid", PlanDatabaseService.SanitizeFts5Query("button OR grid"));
+        Assert.Equal("button AND widget", PlanDatabaseService.SanitizeFts5Query("button AND widget"));
+        Assert.Equal("NOT broken", PlanDatabaseService.SanitizeFts5Query("NOT broken"));
+    }
+
+    [Fact]
     public void UpsertJob_PersistsAndRetrievesJobData()
     {
         var job = new JobItem
