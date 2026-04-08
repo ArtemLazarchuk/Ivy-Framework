@@ -575,6 +575,28 @@ public class PlanDatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void SearchPlans_LikeFallbackFindsInitialPrompt()
+    {
+        var metadata = new PlanMetadata(
+            1501, "Tendril", "NiceToHave", "InitialPrompt Plan", PlanStatus.Draft,
+            new List<string> { "D:\\Repos\\Test" },
+            new List<string>(), new List<string>(),
+            new List<PlanVerificationEntry>(),
+            new List<string>(), new List<string>(),
+            DateTime.UtcNow, DateTime.UtcNow,
+            "Fix the widget rendering pipeline",
+            null
+        );
+        var plan = new PlanFile(metadata, "# Content", "D:\\Plans\\01501-InitialPromptPlan", "state: Draft");
+        _db.UpsertPlan(plan);
+
+        // "rendering/pipeline" contains a slash — FTS5 won't match as substring, should fall back to LIKE
+        var results = _db.SearchPlans("rendering/pipeline");
+        Assert.Single(results);
+        Assert.Equal("InitialPrompt Plan", results[0].Title);
+    }
+
+    [Fact]
     public void SearchPlans_PrefersFts5OverLike()
     {
         _db.UpsertPlan(CreateTestPlan(1500, "Widget Feature",
