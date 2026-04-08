@@ -41,14 +41,14 @@ public class InboxWatcherServiceTests
     }
 
     [Fact]
-    public void ParseContent_EmptyDescriptionAfterFrontmatter_ReturnsFull()
+    public void ParseContent_EmptyDescriptionAfterFrontmatter_ReturnsEmpty()
     {
         var content = "---\nproject: Agent\n---\n";
 
         var (project, description, sourcePath) = InboxWatcherService.ParseContent(content);
 
         Assert.Equal("Agent", project);
-        Assert.Equal(content, description);
+        Assert.Equal("", description);
         Assert.Null(sourcePath);
     }
 
