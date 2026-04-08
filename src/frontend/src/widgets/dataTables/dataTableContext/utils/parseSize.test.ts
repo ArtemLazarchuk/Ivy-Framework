@@ -6,6 +6,7 @@ import {
   parseSizeMin,
   estimateHeaderWidth,
   estimateContentWidth,
+  estimateHeaderWidth,
   getSizeMode,
 } from "./parseSize";
 
@@ -370,5 +371,101 @@ describe("getSizeMode", () => {
 
   it("should return 'fit' for Fit with min/max suffix", () => {
     expect(getSizeMode("Fit,Px:100")).toBe("fit");
+  });
+});
+
+/**
+ * Tests for widenColumnWidths behavior.
+ * The actual callback lives in useColumnManagement hook, but the core logic
+ * (compare new estimate vs current width, only widen) is tested here using
+ * the underlying utility functions.
+ */
+describe("widenColumnWidths behavior", () => {
+  // Simulates the widen logic from useColumnManagement.widenColumnWidths
+  function computeWidenedWidths(
+    columns: { originalWidth?: string; width: number | string; header?: string; name: string }[],
+    arrowTable: arrow.Table,
+    prevWidths: Record<string, number>,
+  ): Record<string, number> {
+    if (Object.keys(prevWidths).length === 0) return prevWidths;
+
+    let changed = false;
+    const widths = { ...prevWidths };
+    columns.forEach((col, index) => {
+      const sizeMode = getSizeMode(col.originalWidth ?? col.width);
+      if (!sizeMode) return;
+
+      const contentWidth = estimateContentWidth(arrowTable, index, sizeMode);
+      if (contentWidth === undefined) return;
+
+      const headerMinWidth = estimateHeaderWidth(col.header || col.name);
+      const newWidth = Math.max(headerMinWidth, contentWidth);
+      const currentWidth = prevWidths[index.toString()] ?? 0;
+
+      if (newWidth > currentWidth) {
+        widths[index.toString()] = newWidth;
+        changed = true;
+      }
+    });
+
+    return changed ? widths : prevWidths;
+  }
+
+  it("should widen columns when new data has wider content", () => {
+    const columns = [{ name: "col", originalWidth: "Fit", width: 0 }];
+    // Initial: short content
+    const initialTable = makeTable([{ name: "col", values: ["ab"] }]);
+    const initialWidth = estimateContentWidth(initialTable, 0, "fit")!;
+    const prevWidths: Record<string, number> = { "0": initialWidth };
+
+    // New data: wider content
+    const widerTable = makeTable([{ name: "col", values: ["ab", "abcdefghijklmnop"] }]);
+    const result = computeWidenedWidths(columns, widerTable, prevWidths);
+
+    expect(result["0"]).toBeGreaterThan(initialWidth);
+  });
+
+  it("should NOT shrink columns when new data has narrower content", () => {
+    const columns = [{ name: "col", originalWidth: "Fit", width: 0 }];
+    // Initial: wide content
+    const wideTable = makeTable([{ name: "col", values: ["abcdefghijklmnop"] }]);
+    const initialWidth = estimateContentWidth(wideTable, 0, "fit")!;
+    const prevWidths: Record<string, number> = { "0": initialWidth };
+
+    // New data: narrower content
+    const narrowTable = makeTable([{ name: "col", values: ["ab"] }]);
+    const result = computeWidenedWidths(columns, narrowTable, prevWidths);
+
+    // Should return the same object reference (no change)
+    expect(result).toBe(prevWidths);
+    expect(result["0"]).toBe(initialWidth);
+  });
+
+  it("should leave non-content-based columns unchanged", () => {
+    const columns = [
+      { name: "pxCol", originalWidth: "Px:200", width: 200 },
+      { name: "fracCol", originalWidth: "Fraction:0.5", width: 0 },
+      { name: "autoCol", originalWidth: "Auto", width: 0 },
+    ];
+    const table = makeTable([
+      { name: "pxCol", values: ["very long text that would be wide"] },
+      { name: "fracCol", values: ["very long text that would be wide"] },
+      { name: "autoCol", values: ["very long text that would be wide"] },
+    ]);
+    const prevWidths: Record<string, number> = { "0": 200, "1": 100, "2": 100 };
+    const result = computeWidenedWidths(columns, table, prevWidths);
+
+    // Non-content-based columns should be unchanged
+    expect(result).toBe(prevWidths);
+  });
+
+  it("should be a no-op when column widths are not initialized (empty prevWidths)", () => {
+    const columns = [{ name: "col", originalWidth: "Fit", width: 0 }];
+    const table = makeTable([{ name: "col", values: ["hello world"] }]);
+    const prevWidths: Record<string, number> = {};
+    const result = computeWidenedWidths(columns, table, prevWidths);
+
+    expect(result).toBe(prevWidths);
+    expect(Object.keys(result)).toHaveLength(0);
   });
 });
