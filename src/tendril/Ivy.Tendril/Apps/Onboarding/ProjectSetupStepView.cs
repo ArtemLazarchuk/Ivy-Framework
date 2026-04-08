@@ -9,8 +9,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
     {
         var config = UseService<IConfigService>();
         var projectName = UseState("");
-        var repoPaths = UseState(new List<string>());
-        var newRepoPath = UseState<string?>(null);
+        var repoPaths = UseState(new List<string> { "" });
         var projectContext = UseState("");
         var error = UseState<string?>(null);
         var verifications = UseState(new List<VerificationEntry>
@@ -27,27 +26,26 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
         {
             var ri = i;
             reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                           | Text.Block(currentRepos[ri]).Width(Size.Grow())
-                           | new Button().Icon(Icons.Trash).Ghost().OnClick(() =>
+                           | new FolderInput
                            {
-                               var list = new List<string>(repoPaths.Value);
-                               list.RemoveAt(ri);
-                               repoPaths.Set(list);
-                           });
+                               Value = currentRepos[ri],
+                               Placeholder = "Select repository folder...",
+                               Mode = FolderInputMode.FullPath,
+                               OnChange = new(e =>
+                               {
+                                   var list = new List<string>(repoPaths.Value);
+                                   list[ri] = e.Value ?? "";
+                                   repoPaths.Set(list);
+                                   return ValueTask.CompletedTask;
+                               })
+                           }.Width(Size.Grow());
         }
 
-        reposLayout |= Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                       | newRepoPath.ToFolderInput("Select repository folder...", mode: FolderInputMode.FullPath)
-                           .Width(Size.Grow())
-                       | new Button("Add").Outline().OnClick(() =>
-                       {
-                           if (!string.IsNullOrWhiteSpace(newRepoPath.Value))
-                           {
-                               var list = new List<string>(repoPaths.Value) { newRepoPath.Value };
-                               repoPaths.Set(list);
-                               newRepoPath.Set(null);
-                           }
-                       });
+        reposLayout |= new Button("Add").Outline().OnClick(() =>
+        {
+            var list = new List<string>(repoPaths.Value) { "" };
+            repoPaths.Set(list);
+        });
 
         // Verification list
         var verificationsLayout = Layout.Vertical().Gap(2);
@@ -102,7 +100,8 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                               return;
                           }
 
-                          if (repoPaths.Value.Count == 0)
+                          var filledRepos = repoPaths.Value.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+                          if (filledRepos.Count == 0)
                           {
                               error.Set("Please add at least one repository path.");
                               return;
@@ -116,7 +115,9 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                           {
                               Name = projectName.Value.Trim(),
                               Color = "Green",
-                              Repos = repoPaths.Value.Select(p => new RepoRef { Path = p, PrRule = "default" })
+                              Repos = repoPaths.Value
+                                  .Where(p => !string.IsNullOrWhiteSpace(p))
+                                  .Select(p => new RepoRef { Path = p, PrRule = "default" })
                                   .ToList(),
                               Context = projectContext.Value.Trim(),
                               Verifications = validVerifications.Select(v => new ProjectVerificationRef
