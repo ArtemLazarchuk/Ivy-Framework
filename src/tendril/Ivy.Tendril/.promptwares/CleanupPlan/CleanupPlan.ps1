@@ -3,7 +3,7 @@ param(
     [string]$PlanPath
 )
 
-. "$PSScriptRoot/.shared/Utils.ps1"
+. "$PSScriptRoot/../.shared/Utils.ps1"
 
 $planYamlPath = ValidatePlanPath $PlanPath
 $planInfo = ReadPlanYaml $planYamlPath

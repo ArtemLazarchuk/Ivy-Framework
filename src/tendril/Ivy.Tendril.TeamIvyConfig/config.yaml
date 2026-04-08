@@ -234,7 +234,7 @@ verifications:
 - name: FrontendLint
   prompt: Run `cd src/frontend && npm run lint && npm run format:check` and verify no errors.
 - name: IvyFrameworkVerification
-  prompt: 'Run the IvyFrameworkVerification promptware to visually verify UI changes. Execute: `pwsh -NoProfile -File "$TENDRIL_HOME/Promptwares/IvyFrameworkVerification.ps1" -PlanPath "<PlanFolder>"`. Creates a temp project with demo apps, runs Playwright tests, and copies artifacts to <PlanFolder>/artifacts/. Write the verification report to <PlanFolder>/verification/IvyFrameworkVerification.md.'
+  prompt: 'Run the IvyFrameworkVerification promptware to visually verify UI changes. Execute: `pwsh -NoProfile -File "$TENDRIL_HOME/Promptwares/IvyFrameworkVerification/IvyFrameworkVerification.ps1" -PlanPath "<PlanFolder>"`. Creates a temp project with demo apps, runs Playwright tests, and copies artifacts to <PlanFolder>/artifacts/. Write the verification report to <PlanFolder>/verification/IvyFrameworkVerification.md.'
 - name: CheckResult
   prompt: >
     Verify the implementation matches what was requested in the plan.

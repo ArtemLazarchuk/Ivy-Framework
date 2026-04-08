@@ -23,14 +23,14 @@ public class JobService : IJobService
 
     private static readonly Dictionary<string, string> ScriptPaths = new()
     {
-        ["MakePlan"] = Path.Combine(PromptsRoot, "MakePlan.ps1"),
-        ["UpdatePlan"] = Path.Combine(PromptsRoot, "UpdatePlan.ps1"),
-        ["SplitPlan"] = Path.Combine(PromptsRoot, "SplitPlan.ps1"),
-        ["ExpandPlan"] = Path.Combine(PromptsRoot, "ExpandPlan.ps1"),
-        ["ExecutePlan"] = Path.Combine(PromptsRoot, "ExecutePlan.ps1"),
-        ["IvyFrameworkVerification"] = Path.Combine(PromptsRoot, "IvyFrameworkVerification.ps1"),
-        ["MakePr"] = Path.Combine(PromptsRoot, "MakePr.ps1"),
-        ["CreateIssue"] = Path.Combine(PromptsRoot, "CreateIssue.ps1")
+        ["MakePlan"] = Path.Combine(PromptsRoot, "MakePlan", "MakePlan.ps1"),
+        ["UpdatePlan"] = Path.Combine(PromptsRoot, "UpdatePlan", "UpdatePlan.ps1"),
+        ["SplitPlan"] = Path.Combine(PromptsRoot, "SplitPlan", "SplitPlan.ps1"),
+        ["ExpandPlan"] = Path.Combine(PromptsRoot, "ExpandPlan", "ExpandPlan.ps1"),
+        ["ExecutePlan"] = Path.Combine(PromptsRoot, "ExecutePlan", "ExecutePlan.ps1"),
+        ["IvyFrameworkVerification"] = Path.Combine(PromptsRoot, "IvyFrameworkVerification", "IvyFrameworkVerification.ps1"),
+        ["MakePr"] = Path.Combine(PromptsRoot, "MakePr", "MakePr.ps1"),
+        ["CreateIssue"] = Path.Combine(PromptsRoot, "CreateIssue", "CreateIssue.ps1")
     };
 
     private readonly IConfigService? _configService;

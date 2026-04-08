@@ -8,7 +8,7 @@ param(
     [string]$Labels = ""
 )
 
-. "$PSScriptRoot/.shared/Utils.ps1"
+. "$PSScriptRoot/../.shared/Utils.ps1"
 
 $programFolder = GetProgramFolder $PSCommandPath
 $planYamlPath = ValidatePlanPath $PlanPath

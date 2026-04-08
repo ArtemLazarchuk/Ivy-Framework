@@ -47,7 +47,17 @@ function GetProgramFolder {
     param([string]$ScriptPath)
 
     $scriptName = [System.IO.Path]::GetFileNameWithoutExtension($ScriptPath)
-    $scriptFolder = Join-Path (Split-Path $ScriptPath) $scriptName
+    $parentDir = Split-Path $ScriptPath
+    $parentDirName = Split-Path $parentDir -Leaf
+
+    # Self-contained layout: script is inside its own program folder
+    if ($parentDirName -eq $scriptName) {
+        $scriptFolder = $parentDir
+    } else {
+        # Legacy layout: script is alongside its folder
+        $scriptFolder = Join-Path $parentDir $scriptName
+    }
+
     if (-not (Test-Path $scriptFolder)) {
         New-Item -ItemType Directory -Path $scriptFolder | Out-Null
     }
