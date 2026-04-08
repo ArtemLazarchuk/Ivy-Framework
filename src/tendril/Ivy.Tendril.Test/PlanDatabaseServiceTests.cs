@@ -798,4 +798,28 @@ public class PlanDatabaseServiceTests : IDisposable
         Assert.Single(jobs);
         Assert.Equal("migration-test", jobs[0].Id);
     }
+
+    [Fact]
+    public void SearchPlans_FindsBySourceUrl()
+    {
+        var metadata = new PlanMetadata(
+            1700, "Tendril", "NiceToHave", "Plan With Source", PlanStatus.Draft,
+            new List<string>(), new List<string>(), new List<string>(),
+            new List<PlanVerificationEntry>(), new List<string>(), new List<string>(),
+            DateTime.UtcNow.AddDays(-1), DateTime.UtcNow, null,
+            "https://github.com/Ivy-Interactive/Ivy-Framework/issues/42"
+        );
+        var plan = new PlanFile(metadata, "# Some content", "D:\\Plans\\01700-PlanWithSource", "state: Draft");
+        _db.UpsertPlan(plan);
+
+        // Search by term from the URL (FTS5 tokenizes on punctuation)
+        var results = _db.SearchPlans("Interactive");
+        Assert.Single(results);
+        Assert.Equal("Plan With Source", results[0].Title);
+
+        // Search by another URL token
+        results = _db.SearchPlans("issues");
+        Assert.Single(results);
+        Assert.Equal(1700, results[0].Id);
+    }
 }

@@ -871,8 +871,8 @@ public class PlanDatabaseService : IPlanDatabaseService
             cmd.ExecuteNonQuery();
 
             cmd.CommandText = """
-                              INSERT INTO PlanSearch(rowid, Title, LatestRevisionContent, Project, InitialPrompt)
-                              SELECT Id, Title, LatestRevisionContent, Project, InitialPrompt
+                              INSERT INTO PlanSearch(rowid, Title, LatestRevisionContent, Project, InitialPrompt, SourceUrl)
+                              SELECT Id, Title, LatestRevisionContent, Project, InitialPrompt, SourceUrl
                               FROM Plans;
                               """;
             cmd.ExecuteNonQuery();
