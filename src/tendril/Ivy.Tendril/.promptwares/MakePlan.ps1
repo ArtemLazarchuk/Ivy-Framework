@@ -29,6 +29,24 @@ $firmwareValues = @{
 }
 if ($SourcePath) { $firmwareValues["SourcePath"] = $SourcePath }
 
+# Pre-compute duplicate detection and active plans (skip duplicates if FORCE flag)
+if ($Description -notmatch '\[FORCE\]') {
+    $keywords = ($Description -replace '\[.*?\]', '' -split '\s+') | Where-Object { $_.Length -ge 3 }
+    if ($keywords) {
+        $duplicates = & "$programFolder/Tools/Find-DuplicatePlans.ps1" `
+            -PlansDirectory $script:PlansDir -Keywords $keywords -Project $Project
+        if ($duplicates) {
+            $firmwareValues["DuplicateCandidates"] = $duplicates
+        }
+    }
+}
+
+$activePlans = & "$programFolder/Tools/Find-ActivePlans.ps1" `
+    -PlansDirectory $script:PlansDir -Repos @()
+if ($activePlans) {
+    $firmwareValues["ActivePlans"] = $activePlans
+}
+
 $promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder $firmwareValues
 
 $agent = GetAgentCommand -Promptware "MakePlan"

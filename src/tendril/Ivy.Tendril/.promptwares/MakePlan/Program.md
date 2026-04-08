@@ -47,7 +47,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
 
 ### 3. Research
 
-- **Check for duplicate plans** first — **unless the force flag was set in Step 1** (args ended with ` [FORCE]`), in which case skip duplicate detection entirely. List existing plan folders in `PlansDirectory` and scan their `plan.yaml` titles. If an existing plan already covers the same issue (same problem, same project), perform **state-aware duplicate detection** before deciding:
+- **Check for duplicate plans** first — **unless the force flag was set in Step 1** (args ended with ` [FORCE]`), in which case skip duplicate detection entirely. Check the `DuplicateCandidates` firmware value. If present, it contains pre-computed matches (format: `folderName|title|state` per line). For each match, perform **state-aware duplicate detection** on those specific plans only. If `DuplicateCandidates` is absent, no potential duplicates were found — skip duplicate detection. When matches are found, decide as follows:
 
   #### Step 1: Read existing plan state
   
@@ -118,18 +118,7 @@ The plan ID is pre-allocated by the launcher script and provided in the firmware
   gh search issues "<keyword>" --repo <owner>/<repo> --json title,url,number,state
   ```
   Derive the repo owner/name from the repos in `config.yaml`. If an issue already covers the task, reference it in the plan and avoid creating workaround plans.
-- **Check for concurrent active plans on overlapping repos.** After duplicate detection, scan `PlansDirectory` for other plans in `Building` or `Executing` state that target any of the same repos:
-
-  ```bash
-  for plan_folder in <PlansDirectory>/*/plan.yaml; do
-    state=$(grep '^state:' "$plan_folder" | awk '{print $2}')
-    if [[ "$state" == "Building" || "$state" == "Executing" ]]; then
-      # Check if repos overlap with the current plan's repos
-      plan_repos=$(grep '^\- D:' "$plan_folder")
-      # If overlap detected, note the plan ID and title
-    fi
-  done
-  ```
+- **Check for concurrent active plans on overlapping repos.** Check the `ActivePlans` firmware value. If present, it contains plans in Building/Executing state (format: `folderName|title|state|repos` per line). After determining this plan's repos, check for overlap with the listed active plans. If `ActivePlans` is absent, no active plans were found — skip this check.
 
   If overlapping active plans are found, add a warning to the `## Questions` section of the plan revision:
 
