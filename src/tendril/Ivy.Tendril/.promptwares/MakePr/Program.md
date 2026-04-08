@@ -46,7 +46,7 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 Check `<PlanFolder>/worktrees/` for each repo worktree.
 
-> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `plan-<planId>-<repo-folder-name>`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create a local branch: `git branch <branch-name> <sha>` and push from the original repo path.
+> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `plan-<planId>-<repo-folder-name>`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create or force-update the local branch: `git branch -f <branch-name> <sha>` (use `-f` because the branch may already exist from a WIP auto-commit) and push from the original repo path.
 
 For each worktree:
 
