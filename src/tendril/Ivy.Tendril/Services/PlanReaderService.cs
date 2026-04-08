@@ -486,14 +486,7 @@ public class PlanReaderService(
     public List<Recommendation> GetRecommendations()
     {
         if (_useDatabaseForReads && _database != null)
-            try
-            {
-                return _database.GetRecommendations();
-            }
-            catch
-            {
-                // Fall back to file system
-            }
+            return _database.GetRecommendations();
 
         return _recommendationsCache.GetOrCompute(ComputeRecommendations);
     }
@@ -519,14 +512,7 @@ public class PlanReaderService(
     public PlanCountSnapshot ComputePlanCounts()
     {
         if (_useDatabaseForReads && _database != null)
-            try
-            {
-                return _database.ComputePlanCounts();
-            }
-            catch
-            {
-                // Fall back to file system
-            }
+            return _database.ComputePlanCounts();
 
         return _planCountsCache.GetOrCompute(ComputePlanCountsInternal);
     }
