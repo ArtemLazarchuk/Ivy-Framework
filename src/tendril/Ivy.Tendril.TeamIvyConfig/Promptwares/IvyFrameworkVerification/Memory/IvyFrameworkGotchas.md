@@ -359,6 +359,7 @@ new DiffView().Diff(diff) with
 |--------|------------|
 | Badge | `getByText()` for text content |
 | ColorInput | `page.locator("input[type='color']")` |
+| FolderInput | `getByPlaceholder()` for text input, `ivy-widget[type="Ivy.FolderInput"]` for widget container |
 | VideoPlayer | `page.locator('video').nth(0)` or `page.locator('iframe').nth(0)` |
 
 📝 VideoPlayer's `.Id()` sets an Ivy-generated short hash, not the value you pass.
