@@ -232,6 +232,12 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
         event.code === expectedCode;
 
       if (isShortcutPressed) {
+        // Skip if button is in a hidden/inactive tab (e.g., aria-hidden container)
+        const buttonEl = document.querySelector(`[data-shortcut-id="${id}"]`);
+        if (buttonEl?.closest('[aria-hidden="true"]')) {
+          return;
+        }
+
         const now = Date.now();
         const lastTrigger = recentShortcuts.get(id) || 0;
 
@@ -392,6 +398,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
           tooltipText={tooltip || undefined}
           autoFocus={autoFocus}
           data-testid={dataTestId}
+          data-shortcut-id={shortcutKey ? id : undefined}
         >
           {hasUrl && validatedHref ? (
             <a
@@ -440,6 +447,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
         tooltip || ((variant === "Link" || variant === "Inline") && title ? title : undefined)
       }
       data-testid={dataTestId}
+      data-shortcut-id={shortcutKey ? id : undefined}
     >
       {hasUrl && validatedHref ? (
         <a
