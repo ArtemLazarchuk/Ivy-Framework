@@ -355,7 +355,7 @@ describe("columnHelpers", () => {
       ];
       const result = convertToGridColumns(columns, [], {}, 600, false);
       expect(result[1].grow).toBe(0.5);
-      expect(result[1].width).toBeGreaterThanOrEqual(100);
+      expect("width" in result[1] && result[1].width).toBeGreaterThanOrEqual(100);
     });
 
     it("should apply grow only to fraction/grow columns in a mix", () => {

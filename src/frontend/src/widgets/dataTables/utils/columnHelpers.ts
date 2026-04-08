@@ -138,20 +138,15 @@ export function convertToGridColumns(
     const grow = parseSizeGrow(col.originalWidth);
     const isLastColumn = index === orderedColumns.length - 1 && containerWidth > 0;
 
-    const gridCol: GridColumn = {
+    // Determine effective grow: explicit Size-based grow, or default last column to 1
+    const effectiveGrow = grow !== undefined ? grow : isLastColumn ? 1 : undefined;
+
+    return {
       title: col.header || col.name,
       width: numericBaseWidth,
+      ...(effectiveGrow !== undefined && { grow: effectiveGrow }),
       group: showGroups ? col.group : undefined,
       icon: showColumnTypeIcons ? mapColumnIcon(col) : undefined,
     };
-
-    // Apply grow factor from Size type, or default last column to grow: 1
-    if (grow !== undefined) {
-      gridCol.grow = grow;
-    } else if (isLastColumn) {
-      gridCol.grow = 1;
-    }
-
-    return gridCol;
   });
 }
