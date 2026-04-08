@@ -266,6 +266,8 @@ public class ModelPricingService : IModelPricingService
 
     private void ProcessSessionFile(string filePath, ref double totalCost, ref int totalTokens)
     {
+        var processedIds = new HashSet<string>();
+
         foreach (var line in FileHelper.ReadAllLines(filePath))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
@@ -278,6 +280,15 @@ public class ModelPricingService : IModelPricingService
                 if (root.GetProperty("type").GetString() != "assistant") continue;
                 if (!root.TryGetProperty("message", out var message)) continue;
                 if (!message.TryGetProperty("usage", out var usage)) continue;
+
+                // Deduplicate: Claude Code writes one JSONL line per content block,
+                // but each line carries the full message with the same usage data.
+                if (message.TryGetProperty("id", out var idProp))
+                {
+                    var msgId = idProp.GetString();
+                    if (msgId != null && !processedIds.Add(msgId))
+                        continue; // Already counted this message
+                }
 
                 var model = message.TryGetProperty("model", out var m)
                     ? m.GetString() ?? "claude-opus-4"

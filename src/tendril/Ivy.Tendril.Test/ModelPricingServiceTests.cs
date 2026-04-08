@@ -314,6 +314,65 @@ public class ModelPricingServiceTests
     }
 
     [Fact]
+    public void CalculateFromFile_DeduplicatesByMessageId()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            // Same message ID appearing 3 times (simulating thinking + text + tool_use content blocks)
+            var lines = string.Join("\n",
+                """{"type":"assistant","message":{"id":"msg_001","model":"claude-sonnet-4","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":500}}}""",
+                """{"type":"assistant","message":{"id":"msg_001","model":"claude-sonnet-4","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":500}}}""",
+                """{"type":"assistant","message":{"id":"msg_001","model":"claude-sonnet-4","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":500}}}"""
+            );
+            File.WriteAllText(tempFile, lines);
+
+            var result = _service.CalculateFromFile(tempFile);
+
+            // Should count only ONCE despite 3 lines
+            Assert.Equal(1700, result.TotalTokens);
+
+            var expectedCost = 1000 * 3.00e-6 + 200 * 15.00e-6 + 500 * 0.30e-6;
+            Assert.Equal(expectedCost, result.TotalCost, 10);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void CalculateFromFile_SumsDistinctMessageIds()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            // Two distinct messages, each appearing twice
+            var lines = string.Join("\n",
+                """{"type":"assistant","message":{"id":"msg_001","model":"claude-sonnet-4","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":0}}}""",
+                """{"type":"assistant","message":{"id":"msg_001","model":"claude-sonnet-4","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":0}}}""",
+                """{"type":"assistant","message":{"id":"msg_002","model":"claude-sonnet-4","usage":{"input_tokens":500,"output_tokens":100,"cache_read_input_tokens":0}}}""",
+                """{"type":"assistant","message":{"id":"msg_002","model":"claude-sonnet-4","usage":{"input_tokens":500,"output_tokens":100,"cache_read_input_tokens":0}}}"""
+            );
+            File.WriteAllText(tempFile, lines);
+
+            var result = _service.CalculateFromFile(tempFile);
+
+            // msg_001: 1200 tokens, msg_002: 600 tokens = 1800 total
+            Assert.Equal(1800, result.TotalTokens);
+
+            var expectedCost =
+                1000 * 3.00e-6 + 200 * 15.00e-6 +
+                500 * 3.00e-6 + 100 * 15.00e-6;
+            Assert.Equal(expectedCost, result.TotalCost, 10);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
     public void CalculateSessionCost_RoutesToCodex()
     {
         var result = _service.CalculateSessionCost("nonexistent-codex-session-12345", "codex");
