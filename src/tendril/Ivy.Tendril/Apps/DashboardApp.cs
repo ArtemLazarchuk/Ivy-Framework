@@ -18,8 +18,7 @@ public class DashboardApp : ViewBase
         if (!planService.IsDatabaseReady)
         {
             return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(2)
-                   | Text.Muted("Loading dashboard data...")
-                   | Skeleton.DataTable();
+                   | Text.Muted("Loading Dashboard Data...");
         }
 
         var stats = planService.GetDashboardData(selectedProject.Value);

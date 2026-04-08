@@ -6,7 +6,7 @@ using SidebarView = Ivy.Tendril.Apps.Review.SidebarView;
 
 namespace Ivy.Tendril.Apps;
 
-[App(title: "Review", icon: Icons.ThumbsUp, group: ["Tools"], order: MenuOrder.Review,
+[App(title: "Review", icon: Icons.ThumbsUp, group: ["Apps"], order: MenuOrder.Review,
     allowDuplicateTabs: false)]
 public class ReviewApp : ViewBase
 {
