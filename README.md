@@ -112,7 +112,6 @@ Make sure you have the following prerequisites installed:
 4. **Run**:
 
    ```bash
-   ivy run --browse
    ```
 
 5. **Open** [http://localhost:5010](http://localhost:5010) in your browser.
