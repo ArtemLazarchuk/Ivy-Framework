@@ -1,0 +1,57 @@
+# Merges main into the development branch and pushes. Then refreshes the staging sites on Sliplane.
+# Runs every 15 minutes on a schedule, or manually. On failure, a short summary is added to the workflow run.
+
+name: Merge main into development
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: merge-main-into-development
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  merge-and-redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: development
+
+      - name: Merge main into development and push
+        run: |
+          set -euo pipefail
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git fetch origin main
+          git merge origin/main --no-edit
+          git push origin development
+
+      - name: Trigger Sliplane deploy (docs)
+        env:
+          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_DOCS }}
+        run: curl -fsS "$HOOK_URL"
+
+      - name: Trigger Sliplane deploy (samples)
+        env:
+          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_SAMPLES }}
+        run: curl -fsS "$HOOK_URL"
+
+      - name: Write merge failure summary
+        if: failure()
+        run: |
+          {
+            echo "## Merge main → development failed"
+            echo ""
+            echo "A previous step failed (merge conflict, push rejected, or deploy hook error)."
+            echo "For merge conflicts: resolve locally or open a PR into \`development\`, then push."
+            echo ""
+            echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"

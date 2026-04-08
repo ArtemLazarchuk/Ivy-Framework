@@ -1,0 +1,26 @@
+# Refreshes the staging sites (docs and samples) on Sliplane. Does not touch git—only deploy-hook URLs from secrets.
+# Runs every 10 minutes on a schedule, or manually from the Actions tab.
+
+name: Staging periodic redeploy
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Sliplane deploy (docs)
+        env:
+          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_DOCS }}
+        run: curl -fsS "$HOOK_URL"
+
+      - name: Trigger Sliplane deploy (samples)
+        env:
+          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_SAMPLES }}
+        run: curl -fsS "$HOOK_URL"
