@@ -75,6 +75,7 @@ export const useColumnManagement = ({
         // First time loading, initialize with default widths
         const defaultTheme = getDefaultTheme();
         const headerFont = `${defaultTheme.headerFontStyle} ${defaultTheme.fontFamily}`;
+        const contentFont = `${defaultTheme.baseFontStyle} ${defaultTheme.fontFamily}`;
         const widths: Record<string, number> = {};
         mergedColumns.forEach((col, index) => {
           const explicitWidth = parseSize(col.width);
@@ -84,7 +85,7 @@ export const useColumnManagement = ({
           // sample actual data if available
           const sizeMode = getSizeMode(col.originalWidth ?? col.width);
           if (sizeMode && arrowTable) {
-            const contentWidth = estimateContentWidth(arrowTable, index, sizeMode);
+            const contentWidth = estimateContentWidth(arrowTable, index, sizeMode, contentFont);
             if (contentWidth !== undefined) {
               widths[index.toString()] = Math.max(headerMinWidth, contentWidth);
               return;

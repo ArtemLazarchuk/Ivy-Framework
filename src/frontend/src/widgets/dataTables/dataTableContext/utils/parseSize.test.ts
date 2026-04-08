@@ -333,6 +333,61 @@ describe("estimateContentWidth", () => {
     // 100*8+24 = 824 → capped at 400
     expect(estimateContentWidth(table, 0, "fit")).toBe(400);
   });
+
+  it("should use character-count fallback without font parameter", () => {
+    const table = makeTable([{ name: "col", values: ["Hello"] }]);
+    // "Hello" = 5*8+24 = 64
+    expect(estimateContentWidth(table, 0, "fit")).toBe(64);
+  });
+
+  it("should use canvas measurement when font is provided", async () => {
+    // Reset module cache to get a fresh _measureCanvas (null)
+    vi.resetModules();
+
+    const mockMeasureText = vi.fn((text: string) => ({
+      width: text === "Hello" ? 40 : text === "World" ? 50 : 0,
+    }));
+    vi.spyOn(document, "createElement").mockReturnValue({
+      getContext: vi.fn().mockReturnValue({
+        font: "",
+        measureText: mockMeasureText,
+      }),
+    } as unknown as HTMLCanvasElement);
+
+    const { estimateContentWidth: freshEstimateContentWidth } = await import("./parseSize");
+    const table = makeTable([{ name: "col", values: ["Hello", "World"] }]);
+    // "World" measured at 50px => 50 + 24 = 74
+    expect(freshEstimateContentWidth(table, 0, "max", "13px sans-serif")).toBe(74);
+    expect(mockMeasureText).toHaveBeenCalledWith("Hello");
+    expect(mockMeasureText).toHaveBeenCalledWith("World");
+
+    vi.restoreAllMocks();
+  });
+
+  it("should produce different widths for narrow vs wide chars when using canvas measurement", async () => {
+    vi.resetModules();
+
+    const mockMeasureText = vi.fn((text: string) => ({
+      width: text === "iii" ? 12 : text === "WWW" ? 42 : 0,
+    }));
+    vi.spyOn(document, "createElement").mockReturnValue({
+      getContext: vi.fn().mockReturnValue({
+        font: "",
+        measureText: mockMeasureText,
+      }),
+    } as unknown as HTMLCanvasElement);
+
+    const { estimateContentWidth: freshEstimateContentWidth } = await import("./parseSize");
+    const narrowTable = makeTable([{ name: "col", values: ["iii"] }]);
+    const wideTable = makeTable([{ name: "col", values: ["WWW"] }]);
+
+    const narrowWidth = freshEstimateContentWidth(narrowTable, 0, "fit", "13px sans-serif");
+    const wideWidth = freshEstimateContentWidth(wideTable, 0, "fit", "13px sans-serif");
+    // "iii" = 12+24=36 → clamped to 60; "WWW" = 42+24=66
+    expect(narrowWidth).toBeLessThan(wideWidth!);
+
+    vi.restoreAllMocks();
+  });
 });
 
 describe("getSizeMode", () => {

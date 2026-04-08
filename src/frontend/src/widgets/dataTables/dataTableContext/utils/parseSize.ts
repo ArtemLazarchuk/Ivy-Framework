@@ -123,7 +123,6 @@ export function estimateHeaderWidth(headerText: string, font?: string): number {
 
 import type { Table } from "apache-arrow";
 
-const CONTENT_CHAR_WIDTH = 8;
 const CONTENT_PADDING = 24;
 const MIN_CONTENT_WIDTH = 60;
 const MAX_CONTENT_WIDTH = 400;
@@ -131,12 +130,15 @@ const SAMPLE_SIZE = 20;
 
 /**
  * Estimates column width by sampling the first N rows of actual cell data.
+ * When a font string is provided, uses canvas.measureText() for accurate width;
+ * otherwise falls back to approximate character width (8px per char).
  * Returns undefined if no data is available or column not found.
  */
 export function estimateContentWidth(
   arrowTable: Table,
   columnIndex: number,
   mode: "fit" | "min" | "max",
+  font?: string,
 ): number | undefined {
   if (!arrowTable || columnIndex < 0 || columnIndex >= arrowTable.numCols) {
     return undefined;
@@ -148,11 +150,17 @@ export function estimateContentWidth(
   const rowCount = Math.min(arrowTable.numRows, SAMPLE_SIZE);
   if (rowCount === 0) return undefined;
 
+  const ctx = font ? getMeasureContext() : null;
+  if (ctx && font) {
+    ctx.font = font;
+  }
+
   const widths: number[] = [];
   for (let i = 0; i < rowCount; i++) {
     const value = column.get(i);
     const text = value == null ? "" : String(value);
-    const width = text.length * CONTENT_CHAR_WIDTH + CONTENT_PADDING;
+    const textWidth = ctx ? ctx.measureText(text).width : text.length * 8;
+    const width = textWidth + CONTENT_PADDING;
     widths.push(Math.max(MIN_CONTENT_WIDTH, Math.min(width, MAX_CONTENT_WIDTH)));
   }
 
