@@ -227,11 +227,12 @@ public class JobsApp : ViewBase
                     }
                     else if (tag == "delete-job")
                     {
-                        if (job.Status != JobStatus.Running)
+                        if (job.Status is JobStatus.Running or JobStatus.Queued)
                         {
-                            jobService.DeleteJob(job.Id);
-                            refreshToken.Refresh();
+                            jobService.StopJob(job.Id);
                         }
+                        jobService.DeleteJob(job.Id);
+                        refreshToken.Refresh();
                     }
                 }
 

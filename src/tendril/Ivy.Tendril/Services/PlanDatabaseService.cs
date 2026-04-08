@@ -835,6 +835,17 @@ public class PlanDatabaseService : IPlanDatabaseService
         }
     }
 
+    public void DeleteJob(string id)
+    {
+        lock (_lock)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "DELETE FROM Jobs WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
     public long GetDatabaseSize()
     {
         lock (_lock)

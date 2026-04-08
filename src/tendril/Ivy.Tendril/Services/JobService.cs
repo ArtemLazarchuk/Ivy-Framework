@@ -81,7 +81,8 @@ public class JobService : IJobService
         string? inboxPath = null,
         int maxConcurrentJobs = 5,
         IPlanReaderService? planReaderService = null,
-        ITelemetryService? telemetryService = null)
+        ITelemetryService? telemetryService = null,
+        IPlanDatabaseService? database = null)
     {
         _syncContext = SynchronizationContext.Current;
         _jobTimeout = jobTimeout;
@@ -93,6 +94,7 @@ public class JobService : IJobService
         _inboxPath = inboxPath;
         _planReaderService = planReaderService;
         _telemetryService = telemetryService;
+        _database = database;
     }
 
     public event Action? JobsChanged;
@@ -297,7 +299,10 @@ public class JobService : IJobService
 
     public void DeleteJob(string id)
     {
-        _jobs.TryRemove(id, out _);
+        if (_jobs.TryRemove(id, out _))
+        {
+            try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
+        }
         RaiseJobsChanged();
     }
 
@@ -308,7 +313,10 @@ public class JobService : IJobService
             .Select(j => j.Id)
             .ToList();
         foreach (var id in completedIds)
+        {
             _jobs.TryRemove(id, out _);
+            try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
+        }
         if (completedIds.Count > 0)
             RaiseJobsChanged();
     }
@@ -320,7 +328,10 @@ public class JobService : IJobService
             .Select(j => j.Id)
             .ToList();
         foreach (var id in failedIds)
+        {
             _jobs.TryRemove(id, out _);
+            try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
+        }
         if (failedIds.Count > 0)
             RaiseJobsChanged();
     }
