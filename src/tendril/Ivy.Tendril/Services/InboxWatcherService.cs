@@ -96,6 +96,12 @@ public class InboxWatcherService : IInboxWatcherService
             var content = await FileHelper.ReadAllTextAsync(filePath);
             var (project, description, sourcePath) = ParseContent(content);
 
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                Console.Error.WriteLine($"Skipping inbox file '{filePath}' — empty description.");
+                return;
+            }
+
             // Rename to .processing so the watcher/poller ignores it while the job runs
             var processingPath = filePath + ".processing";
             File.Move(filePath, processingPath);
@@ -116,6 +122,12 @@ public class InboxWatcherService : IInboxWatcherService
 
                 var content = await FileHelper.ReadAllTextAsync(filePath);
                 var (project, description, sourcePath) = ParseContent(content);
+
+                if (string.IsNullOrWhiteSpace(description))
+                {
+                    Console.Error.WriteLine($"Skipping inbox file '{filePath}' — empty description.");
+                    return;
+                }
 
                 var processingPath = filePath + ".processing";
                 File.Move(filePath, processingPath);

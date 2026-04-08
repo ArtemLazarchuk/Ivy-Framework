@@ -409,7 +409,7 @@ public class JobService : IJobService
         // For others: args[0] is the plan folder path
         if (type == "MakePlan")
         {
-            planFile = GetNamedArg(args, "-Description") is { } desc
+            planFile = GetNamedArg(args, "-Description") is { Length: > 0 } desc
                 ? desc.Length > 50 ? desc[..50] + "..." : desc
                 : "New Plan";
             project = GetNamedArg(args, "-Project") ?? "[Auto]";
