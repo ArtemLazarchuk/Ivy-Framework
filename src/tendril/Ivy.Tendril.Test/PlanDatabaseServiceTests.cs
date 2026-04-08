@@ -409,6 +409,33 @@ public class PlanDatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void GetHourlyTokenBurn_NullLogTimestamp_FallsBackToPlanUpdated()
+    {
+        _db.UpsertPlan(CreateTestPlan(1750, "Test", project: "Tendril"));
+        _db.UpsertCosts(1750, [new("ExecutePlan", 50000, 1.50m, null)]);
+
+        var burn = _db.GetHourlyTokenBurn();
+        Assert.NotEmpty(burn);
+        Assert.Equal(50000, burn[0].Tokens);
+    }
+
+    [Fact]
+    public void GetHourlyTokenBurn_MixedTimestamps_UsesCorrectTimestamp()
+    {
+        _db.UpsertPlan(CreateTestPlan(1760, "Plan A", project: "Tendril"));
+
+        var now = DateTime.UtcNow;
+        _db.UpsertCosts(1760, [
+            new("ExecutePlan", 40000, 1.00m, now),
+            new("MakePr", 20000, 0.50m, null)
+        ]);
+
+        var burn = _db.GetHourlyTokenBurn();
+        Assert.NotEmpty(burn);
+        Assert.Equal(60000, burn.Sum(b => b.Tokens));
+    }
+
+    [Fact]
     public void GetDashboardData_FiltersCorrectlyByProject()
     {
         _db.UpsertPlan(CreateTestPlan(1800, "Plan A", project: "Tendril", status: PlanStatus.Completed));

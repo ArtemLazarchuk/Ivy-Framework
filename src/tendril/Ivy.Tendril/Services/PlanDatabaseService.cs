@@ -396,13 +396,13 @@ public class PlanDatabaseService : IPlanDatabaseService
             var projectClause = projectFilter != null ? " AND p.Project = @project" : "";
             cmd.CommandText = $"""
                                SELECT
-                                   strftime('%Y-%m-%d %H:00:00', c.LogTimestamp) as Hour,
+                                   strftime('%Y-%m-%d %H:00:00', COALESCE(c.LogTimestamp, p.Updated)) as Hour,
                                    p.Project,
                                    SUM(c.Cost) as TotalCost,
                                    SUM(c.Tokens) as TotalTokens
                                FROM Costs c
                                JOIN Plans p ON p.Id = c.PlanId
-                               WHERE c.LogTimestamp IS NOT NULL AND c.LogTimestamp >= @cutoff{projectClause}
+                               WHERE COALESCE(c.LogTimestamp, p.Updated) >= @cutoff{projectClause}
                                GROUP BY Hour, p.Project
                                ORDER BY Hour, p.Project
                                """;
