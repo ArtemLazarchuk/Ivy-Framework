@@ -5,6 +5,7 @@ namespace Ivy.Tendril.Services;
 public interface IPlanReaderService
 {
     string PlansDirectory { get; }
+    bool IsDatabaseReady { get; }
 
     void RecoverStuckPlans();
     void RepairPlans();

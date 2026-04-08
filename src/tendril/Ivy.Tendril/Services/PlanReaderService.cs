@@ -35,6 +35,7 @@ public class PlanReaderService(
     private volatile bool _useDatabaseForReads;
 
     public string PlansDirectory => _config.PlanFolder;
+    public bool IsDatabaseReady => _useDatabaseForReads;
 
     /// <summary>
     ///     On startup, reset any plans stuck in transient states (Building, Executing, Updating)

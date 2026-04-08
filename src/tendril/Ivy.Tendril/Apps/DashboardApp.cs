@@ -14,6 +14,13 @@ public class DashboardApp : ViewBase
 
         var selectedProject = UseState<string?>(null);
 
+        if (!planService.IsDatabaseReady)
+        {
+            return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(2)
+                   | Text.Muted("Loading dashboard data...")
+                   | Skeleton.DataTable();
+        }
+
         var stats = planService.GetDashboardData(selectedProject.Value);
 
         // Statistics cards
