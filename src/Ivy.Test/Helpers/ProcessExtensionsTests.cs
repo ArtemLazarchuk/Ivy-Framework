@@ -47,4 +47,47 @@ public class ProcessExtensionsTests
         Assert.False(result);
         Assert.True(process!.HasExited);
     }
+
+    [Fact]
+    public async Task WaitForExitOrKillAsync_ProcessExitsBeforeTimeout_ReturnsTrue()
+    {
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/sh",
+            Arguments = OperatingSystem.IsWindows() ? "/c exit 0" : "-c \"exit 0\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        var result = await process.WaitForExitOrKillAsync(10000);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task WaitForExitOrKillAsync_NullProcess_ReturnsTrue()
+    {
+        Process? process = null;
+
+        var result = await process.WaitForExitOrKillAsync(10000);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task WaitForExitOrKillAsync_ProcessTimesOut_ReturnsFalseAndKills()
+    {
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/sh",
+            Arguments = OperatingSystem.IsWindows() ? "/c ping -n 60 127.0.0.1 >nul" : "-c \"sleep 60\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        var result = await process.WaitForExitOrKillAsync(100);
+
+        Assert.False(result);
+        Assert.True(process!.HasExited);
+    }
 }

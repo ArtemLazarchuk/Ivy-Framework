@@ -19,4 +19,25 @@ public static class ProcessExtensions
         }
         return true;
     }
+
+    /// <summary>
+    /// Asynchronously waits for the process to exit within the specified timeout.
+    /// If the timeout expires, kills the entire process tree.
+    /// </summary>
+    /// <returns>true if the process exited within the timeout; false if it was killed.</returns>
+    public static async Task<bool> WaitForExitOrKillAsync(this Process? process, int timeoutMs)
+    {
+        if (process is null) return true;
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(true); } catch { /* already exited */ }
+            return false;
+        }
+    }
 }

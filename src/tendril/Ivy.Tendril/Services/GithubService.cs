@@ -131,15 +131,7 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            using var ctsLabels = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            try
-            {
-                await process.WaitForExitAsync(ctsLabels.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            await process.WaitForExitOrKillAsync(60000);
 
             if (process.ExitCode != 0)
             {
@@ -178,15 +170,7 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            using var ctsPrList = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            try
-            {
-                await process.WaitForExitAsync(ctsPrList.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            await process.WaitForExitOrKillAsync(60000);
 
             if (process.ExitCode != 0)
             {
@@ -243,15 +227,7 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            using var ctsAssignees = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            try
-            {
-                await process.WaitForExitAsync(ctsAssignees.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            await process.WaitForExitOrKillAsync(60000);
 
             if (process.ExitCode != 0)
             {
