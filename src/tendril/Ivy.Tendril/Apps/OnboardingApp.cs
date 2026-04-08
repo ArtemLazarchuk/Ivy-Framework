@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Ivy.Helpers;
@@ -250,25 +249,17 @@ public class CodingAgentStepView(IState<int> stepperIndex, IReadOnlyDictionary<s
     }
 }
 
-public record TendrilHomeDetails
-{
-    [Required]
-    [Display(Name = "Where would you like to store Tendril data?")]
-    public string? TendrilHome { get; set; }
-}
-
 public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object Build()
     {
-        var details = UseState(new TendrilHomeDetails
-        {
-            TendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME")
-                          ?? Path.Combine(
-                              Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                              ".tendril"
-                          )
-        });
+        var folderPath = UseState<string?>(
+            Environment.GetEnvironmentVariable("TENDRIL_HOME")
+            ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".tendril"
+            )
+        );
         var error = UseState<string?>(null);
         var config = UseService<IConfigService>();
 
@@ -276,65 +267,53 @@ public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
                | Text.H2("Tendril Data Location")
                | Text.Muted("This folder will store your plans, inbox, trash, and other Tendril data.")
                | (error.Value != null ? Text.Danger(error.Value) : null!)
-               | details.ToForm().Large()
-                   .SubmitBuilder(saving => new Button("Next").Icon(Icons.ArrowRight, Align.Right).Disabled(saving))
-                   .OnSubmit(OnSubmit)
-            ;
+               | folderPath.ToFolderInput("Select Tendril data folder...", mode: FolderInputMode.FullPath)
+                   .WithField().Label("Tendril Home")
+               | new Button("Next").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
+                   .OnClick(() =>
+                   {
+                       if (string.IsNullOrEmpty(folderPath.Value))
+                       {
+                           error.Set("Please provide a valid path");
+                           return;
+                       }
 
-        Task OnSubmit(TendrilHomeDetails? formDetails)
-        {
-            if (string.IsNullOrEmpty(formDetails?.TendrilHome))
-            {
-                error.Set("Please provide a valid path");
-                return Task.CompletedTask;
-            }
+                       try
+                       {
+                           var tendrilHome = folderPath.Value;
+                           tendrilHome = Environment.ExpandEnvironmentVariables(tendrilHome);
 
-            try
-            {
-                var tendrilHome = formDetails.TendrilHome;
+                           if (tendrilHome.StartsWith("~"))
+                           {
+                               var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                               if (tendrilHome == "~") tendrilHome = home;
+                               else if (tendrilHome.StartsWith("~/") || tendrilHome.StartsWith("~\\"))
+                                   tendrilHome = Path.Combine(home, tendrilHome.Substring(2));
+                           }
+                           else if (tendrilHome.StartsWith("$"))
+                           {
+                               var match = Regex.Match(tendrilHome, @"^\$([A-Za-z_][A-Za-z0-9_]*)");
+                               if (match.Success)
+                               {
+                                   var varName = match.Groups[1].Value;
+                                   var varValue = Environment.GetEnvironmentVariable(varName);
+                                   if (!string.IsNullOrEmpty(varValue))
+                                       tendrilHome = varValue + tendrilHome.Substring(match.Length);
+                               }
+                           }
 
-                // Expand environment variables (handles %VAR%)
-                tendrilHome = Environment.ExpandEnvironmentVariables(tendrilHome);
+                           if (!Path.IsPathRooted(tendrilHome)) tendrilHome = Path.GetFullPath(tendrilHome);
+                           tendrilHome = Path.GetFullPath(tendrilHome);
 
-                // Manual expansion for ~ and $HOME (Mac/Linux)
-                if (tendrilHome.StartsWith("~"))
-                {
-                    var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                    if (tendrilHome == "~") tendrilHome = home;
-                    else if (tendrilHome.StartsWith("~/") || tendrilHome.StartsWith("~\\"))
-                        tendrilHome = Path.Combine(home, tendrilHome.Substring(2));
-                }
-                else if (tendrilHome.StartsWith("$"))
-                {
-                    // Handle $HOME style expansion if missed by ExpandEnvironmentVariables
-                    var match = Regex.Match(tendrilHome, @"^\$([A-Za-z_][A-Za-z0-9_]*)");
-                    if (match.Success)
-                    {
-                        var varName = match.Groups[1].Value;
-                        var varValue = Environment.GetEnvironmentVariable(varName);
-                        if (!string.IsNullOrEmpty(varValue))
-                            tendrilHome = varValue + tendrilHome.Substring(match.Length);
-                    }
-                }
-
-                // Normalize and root
-                if (!Path.IsPathRooted(tendrilHome)) tendrilHome = Path.GetFullPath(tendrilHome);
-
-                // Final normalization
-                tendrilHome = Path.GetFullPath(tendrilHome);
-
-                // Store in config for next step
-                config.SetPendingTendrilHome(tendrilHome);
-                error.Set(null);
-                stepperIndex.Set(stepperIndex.Value + 1);
-            }
-            catch (Exception ex)
-            {
-                error.Set($"Invalid path: {ex.Message}");
-            }
-
-            return Task.CompletedTask;
-        }
+                           config.SetPendingTendrilHome(tendrilHome);
+                           error.Set(null);
+                           stepperIndex.Set(stepperIndex.Value + 1);
+                       }
+                       catch (Exception ex)
+                       {
+                           error.Set($"Invalid path: {ex.Message}");
+                       }
+                   });
     }
 }
 
