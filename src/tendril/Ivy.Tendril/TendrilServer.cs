@@ -61,6 +61,8 @@ public static class TendrilServer
         server.Services.AddSingleton<IPlanDatabaseService>(sp =>
         {
             var cfg = sp.GetRequiredService<IConfigService>();
+            if (string.IsNullOrEmpty(cfg.TendrilHome))
+                throw new InvalidOperationException("Cannot create PlanDatabaseService: TendrilHome is not configured. Complete onboarding first.");
             var dbPath = Path.Combine(cfg.TendrilHome, "tendril.db");
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<PlanDatabaseService>();
             return new PlanDatabaseService(dbPath, logger);
