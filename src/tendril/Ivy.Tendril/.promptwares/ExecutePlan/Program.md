@@ -116,7 +116,7 @@ if [[ -n $(git status --porcelain) ]]; then
   STALE_FILES=()
   
   # Get list of dirty tracked files (modified/deleted/staged, not untracked)
-  for file in $(git diff --name-only HEAD; git diff --cached --name-only | grep -v "^$") | sort -u; do
+  for file in $(git diff --name-only HEAD; git diff --cached --name-only) | sort -u; do
     # Check if this file was touched in last 5 commits
     RECENT_COMMIT=$(git log --oneline -1 -5 -- "$file" 2>/dev/null)
     if [[ -n "$RECENT_COMMIT" ]]; then
