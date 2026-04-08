@@ -59,9 +59,7 @@ public class JobsApp : ViewBase
         var rows = jobs.Select(j =>
         {
             var planId = ExtractPlanId(j.PlanFile);
-            var displayPlanId = string.IsNullOrEmpty(planId) && j.Type == "MakePlan"
-                ? "Creating..."
-                : planId;
+            var displayPlanId = planId;
 
             return new JobItemRow
             {
