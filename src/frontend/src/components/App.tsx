@@ -21,6 +21,8 @@ import { EventHandlerProvider } from "./event-handler";
 import { StreamHandlerProvider } from "./stream-handler";
 
 export function App() {
+  sessionStorage.removeItem("vite-chunk-reload");
+
   const appId = getAppId();
   const appArgs = getAppArgs();
   const parentId = getParentId();
