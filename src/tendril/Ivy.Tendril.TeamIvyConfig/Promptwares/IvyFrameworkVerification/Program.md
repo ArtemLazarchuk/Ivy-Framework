@@ -125,10 +125,10 @@ Each app must:
 
 From `<ArtifactsDir>/sample/`:
 
-Before building, kill any leftover processes from previous runs that may lock DLLs:
+Before building, kill any leftover processes from previous runs that may lock DLLs (scoped to this plan's artifacts only):
 
 ```bash
-powershell.exe -NoProfile -Command "Get-Process -ErrorAction SilentlyContinue | Where-Object { \$_.Path -and \$_.Path -match '\\\\artifacts\\\\sample\\\\bin\\\\' } | ForEach-Object { Write-Host \"Killing \$(\$_.ProcessName) (PID \$(\$_.Id))\"; \$_ | Stop-Process -Force -ErrorAction Stop } ; Start-Sleep -Milliseconds 2000"
+powershell.exe -NoProfile -Command "$escaped = [regex]::Escape('<ArtifactsDir>'); Get-Process -ErrorAction SilentlyContinue | Where-Object { \$_.Path -and \$_.Path -match \"^\$escaped\" } | ForEach-Object { Write-Host \"Killing \$(\$_.ProcessName) (PID \$(\$_.Id))\"; \$_ | Stop-Process -Force -ErrorAction Stop } ; Start-Sleep -Milliseconds 2000"
 ```
 
 Use the pre-flight build validation tool:
@@ -317,10 +317,10 @@ npx playwright test
 
 ### 8.5. Post-Test Cleanup
 
-Even if tests pass, kill all sample processes to ensure clean state:
+Even if tests pass, kill this plan's sample processes to ensure clean state:
 
 ```bash
-powershell.exe -NoProfile -Command "Get-Process -ErrorAction SilentlyContinue | Where-Object { \$_.Path -and \$_.Path -match '\\\\artifacts\\\\sample\\\\bin\\\\' } | Stop-Process -Force -ErrorAction SilentlyContinue"
+powershell.exe -NoProfile -Command "$escaped = [regex]::Escape('<ArtifactsDir>'); Get-Process -ErrorAction SilentlyContinue | Where-Object { \$_.Path -and \$_.Path -match \"^\$escaped\" } | Stop-Process -Force -ErrorAction SilentlyContinue"
 ```
 
 ### 9. Fix Loop (up to 10 rounds)

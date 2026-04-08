@@ -25,12 +25,12 @@ foreach ($dir in @($verificationDir, "$artifactsDir\tests", "$artifactsDir\scree
     }
 }
 
-# Kill ALL sample processes from any plan's artifacts directory (not just current plan)
-# to prevent accumulated zombie processes from blocking builds
-Write-Host "Cleaning up any leftover sample processes..." -ForegroundColor Yellow
+# Kill only THIS plan's sample processes (not other concurrent plans)
+Write-Host "Cleaning up leftover sample processes for this plan..." -ForegroundColor Yellow
+$escapedPlanPath = [regex]::Escape((Resolve-Path $PlanPath).Path)
 $killed = 0
 Get-Process -ErrorAction SilentlyContinue | Where-Object {
-    $_.Path -and $_.Path -match '\\artifacts\\sample\\bin\\'
+    $_.Path -and $_.Path -match "^$escapedPlanPath"
 } | ForEach-Object {
     Write-Host "  Killing: $($_.ProcessName) (PID $($_.Id)) from $($_.Path)" -ForegroundColor Yellow
     try {
@@ -84,9 +84,19 @@ if ($needsFrontendRebuild) {
 
 $env:IVY_FRAMEWORK_PATH = $frameworkPath
 
-# Pre-install Playwright browser (cached globally, makes agent's install a no-op)
+# Pre-install Playwright browser with mutex to prevent concurrent download contention
 Write-Host "Ensuring Playwright Chromium is installed..." -ForegroundColor Cyan
-npx playwright install chromium 2>$null
+$mutex = [System.Threading.Mutex]::new($false, "Global\TendrilPlaywrightInstall")
+try {
+    if ($mutex.WaitOne(120000)) {  # 2-minute timeout
+        npx playwright install chromium 2>$null
+    } else {
+        Write-Warning "Timed out waiting for Playwright install lock — assuming another instance completed it"
+    }
+} finally {
+    try { $mutex.ReleaseMutex() } catch {}
+    $mutex.Dispose()
+}
 
 InvokePromptwareAgent $PSScriptRoot $programFolder $logFile @{
     Args             = $PlanPath
