@@ -115,8 +115,8 @@ if [[ -n $(git status --porcelain) ]]; then
   
   STALE_FILES=()
   
-  # Get list of dirty tracked files (modified/deleted, not untracked)
-  for file in $(git diff --name-only HEAD); do
+  # Get list of dirty tracked files (modified/deleted/staged, not untracked)
+  for file in $(git diff --name-only HEAD; git diff --cached --name-only | grep -v "^$") | sort -u; do
     # Check if this file was touched in last 5 commits
     RECENT_COMMIT=$(git log --oneline -1 -5 -- "$file" 2>/dev/null)
     if [[ -n "$RECENT_COMMIT" ]]; then
@@ -160,7 +160,7 @@ fi
 - When the PR merges and MakePr pulls main back, `git pull` would overwrite any uncommitted local changes
 - Auto-committing and pushing ensures all local work is preserved and visible to worktrees
 - The `WIP:` prefix makes auto-commits easily identifiable for later cleanup (squash/amend)
-- **Revert detection with auto-resolve:** Before committing, each dirty tracked file is checked against the last 5 commits. If the working tree version matches the file's state *before* a recent commit (i.e., it's stale), the file is automatically restored to its HEAD version via `git checkout HEAD -- <file>`. This prevents silent reverts while keeping the process fully autonomous. Any remaining non-stale dirty files are committed normally.
+- **Revert detection with auto-resolve:** Before committing, each dirty tracked file — whether unstaged (`git diff --name-only HEAD`) or staged (`git diff --cached --name-only`) — is checked against the last 5 commits. If the working tree version matches the file's state *before* a recent commit (i.e., it's stale), the file is automatically restored to its HEAD version via `git checkout HEAD -- <file>`. This prevents silent reverts while keeping the process fully autonomous. Any remaining non-stale dirty files are committed normally.
 
 **Note:** This step runs in the original repo directories, before worktree creation.
 
