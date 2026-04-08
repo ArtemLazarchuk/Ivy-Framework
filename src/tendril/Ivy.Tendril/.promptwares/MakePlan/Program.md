@@ -28,6 +28,8 @@ Args contains the user's task description. If it references related plans with `
 
 Flags can be combined (e.g., `task description [YOLO] [FORCE]` or `task description [FORCE] [YOLO]`). Strip all flags. The cleaned description should be used for all subsequent steps (title, plan.yaml, etc.). Never let flags appear in any plan field or title.
 
+**Extract Source URL**: Check if the args contain a GitHub PR URL (`https://github.com/{owner}/{repo}/pull/{number}`) or issue URL (`https://github.com/{owner}/{repo}/issues/{number}`). If found, store it as `sourceUrl` in plan.yaml. Use `gh pr view <url> --json title,body` or `gh issue view <url> --json title,body` to fetch the title and body for additional context when writing the plan.
+
 ### 1.5. Load Project Context
 
 Read `config.yaml` (at the path from `TENDRIL_CONFIG` environment variable) to understand all available projects, their repos, and context.
@@ -165,6 +167,8 @@ verifications:
 ```
 
 If `SourcePath` is present in the firmware header, copy it to `plan.yaml` as `sourcePath`.
+
+If a source URL was extracted in Step 1, add `sourceUrl: "<url>"` to plan.yaml.
 
 If the plan references other plans (from `[number]` syntax in args), add them to `relatedPlans`.
 

@@ -49,6 +49,7 @@ repos: []
 created: 2026-03-28T20:36:39Z
 updated: 2026-03-28T20:36:39Z
 initialPrompt: "Make an empty app called Review"
+sourceUrl: "https://github.com/owner/repo/issues/42"
 prs: []
 commits: []
 verifications:
@@ -76,6 +77,7 @@ dependsOn: []
 | `prs`          | Associated pull request URLs                     |
 | `commits`      | Associated commit hashes                         |
 | `verifications`| List of `{name, status}` — status is `Pending`, `Pass`, or `Fail` |
+| `sourceUrl`    | (Optional) GitHub PR or issue URL that triggered this plan |
 | `sourcePath`   | (Optional) Absolute path to the source that generated this plan (e.g. test working directory) |
 | `relatedPlans` | Paths to related plan folders (parent plans, split-from, follow-ups) |
 | `dependsOn`    | Plan folder names this plan depends on (e.g. `- 01478-WorktreeIsolation`). ExecutePlan will block until all dependencies are `Completed` and their PRs are merged. |

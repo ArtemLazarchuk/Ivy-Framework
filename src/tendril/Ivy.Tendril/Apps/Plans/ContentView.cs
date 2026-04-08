@@ -101,6 +101,10 @@ public class ContentView(
                      | Text.Block($"#{_selectedPlan.Id} {_selectedPlan.Title}").Bold();
         header |= Text.Muted($"rev:{_selectedPlan.RevisionCount}");
 
+        if (!string.IsNullOrEmpty(_selectedPlan.SourceUrl))
+            header |= new Button(_selectedPlan.SourceUrl.Contains("/pull/") ? "PR" : "Issue")
+                .Icon(Icons.ExternalLink).Ghost().OnClick(() => client.OpenUrl(_selectedPlan.SourceUrl));
+
         if (_selectedPlan.DependsOn.Count > 0)
         {
             var depIds = string.Join(", ", _selectedPlan.DependsOn.Select(d =>

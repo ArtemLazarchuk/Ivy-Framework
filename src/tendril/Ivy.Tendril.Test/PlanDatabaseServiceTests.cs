@@ -42,6 +42,7 @@ public class PlanDatabaseServiceTests : IDisposable
             new List<string>(),
             DateTime.UtcNow.AddDays(-1),
             DateTime.UtcNow,
+            null,
             null
         );
 
@@ -611,6 +612,55 @@ public class PlanDatabaseServiceTests : IDisposable
 
         var remaining = _db.GetRecentJobs(1000);
         Assert.Equal(10, remaining.Count);
+    }
+
+    [Fact]
+    public void UpsertPlan_WithSourceUrl_PreservesValue()
+    {
+        var metadata = new PlanMetadata(
+            1600, "Tendril", "NiceToHave", "Source URL Plan", PlanStatus.Draft,
+            new List<string>(), new List<string>(), new List<string>(),
+            new List<PlanVerificationEntry>(), new List<string>(), new List<string>(),
+            DateTime.UtcNow.AddDays(-1), DateTime.UtcNow, null,
+            "https://github.com/Ivy-Interactive/Ivy-Framework/pull/42"
+        );
+        var plan = new PlanFile(metadata, "# Content", "D:\\Plans\\01600-SourceUrlPlan", "state: Draft");
+        _db.UpsertPlan(plan);
+
+        var result = _db.GetPlanById(1600);
+        Assert.NotNull(result);
+        Assert.Equal("https://github.com/Ivy-Interactive/Ivy-Framework/pull/42", result.SourceUrl);
+    }
+
+    [Fact]
+    public void UpsertPlan_WithNullSourceUrl_ReturnsNull()
+    {
+        var plan = CreateTestPlan(1601, "No Source URL Plan");
+        _db.UpsertPlan(plan);
+
+        var result = _db.GetPlanById(1601);
+        Assert.NotNull(result);
+        Assert.Null(result.SourceUrl);
+    }
+
+    [Fact]
+    public void Migration_004_AddsSourceUrlColumn()
+    {
+        // The _db created in constructor already ran all migrations including 004.
+        // Verify SourceUrl column exists by inserting and querying a plan with it.
+        var metadata = new PlanMetadata(
+            1602, "Tendril", "NiceToHave", "Migration Test", PlanStatus.Draft,
+            new List<string>(), new List<string>(), new List<string>(),
+            new List<PlanVerificationEntry>(), new List<string>(), new List<string>(),
+            DateTime.UtcNow, DateTime.UtcNow, null,
+            "https://github.com/test/repo/issues/99"
+        );
+        var plan = new PlanFile(metadata, "# Test", "D:\\Plans\\01602-MigrationTest", "state: Draft");
+        _db.UpsertPlan(plan);
+
+        var result = _db.GetPlanById(1602);
+        Assert.NotNull(result);
+        Assert.Equal("https://github.com/test/repo/issues/99", result.SourceUrl);
     }
 
     [Fact]
