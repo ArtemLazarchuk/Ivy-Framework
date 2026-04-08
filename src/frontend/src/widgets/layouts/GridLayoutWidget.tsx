@@ -12,7 +12,8 @@ import {
   getAlignSelf,
   getGridAlign,
 } from "../../lib/styles";
-import { type Responsive, useBreakpoint, resolveResponsive } from "@/hooks/use-responsive";
+import { type Responsive, resolveResponsive } from "@/hooks/use-responsive";
+import { useCurrentBreakpoint } from "@/hooks/use-breakpoint-context";
 
 const EMPTY_ARRAY: never[] = [];
 
@@ -100,7 +101,7 @@ export const GridLayoutWidget: React.FC<GridLayoutWidgetProps> = ({
   responsiveRowGap,
   responsiveColumnGap,
 }) => {
-  const bp = useBreakpoint();
+  const bp = useCurrentBreakpoint();
 
   // Resolve responsive values
   const resolvedColumns = responsiveColumns

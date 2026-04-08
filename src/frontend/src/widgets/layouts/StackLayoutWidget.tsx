@@ -20,7 +20,8 @@ import {
 } from "@/lib/styles";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageOverlayProvider } from "@/components/markdown/ImageOverlayContext";
-import { type Responsive, useBreakpoint, resolveResponsive } from "@/hooks/use-responsive";
+import { type Responsive, resolveResponsive } from "@/hooks/use-responsive";
+import { useCurrentBreakpoint } from "@/hooks/use-breakpoint-context";
 
 const EMPTY_ARRAY: never[] = [];
 
@@ -49,10 +50,6 @@ interface StackLayoutWidgetProps {
   responsiveRowGap?: Responsive<number>;
   responsiveColumnGap?: Responsive<number>;
   responsivePadding?: Responsive<string>;
-  responsiveWidth?: string | Responsive<string>;
-  responsiveHeight?: string | Responsive<string>;
-  responsiveVisible?: boolean | Responsive<boolean>;
-  responsiveDensity?: Responsive<string>;
 }
 
 export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
@@ -80,13 +77,10 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
   responsiveRowGap,
   responsiveColumnGap,
   responsivePadding,
-  responsiveWidth,
-  responsiveHeight,
-  responsiveVisible,
 }) => {
-  const bp = useBreakpoint();
+  const bp = useCurrentBreakpoint();
 
-  // Resolve responsive values with mobile-first cascading
+  // Resolve layout-specific responsive values with mobile-first cascading
   const resolvedOrientation = responsiveOrientation
     ? resolveResponsive(responsiveOrientation, bp, orientation)
     : orientation;
@@ -99,16 +93,6 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
   const resolvedPadding = responsivePadding
     ? resolveResponsive(responsivePadding, bp, padding as string)
     : padding;
-  const resolvedWidth = responsiveWidth
-    ? resolveResponsive(responsiveWidth as string | Responsive<string>, bp, width as string)
-    : width;
-  const resolvedHeight = responsiveHeight
-    ? resolveResponsive(responsiveHeight as string | Responsive<string>, bp, height as string)
-    : height;
-  const resolvedVisible =
-    responsiveVisible !== undefined
-      ? resolveResponsive(responsiveVisible as boolean | Responsive<boolean>, bp, visible)
-      : visible;
 
   const baseStyles: React.CSSProperties = {
     ...getPadding(resolvedPadding),
@@ -116,8 +100,8 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
     ...getRowGap(resolvedRowGap),
     ...getColumnGap(resolvedColumnGap),
     ...getAlign(resolvedOrientation, alignContent),
-    ...getWidth(resolvedWidth),
-    ...getHeight(resolvedHeight),
+    ...getWidth(width),
+    ...getHeight(height),
     ...getAspectRatio(aspectRatio),
     ...getColor(background, "backgroundColor", "background"),
     ...(borderStyle !== "None" ? getBorderStyle(borderStyle) : {}),
@@ -135,7 +119,7 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
     baseStyles.flexWrap = "wrap";
   }
 
-  if (!resolvedVisible) {
+  if (!visible) {
     return null;
   }
 
@@ -156,8 +140,8 @@ export const StackLayoutWidget: React.FC<StackLayoutWidgetProps> = ({
     delete flexStyles.width;
     delete flexStyles.height;
     const outerStyles: React.CSSProperties = {
-      ...getWidth(resolvedWidth),
-      ...getHeight(resolvedHeight),
+      ...getWidth(width),
+      ...getHeight(height),
     };
 
     return (

@@ -6,5 +6,6 @@ export type { ErrorSheetData } from "./use-error-sheet";
 export * from "./use-focus-management";
 export * from "./use-mobile";
 export * from "./use-responsive";
+export { BreakpointProvider, useCurrentBreakpoint } from "./use-breakpoint-context";
 export * from "./use-scroll-shadow";
 export { useToast, toast } from "./use-toast";
