@@ -4,7 +4,7 @@ import {
   estimateHeaderWidth,
   parseSizeGrow,
   parseSizeMin,
-} from "../dataTableContext/utils/parseSize";
+} from "../dataTableContext/utils/columnSizing";
 
 /**
  * Maps column icon names or types to appropriate icons

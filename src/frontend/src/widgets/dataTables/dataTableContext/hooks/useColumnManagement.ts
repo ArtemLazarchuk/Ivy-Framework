@@ -6,7 +6,7 @@ import {
   estimateHeaderWidth,
   estimateContentWidth,
   getSizeMode,
-} from "../utils/parseSize";
+} from "../utils/columnSizing";
 import type * as arrow from "apache-arrow";
 
 interface UseColumnManagementProps {
