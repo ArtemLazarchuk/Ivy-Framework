@@ -133,16 +133,7 @@ public static class TendrilServer
                 Environment.SetEnvironmentVariable("TENDRIL_URL", serverUrl);
 
             if (!configService.NeedsOnboarding)
-            {
-                // Eagerly resolve watcher services
-                app.Services.GetRequiredService<IPlanWatcherService>();
-                app.Services.GetRequiredService<IInboxWatcherService>();
-                app.Services.GetRequiredService<WorktreeCleanupService>().Start();
-
-                // Start database sync in background
-                var syncService = app.Services.GetRequiredService<PlanDatabaseSyncService>();
-                Task.Run(syncService.PerformInitialSync);
-            }
+                BackgroundServiceActivator.Start(app.Services);
 
             var telemetryService = app.Services.GetRequiredService<TelemetryService>();
             var appVersion = typeof(TendrilAppShell).Assembly.GetName().Version!.ToString(3);
