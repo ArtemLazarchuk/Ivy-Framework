@@ -584,7 +584,7 @@ public class PlanDatabaseServiceTests : IDisposable
             new List<PlanVerificationEntry>(),
             new List<string>(), new List<string>(),
             DateTime.UtcNow, DateTime.UtcNow,
-            "Fix the widget rendering pipeline",
+            "Fix the widget rendering/pipeline issue",
             null
         );
         var plan = new PlanFile(metadata, "# Content", "D:\\Plans\\01501-InitialPromptPlan", "state: Draft");

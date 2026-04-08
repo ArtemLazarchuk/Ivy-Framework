@@ -3,9 +3,9 @@ using Microsoft.Data.Sqlite;
 
 namespace Ivy.Tendril.Database.Migrations;
 
-public class Migration_005_FtsSourceUrl : IMigration
+public class Migration_007_FtsSourceUrl : IMigration
 {
-    public int Version => 5;
+    public int Version => 7;
     public string Description => "Add SourceUrl to FTS5 PlanSearch index";
 
     public void Apply(SqliteConnection connection)
@@ -63,7 +63,7 @@ public class Migration_005_FtsSourceUrl : IMigration
         }
 
         using var setVersionCmd = connection.CreateCommand();
-        setVersionCmd.CommandText = "PRAGMA user_version = 5;";
+        setVersionCmd.CommandText = "PRAGMA user_version = 7;";
         setVersionCmd.ExecuteNonQuery();
     }
 }
