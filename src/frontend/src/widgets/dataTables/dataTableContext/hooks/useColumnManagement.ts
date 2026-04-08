@@ -98,6 +98,34 @@ export const useColumnManagement = ({
     [],
   );
 
+  // Widen content-based columns if new data contains wider content (never shrink)
+  const widenColumnWidths = useCallback((mergedColumns: DataColumn[], arrowTable: arrow.Table) => {
+    setColumnWidths((prevWidths) => {
+      if (Object.keys(prevWidths).length === 0) return prevWidths;
+
+      let changed = false;
+      const widths = { ...prevWidths };
+      mergedColumns.forEach((col, index) => {
+        const sizeMode = getSizeMode(col.originalWidth ?? col.width);
+        if (!sizeMode) return;
+
+        const contentWidth = estimateContentWidth(arrowTable, index, sizeMode);
+        if (contentWidth === undefined) return;
+
+        const headerMinWidth = estimateHeaderWidth(col.header || col.name);
+        const newWidth = Math.max(headerMinWidth, contentWidth);
+        const currentWidth = prevWidths[index.toString()] ?? 0;
+
+        if (newWidth > currentWidth) {
+          widths[index.toString()] = newWidth;
+          changed = true;
+        }
+      });
+
+      return changed ? widths : prevWidths;
+    });
+  }, []);
+
   // Handle column resize
   const handleColumnResize = useCallback(
     (column: GridColumn, newSize: number) => {
@@ -165,6 +193,7 @@ export const useColumnManagement = ({
     resetColumnWidths,
     initializeColumnOrder,
     initializeColumnWidths,
+    widenColumnWidths,
     handleColumnResize,
     handleColumnReorder,
   };
