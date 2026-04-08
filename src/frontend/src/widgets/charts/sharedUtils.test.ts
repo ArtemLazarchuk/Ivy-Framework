@@ -316,16 +316,43 @@ describe("generateEChartGrid", () => {
     expect(result).toHaveProperty("containLabel", true);
   });
 
-  it("returns containLabel: false and left/right: 0 when all Y axes are hidden", () => {
+  it("returns containLabel: false and left/right: 15 when all Y axes are hidden (X axes implicitly visible)", () => {
     const yAxis: YAxisProps[] = [{ hide: true }, { hide: true }];
     const result = generateEChartGrid(undefined, false, yAxis);
     expect(result).toHaveProperty("containLabel", false);
-    expect(result).toHaveProperty("left", 0);
-    expect(result).toHaveProperty("right", 0);
+    expect(result).toHaveProperty("left", 15);
+    expect(result).toHaveProperty("right", 15);
   });
 
   it("returns containLabel: true when yAxis is empty array", () => {
     const result = generateEChartGrid(undefined, false, []);
+    expect(result).toHaveProperty("containLabel", true);
+  });
+
+  it("returns left/right 15 when Y axes hidden and X axes visible", () => {
+    const yAxis: YAxisProps[] = [{ hide: true }];
+    const xAxis: XAxisProps[] = [{ hide: false }];
+    const result = generateEChartGrid(undefined, false, yAxis, xAxis);
+    expect(result).toHaveProperty("left", 15);
+    expect(result).toHaveProperty("right", 15);
+    expect(result).toHaveProperty("containLabel", false);
+  });
+
+  it("returns left/right 0 when both axes hidden", () => {
+    const yAxis: YAxisProps[] = [{ hide: true }];
+    const xAxis: XAxisProps[] = [{ hide: true }];
+    const result = generateEChartGrid(undefined, false, yAxis, xAxis);
+    expect(result).toHaveProperty("left", 0);
+    expect(result).toHaveProperty("right", 0);
+    expect(result).toHaveProperty("containLabel", false);
+  });
+
+  it("returns percentage left/right when Y axes visible", () => {
+    const yAxis: YAxisProps[] = [{ hide: false }];
+    const xAxis: XAxisProps[] = [{ hide: false }];
+    const result = generateEChartGrid(undefined, false, yAxis, xAxis);
+    expect(result).toHaveProperty("left", "3%");
+    expect(result).toHaveProperty("right", "4%");
     expect(result).toHaveProperty("containLabel", true);
   });
 });

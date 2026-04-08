@@ -207,8 +207,8 @@ export function generateEChartGrid(
 
   const defaultGrid = {
     show: false, // Hide grid border to remove the square frame
-    left: allYAxesHidden ? 0 : "3%",
-    right: allYAxesHidden ? 0 : "4%",
+    left: allYAxesHidden ? (allXAxesHidden ? 0 : 15) : "3%",
+    right: allYAxesHidden ? (allXAxesHidden ? 0 : 15) : "4%",
     top: hasToolbox ? 40 : 15,
     bottom: allXAxesHidden ? 10 : 50, // Reduce bottom padding when X axis is hidden
     containLabel: !allYAxesHidden,
