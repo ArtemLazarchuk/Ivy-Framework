@@ -612,38 +612,10 @@ public class JobService : IJobService
 
         Task.Run(async () =>
         {
-            var timedOut = false;
-
-            try
-            {
-                // Wait for process exit or timeout
-                await process.WaitForExitAsync(cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                timedOut = true;
-            }
-
-            if (!timedOut && !process.HasExited)
-                // Shouldn't happen, but guard against it
-                timedOut = true;
-
-            if (timedOut)
-            {
-                try
-                {
-                    process.Kill(true);
-                }
-                catch
-                {
-                    /* Process may have already exited */
-                }
-
+            if (await process.WaitForExitOrKillAsync(cts.Token))
+                CompleteJob(id, process.ExitCode);
+            else
                 CompleteJob(id, null, true);
-                return;
-            }
-
-            CompleteJob(id, process.ExitCode);
         });
 
         // Start stale output watchdog

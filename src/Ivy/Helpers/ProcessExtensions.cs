@@ -40,4 +40,24 @@ public static class ProcessExtensions
             return false;
         }
     }
+
+    /// <summary>
+    /// Asynchronously waits for the process to exit, observing the given cancellation token.
+    /// If cancelled, kills the entire process tree.
+    /// </summary>
+    /// <returns>true if the process exited normally; false if it was killed due to cancellation.</returns>
+    public static async Task<bool> WaitForExitOrKillAsync(this Process? process, CancellationToken cancellationToken)
+    {
+        if (process is null) return true;
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(true); } catch { /* already exited */ }
+            return false;
+        }
+    }
 }
