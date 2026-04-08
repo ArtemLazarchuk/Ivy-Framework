@@ -410,7 +410,7 @@ public class JobService : IJobService
         if (type == "MakePlan")
         {
             planFile = GetNamedArg(args, "-Description") is { } desc
-                ? desc.Length > 80 ? desc[..80] + "..." : desc
+                ? desc.Length > 50 ? desc[..50] + "..." : desc
                 : "New Plan";
             project = GetNamedArg(args, "-Project") ?? "[Auto]";
         }

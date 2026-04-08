@@ -60,7 +60,7 @@ public class JobsApp : ViewBase
             Id = j.Id,
             Status = j.Status,
             PlanId = ExtractPlanId(j.PlanFile),
-            Plan = j.PlanFile,
+            Plan = j.PlanFile.Length > 50 ? j.PlanFile[..50] + "..." : j.PlanFile,
             Type = j.Type,
             Project = j.Project,
             Timer = FormatTimer(j),
