@@ -398,26 +398,29 @@ public class PlanDatabaseService : IPlanDatabaseService
         }
     }
 
-    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
+    public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7, string? projectFilter = null)
     {
         lock (_lock)
         {
             var cutoff = DateTime.UtcNow.AddDays(-days);
 
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = """
-                              SELECT
-                                  strftime('%Y-%m-%d %H:00:00', c.LogTimestamp) as Hour,
-                                  p.Project,
-                                  SUM(c.Cost) as TotalCost,
-                                  SUM(c.Tokens) as TotalTokens
-                              FROM Costs c
-                              JOIN Plans p ON p.Id = c.PlanId
-                              WHERE c.LogTimestamp IS NOT NULL AND c.LogTimestamp >= @cutoff
-                              GROUP BY Hour, p.Project
-                              ORDER BY Hour, p.Project
-                              """;
+            var projectClause = projectFilter != null ? " AND p.Project = @project" : "";
+            cmd.CommandText = $"""
+                               SELECT
+                                   strftime('%Y-%m-%d %H:00:00', c.LogTimestamp) as Hour,
+                                   p.Project,
+                                   SUM(c.Cost) as TotalCost,
+                                   SUM(c.Tokens) as TotalTokens
+                               FROM Costs c
+                               JOIN Plans p ON p.Id = c.PlanId
+                               WHERE c.LogTimestamp IS NOT NULL AND c.LogTimestamp >= @cutoff{projectClause}
+                               GROUP BY Hour, p.Project
+                               ORDER BY Hour, p.Project
+                               """;
             cmd.Parameters.AddWithValue("@cutoff", cutoff.ToString("O", CultureInfo.InvariantCulture));
+            if (projectFilter != null)
+                cmd.Parameters.AddWithValue("@project", projectFilter);
 
             var result = new List<HourlyTokenBurn>();
             using var reader = cmd.ExecuteReader();

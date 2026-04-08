@@ -115,10 +115,10 @@ public class DashboardApp : ViewBase
             });
 
         // Hourly cost & tokens combined bar chart
-        var allHourlyBurn = planService.GetHourlyTokenBurn();
-        var hourlyBurn = selectedProject.Value != null
-            ? allHourlyBurn.Where(h => h.Project == selectedProject.Value).ToList()
-            : allHourlyBurn
+        var hourlyBurn = planService.GetHourlyTokenBurn(projectFilter: selectedProject.Value);
+        if (selectedProject.Value == null)
+        {
+            hourlyBurn = hourlyBurn
                 .GroupBy(h => h.Hour)
                 .Select(g => new HourlyTokenBurn
                 {
@@ -129,6 +129,7 @@ public class DashboardApp : ViewBase
                 })
                 .OrderBy(h => h.Hour)
                 .ToList();
+        }
 
         var combinedChart = hourlyBurn.ToBarChart(
                 style: BarChartStyles.Default,
