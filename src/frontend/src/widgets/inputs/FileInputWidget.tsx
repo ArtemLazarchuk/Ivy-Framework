@@ -372,9 +372,14 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
                 disabled={disabled}
                 data-file-input-trigger
                 onClick={handleButtonClick}
+                title={hasFiles ? fileList.map((f) => f.fileName).join(", ") : undefined}
               >
                 <Upload className="h-4 w-4" />
-                {placeholder || `Select ${multiple ? "files" : "file"}`}
+                {hasFiles
+                  ? fileList.length === 1
+                    ? fileList[0].fileName
+                    : `${fileList.length} files selected`
+                  : (placeholder || `Select ${multiple ? "files" : "file"}`)}
               </Button>
               {invalid && (
                 <div className="pointer-events-none">
