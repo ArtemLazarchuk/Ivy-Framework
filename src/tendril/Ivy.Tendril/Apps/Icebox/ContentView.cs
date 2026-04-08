@@ -17,6 +17,7 @@ public class ContentView(
 {
     private readonly List<PlanFile> _allPlans = allPlans;
     private readonly IConfigService _config = config;
+    private readonly IJobService _jobService = jobService;
     private readonly IPlanReaderService _planService = planService;
     private readonly Action _refreshPlans = refreshPlans;
     private readonly PlanFile? _selectedPlan = selectedPlan;
@@ -125,6 +126,12 @@ public class ContentView(
                         | new Button("Thaw").Icon(Icons.Flame).Primary().OnClick(() =>
                         {
                             _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Draft);
+                            _refreshPlans();
+                        })
+                        | new Button("Execute").Icon(Icons.Rocket).Outline().ShortcutKey("e").OnClick(() =>
+                        {
+                            _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                            _jobService.StartJob("ExecutePlan", _selectedPlan.FolderPath);
                             _refreshPlans();
                         })
                         | new Button().Icon(Icons.EllipsisVertical).Ghost().WithDropDown(
