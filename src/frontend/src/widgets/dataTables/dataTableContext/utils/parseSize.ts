@@ -89,17 +89,35 @@ export function parseSizeMin(size: number | string | undefined): number | undefi
   return parseSize(parts[1]) || undefined;
 }
 
+let _measureCanvas: HTMLCanvasElement | null = null;
+
+function getMeasureContext(): CanvasRenderingContext2D | null {
+  if (!_measureCanvas) {
+    _measureCanvas = document.createElement("canvas");
+  }
+  return _measureCanvas.getContext("2d");
+}
+
 /**
  * Estimates minimum column width needed to display header text without truncation.
- * Uses approximate character width (8px per char) plus padding for icon + sort indicator.
+ * When a font string is provided, uses canvas.measureText() for accurate width;
+ * otherwise falls back to approximate character width (8px per char).
  */
-export function estimateHeaderWidth(headerText: string): number {
-  const CHAR_WIDTH = 8; // approximate px per character in header font
+export function estimateHeaderWidth(headerText: string, font?: string): number {
   const HEADER_PADDING = 40; // padding for icon, sort arrow, cell padding
   const MIN_WIDTH = 60; // absolute minimum
   const MAX_AUTO_WIDTH = 300; // cap auto-width to prevent excessively wide columns
 
-  const estimated = headerText.length * CHAR_WIDTH + HEADER_PADDING;
+  let textWidth: number;
+  const ctx = font ? getMeasureContext() : null;
+  if (ctx && font) {
+    ctx.font = font;
+    textWidth = ctx.measureText(headerText).width;
+  } else {
+    textWidth = headerText.length * 8; // fallback
+  }
+
+  const estimated = textWidth + HEADER_PADDING;
   return Math.max(MIN_WIDTH, Math.min(estimated, MAX_AUTO_WIDTH));
 }
 

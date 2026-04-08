@@ -117,6 +117,7 @@ export function convertToGridColumns(
   containerWidth: number,
   showGroups: boolean,
   showColumnTypeIcons: boolean = true,
+  headerFont?: string,
 ): GridColumn[] {
   const orderedColumns = getOrderedVisibleDataColumns(columns, columnOrder);
 
@@ -126,7 +127,7 @@ export function convertToGridColumns(
     let numericBaseWidth = typeof baseWidth === "string" ? parseFloat(baseWidth) : baseWidth;
 
     if (isNaN(numericBaseWidth) || !numericBaseWidth) {
-      numericBaseWidth = estimateHeaderWidth(col.header || col.name);
+      numericBaseWidth = estimateHeaderWidth(col.header || col.name, headerFont);
     }
 
     // Apply min constraint from Size string (e.g., "Fraction:0.5,Px:100,Px:500" → min 100px)

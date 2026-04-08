@@ -1,9 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import * as arrow from "apache-arrow";
 import {
   parseSize,
   parseSizeGrow,
   parseSizeMin,
+  estimateHeaderWidth,
   estimateContentWidth,
   getSizeMode,
 } from "./parseSize";
@@ -212,6 +213,51 @@ describe("parseSizeMin", () => {
 
   it("should return undefined for number", () => {
     expect(parseSizeMin(42)).toBeUndefined();
+  });
+});
+
+describe("estimateHeaderWidth", () => {
+  it("should return MIN_WIDTH (60) for empty string without font", () => {
+    // "" => 0 * 8 + 40 = 40, clamped to min 60
+    expect(estimateHeaderWidth("")).toBe(60);
+  });
+
+  it("should return clamped value at MAX_AUTO_WIDTH (300) for very long text without font", () => {
+    const longText = "A".repeat(100); // 100 * 8 + 40 = 840, clamped to 300
+    expect(estimateHeaderWidth(longText)).toBe(300);
+  });
+
+  it("should use character-count fallback without font parameter", () => {
+    // "Hello" = 5 * 8 + 40 = 80
+    expect(estimateHeaderWidth("Hello")).toBe(80);
+  });
+
+  it("should use canvas measurement when font is provided and narrow chars produce smaller width than wide chars", () => {
+    const widths: Record<string, number> = {
+      Test: 50,
+      iii: 15,
+      WWW: 45,
+    };
+    const mockMeasureText = vi.fn((text: string) => ({ width: widths[text] ?? 0 }));
+    const mockGetContext = vi.fn().mockReturnValue({
+      font: "",
+      measureText: mockMeasureText,
+    });
+    vi.spyOn(document, "createElement").mockReturnValue({
+      getContext: mockGetContext,
+    } as unknown as HTMLCanvasElement);
+
+    // "Test" measured at 50px => 50 + 40 = 90
+    expect(estimateHeaderWidth("Test", "bold 13px sans-serif")).toBe(90);
+    expect(mockMeasureText).toHaveBeenCalledWith("Test");
+
+    // "iii" measured at 15px => 15 + 40 = 55, clamped to MIN_WIDTH 60
+    const narrowWidth = estimateHeaderWidth("iii", "bold 13px sans-serif");
+    // "WWW" measured at 45px => 45 + 40 = 85
+    const wideWidth = estimateHeaderWidth("WWW", "bold 13px sans-serif");
+    expect(narrowWidth).toBeLessThan(wideWidth);
+
+    vi.restoreAllMocks();
   });
 });
 

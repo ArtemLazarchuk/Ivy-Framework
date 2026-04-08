@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GridColumn } from "@glideapps/glide-data-grid";
+import { GridColumn, getDefaultTheme } from "@glideapps/glide-data-grid";
 import { DataColumn } from "../../types/types";
 import {
   parseSize,
@@ -73,10 +73,12 @@ export const useColumnManagement = ({
         }
 
         // First time loading, initialize with default widths
+        const defaultTheme = getDefaultTheme();
+        const headerFont = `${defaultTheme.headerFontStyle} ${defaultTheme.fontFamily}`;
         const widths: Record<string, number> = {};
         mergedColumns.forEach((col, index) => {
           const explicitWidth = parseSize(col.width);
-          const headerMinWidth = estimateHeaderWidth(col.header || col.name);
+          const headerMinWidth = estimateHeaderWidth(col.header || col.name, headerFont);
 
           // For content-based size types (Fit, MinContent, MaxContent),
           // sample actual data if available
