@@ -87,7 +87,7 @@
 
 - `Layout.Horizontal().Gap()` takes `bool`, not `Size` — use `Gap(true)` or omit
 - **Stale obj cache**: When switching branches in worktrees, `src/Ivy/obj/` can reference old frontend asset filenames. Delete obj/bin and rebuild.
-- **Worktree deep path breaks `vp run build`**: MSBuild's `BuildFrontend` target runs `vp run build` (which calls `tsc -b && vp build`) and fails in deep worktree paths because vite emits relative `../` paths. Workaround: (1) build frontend manually `cd worktree/src/frontend && vp build`, (2) create stamp `touch worktree/src/frontend/dist/.build-stamp`, (3) build Ivy.dll from worktree `cd worktree/src/Ivy && dotnet build`, (4) then build sample project.
+- **Worktree deep path breaks `vp run build`**: MSBuild's `BuildFrontend` target runs `vp run build` (which calls `tsc -b && vp build`) and fails in deep worktree paths because vite emits relative `../` paths. Workaround: (1) build frontend manually `cd worktree/src/frontend && vp build`, (2) create stamp `touch worktree/src/frontend/dist/.build-stamp` **AFTER** the build (vp build cleans dist/), (3) clean Ivy obj/bin `rm -rf worktree/src/Ivy/obj/Debug worktree/src/Ivy/bin/Debug`, (4) build Ivy.dll from worktree `cd worktree/src/Ivy && dotnet build`, (5) then build sample project.
 - `test.use({ video })` CANNOT be inside `test.describe()` — must be top-level in the file
 - `Dictionary<TKey, TValue>.ToDetails()` crashes with `TargetParameterCountException` — convert to anonymous object first
 - `DataTableBuilder.Header(r => r.Values[colIndex], ...)` crashes — `GetNameFromMemberExpression` only handles simple member access, not indexers

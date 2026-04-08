@@ -72,7 +72,7 @@ Create everything directly in `<ArtifactsDir>/sample/` so the plan folder is sel
 
 **Important: Check which branch has the fix.** If the plan's commit is on a feature branch (check `plan.yaml` commits + `git branch --contains <commit>`), the worktree at `<PlanFolder>/worktrees/<RepoName>` has the correct code. Use that path for ProjectReference, NOT the main repo. If the commit is on main/master, use `~/git/ivy/Ivy-Framework`.
 
-**If referencing a worktree and it has frontend (.ts) changes:** rebuild frontend from the worktree path (`cd <worktree>/src/frontend && vp build`), then clean the Ivy obj dir (`rm -rf <worktree>/src/Ivy/obj/Debug`) before building the sample project.
+**If referencing a worktree and it has frontend (.ts) changes:** rebuild frontend from the worktree path (`cd <worktree>/src/frontend && npx vite build --outDir dist`) — do NOT use `vp build` as it may output to the main repo's dist instead of the worktree's. Then clean the Ivy obj dir (`rm -rf <worktree>/src/Ivy/obj/Debug`) before building the sample project.
 
 **`<ArtifactsDir>/sample/Sample.csproj`:**
 
