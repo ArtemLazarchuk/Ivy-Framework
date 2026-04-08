@@ -244,6 +244,9 @@ public class JobService : IJobService
             });
         }
 
+        // Release process and timeout resources
+        job.DisposeResources();
+
         // Persist completed job to SQLite
         PersistJob(job);
 
@@ -283,6 +286,8 @@ public class JobService : IJobService
             /* Process may have already exited */
         }
 
+        job.DisposeResources();
+
         job.Status = JobStatus.Stopped;
         job.CompletedAt = DateTime.UtcNow;
         if (job.StartedAt.HasValue)
@@ -303,8 +308,9 @@ public class JobService : IJobService
 
     public void DeleteJob(string id)
     {
-        if (_jobs.TryRemove(id, out _))
+        if (_jobs.TryRemove(id, out var removed))
         {
+            removed.DisposeResources();
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         RaiseJobsChanged();
@@ -318,7 +324,8 @@ public class JobService : IJobService
             .ToList();
         foreach (var id in completedIds)
         {
-            _jobs.TryRemove(id, out _);
+            if (_jobs.TryRemove(id, out var removed))
+                removed.DisposeResources();
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         if (completedIds.Count > 0)
@@ -333,7 +340,8 @@ public class JobService : IJobService
             .ToList();
         foreach (var id in failedIds)
         {
-            _jobs.TryRemove(id, out _);
+            if (_jobs.TryRemove(id, out var removed))
+                removed.DisposeResources();
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         if (failedIds.Count > 0)
@@ -592,14 +600,14 @@ public class JobService : IJobService
             if (e.Data != null)
             {
                 job.LastOutputAt = DateTime.UtcNow;
-                if (!e.Data.Contains("\"type\":\"heartbeat\"")) job.OutputLines.Enqueue(e.Data);
+                if (!e.Data.Contains("\"type\":\"heartbeat\"")) job.EnqueueOutput(e.Data);
             }
         };
         process.ErrorDataReceived += (_, e) =>
         {
             if (e.Data != null)
             {
-                job.OutputLines.Enqueue($"[stderr] {e.Data}");
+                job.EnqueueOutput($"[stderr] {e.Data}");
                 job.LastOutputAt = DateTime.UtcNow;
             }
         };
@@ -662,7 +670,7 @@ public class JobService : IJobService
                     if (condProc?.ExitCode != 0 ||
                         condOutput.Equals("False", StringComparison.OrdinalIgnoreCase))
                     {
-                        job.OutputLines.Enqueue($"[hook:{hook.Name}] Condition not met, skipping");
+                        job.EnqueueOutput($"[hook:{hook.Name}] Condition not met, skipping");
                         continue;
                     }
                 }
@@ -690,16 +698,16 @@ public class JobService : IJobService
                 actionProc.WaitForExitOrKill(30000);
 
                 if (!string.IsNullOrEmpty(output))
-                    job.OutputLines.Enqueue($"[hook:{hook.Name}] {output}");
+                    job.EnqueueOutput($"[hook:{hook.Name}] {output}");
                 if (!string.IsNullOrEmpty(stderr))
-                    job.OutputLines.Enqueue($"[hook:{hook.Name}] [stderr] {stderr}");
+                    job.EnqueueOutput($"[hook:{hook.Name}] [stderr] {stderr}");
 
                 if (actionProc?.ExitCode != 0)
-                    job.OutputLines.Enqueue($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
+                    job.EnqueueOutput($"[hook:{hook.Name}] Hook failed with exit code {actionProc?.ExitCode}");
             }
             catch (Exception ex)
             {
-                job.OutputLines.Enqueue($"[hook:{hook.Name}] Error: {ex.Message}");
+                job.EnqueueOutput($"[hook:{hook.Name}] Error: {ex.Message}");
             }
     }
 
@@ -996,7 +1004,7 @@ public class JobService : IJobService
             if (!created && !duplicate)
             {
                 // Agent exited 0 but didn't create a plan or detect a duplicate — flag it
-                job.OutputLines.Enqueue(
+                job.EnqueueOutput(
                     "[Tendril] WARNING: MakePlan completed but no plan folder or trash entry was found.");
                 job.Status = JobStatus.Failed;
                 job.StatusMessage = "No plan created";

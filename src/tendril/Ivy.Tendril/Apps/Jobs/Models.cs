@@ -17,6 +17,8 @@ public enum JobStatus
 
 public record JobItem
 {
+    private const int MaxOutputLines = 10_000;
+
     public string Id { get; init; } = "";
     public string Type { get; init; } = "";
     public string PlanFile { get; init; } = "";
@@ -43,6 +45,21 @@ public record JobItem
 
     // Path to the .processing inbox file for MakePlan job recovery
     public string? InboxFile { get; set; }
+
+    public void EnqueueOutput(string line)
+    {
+        OutputLines.Enqueue(line);
+        while (OutputLines.Count > MaxOutputLines)
+            OutputLines.TryDequeue(out _);
+    }
+
+    public void DisposeResources()
+    {
+        try { Process?.Dispose(); } catch { }
+        try { TimeoutCts?.Dispose(); } catch { }
+        Process = null;
+        TimeoutCts = null;
+    }
 }
 
 public record JobItemRow
