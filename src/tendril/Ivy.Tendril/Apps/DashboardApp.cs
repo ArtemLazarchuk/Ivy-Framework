@@ -141,7 +141,7 @@ public class DashboardApp : ViewBase
                     ],
                     XAxis =
                     [
-                        new XAxis().TickFormatter("MM/dd HH", TickFormatterType.Date)
+                        new XAxis().TickFormatter("MM/dd", TickFormatterType.Date).MinTickGap(23)
                     ],
                     YAxis =
                     [
