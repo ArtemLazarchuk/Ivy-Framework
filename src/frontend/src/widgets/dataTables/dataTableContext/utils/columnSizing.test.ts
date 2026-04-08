@@ -7,7 +7,7 @@ import {
   estimateHeaderWidth,
   estimateContentWidth,
   getSizeMode,
-} from "./parseSize";
+} from "./columnSizing";
 
 describe("parseSize", () => {
   // Fixed size types
@@ -354,7 +354,7 @@ describe("estimateContentWidth", () => {
       }),
     } as unknown as HTMLCanvasElement);
 
-    const { estimateContentWidth: freshEstimateContentWidth } = await import("./parseSize");
+    const { estimateContentWidth: freshEstimateContentWidth } = await import("./columnSizing");
     const table = makeTable([{ name: "col", values: ["Hello", "World"] }]);
     // "World" measured at 50px => 50 + 24 = 74
     expect(freshEstimateContentWidth(table, 0, "max", "13px sans-serif")).toBe(74);
@@ -377,7 +377,7 @@ describe("estimateContentWidth", () => {
       }),
     } as unknown as HTMLCanvasElement);
 
-    const { estimateContentWidth: freshEstimateContentWidth } = await import("./parseSize");
+    const { estimateContentWidth: freshEstimateContentWidth } = await import("./columnSizing");
     const narrowTable = makeTable([{ name: "col", values: ["iii"] }]);
     const wideTable = makeTable([{ name: "col", values: ["WWW"] }]);
 

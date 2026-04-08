@@ -3,7 +3,7 @@ import * as arrow from "apache-arrow";
 import { Filter, SortOrder } from "@/services/grpcTableService";
 import { DataColumn, DataTableConnection, DataTableConfig } from "../../types/types";
 import { fetchTableData } from "../../utils/tableDataFetcher";
-import { parseSize } from "../utils/parseSize";
+import { parseSize } from "../utils/columnSizing";
 
 interface UseDataLoadingProps {
   connection: DataTableConnection;
