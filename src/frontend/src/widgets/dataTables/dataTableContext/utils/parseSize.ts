@@ -102,3 +102,66 @@ export function estimateHeaderWidth(headerText: string): number {
   const estimated = headerText.length * CHAR_WIDTH + HEADER_PADDING;
   return Math.max(MIN_WIDTH, Math.min(estimated, MAX_AUTO_WIDTH));
 }
+
+import type { Table } from "apache-arrow";
+
+const CONTENT_CHAR_WIDTH = 8;
+const CONTENT_PADDING = 24;
+const MIN_CONTENT_WIDTH = 60;
+const MAX_CONTENT_WIDTH = 400;
+const SAMPLE_SIZE = 20;
+
+/**
+ * Estimates column width by sampling the first N rows of actual cell data.
+ * Returns undefined if no data is available or column not found.
+ */
+export function estimateContentWidth(
+  arrowTable: Table,
+  columnIndex: number,
+  mode: "fit" | "min" | "max",
+): number | undefined {
+  if (!arrowTable || columnIndex < 0 || columnIndex >= arrowTable.numCols) {
+    return undefined;
+  }
+
+  const column = arrowTable.getChildAt(columnIndex);
+  if (!column) return undefined;
+
+  const rowCount = Math.min(arrowTable.numRows, SAMPLE_SIZE);
+  if (rowCount === 0) return undefined;
+
+  const widths: number[] = [];
+  for (let i = 0; i < rowCount; i++) {
+    const value = column.get(i);
+    const text = value == null ? "" : String(value);
+    const width = text.length * CONTENT_CHAR_WIDTH + CONTENT_PADDING;
+    widths.push(Math.max(MIN_CONTENT_WIDTH, Math.min(width, MAX_CONTENT_WIDTH)));
+  }
+
+  switch (mode) {
+    case "min":
+      return Math.min(...widths);
+    case "max":
+      return Math.max(...widths);
+    case "fit":
+      return Math.max(...widths);
+  }
+}
+
+/**
+ * Returns the content-sizing mode for a Size string, or undefined if not content-based.
+ */
+export function getSizeMode(size: string | number | undefined): "fit" | "min" | "max" | undefined {
+  if (typeof size !== "string") return undefined;
+  const sizeType = size.split(",")[0].split(":")[0];
+  switch (sizeType) {
+    case "Fit":
+      return "fit";
+    case "MinContent":
+      return "min";
+    case "MaxContent":
+      return "max";
+    default:
+      return undefined;
+  }
+}

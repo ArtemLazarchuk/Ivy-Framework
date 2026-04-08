@@ -17,7 +17,7 @@ interface UseDataLoadingProps {
   setVisibleRows: (rows: number) => void;
   setError: (error: string | null) => void;
   initializeColumnOrder: (columns: DataColumn[]) => void;
-  initializeColumnWidths: (columns: DataColumn[]) => void;
+  initializeColumnWidths: (columns: DataColumn[], arrowTable?: arrow.Table | null) => void;
   initializeSortFromColumns: (columns: DataColumn[]) => boolean;
 }
 
@@ -124,8 +124,8 @@ export const useDataLoading = ({
           return;
         }
 
-        // Initialize column widths only if not already set (first load)
-        initializeColumnWidths(mergedColumns);
+        // Initialize column widths, passing Arrow data for content-based sizing
+        initializeColumnWidths(mergedColumns, result.arrowTable);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load data";
         setError(errorMessage);

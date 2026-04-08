@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { parseSize, parseSizeGrow, parseSizeMin } from "./parseSize";
+import * as arrow from "apache-arrow";
+import {
+  parseSize,
+  parseSizeGrow,
+  parseSizeMin,
+  estimateContentWidth,
+  getSizeMode,
+} from "./parseSize";
 
 describe("parseSize", () => {
   // Fixed size types
@@ -205,5 +212,117 @@ describe("parseSizeMin", () => {
 
   it("should return undefined for number", () => {
     expect(parseSizeMin(42)).toBeUndefined();
+  });
+});
+
+function makeTable(fields: { name: string; values: (string | number | null)[] }[]): arrow.Table {
+  const columns: Record<string, (string | number | null)[]> = {};
+  for (const f of fields) {
+    columns[f.name] = f.values;
+  }
+  return arrow.tableFromArrays(columns);
+}
+
+describe("estimateContentWidth", () => {
+  it("should return undefined for empty table (0 rows)", () => {
+    const table = makeTable([{ name: "col", values: [] }]);
+    expect(estimateContentWidth(table, 0, "fit")).toBeUndefined();
+  });
+
+  it("should return undefined for out-of-bounds column index", () => {
+    const table = makeTable([{ name: "col", values: ["hello"] }]);
+    expect(estimateContentWidth(table, 5, "fit")).toBeUndefined();
+    expect(estimateContentWidth(table, -1, "fit")).toBeUndefined();
+  });
+
+  it("should sample up to 20 rows maximum", () => {
+    // Create a table with 30 rows, first 20 are short, last 10 are very long
+    const values = [
+      ...Array.from({ length: 20 }, () => "short"),
+      ...Array.from({ length: 10 }, () => "a".repeat(50)),
+    ];
+    const table = makeTable([{ name: "col", values }]);
+    const result = estimateContentWidth(table, 0, "max");
+    // "short" = 5 chars * 8 + 24 = 64px
+    // If it sampled beyond 20, "a".repeat(50) = 50*8+24 = 424 → capped at 400
+    // Since max of first 20 should be 64, not 400
+    expect(result).toBe(64);
+  });
+
+  it("mode 'max' should return width of the longest cell content", () => {
+    const table = makeTable([{ name: "col", values: ["ab", "abcdef", "abc"] }]);
+    // "abcdef" = 6*8+24 = 72
+    expect(estimateContentWidth(table, 0, "max")).toBe(72);
+  });
+
+  it("mode 'min' should return width of the shortest cell content", () => {
+    const table = makeTable([{ name: "col", values: ["ab", "abcdef", "abc"] }]);
+    // "ab" = 2*8+24 = 40 → clamped to MIN_CONTENT_WIDTH = 60
+    expect(estimateContentWidth(table, 0, "min")).toBe(60);
+  });
+
+  it("mode 'fit' should return same as max", () => {
+    const table = makeTable([{ name: "col", values: ["ab", "abcdef", "abc"] }]);
+    const fitResult = estimateContentWidth(table, 0, "fit");
+    const maxResult = estimateContentWidth(table, 0, "max");
+    expect(fitResult).toBe(maxResult);
+  });
+
+  it("should handle null values (treated as empty string)", () => {
+    const table = makeTable([{ name: "col", values: [null, "hello", null] }]);
+    // null → "" → 0*8+24 = 24 → clamped to 60
+    // "hello" → 5*8+24 = 64
+    expect(estimateContentWidth(table, 0, "min")).toBe(60);
+    expect(estimateContentWidth(table, 0, "max")).toBe(64);
+  });
+
+  it("should respect MIN_CONTENT_WIDTH (60px) floor", () => {
+    const table = makeTable([{ name: "col", values: ["a"] }]);
+    // "a" = 1*8+24 = 32 → clamped to 60
+    expect(estimateContentWidth(table, 0, "fit")).toBe(60);
+  });
+
+  it("should respect MAX_CONTENT_WIDTH (400px) cap", () => {
+    const table = makeTable([{ name: "col", values: ["a".repeat(100)] }]);
+    // 100*8+24 = 824 → capped at 400
+    expect(estimateContentWidth(table, 0, "fit")).toBe(400);
+  });
+});
+
+describe("getSizeMode", () => {
+  it("should return 'fit' for Fit", () => {
+    expect(getSizeMode("Fit")).toBe("fit");
+  });
+
+  it("should return 'min' for MinContent", () => {
+    expect(getSizeMode("MinContent")).toBe("min");
+  });
+
+  it("should return 'max' for MaxContent", () => {
+    expect(getSizeMode("MaxContent")).toBe("max");
+  });
+
+  it("should return undefined for Px:200", () => {
+    expect(getSizeMode("Px:200")).toBeUndefined();
+  });
+
+  it("should return undefined for Auto", () => {
+    expect(getSizeMode("Auto")).toBeUndefined();
+  });
+
+  it("should return undefined for Fraction:0.5", () => {
+    expect(getSizeMode("Fraction:0.5")).toBeUndefined();
+  });
+
+  it("should return undefined for undefined", () => {
+    expect(getSizeMode(undefined)).toBeUndefined();
+  });
+
+  it("should return undefined for number", () => {
+    expect(getSizeMode(42)).toBeUndefined();
+  });
+
+  it("should return 'fit' for Fit with min/max suffix", () => {
+    expect(getSizeMode("Fit,Px:100")).toBe("fit");
   });
 });
