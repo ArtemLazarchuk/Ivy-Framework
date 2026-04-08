@@ -10,6 +10,17 @@ export interface ShortcutRegistration {
   isActive: () => boolean;
   /** If true, skip firing when target is INPUT/TEXTAREA/contentEditable */
   skipInInputs: boolean;
+  /** Raw shortcut string for display (e.g., "Ctrl+K") */
+  displayKey: string;
+}
+
+export interface ShortcutInfo {
+  id: string;
+  /** Serialized canonical key (e.g., "ctrl+k") */
+  shortcutKey: string;
+  /** Raw shortcut string for display formatting */
+  displayKey: string;
+  isActive: boolean;
 }
 
 const registry = new Map<string, ShortcutRegistration>();
@@ -19,6 +30,16 @@ const recentShortcuts = new Map<string, number>();
 const DEBOUNCE_MS = 300;
 const SWEEP_INTERVAL_MS = 5 * DEBOUNCE_MS; // 1500ms
 let sweepTimerId: number | null = null;
+
+export function serializeShortcut(shortcut: ParsedShortcut): string {
+  const parts: string[] = [];
+  if (shortcut.ctrl) parts.push("ctrl");
+  if (shortcut.meta) parts.push("meta");
+  if (shortcut.alt) parts.push("alt");
+  if (shortcut.shift) parts.push("shift");
+  parts.push(shortcut.key.toLowerCase());
+  return parts.join("+");
+}
 
 function startSweepIfNeeded() {
   if (sweepTimerId !== null) return;
@@ -96,6 +117,20 @@ function removeListener() {
 export function registerShortcut(registration: ShortcutRegistration): void {
   registry.set(registration.id, registration);
   installListener();
+
+  // Dev-only: warn about conflicting shortcut assignments
+  if (process.env.NODE_ENV === "development") {
+    const key = serializeShortcut(registration.shortcut);
+    const conflicts = [...registry.values()].filter(
+      (r) => r.id !== registration.id && serializeShortcut(r.shortcut) === key,
+    );
+    if (conflicts.length > 0) {
+      console.warn(`[Ivy] Shortcut conflict: "${key}" is registered by multiple widgets:`, [
+        registration.id,
+        ...conflicts.map((c) => c.id),
+      ]);
+    }
+  }
 }
 
 export function unregisterShortcut(id: string): void {
@@ -108,6 +143,15 @@ export function unregisterShortcut(id: string): void {
       sweepTimerId = null;
     }
   }
+}
+
+export function getRegisteredShortcuts(): ShortcutInfo[] {
+  return [...registry.values()].map((r) => ({
+    id: r.id,
+    shortcutKey: serializeShortcut(r.shortcut),
+    displayKey: r.displayKey,
+    isActive: r.isActive(),
+  }));
 }
 
 /** For testing only — resets all internal state */

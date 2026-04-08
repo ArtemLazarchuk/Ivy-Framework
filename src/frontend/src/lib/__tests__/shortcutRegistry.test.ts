@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   registerShortcut,
   unregisterShortcut,
+  getRegisteredShortcuts,
+  serializeShortcut,
   _resetForTesting,
   _getRegistrySize,
   _isListenerInstalled,
@@ -28,6 +30,7 @@ function makeRegistration(
     handler: vi.fn(),
     isActive: () => true,
     skipInInputs: true,
+    displayKey: "K",
     ...overrides,
   };
 }
@@ -238,5 +241,185 @@ describe("shortcutRegistry", () => {
 
     fireKeydown("KeyJ");
     expect(handler).not.toHaveBeenCalled();
+  });
+});
+
+describe("serializeShortcut", () => {
+  it("serializes a simple key", () => {
+    expect(serializeShortcut(makeShortcut("k"))).toBe("k");
+  });
+
+  it("serializes ctrl+key", () => {
+    expect(serializeShortcut(makeShortcut("k", { ctrl: true }))).toBe("ctrl+k");
+  });
+
+  it("serializes multiple modifiers in canonical order", () => {
+    expect(
+      serializeShortcut(makeShortcut("s", { ctrl: true, meta: true, alt: true, shift: true })),
+    ).toBe("ctrl+meta+alt+shift+s");
+  });
+
+  it("normalizes key to lowercase", () => {
+    expect(serializeShortcut(makeShortcut("K", { ctrl: true }))).toBe("ctrl+k");
+  });
+
+  it("omits false modifiers", () => {
+    expect(serializeShortcut(makeShortcut("x", { alt: true }))).toBe("alt+x");
+  });
+});
+
+describe("getRegisteredShortcuts", () => {
+  beforeEach(() => {
+    _resetForTesting();
+  });
+
+  it("returns empty array when no shortcuts registered", () => {
+    expect(getRegisteredShortcuts()).toEqual([]);
+  });
+
+  it("returns correct entries after registration", () => {
+    registerShortcut(
+      makeRegistration({
+        id: "btn-1",
+        shortcut: makeShortcut("k", { ctrl: true }),
+        displayKey: "Ctrl+K",
+      }),
+    );
+    registerShortcut(
+      makeRegistration({
+        id: "btn-2",
+        shortcut: makeShortcut("s", { alt: true }),
+        displayKey: "Alt+S",
+      }),
+    );
+
+    const shortcuts = getRegisteredShortcuts();
+    expect(shortcuts).toHaveLength(2);
+    expect(shortcuts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "btn-1",
+          shortcutKey: "ctrl+k",
+          displayKey: "Ctrl+K",
+          isActive: true,
+        }),
+        expect.objectContaining({
+          id: "btn-2",
+          shortcutKey: "alt+s",
+          displayKey: "Alt+S",
+          isActive: true,
+        }),
+      ]),
+    );
+  });
+
+  it("reflects unregistration", () => {
+    registerShortcut(
+      makeRegistration({
+        id: "btn-1",
+        shortcut: makeShortcut("k", { ctrl: true }),
+        displayKey: "Ctrl+K",
+      }),
+    );
+    registerShortcut(
+      makeRegistration({
+        id: "btn-2",
+        shortcut: makeShortcut("s", { alt: true }),
+        displayKey: "Alt+S",
+      }),
+    );
+
+    unregisterShortcut("btn-1");
+
+    const shortcuts = getRegisteredShortcuts();
+    expect(shortcuts).toHaveLength(1);
+    expect(shortcuts[0].id).toBe("btn-2");
+  });
+
+  it("reflects isActive state", () => {
+    registerShortcut(
+      makeRegistration({
+        id: "btn-active",
+        shortcut: makeShortcut("a", { ctrl: true }),
+        displayKey: "Ctrl+A",
+        isActive: () => true,
+      }),
+    );
+    registerShortcut(
+      makeRegistration({
+        id: "btn-inactive",
+        shortcut: makeShortcut("b", { ctrl: true }),
+        displayKey: "Ctrl+B",
+        isActive: () => false,
+      }),
+    );
+
+    const shortcuts = getRegisteredShortcuts();
+    const active = shortcuts.find((s) => s.id === "btn-active");
+    const inactive = shortcuts.find((s) => s.id === "btn-inactive");
+    expect(active?.isActive).toBe(true);
+    expect(inactive?.isActive).toBe(false);
+  });
+});
+
+describe("conflict detection", () => {
+  beforeEach(() => {
+    _resetForTesting();
+    vi.stubEnv("NODE_ENV", "development");
+  });
+
+  it("warns when two shortcuts share the same key combination", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const shortcut = makeShortcut("k", { ctrl: true });
+    registerShortcut(makeRegistration({ id: "btn-1", shortcut, displayKey: "Ctrl+K" }));
+    registerShortcut(makeRegistration({ id: "btn-2", shortcut, displayKey: "Ctrl+K" }));
+
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[Ivy] Shortcut conflict: "ctrl+k"'),
+      expect.arrayContaining(["btn-2", "btn-1"]),
+    );
+
+    warnSpy.mockRestore();
+    vi.unstubAllEnvs();
+  });
+
+  it("does not warn for different key combinations", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    registerShortcut(
+      makeRegistration({
+        id: "btn-1",
+        shortcut: makeShortcut("k", { ctrl: true }),
+        displayKey: "Ctrl+K",
+      }),
+    );
+    registerShortcut(
+      makeRegistration({
+        id: "btn-2",
+        shortcut: makeShortcut("s", { ctrl: true }),
+        displayKey: "Ctrl+S",
+      }),
+    );
+
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+    vi.unstubAllEnvs();
+  });
+
+  it("does not warn in production mode", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const shortcut = makeShortcut("k", { ctrl: true });
+    registerShortcut(makeRegistration({ id: "btn-1", shortcut, displayKey: "Ctrl+K" }));
+    registerShortcut(makeRegistration({ id: "btn-2", shortcut, displayKey: "Ctrl+K" }));
+
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+    vi.unstubAllEnvs();
   });
 });
