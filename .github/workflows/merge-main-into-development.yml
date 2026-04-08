@@ -1,5 +1,5 @@
 # Merges main into the development branch and pushes. Then triggers Sliplane staging deploys via API.
-# Runs every 15 minutes on a schedule, or manually. On failure, a short summary is added to the workflow run.
+# Runs every 15 minutes on a schedule, on push to `development`, or manually. On failure, a short summary is added to the workflow run.
 
 name: Merge main into development
 
@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - development
 
 concurrency:
   group: merge-main-into-development

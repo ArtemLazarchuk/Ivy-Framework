@@ -1,5 +1,5 @@
 # Refreshes staging (docs + samples) on Sliplane via the deploy API. Does not touch git.
-# Runs every 10 minutes on a schedule, or manually from the Actions tab.
+# Runs every 10 minutes on a schedule, on push to `development`, or manually from the Actions tab.
 
 name: Staging periodic redeploy
 
@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - development
 
 permissions:
   contents: read
