@@ -118,7 +118,7 @@ public class JobService : IJobService
         if (timedOut)
         {
             job.Status = JobStatus.Timeout;
-            var reason = staleOutput
+            var reason = (staleOutput || job.StaleOutputDetected)
                 ? $"No output for {(int)_staleOutputTimeout.TotalMinutes} minutes"
                 : $"Exceeded {(int)_jobTimeout.TotalMinutes} minute timeout";
             job.StatusMessage = reason;
@@ -734,18 +734,10 @@ public class JobService : IJobService
                 var sinceLastOutput = DateTime.UtcNow - job.LastOutputAt.Value;
                 if (sinceLastOutput >= _staleOutputTimeout)
                 {
-                    // Stale output detected — cancel the timeout CTS to trigger the main monitor
+                    // Stale output detected — signal via flag and cancel the timeout CTS
+                    // The main monitor (LaunchJob background task) will handle process kill and CompleteJob
                     job.StaleOutputDetected = true;
-                    try
-                    {
-                        job.Process?.Kill(true);
-                    }
-                    catch
-                    {
-                        /* Process may have already exited */
-                    }
-
-                    CompleteJob(id, null, true, true);
+                    try { timeoutCts.Cancel(); } catch (ObjectDisposedException) { }
                     break;
                 }
             }
