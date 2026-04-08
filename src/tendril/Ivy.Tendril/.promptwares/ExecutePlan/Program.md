@@ -113,15 +113,13 @@ cd <repo-path>
 if [[ -n $(git status --porcelain) ]]; then
   echo "Found uncommitted changes in $(pwd), checking for conflicts with recent commits..."
   
-  CONFLICT_FOUND=false
+  STALE_FILES=()
   
-  # Get list of dirty files (modified/added/deleted, not untracked)
+  # Get list of dirty tracked files (modified/deleted, not untracked)
   for file in $(git diff --name-only HEAD); do
     # Check if this file was touched in last 5 commits
     RECENT_COMMIT=$(git log --oneline -1 -5 -- "$file" 2>/dev/null)
     if [[ -n "$RECENT_COMMIT" ]]; then
-      # Compare: would staging this file revert the recent commit's changes?
-      # Check if the working tree version matches a pre-commit state
       COMMIT_HASH=$(echo "$RECENT_COMMIT" | awk '{print $1}')
       
       # Get the file content from before that commit
@@ -129,29 +127,31 @@ if [[ -n $(git status --porcelain) ]]; then
       WORKING_CONTENT=$(cat "$file" 2>/dev/null)
       
       if [[ "$PARENT_CONTENT" == "$WORKING_CONTENT" ]]; then
-        echo "WARNING: Dirty file '$file' matches pre-commit state of $RECENT_COMMIT"
-        echo "  Auto-committing would revert changes from that commit."
-        CONFLICT_FOUND=true
+        echo "WARNING: Stale file '$file' matches pre-commit state of $RECENT_COMMIT"
+        echo "  Discarding stale version — keeping committed (HEAD) version."
+        STALE_FILES+=("$file")
       fi
     fi
   done
   
-  # Also check untracked files (these are safe — they can't revert anything)
-  # No conflict check needed for untracked files
-  
-  if [[ "$CONFLICT_FOUND" == "true" ]]; then
-    echo "ERROR: Auto-commit aborted — dirty files would revert recent commits."
-    echo "  Please resolve manually: commit, stash, or discard the conflicting files."
-    echo "  Then re-execute the plan."
-    # Do NOT commit or push — fail the step so the user notices
-    exit 1
+  # Auto-resolve: discard stale files by restoring HEAD versions
+  if [[ ${#STALE_FILES[@]} -gt 0 ]]; then
+    echo "Auto-resolving ${#STALE_FILES[@]} stale file(s)..."
+    for stale in "${STALE_FILES[@]}"; do
+      git checkout HEAD -- "$stale"
+      echo "  Restored: $stale"
+    done
   fi
   
-  # No conflicts — safe to auto-commit
-  git add -A
-  git commit -m "WIP: Auto-commit before plan execution [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
-  git push origin $(git branch --show-current)
-  echo "Changes committed and pushed successfully"
+  # After resolving stale files, check if there are still changes to commit
+  if [[ -n $(git status --porcelain) ]]; then
+    git add -A
+    git commit -m "WIP: Auto-commit before plan execution [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+    git push origin $(git branch --show-current)
+    echo "Changes committed and pushed successfully"
+  else
+    echo "All dirty files were stale — nothing to commit after cleanup."
+  fi
 fi
 ```
 
@@ -160,7 +160,7 @@ fi
 - When the PR merges and MakePr pulls main back, `git pull` would overwrite any uncommitted local changes
 - Auto-committing and pushing ensures all local work is preserved and visible to worktrees
 - The `WIP:` prefix makes auto-commits easily identifiable for later cleanup (squash/amend)
-- **Revert detection:** Before committing, each dirty tracked file is checked against the last 5 commits. If the working tree version matches the file's state *before* a recent commit, the auto-commit would silently revert that commit's changes. In this case, the auto-commit is aborted with a warning so the user can resolve manually.
+- **Revert detection with auto-resolve:** Before committing, each dirty tracked file is checked against the last 5 commits. If the working tree version matches the file's state *before* a recent commit (i.e., it's stale), the file is automatically restored to its HEAD version via `git checkout HEAD -- <file>`. This prevents silent reverts while keeping the process fully autonomous. Any remaining non-stale dirty files are committed normally.
 
 **Note:** This step runs in the original repo directories, before worktree creation.
 
