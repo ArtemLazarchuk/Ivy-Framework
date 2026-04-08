@@ -38,6 +38,7 @@ export function useShortcut(
         return !elementRef.current.closest('[aria-hidden="true"]');
       },
       skipInInputs,
+      displayKey: shortcutKey,
     });
 
     return () => {
