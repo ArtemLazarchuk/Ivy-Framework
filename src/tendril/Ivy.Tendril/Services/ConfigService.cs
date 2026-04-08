@@ -286,14 +286,6 @@ public class ConfigService : IConfigService
         // Update paths
         SetTendrilHome(tendrilHome);
 
-        // Ensure directories exist
-        Directory.CreateDirectory(TendrilHome);
-        Directory.CreateDirectory(Path.Combine(TendrilHome, "Inbox"));
-        Directory.CreateDirectory(Path.Combine(TendrilHome, "Plans"));
-        Directory.CreateDirectory(Path.Combine(TendrilHome, "Trash"));
-        Directory.CreateDirectory(Path.Combine(TendrilHome, "Promptwares"));
-        Directory.CreateDirectory(Path.Combine(TendrilHome, "Hooks"));
-
         // Use current settings (already initialized or updated during onboarding)
         // If they are empty, serialize defaults
         SaveSettings();
