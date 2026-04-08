@@ -375,6 +375,52 @@ public class PlanDatabaseServiceTests : IDisposable
     }
 
     [Fact]
+    public void GetHourlyTokenBurn_WithProjectFilter_ReturnsOnlyMatchingProject()
+    {
+        _db.UpsertPlan(CreateTestPlan(1600, "Plan A", project: "Tendril"));
+        _db.UpsertPlan(CreateTestPlan(1601, "Plan B", project: "Framework"));
+
+        var now = DateTime.UtcNow;
+        _db.UpsertCosts(1600, [new("ExecutePlan", 50000, 1.50m, now)]);
+        _db.UpsertCosts(1601, [new("ExecutePlan", 30000, 0.90m, now)]);
+
+        var burn = _db.GetHourlyTokenBurn(projectFilter: "Tendril");
+        Assert.NotEmpty(burn);
+        Assert.All(burn, b => Assert.Equal("Tendril", b.Project));
+        Assert.Equal(50000, burn.Sum(b => b.Tokens));
+    }
+
+    [Fact]
+    public void GetHourlyTokenBurn_WithNullFilter_ReturnsAllProjects()
+    {
+        _db.UpsertPlan(CreateTestPlan(1700, "Plan A", project: "Tendril"));
+        _db.UpsertPlan(CreateTestPlan(1701, "Plan B", project: "Framework"));
+
+        var now = DateTime.UtcNow;
+        _db.UpsertCosts(1700, [new("ExecutePlan", 50000, 1.50m, now)]);
+        _db.UpsertCosts(1701, [new("ExecutePlan", 30000, 0.90m, now)]);
+
+        var burn = _db.GetHourlyTokenBurn(projectFilter: null);
+        Assert.NotEmpty(burn);
+        var projects = burn.Select(b => b.Project).Distinct().OrderBy(p => p).ToList();
+        Assert.Contains("Tendril", projects);
+        Assert.Contains("Framework", projects);
+    }
+
+    [Fact]
+    public void GetDashboardData_FiltersCorrectlyByProject()
+    {
+        _db.UpsertPlan(CreateTestPlan(1800, "Plan A", project: "Tendril", status: PlanStatus.Completed));
+        _db.UpsertPlan(CreateTestPlan(1801, "Plan B", project: "Framework", status: PlanStatus.Draft));
+        _db.UpsertPlan(CreateTestPlan(1802, "Plan C", project: "Tendril", status: PlanStatus.Draft));
+
+        var stats = _db.GetDashboardData("Tendril");
+        Assert.Equal(2, stats.TotalCount);
+        Assert.Equal(1, stats.CompletedCount);
+        Assert.Equal(1, stats.DraftCount);
+    }
+
+    [Fact]
     public void Constructor_DetectsAndHandlesCorruptedDatabase()
     {
         var corruptDbPath = Path.Combine(Path.GetTempPath(), $"tendril-corrupt-{Guid.NewGuid()}.db");

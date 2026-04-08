@@ -379,7 +379,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
             return 0;
         }
 
-        public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7)
+        public List<HourlyTokenBurn> GetHourlyTokenBurn(int days = 7, string? projectFilter = null)
         {
             return [];
         }
