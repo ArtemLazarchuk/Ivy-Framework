@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Ivy.Helpers;
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ivy.Tendril.Apps;
 
@@ -508,6 +509,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
         var isProcessing = UseState(false);
         var error = UseState<string?>(null);
         var config = UseService<IConfigService>();
+        var services = UseService<IServiceProvider>();
         var navigator = UseNavigation();
 
         async Task OnComplete()
@@ -600,6 +602,14 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
                     config.Settings.Projects.Add(pendingProject);
                     config.SaveSettings();
                 }
+
+                // Initialize database and start background services now that TendrilHome is set
+                services.GetRequiredService<IPlanWatcherService>();
+                services.GetRequiredService<IInboxWatcherService>();
+                services.GetRequiredService<WorktreeCleanupService>().Start();
+
+                var syncService = services.GetRequiredService<PlanDatabaseSyncService>();
+                _ = Task.Run(syncService.PerformInitialSync);
 
                 // Navigate to SetupApp
                 navigator.Navigate<SetupApp>();

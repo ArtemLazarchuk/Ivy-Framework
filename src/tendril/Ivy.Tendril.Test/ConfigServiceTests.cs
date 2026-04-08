@@ -298,6 +298,27 @@ verifications: []
         }
     }
 
+    [Fact]
+    public void NeedsOnboarding_IsTrueWhenNoTendrilHomeSet()
+    {
+        // When TENDRIL_HOME is not set, ConfigService should indicate onboarding is needed.
+        // TendrilServer uses this flag to defer database and watcher service initialization
+        // until onboarding completes and a valid TendrilHome is established.
+        var previousHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
+        Environment.SetEnvironmentVariable("TENDRIL_HOME", null);
+
+        try
+        {
+            var service = new ConfigService();
+            Assert.True(service.NeedsOnboarding);
+            Assert.Equal("", service.TendrilHome);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TENDRIL_HOME", previousHome);
+        }
+    }
+
     [Theory]
     [InlineData("#9a3c3c", "Slate")]
     [InlineData("#2563eb", "Slate")]
