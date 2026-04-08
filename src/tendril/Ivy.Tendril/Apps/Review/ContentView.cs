@@ -225,7 +225,7 @@ public class ContentView(
 
         // Header
         var header = Layout.Horizontal().Width(Size.Full()).Padding(1).Gap(2)
-                     | Text.Block($"#{_selectedPlan.Id} {_selectedPlan.Title}").Bold();
+                     | Text.Block($"#{_selectedPlan.Id} {_selectedPlan.Title}").Bold().NoWrap().Overflow(Overflow.Ellipsis);
 
         if (!string.IsNullOrEmpty(_selectedPlan.SourceUrl))
             header |= new Button(_selectedPlan.SourceUrl.Contains("/pull/") ? "PR" : "Issue")
