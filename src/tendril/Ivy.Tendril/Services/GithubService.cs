@@ -88,7 +88,10 @@ public class GithubService(IConfigService config) : IGithubService
             if (process is null) return null;
 
             var url = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit();
+            if (!process.WaitForExit(10000))
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
             if (process.ExitCode != 0) return null;
 
             return ParseRepoConfigFromUrl(url);
@@ -130,7 +133,15 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            using var ctsLabels = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            try
+            {
+                await process.WaitForExitAsync(ctsLabels.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
 
             if (process.ExitCode != 0)
             {
@@ -169,7 +180,15 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            using var ctsPrList = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            try
+            {
+                await process.WaitForExitAsync(ctsPrList.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
 
             if (process.ExitCode != 0)
             {
@@ -226,7 +245,15 @@ public class GithubService(IConfigService config) : IGithubService
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            using var ctsAssignees = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            try
+            {
+                await process.WaitForExitAsync(ctsAssignees.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
 
             if (process.ExitCode != 0)
             {

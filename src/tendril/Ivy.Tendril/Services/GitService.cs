@@ -19,7 +19,10 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var title = process?.StandardOutput.ReadLine();
-            process?.WaitForExit();
+            if (process is not null && !process.WaitForExit(10000))
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
             return process?.ExitCode == 0 ? title : null;
         }
         catch
@@ -42,7 +45,10 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process?.WaitForExit();
+            if (process is not null && !process.WaitForExit(10000))
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
             return process?.ExitCode == 0 ? output : null;
         }
         catch
@@ -65,7 +71,10 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process?.WaitForExit();
+            if (process is not null && !process.WaitForExit(10000))
+            {
+                try { process.Kill(true); } catch { /* already exited */ }
+            }
             if (process?.ExitCode != 0 || output == null) return null;
 
             var files = new List<(string Status, string FilePath)>();

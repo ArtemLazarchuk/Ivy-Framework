@@ -208,7 +208,10 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                     UseShellExecute = false,
                     CreateNoWindow = true
                 });
-                proc?.WaitForExit();
+                if (proc is not null && !proc.WaitForExit(10000))
+                {
+                    try { proc.Kill(true); } catch { /* already exited */ }
+                }
                 return proc?.ExitCode == 0;
             });
         }

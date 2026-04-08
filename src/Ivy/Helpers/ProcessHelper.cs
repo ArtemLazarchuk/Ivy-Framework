@@ -51,7 +51,10 @@ public static class ProcessHelper
         };
         netstat.Start();
         string output = netstat.StandardOutput.ReadToEnd();
-        netstat.WaitForExit();
+        if (!netstat.WaitForExit(10000))
+        {
+            try { netstat.Kill(true); } catch { /* already exited */ }
+        }
 
         var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         var regex = new Regex(@"\s+");
@@ -98,7 +101,10 @@ public static class ProcessHelper
         };
         lsof.Start();
         string output = lsof.StandardOutput.ReadToEnd();
-        lsof.WaitForExit();
+        if (!lsof.WaitForExit(10000))
+        {
+            try { lsof.Kill(true); } catch { /* already exited */ }
+        }
 
         if (lsof.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
             return;
