@@ -2,6 +2,7 @@ codingAgent: claude
 jobTimeout: 30
 staleOutputTimeout: 10
 maxConcurrentJobs: 20
+defaultEffort: high
 projects:
 - name: Framework
   color: Blue
@@ -313,6 +314,7 @@ llm:
 promptwares:
   MakePlan:
     model: sonnet
+    effort: high
     allowedTools:
     - Read
     - Glob
@@ -322,6 +324,7 @@ promptwares:
     - Edit
   ExecutePlan:
     model: opus
+    effort: max
     allowedTools:
     - Read
     - Write
