@@ -181,7 +181,6 @@ export const useDataLoading = ({
         const newRowCount = arrowTableRef.current.numRows;
         setVisibleRows(newRowCount);
         currentRowCountRef.current = newRowCount;
-
       }
 
       setHasMoreState(result.hasMore);

@@ -372,4 +372,3 @@ describe("getSizeMode", () => {
     expect(getSizeMode("Fit,Px:100")).toBe("fit");
   });
 });
-
