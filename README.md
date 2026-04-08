@@ -108,9 +108,6 @@ Make sure you have the following prerequisites installed:
 
 3. **Create a new project**:
 
-   ```bash
-    ivy init --hello
-    ```
 
 4. **Run**:
 
