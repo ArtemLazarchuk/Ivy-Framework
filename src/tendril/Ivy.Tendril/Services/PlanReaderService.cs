@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Ivy.Helpers;
 using Ivy.Tendril.Apps.Plans;
 using Microsoft.Extensions.Logging;
 
@@ -995,10 +996,7 @@ public class PlanReaderService(
                     CreateNoWindow = true
                 };
                 using var process = Process.Start(psi);
-                if (process is not null && !process.WaitForExit(10000))
-                {
-                    try { process.Kill(entireProcessTree: true); } catch { /* already exited */ }
-                }
+                process.WaitForExitOrKill(10000);
             }
             catch
             {

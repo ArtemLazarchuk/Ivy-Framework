@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Ivy.Helpers;
 
 namespace Ivy.Tendril.Services;
 
@@ -19,10 +20,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var title = process?.StandardOutput.ReadLine();
-            if (process is not null && !process.WaitForExit(10000))
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            process.WaitForExitOrKill(10000);
             return process?.ExitCode == 0 ? title : null;
         }
         catch
@@ -45,10 +43,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            if (process is not null && !process.WaitForExit(10000))
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            process.WaitForExitOrKill(10000);
             return process?.ExitCode == 0 ? output : null;
         }
         catch
@@ -71,10 +66,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            if (process is not null && !process.WaitForExit(10000))
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            process.WaitForExitOrKill(10000);
             if (process?.ExitCode != 0 || output == null) return null;
 
             var files = new List<(string Status, string FilePath)>();

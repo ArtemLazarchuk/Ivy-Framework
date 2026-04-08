@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Ivy.Helpers;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
@@ -208,10 +209,7 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                     UseShellExecute = false,
                     CreateNoWindow = true
                 });
-                if (proc is not null && !proc.WaitForExit(10000))
-                {
-                    try { proc.Kill(true); } catch { /* already exited */ }
-                }
+                proc.WaitForExitOrKill(10000);
                 return proc?.ExitCode == 0;
             });
         }

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Ivy.Helpers;
 
 namespace Ivy.Tendril.Services;
 
@@ -88,10 +89,7 @@ public class GithubService(IConfigService config) : IGithubService
             if (process is null) return null;
 
             var url = process.StandardOutput.ReadToEnd().Trim();
-            if (!process.WaitForExit(10000))
-            {
-                try { process.Kill(true); } catch { /* already exited */ }
-            }
+            process.WaitForExitOrKill(10000);
             if (process.ExitCode != 0) return null;
 
             return ParseRepoConfigFromUrl(url);

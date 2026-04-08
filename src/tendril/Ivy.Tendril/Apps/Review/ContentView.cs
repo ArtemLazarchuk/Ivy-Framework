@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Ivy.Core;
+using Ivy.Helpers;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.Review.Dialogs;
 using Ivy.Tendril.Services;
@@ -181,10 +182,8 @@ public class ContentView(
                             using var proc = Process.Start(psi);
                             if (proc is not null)
                             {
-                                var exited = proc.WaitForExit(5000);
-                                if (!exited)
+                                if (!proc.WaitForExitOrKill(5000))
                                 {
-                                    try { proc.Kill(entireProcessTree: true); } catch { /* already exited */ }
                                     actionStates[i] = (action.Name, false);
                                     return;
                                 }
