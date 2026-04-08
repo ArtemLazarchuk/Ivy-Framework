@@ -164,8 +164,7 @@ public class InboxWatcherService : IInboxWatcherService
                         sourcePath = trimmed.Substring("sourcePath:".Length).Trim();
                 }
 
-                var desc = string.IsNullOrEmpty(description) ? content : description;
-                return (project ?? "[Auto]", desc, sourcePath);
+                return (project ?? "[Auto]", description, sourcePath);
             }
         }
 
