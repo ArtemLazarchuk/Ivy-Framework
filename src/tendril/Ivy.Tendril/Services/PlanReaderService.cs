@@ -882,7 +882,7 @@ public class PlanReaderService(
         return latestFile != null ? FileHelper.ReadAllText(latestFile) : string.Empty;
     }
 
-    private static void RemoveWorktrees(string planFolderPath)
+    internal static void RemoveWorktrees(string planFolderPath)
     {
         var worktreesDir = Path.Combine(planFolderPath, "worktrees");
         if (!Directory.Exists(worktreesDir)) return;
@@ -925,7 +925,7 @@ public class PlanReaderService(
         }
     }
 
-    private static void ClearReadOnlyAttributes(string directoryPath)
+    internal static void ClearReadOnlyAttributes(string directoryPath)
     {
         try
         {

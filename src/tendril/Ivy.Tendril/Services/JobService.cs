@@ -151,6 +151,7 @@ public class JobService : IJobService
         if (job.Status is JobStatus.Failed or JobStatus.Timeout)
         {
             ResetPlanState(job);
+            ScheduleWorktreeCleanup(job);
         }
         else if (isSuccess && job.Type == "ExecutePlan")
         {
@@ -1019,6 +1020,34 @@ public class JobService : IJobService
         {
             /* Don't let state reset failures crash job completion */
         }
+    }
+
+    private static void ScheduleWorktreeCleanup(JobItem job)
+    {
+        if (job.Type != "ExecutePlan") return;
+
+        var planFolder = job.Args.Length > 0 ? job.Args[0] : "";
+        if (string.IsNullOrEmpty(planFolder) || !Directory.Exists(planFolder)) return;
+
+        var worktreesDir = Path.Combine(planFolder, "worktrees");
+        if (!Directory.Exists(worktreesDir)) return;
+
+        // Clean up immediately after failure — no grace period needed since the plan just failed
+        Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            try
+            {
+                PlanReaderService.RemoveWorktrees(planFolder);
+
+                if (Directory.Exists(worktreesDir) && Directory.GetDirectories(worktreesDir).Length == 0)
+                    Directory.Delete(worktreesDir, false);
+            }
+            catch
+            {
+                // Best-effort: background cleanup service will catch it later
+            }
+        });
     }
 
     private (bool Ok, string? BlockReason) CheckDependencies(string planFolder)

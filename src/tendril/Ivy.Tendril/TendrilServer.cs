@@ -114,6 +114,12 @@ public static class TendrilServer
             return new InboxWatcherService(config, jobService);
         });
         server.Services.AddSingleton<IInboxWatcherService>(sp => sp.GetRequiredService<InboxWatcherService>());
+        server.Services.AddSingleton<WorktreeCleanupService>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfigService>();
+            var logger = sp.GetRequiredService<ILogger<WorktreeCleanupService>>();
+            return new WorktreeCleanupService(config.PlanFolder, logger);
+        });
 
         server.UseWebApplication(app =>
         {
@@ -125,6 +131,7 @@ public static class TendrilServer
             // Eagerly resolve watcher services
             app.Services.GetRequiredService<IPlanWatcherService>();
             app.Services.GetRequiredService<IInboxWatcherService>();
+            app.Services.GetRequiredService<WorktreeCleanupService>().Start();
 
             // Start database sync in background
             var syncService = app.Services.GetRequiredService<PlanDatabaseSyncService>();
