@@ -239,9 +239,21 @@ public class ContentView(
         
         header |= new Button("Make PR").Icon(Icons.GitPullRequest).Primary().OnClick(() =>
         {
-            _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
-            _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
-            _refreshPlans();
+            var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
+            var project = _config.GetProject(_selectedPlan.Project);
+            var allYolo = repoPaths.All(rp =>
+                project?.Repos.FirstOrDefault(r => r.Path == rp)?.PrRule == "yolo");
+
+            if (allYolo)
+            {
+                _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
+                _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                _refreshPlans();
+            }
+            else
+            {
+                customPrOpen.Set(true);
+            }
         }).ShortcutKey("m").WithConfetti(AnimationTrigger.Click);
 
         // Content sections
