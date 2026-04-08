@@ -225,8 +225,13 @@ public class ContentView(
 
         // Header
         var header = Layout.Horizontal().Width(Size.Full()).Padding(1).Gap(2)
-                     | Text.Block($"#{_selectedPlan.Id} {_selectedPlan.Title}").Bold()
-                     | new Spacer().Width(Size.Grow())
+                     | Text.Block($"#{_selectedPlan.Id} {_selectedPlan.Title}").Bold();
+
+        if (!string.IsNullOrEmpty(_selectedPlan.SourceUrl))
+            header |= new Button(_selectedPlan.SourceUrl.Contains("/pull/") ? "PR" : "Issue")
+                .Icon(Icons.ExternalLink).Ghost().OnClick(() => client.OpenUrl(_selectedPlan.SourceUrl));
+
+        header |= new Spacer().Width(Size.Grow())
                      | Text.Rich()
                          .Bold($"{currentIndex + 1}/{_allPlans.Count}", word: true)
                          .Muted("plans", word: true)
