@@ -105,7 +105,7 @@ If no custom options or `comment` is empty, skip this step.
 - If `merge` is `true` but `deleteBranch` is `false`: merge without `--delete-branch` flag
 - If all flags are `true`: behave exactly like `yolo`
 
-**Merge conflict guard (applies to ALL merge paths below):**
+**Merge conflict handling (applies to ALL merge paths below):**
 
 Before calling `gh pr merge`, check for merge conflicts:
 
@@ -116,21 +116,54 @@ for i in $(seq 1 6); do
   if [[ "$MERGEABLE" != "UNKNOWN" ]]; then break; fi
   sleep 5
 done
-
-# Abort if conflicts or unknown
-if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
-  echo "ERROR: PR #<pr-number> has merge conflicts or mergeability is unknown (status: $MERGEABLE). Cannot merge."
-  exit 1
-fi
 ```
-
-If the check fails, do NOT merge. Leave the PR open and fail the MakePr execution so the plan can be retried after conflict resolution.
 
 | Mergeable status | Action |
 |---|---|
 | `MERGEABLE` | Proceed with merge |
-| `CONFLICTING` | Fail with error, PR stays open |
+| `CONFLICTING` | **Resolve conflicts** (see below), then retry |
 | `UNKNOWN` (after 30s timeout) | Fail conservatively |
+
+#### Conflict Resolution
+
+When the PR status is `CONFLICTING`, resolve the conflict locally before retrying:
+
+1. **Locate the worktree** for this repo. If the worktree still exists in `<PlanFolder>/worktrees/<repo-folder-name>`, use it. If the worktree was already removed, use the original repo path — create or force-update the local branch first: `git branch -f <branch-name> <sha>` and `git checkout <branch-name>`.
+
+2. **Read the plan revision** to understand the intent of the plan's changes (what matters, what can be safely adapted).
+
+3. **Merge the base branch** into the feature branch:
+   ```bash
+   cd <worktree-or-repo-path>
+   git fetch origin <default-branch>
+   git merge origin/<default-branch>
+   ```
+
+4. **Resolve conflicts**: Read each conflicted file (`git diff --name-only --diff-filter=U`), understand both sides, and resolve using the Edit tool. Prioritize:
+   - Keep the plan's intentional changes
+   - Accept base branch changes for unrelated code
+   - When both sides changed the same lines, merge intelligently based on the plan's intent
+
+5. **Commit the merge**:
+   ```bash
+   git add -A
+   git commit -m "[<planId>] Resolve merge conflicts with <default-branch>"
+   ```
+
+6. **Quick build check** (if C# files were involved in conflicts):
+   ```bash
+   dotnet build --warnaserror
+   ```
+   If the build fails, fix the issue and amend the merge commit.
+
+7. **Push** the resolved branch:
+   ```bash
+   git push origin <branch>
+   ```
+
+8. **Re-check mergeability** (poll up to 30s again). If now `MERGEABLE`, proceed with the merge. If still `CONFLICTING` after resolution, **fail with a detailed error** explaining which files could not be resolved.
+
+**Important:** Only attempt conflict resolution **once**. If the second mergeability check still shows CONFLICTING, fail the execution — infinite retry loops waste tokens and time.
 
 **If `yolo` (and no custom options overriding):**
 ```bash
@@ -169,6 +202,8 @@ If cleanup fails (e.g. locked files on Windows), log a warning but do not fail t
 ### 6. Update plan.yaml
 
 Append each PR URL to the `prs` list in `plan.yaml`.
+
+> If merge conflict resolution was performed (Step 4), the resolution commit hash should already be on the pushed branch. No additional plan.yaml update needed beyond the PR URL.
 
 ### Rules
 
