@@ -5,7 +5,8 @@ function isChunkLoadError(error: unknown): boolean {
     return (
       error.message.includes("Failed to fetch dynamically imported module") ||
       error.message.includes("Loading chunk") ||
-      error.message.includes("Loading CSS chunk")
+      error.message.includes("Loading CSS chunk") ||
+      error.message.includes("Failed to load script")
     );
   }
   return false;

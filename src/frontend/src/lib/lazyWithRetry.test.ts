@@ -8,7 +8,8 @@ function isChunkLoadError(error: unknown): boolean {
     return (
       error.message.includes("Failed to fetch dynamically imported module") ||
       error.message.includes("Loading chunk") ||
-      error.message.includes("Loading CSS chunk")
+      error.message.includes("Loading CSS chunk") ||
+      error.message.includes("Failed to load script")
     );
   }
   return false;
@@ -29,6 +30,11 @@ describe("isChunkLoadError", () => {
 
   it("detects 'Loading CSS chunk' errors", () => {
     const error = new Error("Loading CSS chunk styles-abc123 failed");
+    expect(isChunkLoadError(error)).toBe(true);
+  });
+
+  it("detects 'Failed to load script' errors", () => {
+    const error = new Error("Failed to load script: http://localhost:5010/external/MyWidget.js");
     expect(isChunkLoadError(error)).toBe(true);
   });
 
