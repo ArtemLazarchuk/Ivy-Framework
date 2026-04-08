@@ -46,12 +46,16 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 Check `<PlanFolder>/worktrees/` for each repo worktree.
 
+> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `plan-<planId>-<repo-folder-name>`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create a local branch: `git branch <branch-name> <sha>` and push from the original repo path.
+
 For each worktree:
 
 1. `git remote get-url origin` (from the worktree) to get the GitHub remote
 2. Extract `owner/repo` from the remote URL
 3. `git rev-parse --abbrev-ref HEAD` to get the branch name
 4. `git push -u origin <branch>`
+
+> **Stale remote tracking refs warning:** A ref appearing in `git branch -a` as `remotes/origin/<branch>` does NOT guarantee the branch exists on GitHub. Always verify with `gh api repos/<owner>/<repo>/branches/<branch>` or `git ls-remote origin <branch>` before assuming the push succeeded.
 
 ### 2.5. Upload Artifacts
 
