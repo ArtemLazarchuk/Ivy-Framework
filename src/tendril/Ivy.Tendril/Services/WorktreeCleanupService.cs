@@ -6,7 +6,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Ivy.Tendril.Services;
 
-public class WorktreeCleanupService : IDisposable
+public class WorktreeCleanupService : IStartable, IDisposable
 {
     private static readonly HashSet<string> TerminalStates = new(StringComparer.OrdinalIgnoreCase)
         { "Completed", "Failed", "Skipped", "Icebox" };

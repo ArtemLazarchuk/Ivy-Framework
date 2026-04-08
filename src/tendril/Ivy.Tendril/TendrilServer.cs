@@ -124,6 +124,7 @@ public static class TendrilServer
             var logger = sp.GetRequiredService<ILogger<WorktreeCleanupService>>();
             return new WorktreeCleanupService(config.PlanFolder, logger);
         });
+        server.Services.AddSingleton<IStartable>(sp => sp.GetRequiredService<WorktreeCleanupService>());
 
         server.UseWebApplication(app =>
         {

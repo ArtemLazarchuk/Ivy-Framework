@@ -8,7 +8,8 @@ public static class BackgroundServiceActivator
     {
         services.GetRequiredService<IPlanWatcherService>();
         services.GetRequiredService<IInboxWatcherService>();
-        services.GetRequiredService<WorktreeCleanupService>().Start();
+        foreach (var startable in services.GetServices<IStartable>())
+            startable.Start();
 
         var syncService = services.GetRequiredService<PlanDatabaseSyncService>();
         _ = Task.Run(syncService.PerformInitialSync);

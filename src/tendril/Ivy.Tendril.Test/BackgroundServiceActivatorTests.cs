@@ -54,6 +54,7 @@ public class BackgroundServiceActivatorTests : IAsyncLifetime
         });
         services.AddSingleton<WorktreeCleanupService>(sp =>
             new WorktreeCleanupService(Path.Combine(_tempDir, "Plans"), NullLogger<WorktreeCleanupService>.Instance));
+        services.AddSingleton<IStartable>(sp => sp.GetRequiredService<WorktreeCleanupService>());
         services.AddSingleton<IPlanDatabaseService>(sp =>
         {
             var dbPath = Path.Combine(_tempDir, "tendril.db");
@@ -100,5 +101,56 @@ public class BackgroundServiceActivatorTests : IAsyncLifetime
         var sp = services.BuildServiceProvider();
 
         Assert.Throws<InvalidOperationException>(() => BackgroundServiceActivator.Start(sp));
+    }
+
+    [Fact]
+    public void Start_CallsStartOnAllRegisteredIStartables()
+    {
+        var startable1 = new MockStartable();
+        var startable2 = new MockStartable();
+
+        var settings = new TendrilSettings();
+        var config = new ConfigService(settings, _tempDir);
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfigService>(config);
+        services.AddSingleton<ConfigService>(config);
+        services.AddSingleton<IPlanWatcherService>(new PlanWatcherService(config));
+        services.AddSingleton<IInboxWatcherService>(sp =>
+        {
+            var cfg = sp.GetRequiredService<IConfigService>();
+            var jobService = new JobService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10));
+            return new InboxWatcherService(cfg, jobService);
+        });
+        services.AddSingleton<WorktreeCleanupService>(sp =>
+            new WorktreeCleanupService(Path.Combine(_tempDir, "Plans"), NullLogger<WorktreeCleanupService>.Instance));
+        services.AddSingleton<IStartable>(startable1);
+        services.AddSingleton<IStartable>(startable2);
+        services.AddSingleton<IPlanDatabaseService>(sp =>
+        {
+            var dbPath = Path.Combine(_tempDir, "tendril.db");
+            return new PlanDatabaseService(dbPath, NullLogger<PlanDatabaseService>.Instance);
+        });
+        services.AddSingleton<PlanDatabaseSyncService>(sp =>
+        {
+            var planReader = new PlanReaderService(config, NullLogger<PlanReaderService>.Instance);
+            var database = sp.GetRequiredService<IPlanDatabaseService>();
+            var watcher = sp.GetRequiredService<IPlanWatcherService>();
+            return new PlanDatabaseSyncService(planReader, database, watcher,
+                NullLogger<PlanDatabaseSyncService>.Instance);
+        });
+
+        _serviceProvider = services.BuildServiceProvider();
+
+        BackgroundServiceActivator.Start(_serviceProvider);
+
+        Assert.True(startable1.Started);
+        Assert.True(startable2.Started);
+    }
+
+    private class MockStartable : IStartable
+    {
+        public bool Started { get; private set; }
+        public void Start() => Started = true;
     }
 }
