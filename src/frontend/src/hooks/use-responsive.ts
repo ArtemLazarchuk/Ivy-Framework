@@ -16,11 +16,18 @@ export function useBreakpoint(): BreakpointName {
   const [bp, setBp] = useState<BreakpointName>(() => getBreakpoint());
 
   useEffect(() => {
+    let timeoutId: number | undefined;
     const onResize = () => {
-      setBp(getBreakpoint());
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        setBp(getBreakpoint());
+      }, 100);
     };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
   }, []);
 
   return bp;
