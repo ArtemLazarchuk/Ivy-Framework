@@ -301,6 +301,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
         }
 
         public string PlansDirectory { get; }
+        public bool IsDatabaseReady => true;
 
         public void RecoverStuckPlans()
         {

@@ -242,6 +242,7 @@ public class JobServiceRetryBlockedTests
         }
 
         public string PlansDirectory { get; }
+        public bool IsDatabaseReady => true;
 
         public void RecoverStuckPlans()
         {

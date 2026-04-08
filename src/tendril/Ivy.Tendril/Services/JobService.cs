@@ -126,7 +126,10 @@ public class JobService : IJobService
         else
         {
             var success = exitCode == 0;
-            job.StatusMessage = success ? null : ExtractFailureReason(job.OutputLines.ToList());
+            if (!success)
+                job.StatusMessage ??= ExtractFailureReason(job.OutputLines.ToList());
+            else
+                job.StatusMessage = null;
             job.Status = success ? JobStatus.Completed : JobStatus.Failed;
         }
 
@@ -860,7 +863,23 @@ public class JobService : IJobService
                 return "Unknown error (exit code non-zero)";
         }
 
+        reason = SanitizeForDisplay(reason);
+
         return reason.Length > 200 ? reason[..200] + "..." : reason;
+    }
+
+    internal static string SanitizeForDisplay(string text)
+    {
+        // Strip ANSI escape codes (color, cursor, formatting)
+        text = Regex.Replace(text, @"\x1B\[[0-9;]*[A-Za-z]", "");
+
+        // Replace control characters (tabs, newlines, carriage returns, null bytes, etc.) with spaces
+        text = Regex.Replace(text, @"[\x00-\x1F]", " ");
+
+        // Collapse multiple consecutive spaces into one
+        text = Regex.Replace(text, @" {2,}", " ");
+
+        return text.Trim();
     }
 
     internal static string? ReadPlanYamlRaw(string planFolder)
