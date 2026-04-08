@@ -1,4 +1,4 @@
-# Merges main into the development branch and pushes. Then refreshes the staging sites on Sliplane.
+# Merges main into the development branch and pushes. Then triggers Sliplane staging deploys via API.
 # Runs every 15 minutes on a schedule, or manually. On failure, a short summary is added to the workflow run.
 
 name: Merge main into development
@@ -34,15 +34,25 @@ jobs:
           git merge origin/main --no-edit
           git push origin development
 
-      - name: Trigger Sliplane deploy (docs)
+      - name: Deploy docs (Sliplane API)
         env:
-          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_DOCS }}
-        run: curl -fsS "$HOOK_URL"
+          SLIPLANE_API_TOKEN: ${{ secrets.SLIPLANE_API_TOKEN }}
+          DEPLOY_URL: ${{ secrets.SLIPLANE_DOCS_DEPLOY_URL }}
+        run: |
+          curl -fsS -X POST "$DEPLOY_URL" \
+            -H "Authorization: Bearer ${SLIPLANE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"tag":"latest"}'
 
-      - name: Trigger Sliplane deploy (samples)
+      - name: Deploy samples (Sliplane API)
         env:
-          HOOK_URL: ${{ secrets.SLIPLANE_DEPLOY_HOOK_SAMPLES }}
-        run: curl -fsS "$HOOK_URL"
+          SLIPLANE_API_TOKEN: ${{ secrets.SLIPLANE_API_TOKEN }}
+          DEPLOY_URL: ${{ secrets.SLIPLANE_SAMPLES_DEPLOY_URL }}
+        run: |
+          curl -fsS -X POST "$DEPLOY_URL" \
+            -H "Authorization: Bearer ${SLIPLANE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"tag":"latest"}'
 
       - name: Write merge failure summary
         if: failure()
@@ -50,7 +60,7 @@ jobs:
           {
             echo "## Merge main → development failed"
             echo ""
-            echo "A previous step failed (merge conflict, push rejected, or deploy hook error)."
+            echo "A previous step failed (merge conflict, push rejected, or Sliplane deploy error)."
             echo "For merge conflicts: resolve locally or open a PR into \`development\`, then push."
             echo ""
             echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
