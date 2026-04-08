@@ -71,7 +71,7 @@ export const StackedProgressWidget: React.FC<StackedProgressWidgetProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-1" style={getWidth(width)}>
+      <div className="flex flex-col gap-1" style={{ ...getWidth(width), height: "fit-content" }}>
         <div className="bg-neutral/10" style={containerStyles}>
           {segments.map((segment, index) => {
             const percentage = (segment.value / total) * 100;
