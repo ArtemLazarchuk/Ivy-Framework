@@ -134,55 +134,13 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                              new TableCell("Status").IsHeader(),
                              new TableCell("Notes").IsHeader()
                          ).IsHeader(),
-                         new TableRow(
-                             new TableCell("GitHub CLI"),
-                             new TableCell(checkResults.Value["gh"] ? "✅ Installed" : "❌ Not Found"),
-                             checkResults.Value["gh"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://cli.github.com/"))
-                         ),
-                         new TableRow(
-                             new TableCell("Claude CLI"),
-                             new TableCell(checkResults.Value["claude"] ? "✅ Installed" : "❌ Not Installed"),
-                             checkResults.Value["claude"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://docs.anthropic.com/en/docs/claude-code"))
-                         ),
-                         new TableRow(
-                             new TableCell("Codex CLI"),
-                             new TableCell(checkResults.Value["codex"] ? "✅ Installed" : "❌ Not Installed"),
-                             checkResults.Value["codex"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://openai.com/index/codex/"))
-                         ),
-                         new TableRow(
-                             new TableCell("Gemini CLI"),
-                             new TableCell(checkResults.Value["gemini"] ? "✅ Installed" : "❌ Not Installed"),
-                             checkResults.Value["gemini"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://github.com/google-gemini/gemini-cli"))
-                         ),
-                         new TableRow(
-                             new TableCell("Git"),
-                             new TableCell(checkResults.Value["git"] ? "✅ Installed" : "❌ Not Found"),
-                             checkResults.Value["git"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://git-scm.com/downloads"))
-                         ),
-                         new TableRow(
-                             new TableCell("PowerShell"),
-                             new TableCell(checkResults.Value["powershell"] ? "✅ Installed" : "❌ Not Found"),
-                             checkResults.Value["powershell"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://github.com/PowerShell/PowerShell"))
-                         ),
-                         new TableRow(
-                             new TableCell("Pandoc (Optional)"),
-                             new TableCell(checkResults.Value["pandoc"] ? "✅ Installed" : "❌ Not Found"),
-                             checkResults.Value["pandoc"]
-                                 ? new TableCell("")
-                                 : new TableCell(new Button("Install").Inline().Url("https://pandoc.org/installing.html"))
-                         )
+                         MakeSoftwareRow(checkResults.Value, "GitHub CLI", "gh", "https://cli.github.com/", true),
+                         MakeSoftwareRow(checkResults.Value, "Claude CLI", "claude", "https://docs.anthropic.com/en/docs/claude-code", false),
+                         MakeSoftwareRow(checkResults.Value, "Codex CLI", "codex", "https://openai.com/index/codex/", false),
+                         MakeSoftwareRow(checkResults.Value, "Gemini CLI", "gemini", "https://github.com/google-gemini/gemini-cli", false),
+                         MakeSoftwareRow(checkResults.Value, "Git", "git", "https://git-scm.com/downloads", true),
+                         MakeSoftwareRow(checkResults.Value, "PowerShell", "powershell", "https://github.com/PowerShell/PowerShell", true),
+                         MakeSoftwareRow(checkResults.Value, "Pandoc (Optional)", "pandoc", "https://pandoc.org/installing.html", false)
                      ).Width(Size.Full())
                    : null!)
                | (checkResults.Value == null
@@ -212,6 +170,27 @@ public class SoftwareCheckStepView(IState<int> stepperIndex) : ViewBase
                                 .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
                          )
                );
+    }
+
+    private static TableRow MakeSoftwareRow(
+        Dictionary<string, bool> results,
+        string displayName,
+        string key,
+        string installUrl,
+        bool isRequired)
+    {
+        var installed = results[key];
+        var statusText = installed
+            ? "✅ Installed"
+            : isRequired ? "❌ Not Found" : "❌ Not Installed";
+
+        return new TableRow(
+            new TableCell(displayName),
+            new TableCell(statusText),
+            installed
+                ? new TableCell("")
+                : new TableCell(new Button("Install").Inline().Url(installUrl))
+        );
     }
 
     private static async Task<bool> CheckCommand(string fileName, string arguments)
