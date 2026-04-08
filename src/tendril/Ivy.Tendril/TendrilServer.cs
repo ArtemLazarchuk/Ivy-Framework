@@ -41,6 +41,8 @@ public static class TendrilServer
                 return client.GetChatClient(llm.Model).AsIChatClient();
             });
 
+        server.Services.AddSingleton<OnboardingSetupService>();
+        server.Services.AddSingleton<IOnboardingSetupService>(sp => sp.GetRequiredService<OnboardingSetupService>());
         server.Services.AddSingleton<GithubService>();
         server.Services.AddSingleton<IGithubService>(sp => sp.GetRequiredService<GithubService>());
         server.Services.AddSingleton<GitService>();
