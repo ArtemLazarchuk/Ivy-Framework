@@ -112,7 +112,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
     }
 
     [Fact]
-    public void RetryBlockedDependents_TransitionsBlockedToDraft_WhenUnblocked()
+    public void RetryBlockedDependents_TransitionsBlockedToBuilding_WhenUnblocked()
     {
         var planB = CreatePlanFolder("02600-PlanB", "Completed");
         var planA = CreatePlanFolder("02601-PlanA", "Blocked", ["02600-PlanB"]);
@@ -122,9 +122,9 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
         var id = service.StartJob("CreateIssue", planB, "-Repo", "owner/repo", "-Assignee", "", "-Labels", "");
         service.CompleteJob(id, 0);
 
-        // Verify plan.yaml was updated to Draft
+        // Verify plan.yaml was updated to Building
         var planYamlContent = File.ReadAllText(Path.Combine(planA, "plan.yaml"));
-        Assert.Contains("state: Draft", planYamlContent);
+        Assert.Contains("state: Building", planYamlContent);
     }
 
     [Fact]
