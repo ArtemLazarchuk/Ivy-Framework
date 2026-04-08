@@ -178,9 +178,20 @@ public class ContentView(
                                 UseShellExecute = false,
                                 CreateNoWindow = true
                             };
-                            var proc = Process.Start(psi);
-                            proc?.WaitForExit(5000);
-                            actionStates[i] = (action.Name, proc?.ExitCode == 0);
+                            using var proc = Process.Start(psi);
+                            if (proc is not null)
+                            {
+                                var exited = proc.WaitForExit(5000);
+                                if (!exited)
+                                {
+                                    try { proc.Kill(entireProcessTree: true); } catch { /* already exited */ }
+                                    actionStates[i] = (action.Name, false);
+                                    return;
+                                }
+                                actionStates[i] = (action.Name, proc.ExitCode == 0);
+                                return;
+                            }
+                            actionStates[i] = (action.Name, false);
                         }
                         catch (Exception ex)
                         {
