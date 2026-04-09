@@ -430,4 +430,26 @@ projects:
         Assert.NotNull(result);
         Assert.Equal("yolo", result.PrRule);
     }
+
+    [Fact]
+    public void EditorConfig_IsAvailable_WhenCommandExists()
+    {
+        // "dotnet" should be available on any machine running these tests
+        var result = ConfigService.IsCommandAvailable("dotnet");
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void EditorConfig_IsAvailable_WhenCommandMissing()
+    {
+        var result = ConfigService.IsCommandAvailable("nonexistent-command-xyz-12345");
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void PlatformHelper_OpenInEditor_ReturnsFalse_WhenCommandInvalid()
+    {
+        var result = PlatformHelper.OpenInEditor("nonexistent-editor-xyz-12345", "somefile.txt");
+        Assert.False(result);
+    }
 }

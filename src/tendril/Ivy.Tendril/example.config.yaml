@@ -57,6 +57,16 @@ levels:
   - name: Epic
     badge: Info
 
+# Editor configuration for opening files and folders.
+# The 'command' must be available on your system's PATH.
+#
+# Common editors:
+#   VS Code:    command: code         (Windows: auto. macOS: run "Shell Command: Install 'code' command in PATH" from VS Code)
+#   Cursor:     command: cursor
+#   Zed:        command: zed
+#   Sublime:    command: subl
+#   Vim:        command: vim
+#   Nano:       command: nano
 editor:
   command: code
   label: VS Code
