@@ -23,9 +23,9 @@ public class CustomPrDialog(
     public override object? Build()
     {
         var customPrApprove = UseState(true);
-        var customPrMerge = UseState(true);
-        var customPrDeleteBranch = UseState(true);
-        var customPrIncludeArtifacts = UseState(true);
+        var customPrMerge = UseState(false);
+        var customPrDeleteBranch = UseState(false);
+        var customPrIncludeArtifacts = UseState(false);
         var customPrAssignee = UseState<string?>(null);
         var customPrComment = UseState("");
 

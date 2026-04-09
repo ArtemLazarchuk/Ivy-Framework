@@ -198,7 +198,13 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 
 ### 2.5. Setup Frontend Dependencies
 
-**!CRITICAL: Frontend builds in worktrees have known issues with `@linaria/core` and `echarts` module resolution that cause 15-25 minute timeouts. Follow this workaround to avoid them.**
+**!CRITICAL: Frontend builds in worktrees have known issues with npm package module resolution that cause 15-25 minute timeouts. Follow this workaround to avoid them.**
+
+Frontend directories are detected by the presence of `package.json` files in the repo. Find them by scanning the worktree:
+
+```bash
+find "<worktree-path>" -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;
+```
 
 #### Cleanup Leftover Files
 
@@ -212,63 +218,36 @@ This removes temporary `.npmrc` files with auth tokens while preserving tracked 
 
 #### Default Path (Most Plans)
 
-If the plan does **NOT** modify frontend code (`.tsx`, `.ts`, `.css` files in `src/frontend/` or `src/widgets/*/frontend/`):
+If the plan does **NOT** modify frontend code (`.tsx`, `.ts`, `.css` files in frontend directories):
 
-1. **Copy pre-built artifacts** from the original repo into each worktree:
+1. **Copy pre-built artifacts** from the original repo into each worktree. For each frontend directory that has a `dist/` folder in the original repo, copy it to the corresponding worktree path:
 
 ```bash
-# Copy main frontend dist
-if [ -d "<original-repo-path>/src/frontend/dist" ]; then
-  mkdir -p "<worktree-path>/src/frontend"
-  cp -r "<original-repo-path>/src/frontend/dist" "<worktree-path>/src/frontend/"
-fi
-
-# Copy widget frontend dists
-for widget_dist in "<original-repo-path>"/src/widgets/*/frontend/dist; do
-  if [ -d "$widget_dist" ]; then
-    widget_name=$(basename $(dirname $(dirname "$widget_dist")))
-    mkdir -p "<worktree-path>/src/widgets/$widget_name/frontend"
-    cp -r "$widget_dist" "<worktree-path>/src/widgets/$widget_name/frontend/"
-  fi
+# For each frontend dir with dist/ in the original repo, copy to worktree
+for dist_dir in $(find "<original-repo-path>" -name "dist" -path "*/frontend/dist" -type d); do
+  relative_path="${dist_dir#<original-repo-path>/}"
+  parent_dir=$(dirname "$relative_path")
+  mkdir -p "<worktree-path>/$parent_dir"
+  cp -r "$dist_dir" "<worktree-path>/$parent_dir/"
 done
 ```
 
-2. **Create `.npmrc`** in each frontend directory preemptively (in case C# tests need to load frontend resources):
+2. **Create `.npmrc`** in each frontend directory preemptively (in case builds need to load frontend resources):
 
 ```bash
-# Create .npmrc in main frontend
-if [ -d "<worktree-path>/src/frontend" ]; then
-  echo "node-linker=hoisted" > "<worktree-path>/src/frontend/.npmrc"
-fi
-
-# Create .npmrc in widget frontends
-for widget_frontend in "<worktree-path>"/src/widgets/*/frontend; do
-  if [ -d "$widget_frontend" ]; then
-    echo "node-linker=hoisted" > "$widget_frontend/.npmrc"
-  fi
+for frontend_dir in $(find "<worktree-path>" -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;); do
+  echo "node-linker=hoisted" > "$frontend_dir/.npmrc"
 done
 ```
 
-3. **Skip `pnpm install`** entirely — the copied artifacts are sufficient for C# build and tests.
+3. **Skip `pnpm install`** entirely — the copied artifacts are sufficient for build and tests.
 
 #### Exception Path (Frontend Code Changes)
 
 If the plan **modifies frontend code** (adding/editing `.tsx`, `.ts`, `.css` files), you MUST rebuild:
 
 1. **Create `.npmrc`** with `node-linker=hoisted` in each frontend directory (required for pnpm in worktrees)
-2. **Run `pnpm install`** in each frontend directory:
-
-```bash
-cd "<worktree-path>/src/frontend" && pnpm install && cd ../..
-
-# For each widget with frontend
-for widget_frontend in "<worktree-path>"/src/widgets/*/frontend; do
-  if [ -f "$widget_frontend/package.json" ]; then
-    cd "$widget_frontend" && pnpm install && cd ../../..
-  fi
-done
-```
-
+2. **Run `pnpm install`** in each frontend directory that has a `package.json`
 3. **Run `pnpm run build`** to regenerate `dist/`
 4. Be prepared for resolution failures — if `pnpm install` fails after 2 attempts, document the failure and recommend the user manually fix the lockfile
 
@@ -294,12 +273,12 @@ Work exclusively in the worktree directories. Follow the plan's latest revision:
 
 Make logically grouped commits in the worktree(s). Each commit should be a coherent unit of work.
 
-Before each commit, run formatting/linting:
+Before each commit, run formatting/linting as defined by the project's verifications in `config.yaml`. Common patterns:
 
-**Frontend files** (under `src/frontend/`):
+**Frontend files** (in directories containing `package.json`):
 
 ```bash
-cd src/frontend && npm run format && npm run lint:fix && cd ../..
+cd <frontend-dir> && npm run format && npm run lint:fix && cd <back-to-root>
 ```
 
 **C# files**:
