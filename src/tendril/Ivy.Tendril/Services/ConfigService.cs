@@ -114,8 +114,8 @@ public class TendrilSettings
 
     public List<LevelConfig> Levels { get; set; } = new()
     {
-        new LevelConfig { Name = "Critical", Badge = "Warning" },
         new LevelConfig { Name = "Bug", Badge = "Destructive" },
+        new LevelConfig { Name = "Critical", Badge = "Warning" },
         new LevelConfig { Name = "NiceToHave", Badge = "Outline" },
         new LevelConfig { Name = "Epic", Badge = "Info" }
     };
