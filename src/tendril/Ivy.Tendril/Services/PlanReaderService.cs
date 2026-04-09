@@ -327,7 +327,7 @@ public class PlanReaderService(
         WriteFileInBackground(() =>
         {
             if (!Directory.Exists(folderPath)) return;
-            RemoveWorktrees(folderPath);
+            RemoveWorktrees(folderPath, _logger);
             ClearReadOnlyAttributes(folderPath);
             Directory.Delete(folderPath, true);
         });
@@ -883,7 +883,7 @@ public class PlanReaderService(
         return latestFile != null ? FileHelper.ReadAllText(latestFile) : string.Empty;
     }
 
-    internal static void RemoveWorktrees(string planFolderPath)
+    internal static void RemoveWorktrees(string planFolderPath, ILogger? logger = null)
     {
         var worktreesDir = Path.Combine(planFolderPath, "worktrees");
         if (!Directory.Exists(worktreesDir)) return;
@@ -891,7 +891,11 @@ public class PlanReaderService(
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
         {
             var gitFile = Path.Combine(wtDir, ".git");
-            if (!File.Exists(gitFile)) continue;
+            if (!File.Exists(gitFile))
+            {
+                logger?.LogWarning("Worktree directory has no .git file, skipping git removal: {Path}", wtDir);
+                continue;
+            }
 
             // Read the .git file to find which repo this worktree belongs to.
             // Format: "gitdir: <path-to-repo>/.git/worktrees/<name>"
