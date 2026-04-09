@@ -512,14 +512,11 @@ public class ContentView(
                                     client.Toast("Copied path to clipboard", "Path Copied");
                                 }),
                             new MenuItem($"Open in {_config.Editor.Label}", Icon: Icons.Code, Tag: "OpenInEditor")
-                                .OnSelect(() =>
-                                {
-                                    PlatformHelper.OpenInEditor(_config.Editor.Command, _selectedPlan.FolderPath);
-                                }),
+                                .OnSelect(() => { _config.OpenInEditor(_selectedPlan.FolderPath); }),
                             new MenuItem("Open plan.yaml", Icon: Icons.FileText, Tag: "OpenPlanYaml").OnSelect(() =>
                             {
                                 var yamlPath = Path.Combine(_selectedPlan.FolderPath, "plan.yaml");
-                                PlatformHelper.OpenInEditor(_config.Editor.Command, yamlPath);
+                                _config.OpenInEditor(yamlPath);
                             })
                         );
 

@@ -96,5 +96,6 @@ public class PlanContentHelpersTests
         public void SetPendingVerificationDefinitions(List<VerificationConfig> definitions) { }
         public List<VerificationConfig>? GetPendingVerificationDefinitions() => null;
         public void CompleteOnboarding(string tendrilHome) { }
+        public void OpenInEditor(string path) { }
     }
 }

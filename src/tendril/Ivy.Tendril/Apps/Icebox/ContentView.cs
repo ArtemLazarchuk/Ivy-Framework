@@ -145,7 +145,7 @@ public class ContentView(
                             new MenuItem("Open plan.yaml", Icon: Icons.FileText, Tag: "OpenPlanYaml").OnSelect(() =>
                             {
                                 var yamlPath = Path.Combine(_selectedPlan.FolderPath, "plan.yaml");
-                                PlatformHelper.OpenInEditor(_config.Editor.Command, yamlPath);
+                                _config.OpenInEditor(yamlPath);
                             })
                         );
 

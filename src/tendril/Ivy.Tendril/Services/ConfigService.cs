@@ -292,6 +292,11 @@ public class ConfigService : IConfigService
         return _pendingVerificationDefinitions;
     }
 
+    public void OpenInEditor(string path)
+    {
+        PlatformHelper.OpenInEditor(Editor.Command, path);
+    }
+
     public void CompleteOnboarding(string tendrilHome)
     {
         // Update paths

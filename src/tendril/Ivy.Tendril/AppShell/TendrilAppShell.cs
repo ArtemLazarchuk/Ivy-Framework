@@ -378,10 +378,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
             MenuItem.Default("Open config.yaml")
                 .Tag("$open-config")
                 .Icon(Icons.FileText)
-                .OnSelect(() =>
-                {
-                    PlatformHelper.OpenInEditor(config.Editor.Command, config.ConfigPath);
-                })
+                .OnSelect(() => { config.OpenInEditor(config.ConfigPath); })
         };
 
         var authSession = auth?.GetAuthSession();

@@ -384,10 +384,7 @@ public class ContentView(
                                 PlatformHelper.OpenInTerminal(_selectedPlan.FolderPath);
                             }),
                             new MenuItem($"Open in {_config.Editor.Label}", Icon: Icons.Code, Tag: "OpenInEditor")
-                                .OnSelect(() =>
-                                {
-                                    PlatformHelper.OpenInEditor(_config.Editor.Command, _selectedPlan.FolderPath);
-                                }),
+                                .OnSelect(() => { _config.OpenInEditor(_selectedPlan.FolderPath); }),
                             new MenuItem("Copy Path to Clipboard", Icon: Icons.ClipboardCopy, Tag: "CopyPath")
                                 .OnSelect(() =>
                                 {
@@ -403,7 +400,7 @@ public class ContentView(
                             new MenuItem("Open plan.yaml", Icon: Icons.FileText, Tag: "OpenPlanYaml").OnSelect(() =>
                             {
                                 var yamlPath = Path.Combine(_selectedPlan.FolderPath, "plan.yaml");
-                                PlatformHelper.OpenInEditor(_config.Editor.Command, yamlPath);
+                                _config.OpenInEditor(yamlPath);
                             })
                         );
 

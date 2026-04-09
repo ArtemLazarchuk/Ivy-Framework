@@ -112,7 +112,7 @@ public class ContentView(
                             {
                                 var fullPath = Path.Combine(_planService.PlansDirectory, _selected.PlanFolderName);
                                 var yamlPath = Path.Combine(fullPath, "plan.yaml");
-                                PlatformHelper.OpenInEditor(config.Editor.Command, yamlPath);
+                                config.OpenInEditor(yamlPath);
                             })
                         );
 
