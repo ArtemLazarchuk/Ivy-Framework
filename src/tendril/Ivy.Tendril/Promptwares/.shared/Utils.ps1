@@ -32,7 +32,7 @@ $script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 # falls back to the ".shared" directory relative to the given script root.
 # Note: Scripts that need to dot-source Utils.ps1 itself cannot use this helper
 # (they need the path before Utils.ps1 is loaded). Those scripts must use the
-# inline pattern instead — see IvyFrameworkVerification.ps1 for an example.
+# inline pattern instead.
 function Get-SharedFolder {
     param([string]$ScriptRoot)
 
@@ -337,14 +337,14 @@ function ExtractRepoPathsFromYaml {
 Resolves the first repository path for a given project from config.yaml.
 
 .PARAMETER Project
-The project name to look up in config.yaml (e.g., "Framework", "Tendril")
+The project name to look up in config.yaml (e.g., "MyProject", "WebApp")
 
 .OUTPUTS
 Returns the first repository path for the project from config.yaml, or the current working directory if project not found
 
 .EXAMPLE
-$workDir = GetProjectWorkDir "Tendril"
-# Returns: D:\Repos\_Ivy\Ivy-Framework (first repo path from Tendril project config)
+$workDir = GetProjectWorkDir "MyProject"
+# Returns: the first repo path from MyProject's config
 
 .EXAMPLE
 $workDir = GetProjectWorkDir "NonExistent"
@@ -381,7 +381,7 @@ Program folder path (from GetProgramFolder)
 Path to the log file for this session
 
 .PARAMETER FirmwareValues
-Hashtable of key-value pairs to inject into firmware header (e.g., @{ PlanId = "01234"; Project = "Tendril" })
+Hashtable of key-value pairs to inject into firmware header (e.g., @{ PlanId = "01234"; Project = "MyProject" })
 
 .PARAMETER WorkDir
 Working directory for the agent (defaults to ProgramFolder)
@@ -406,7 +406,7 @@ InvokePromptwareAgent `
     -ScriptRoot $PSScriptRoot `
     -ProgramFolder $programFolder `
     -LogFile $logFile `
-    -FirmwareValues @{ PlanId = $planId; Project = "Tendril" } `
+    -FirmwareValues @{ PlanId = $planId; Project = "MyProject" } `
     -WorkDir $repoPath `
     -PlanPath $planFolder `
     -Action "MakePlan" `
@@ -595,9 +595,14 @@ function GetAgentCommand {
                 $codingAgent = $config.codingAgent.ToLower()
             }
 
+            $pwConfig = $null
             if ($Promptware -and $config.promptwares.$Promptware) {
                 $pwConfig = $config.promptwares.$Promptware
+            } elseif ($config.promptwares._default) {
+                $pwConfig = $config.promptwares._default
+            }
 
+            if ($pwConfig) {
                 # Apply model override
                 if ($pwConfig.model) {
                     $model = $pwConfig.model
