@@ -32,6 +32,11 @@ public record ProjectConfig
     {
         return Meta.TryGetValue(key, out var v) ? v?.ToString() : null;
     }
+
+    public RepoRef? GetRepoRef(string path)
+    {
+        return Repos.FirstOrDefault(r => r.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 public record LevelConfig

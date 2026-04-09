@@ -386,4 +386,48 @@ projects:
             Directory.Delete(tempDir, true);
         }
     }
+
+    [Fact]
+    public void GetRepoRef_ReturnsMatchingRepo()
+    {
+        var project = new ProjectConfig
+        {
+            Name = "Test",
+            Repos =
+            [
+                new RepoRef { Path = @"D:\Repos\Foo", PrRule = "yolo" },
+                new RepoRef { Path = @"D:\Repos\Bar", PrRule = "default" }
+            ]
+        };
+
+        var result = project.GetRepoRef(@"D:\Repos\Foo");
+        Assert.NotNull(result);
+        Assert.Equal("yolo", result.PrRule);
+    }
+
+    [Fact]
+    public void GetRepoRef_ReturnsNullWhenNotFound()
+    {
+        var project = new ProjectConfig
+        {
+            Name = "Test",
+            Repos = [new RepoRef { Path = @"D:\Repos\Foo" }]
+        };
+
+        Assert.Null(project.GetRepoRef(@"D:\Repos\NonExistent"));
+    }
+
+    [Fact]
+    public void GetRepoRef_IsCaseInsensitive()
+    {
+        var project = new ProjectConfig
+        {
+            Name = "Test",
+            Repos = [new RepoRef { Path = @"D:\Repos\Foo", PrRule = "yolo" }]
+        };
+
+        var result = project.GetRepoRef(@"d:\repos\foo");
+        Assert.NotNull(result);
+        Assert.Equal("yolo", result.PrRule);
+    }
 }

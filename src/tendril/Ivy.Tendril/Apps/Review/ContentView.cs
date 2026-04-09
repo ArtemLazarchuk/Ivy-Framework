@@ -242,7 +242,7 @@ public class ContentView(
             var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
             var project = _config.GetProject(_selectedPlan.Project);
             var allYolo = repoPaths.All(rp =>
-                project?.Repos.FirstOrDefault(r => r.Path == rp)?.PrRule == "yolo");
+                project?.GetRepoRef(rp)?.PrRule == "yolo");
 
             if (allYolo)
             {
