@@ -254,10 +254,11 @@ public class WorktreeCleanupServiceTests : IDisposable
     {
         var dir = Path.Combine(_tempDir, "force-delete-nonexistent");
 
-        // ForceDeleteDirectory on a nonexistent path — the first Directory.Delete will
-        // throw DirectoryNotFoundException (not IOException/UnauthorizedAccessException),
-        // so it propagates. Verify it throws rather than silently succeeding.
-        Assert.ThrowsAny<Exception>(() => WorktreeCleanupService.ForceDeleteDirectory(dir));
+        // DirectoryNotFoundException inherits from IOException, so the first catch handles it.
+        // The Windows rmdir fallback also tolerates missing paths.
+        // Verify the method does not throw on nonexistent directories.
+        var ex = Record.Exception(() => WorktreeCleanupService.ForceDeleteDirectory(dir));
+        Assert.Null(ex);
     }
 
     [Fact]
