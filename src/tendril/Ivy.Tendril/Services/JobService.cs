@@ -113,7 +113,7 @@ public class JobService : IJobService
     public void CompleteJob(string id, int? exitCode, bool timedOut = false, bool staleOutput = false)
     {
         if (!_jobs.TryGetValue(id, out var job)) return;
-        if (job.Status != JobStatus.Running) return;
+        if (!job.TryClaimCompletion()) return;
 
         if (timedOut)
         {
@@ -265,6 +265,7 @@ public class JobService : IJobService
     public void StopJob(string id)
     {
         if (!_jobs.TryGetValue(id, out var job)) return;
+        if (!job.TryClaimCompletion()) return;
 
         var wasRunning = job.Status == JobStatus.Running;
         job.CancellationRequested = true;
@@ -624,9 +625,16 @@ public class JobService : IJobService
         Task.Run(async () =>
         {
             if (await process.WaitForExitOrKillAsync(cts.Token))
-                CompleteJob(id, process.ExitCode);
+            {
+                if (_jobs.TryGetValue(id, out var j) && j.StaleOutputDetected)
+                    CompleteJob(id, null, timedOut: true, staleOutput: true);
+                else
+                    CompleteJob(id, process.ExitCode);
+            }
             else
-                CompleteJob(id, null, true);
+            {
+                CompleteJob(id, null, timedOut: true);
+            }
         });
 
         // Start stale output watchdog

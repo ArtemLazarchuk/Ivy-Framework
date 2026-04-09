@@ -18,6 +18,10 @@ public enum JobStatus
 public record JobItem
 {
     private const int MaxOutputLines = 10_000;
+    private int _completionGuard;
+
+    public bool TryClaimCompletion() =>
+        Interlocked.CompareExchange(ref _completionGuard, 1, 0) == 0;
 
     public string Id { get; init; } = "";
     public string Type { get; init; } = "";
