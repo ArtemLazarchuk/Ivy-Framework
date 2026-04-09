@@ -595,9 +595,14 @@ function GetAgentCommand {
                 $codingAgent = $config.codingAgent.ToLower()
             }
 
+            $pwConfig = $null
             if ($Promptware -and $config.promptwares.$Promptware) {
                 $pwConfig = $config.promptwares.$Promptware
+            } elseif ($config.promptwares._default) {
+                $pwConfig = $config.promptwares._default
+            }
 
+            if ($pwConfig) {
                 # Apply model override
                 if ($pwConfig.model) {
                     $model = $pwConfig.model

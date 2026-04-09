@@ -430,4 +430,85 @@ projects:
         Assert.NotNull(result);
         Assert.Equal("yolo", result.PrRule);
     }
+
+    [Fact]
+    public void Should_Deserialize_Effort_In_PromptwareConfig()
+    {
+        var yaml = @"
+promptwares:
+  ExecutePlan:
+    model: opus
+    effort: max
+    allowedTools:
+      - Read
+      - Write
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.NotNull(service.Settings.Promptwares);
+            Assert.True(service.Settings.Promptwares.ContainsKey("ExecutePlan"));
+
+            var config = service.Settings.Promptwares["ExecutePlan"];
+            Assert.Equal("opus", config.Model);
+            Assert.Equal("max", config.Effort);
+            Assert.Equal(2, config.AllowedTools.Count);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Parse_Default_Key_In_Promptwares()
+    {
+        var yaml = @"
+promptwares:
+  _default:
+    model: sonnet
+    effort: high
+    allowedTools:
+      - Read
+      - Glob
+  ExecutePlan:
+    model: opus
+    effort: max
+    allowedTools:
+      - Read
+      - Write
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.NotNull(service.Settings.Promptwares);
+            Assert.True(service.Settings.Promptwares.ContainsKey("_default"));
+            Assert.True(service.Settings.Promptwares.ContainsKey("ExecutePlan"));
+
+            var defaultConfig = service.Settings.Promptwares["_default"];
+            Assert.Equal("sonnet", defaultConfig.Model);
+            Assert.Equal("high", defaultConfig.Effort);
+            Assert.Equal(2, defaultConfig.AllowedTools.Count);
+            Assert.Contains("Read", defaultConfig.AllowedTools);
+            Assert.Contains("Glob", defaultConfig.AllowedTools);
+
+            var execConfig = service.Settings.Promptwares["ExecutePlan"];
+            Assert.Equal("opus", execConfig.Model);
+            Assert.Equal("max", execConfig.Effort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }
