@@ -1,7 +1,7 @@
 codingAgent: claude
 jobTimeout: 30
 staleOutputTimeout: 10
-maxConcurrentJobs: 20
+maxConcurrentJobs: 10
 defaultEffort: high
 projects:
 - name: Framework
