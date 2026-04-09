@@ -23,7 +23,7 @@ A plan is NOT concrete if it has:
 ### Minimum Research for Any Plan:
 1. Read all directly mentioned files
 2. **Check for plural nouns in title** ("DataTables", "Components", "Forms") — signals multiple instances to find
-3. Search for similar patterns in codebase (use Find-SimilarPatterns.ps1 or Grep)
+3. Search for similar patterns in codebase (use `Find-SimilarPatterns.ps1 -FileTypes cs,tsx,ts` or Grep)
 4. Verify all file paths and line numbers exist
 5. Check if related tests exist
 
