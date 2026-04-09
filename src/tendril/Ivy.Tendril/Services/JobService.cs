@@ -16,10 +16,30 @@ public record JobNotification(string Title, string Message, bool IsSuccess);
 
 public class JobService : IJobService
 {
-    private static readonly string PromptsRoot =
-        Path.GetFullPath(Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", ".promptwares"));
+    private static readonly string PromptsRoot = ResolvePromptsRoot();
 
     internal static readonly string SharedRoot = Path.Combine(PromptsRoot, ".shared");
+
+    internal static string ResolvePromptsRoot()
+    {
+        // 1. Debug/source mode: check if Promptwares exists relative to BaseDirectory
+        var sourceRoot = Path.GetFullPath(
+            Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", "Promptwares"));
+        if (Directory.Exists(sourceRoot))
+            return sourceRoot;
+
+        // 2. Production mode: use TENDRIL_HOME/Promptwares
+        var tendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
+        if (!string.IsNullOrEmpty(tendrilHome))
+        {
+            var deployedRoot = Path.Combine(tendrilHome, "Promptwares");
+            if (Directory.Exists(deployedRoot))
+                return deployedRoot;
+        }
+
+        // 3. Fallback (will fail at runtime, but gives a clear error location)
+        return sourceRoot;
+    }
 
     private static readonly Dictionary<string, string> ScriptPaths = new()
     {

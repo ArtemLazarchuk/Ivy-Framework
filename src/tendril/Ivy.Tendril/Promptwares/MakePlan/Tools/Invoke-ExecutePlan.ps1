@@ -9,7 +9,7 @@ if (-not (Test-Path $PlanPath)) {
     exit 1
 }
 
-# Get the ExecutePlan.ps1 script path (relative to .promptwares root)
+# Get the ExecutePlan.ps1 script path (relative to Promptwares root)
 $promptwaresRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $executePlanScript = Join-Path $promptwaresRoot "ExecutePlan.ps1"
 

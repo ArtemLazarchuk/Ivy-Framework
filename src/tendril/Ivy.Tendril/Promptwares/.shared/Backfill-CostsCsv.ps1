@@ -38,8 +38,8 @@ function Get-ClaudeProjectDir {
     param([string]$Promptware, [string]$Project)
 
     # Determine the working directory Claude was launched from for each promptware type.
-    # TENDRIL_HOME = TeamIvyConfig dir. Promptwares live in sibling Ivy.Tendril/.promptwares/
-    # They run with Push-Location to their program folder under .promptwares/<Name>/,
+    # TENDRIL_HOME = TeamIvyConfig dir. Promptwares live in sibling Ivy.Tendril/Promptwares/
+    # They run with Push-Location to their program folder under Promptwares/<Name>/,
     # while ExecutePlan Push-Locations to the project's primary repo.
     $ivyTendrilDir = Join-Path $env:TENDRIL_HOME "../Ivy.Tendril"
     $ivyTendrilDir = [System.IO.Path]::GetFullPath($ivyTendrilDir)
@@ -57,11 +57,11 @@ function Get-ClaudeProjectDir {
                 default       { return "D:\Repos\_Ivy\Ivy-Framework" }
             }
         }
-        "MakePlan"   { return Join-Path $ivyTendrilDir ".promptwares/MakePlan" }
-        "MakePr"     { return Join-Path $ivyTendrilDir ".promptwares/MakePr" }
-        "ExpandPlan" { return Join-Path $ivyTendrilDir ".promptwares/ExpandPlan" }
-        "UpdatePlan" { return Join-Path $ivyTendrilDir ".promptwares/UpdatePlan" }
-        "SplitPlan"  { return Join-Path $ivyTendrilDir ".promptwares/UpdatePlan" }
+        "MakePlan"   { return Join-Path $ivyTendrilDir "Promptwares/MakePlan" }
+        "MakePr"     { return Join-Path $ivyTendrilDir "Promptwares/MakePr" }
+        "ExpandPlan" { return Join-Path $ivyTendrilDir "Promptwares/ExpandPlan" }
+        "UpdatePlan" { return Join-Path $ivyTendrilDir "Promptwares/UpdatePlan" }
+        "SplitPlan"  { return Join-Path $ivyTendrilDir "Promptwares/UpdatePlan" }
         default      { return $ivyTendrilDir }
     }
 }

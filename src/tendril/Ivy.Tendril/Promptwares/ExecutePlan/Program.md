@@ -205,7 +205,7 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 Before setting up frontend dependencies, clean up any `.npmrc` files left from previous crashed runs:
 
 ```bash
-pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
+pwsh -NoProfile -File "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
 ```
 
 This removes temporary `.npmrc` files with auth tokens while preserving tracked files.
@@ -455,7 +455,7 @@ After all verifications pass:
 
 2. Clean up temporary `.npmrc` files created in Step 2.5:
    ```bash
-   pwsh -NoProfile -File "$env:TENDRIL_HOME/.promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
+   pwsh -NoProfile -File "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Cleanup-WorktreeFrontend.ps1" -WorktreeRoot "<PlanFolder>/worktrees"
    ```
 
 3. Run `git status` in every worktree. If there are any uncommitted files (from verification fixes, generated files, etc.), commit or discard them. The worktrees must be completely clean before finishing.

@@ -64,7 +64,7 @@ For each worktree:
 Otherwise, run the `Upload-Artifacts.ps1` tool to upload screenshots and videos from `<PlanFolder>/artifacts/` to Azure storage:
 
 ```powershell
-$artifactMarkdown = pwsh -NoProfile -File .promptwares/MakePr/Tools/Upload-Artifacts.ps1 -PlanFolder <PlanFolder>
+$artifactMarkdown = pwsh -NoProfile -File Promptwares/MakePr/Tools/Upload-Artifacts.ps1 -PlanFolder <PlanFolder>
 ```
 
 Capture the returned markdown. If non-empty, it will be appended to the PR body under an `## Artifacts` heading in the next step.
