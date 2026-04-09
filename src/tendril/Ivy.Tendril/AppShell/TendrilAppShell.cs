@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Reactive.Disposables;
 using Ivy.Core;
 using Ivy.Core.Apps;
@@ -379,15 +378,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
             MenuItem.Default("Open config.yaml")
                 .Tag("$open-config")
                 .Icon(Icons.FileText)
-                .OnSelect(() =>
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = config.Editor.Command,
-                        Arguments = $"\"{config.ConfigPath}\"",
-                        UseShellExecute = true
-                    });
-                })
+                .OnSelect(() => { config.OpenInEditor(config.ConfigPath); })
         };
 
         var authSession = auth?.GetAuthSession();

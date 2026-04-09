@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Ivy.Tendril.Services;
@@ -284,6 +285,16 @@ public class ConfigService : IConfigService
     public List<VerificationConfig>? GetPendingVerificationDefinitions()
     {
         return _pendingVerificationDefinitions;
+    }
+
+    public void OpenInEditor(string path)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = Editor.Command,
+            Arguments = $"\"{path}\"",
+            UseShellExecute = true
+        });
     }
 
     public void CompleteOnboarding(string tendrilHome)
