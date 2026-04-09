@@ -332,8 +332,6 @@ promptwares:
     - Glob
     - Grep
     - Bash
-    - WebFetch
-    - WebSearch
   ExpandPlan:
     model: sonnet
     effort: high
@@ -343,14 +341,11 @@ promptwares:
     - Grep
     - Bash
     - Write
-    - Edit
   MakePr:
     model: sonnet
     effort: medium
     allowedTools:
     - Read
-    - Glob
-    - Grep
     - Bash
     - Write
     - Edit
@@ -363,36 +358,25 @@ promptwares:
     - Grep
     - Bash
     - Write
-    - Edit
   SplitPlan:
     model: sonnet
     effort: medium
     allowedTools:
     - Read
-    - Glob
-    - Grep
     - Bash
     - Write
-    - Edit
   CreateIssue:
     model: sonnet
     effort: medium
     allowedTools:
     - Read
-    - Glob
-    - Grep
     - Bash
-    - Write
-    - Edit
   IvyFrameworkVerification:
     model: sonnet
     effort: high
     allowedTools:
     - Read
     - Write
-    - Edit
-    - Glob
-    - Grep
     - Bash
 telemetry: true
 levels:
