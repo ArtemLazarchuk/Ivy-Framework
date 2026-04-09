@@ -165,32 +165,13 @@ public class SoftwareCheckStepView(
         );
     }
 
-    private static async Task<bool> CheckHealth(string fileName, string arguments)
-    {
-        try
-        {
-            return await Task.Run(() =>
-            {
-                var proc = Process.Start(new ProcessStartInfo
-                {
-                    FileName = OperatingSystem.IsWindows() ? "cmd.exe" : fileName,
-                    Arguments = OperatingSystem.IsWindows() ? $"/c \"{fileName}\" {arguments}" : arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-                proc.WaitForExitOrKill(15000);
-                return proc?.ExitCode == 0;
-            });
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    private static Task<bool> CheckCommand(string fileName, string arguments)
+        => CheckProcess(fileName, arguments, 10000);
 
-    private static async Task<bool> CheckCommand(string fileName, string arguments)
+    private static Task<bool> CheckHealth(string fileName, string arguments)
+        => CheckProcess(fileName, arguments, 15000);
+
+    private static async Task<bool> CheckProcess(string fileName, string arguments, int timeoutMs)
     {
         try
         {
@@ -205,7 +186,7 @@ public class SoftwareCheckStepView(
                     UseShellExecute = false,
                     CreateNoWindow = true
                 });
-                proc.WaitForExitOrKill(10000);
+                proc.WaitForExitOrKill(timeoutMs);
                 return proc?.ExitCode == 0;
             });
         }
