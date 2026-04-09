@@ -1,4 +1,7 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
 
 namespace Ivy.Tendril.Services;
 
@@ -77,11 +80,13 @@ public record EditorConfig
 {
     public string Command { get; set; } = "code";
     public string Label { get; set; } = "VS Code";
+    [YamlIgnore] public bool IsAvailable { get; set; } = true;
 }
 
 public record PromptwareConfig
 {
     public string Model { get; set; } = "";
+    public string Effort { get; set; } = "";
     public List<string> AllowedTools { get; set; } = new();
 }
 
@@ -298,6 +303,29 @@ public class ConfigService : IConfigService
         NeedsOnboarding = false;
     }
 
+    internal static bool IsCommandAvailable(string command)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "where" : "which",
+                Arguments = command,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using var process = Process.Start(psi);
+            process?.WaitForExit(3000);
+            return process?.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     internal static string? MigrateProjectColor(string? colorValue)
     {
         if (string.IsNullOrEmpty(colorValue))
@@ -377,6 +405,9 @@ public class ConfigService : IConfigService
         {
             Settings.Editor.Command = VariableExpansion.ExpandVariables(Settings.Editor.Command, TendrilHome);
             Settings.Editor.Label = VariableExpansion.ExpandVariables(Settings.Editor.Label, TendrilHome);
+
+            // Validate editor command exists on PATH (non-blocking)
+            Settings.Editor.IsAvailable = IsCommandAvailable(Settings.Editor.Command);
         }
 
         // Expand promptware configs
@@ -385,6 +416,7 @@ public class ConfigService : IConfigService
             {
                 var config = kvp.Value;
                 config.Model = VariableExpansion.ExpandVariables(config.Model, TendrilHome);
+                config.Effort = VariableExpansion.ExpandVariables(config.Effort, TendrilHome);
 
                 if (config.AllowedTools != null)
                     for (var i = 0; i < config.AllowedTools.Count; i++)

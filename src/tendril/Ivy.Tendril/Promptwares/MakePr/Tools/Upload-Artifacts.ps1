@@ -1,6 +1,10 @@
 param(
     [Parameter(Mandatory)]
-    [string]$PlanFolder
+    [string]$PlanFolder,
+
+    [string]$StorageContainer = $env:TENDRIL_STORAGE_CONTAINER,
+
+    [string]$StorageDomain = $env:TENDRIL_STORAGE_DOMAIN
 )
 
 $env:NO_COLOR = "1"
@@ -22,11 +26,21 @@ if ($screenshotFiles.Count -gt 0) {
     $markdown += "### Screenshots"
     $markdown += ""
     foreach ($file in $screenshotFiles) {
-        $raw = & storage upload ivy-tendril $file.FullName 2>&1 | Out-String
+        if (-not $StorageContainer) {
+            Write-Error "No storage container specified. Set TENDRIL_STORAGE_CONTAINER env var or pass -StorageContainer"
+            return ""
+        }
+        $raw = & storage upload $StorageContainer $file.FullName 2>&1 | Out-String
         # Strip ANSI codes and collapse whitespace to reconstruct wrapped URLs
         $clean = $raw -replace "\x1B\[[0-9;]*m", ""
         $noWs = $clean -replace "\s+", ""
-        if ($noWs -match "(https://stivytelemetry\.blob\.core\.windows\.net/[^""]+)") {
+        if ($StorageDomain) {
+            $escapedDomain = [regex]::Escape($StorageDomain)
+            $urlPattern = "(https://${escapedDomain}/[^""]+)"
+        } else {
+            $urlPattern = "(https://[^/]+\.blob\.core\.windows\.net/[^""]+)"
+        }
+        if ($noWs -match $urlPattern) {
             $url = $Matches[1].Trim()
         } else {
             continue

@@ -22,9 +22,9 @@ public class CustomPrDialog(
 
     public override object? Build()
     {
-        var customPrMerge = UseState(true);
-        var customPrDeleteBranch = UseState(true);
-        var customPrIncludeArtifacts = UseState(true);
+        var customPrMerge = UseState(false);
+        var customPrDeleteBranch = UseState(false);
+        var customPrIncludeArtifacts = UseState(false);
         var customPrAssignee = UseState<string?>(null);
         var customPrComment = UseState("");
 
@@ -36,7 +36,15 @@ public class CustomPrDialog(
         if (!_dialogOpen.Value) return null;
 
         return new Dialog(
-            _ => _dialogOpen.Set(false),
+            _ =>
+            {
+                customPrMerge.Set(true);
+                customPrDeleteBranch.Set(true);
+                customPrIncludeArtifacts.Set(true);
+                customPrAssignee.Set(null);
+                customPrComment.Set("");
+                _dialogOpen.Set(false);
+            },
             new DialogHeader($"Custom PR for #{_selectedPlan.Id}"),
             new DialogBody(
                 Layout.Vertical().Gap(2)
@@ -49,7 +57,15 @@ public class CustomPrDialog(
                 | customPrComment.ToTextareaInput("Comment").Rows(3)
             ),
             new DialogFooter(
-                new Button("Cancel").Outline().ShortcutKey("Escape").OnClick(() => _dialogOpen.Set(false)),
+                new Button("Cancel").Outline().ShortcutKey("Escape").OnClick(() =>
+                {
+                    customPrMerge.Set(true);
+                    customPrDeleteBranch.Set(true);
+                    customPrIncludeArtifacts.Set(true);
+                    customPrAssignee.Set(null);
+                    customPrComment.Set("");
+                    _dialogOpen.Set(false);
+                }),
                 new Button("Create PR").Primary().ShortcutKey("Ctrl+Enter").OnClick(() =>
                 {
                     var options = new Dictionary<string, object>
@@ -68,6 +84,11 @@ public class CustomPrDialog(
                     _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
                     _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
                     _refreshPlans();
+                    customPrMerge.Set(true);
+                    customPrDeleteBranch.Set(true);
+                    customPrIncludeArtifacts.Set(true);
+                    customPrAssignee.Set(null);
+                    customPrComment.Set("");
                     _dialogOpen.Set(false);
                 }).WithConfetti(AnimationTrigger.Click)
             )
