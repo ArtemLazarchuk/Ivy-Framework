@@ -30,3 +30,33 @@
   word-break: break-all;
   overflow-wrap: break-word;
 }
+
+/* Dark mode overrides for react-diff-view */
+.dark {
+  --diff-background-color: var(--background);
+  --diff-text-color: var(--foreground);
+  --diff-font-family: var(--font-mono, Consolas, Courier, monospace);
+
+  --diff-selection-background-color: hsl(212 60% 30%);
+  --diff-selection-text-color: var(--foreground);
+
+  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.30);
+  --diff-gutter-insert-text-color: var(--foreground);
+  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.30);
+  --diff-gutter-delete-text-color: var(--foreground);
+  --diff-gutter-selected-background-color: rgba(187, 128, 9, 0.30);
+  --diff-gutter-selected-text-color: var(--foreground);
+
+  --diff-code-insert-background-color: rgba(46, 160, 67, 0.15);
+  --diff-code-insert-text-color: var(--foreground);
+  --diff-code-delete-background-color: rgba(248, 81, 73, 0.15);
+  --diff-code-delete-text-color: var(--foreground);
+  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.30);
+  --diff-code-insert-edit-text-color: var(--foreground);
+  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.30);
+  --diff-code-delete-edit-text-color: var(--foreground);
+  --diff-code-selected-background-color: rgba(187, 128, 9, 0.20);
+  --diff-code-selected-text-color: var(--foreground);
+
+  --diff-omit-gutter-line-color: rgba(248, 81, 73, 0.60);
+}
