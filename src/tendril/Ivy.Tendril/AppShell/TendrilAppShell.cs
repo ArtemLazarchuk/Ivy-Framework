@@ -100,7 +100,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                                                     StringComparison.OrdinalIgnoreCase) ||
                                                 targetAppId.Equals("onboarding-app",
                                                     StringComparison.OrdinalIgnoreCase)))
-                    targetAppId = settings.DefaultAppId ?? "dashboard";
+                    targetAppId = settings.DefaultAppId;
 
                 var appArgs = args.GetArgs<object>();
                 OpenApp(new NavigateArgs(targetAppId, appArgs), true);
