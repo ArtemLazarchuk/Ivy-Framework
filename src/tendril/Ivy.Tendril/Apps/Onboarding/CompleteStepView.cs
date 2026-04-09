@@ -10,7 +10,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
         var error = UseState<string?>(null);
         var config = UseService<IConfigService>();
         var setupService = UseService<IOnboardingSetupService>();
-        var navigator = UseNavigation();
+        var client = UseService<IClientProvider>();
 
         async Task OnComplete()
         {
@@ -30,8 +30,7 @@ public class CompleteStepView(IState<int> stepperIndex) : ViewBase
 
                 await setupService.CompleteSetupAsync(tendrilHome);
 
-                // Navigate to SetupApp
-                navigator.Navigate<SetupApp>();
+                client.Redirect("/", true);
             }
             catch (Exception ex)
             {
