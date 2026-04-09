@@ -90,7 +90,7 @@ public class WorktreeCleanupService : IStartable, IDisposable
         logger?.LogInformation("Cleaning up worktrees for plan {PlanFolder} (state: {State}, updated: {Updated})",
             Path.GetFileName(planFolderPath), planYaml.State, planYaml.Updated.ToString("o", CultureInfo.InvariantCulture));
 
-        PlanReaderService.RemoveWorktrees(planFolderPath);
+        PlanReaderService.RemoveWorktrees(planFolderPath, logger);
 
         // Force-delete any remaining worktree directories that git couldn't remove
         // (orphaned .git files, missing entries, Windows file locks, etc.)

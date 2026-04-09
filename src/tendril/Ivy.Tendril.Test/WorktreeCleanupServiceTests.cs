@@ -1,4 +1,5 @@
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ivy.Tendril.Test;
@@ -219,5 +220,35 @@ public class WorktreeCleanupServiceTests : IDisposable
 
         Assert.False(Directory.Exists(worktreeDir), "Directory with read-only files should be force-deleted");
         Assert.False(Directory.Exists(Path.Combine(dir, "worktrees")), "Worktrees directory should be removed");
+    }
+
+    [Fact]
+    public void RemoveWorktrees_Logs_Warning_When_GitFile_Missing()
+    {
+        var dir = CreatePlan("10000-LogWarningTest", "Failed", DateTime.UtcNow.AddHours(-2));
+        var worktreeDir = Path.Combine(dir, "worktrees", "TestRepo");
+        Directory.CreateDirectory(worktreeDir);
+        File.WriteAllText(Path.Combine(worktreeDir, "file.txt"), "test");
+
+        var logEntries = new List<string>();
+        var logger = new CapturingLogger(logEntries);
+
+        PlanReaderService.RemoveWorktrees(dir, logger);
+
+        Assert.Single(logEntries);
+        Assert.Contains("has no .git file", logEntries[0]);
+        Assert.Contains("TestRepo", logEntries[0]);
+    }
+
+    private class CapturingLogger(List<string> entries) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            entries.Add(formatter(state, exception));
+        }
     }
 }
