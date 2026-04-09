@@ -172,7 +172,7 @@ Verification definitions (name + prompt) live in the top-level `verifications` s
 
 ## Notes
 
-- **When referencing local files, folders, or screenshots in plans, use markdown links with the filename as display text: `[Button.cs](file:///path/to/repo/src/Ivy/Widgets/Button.cs)`. This allows the user to open files directly in VS Code by clicking the link while keeping plans readable.**
+- **When referencing local files, folders, or screenshots in plans, use markdown links with the filename as display text: `[Button.cs](file:///path/to/repo/src/components/Button.cs)`. This allows the user to open files directly in VS Code by clicking the link while keeping plans readable.**
 - Use markdown format for images ![alt text](image-url) for images.
 - **Diagrams**: Our Markdown renderer supports Graphviz/DOT (```dot or ```graphviz code blocks) and Mermaid (```mermaid code blocks). **Prefer Graphviz/DOT over Mermaid** — it produces cleaner, more predictable layouts. Use diagrams sparingly — only when a visual genuinely clarifies architecture, data flow, or state transitions. Most plans don't need diagrams.
 
