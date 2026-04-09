@@ -16,6 +16,11 @@ public class HelpApp : ViewBase
                       .Large()
                       .Icon(Icons.ExternalLink, Align.Right)
                       .OnClick(() => client.OpenUrl("https://tendril.ivy.app"))
+                  | Text.Muted("Join our Discord to talk directly with the team.")
+                  | new Button("Join Discord")
+                      .Large()
+                      .Icon(Icons.Discord, Align.Right)
+                      .OnClick(() => client.OpenUrl("https://discord.gg/FHgxkDga3y"))
                );
     }
 }
