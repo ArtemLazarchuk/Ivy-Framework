@@ -222,11 +222,11 @@ public class ContentView(
                 .Icon(Icons.ExternalLink).Ghost().OnClick(() => client.OpenUrl(_selectedPlan.SourceUrl));
 
         header |= new Spacer().Width(Size.Grow());
-        
+
         header |= Text.Rich()
                          .Bold($"{currentIndex + 1}/{_allPlans.Count}", word: true)
                          .Muted("plans", word: true);
-        
+
         header |= new Button("Make PR").Icon(Icons.GitPullRequest).Primary().OnClick(() =>
         {
             var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
@@ -470,6 +470,13 @@ public class ContentView(
 
         // Action bar
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
+                        | new Button("Rerun").Icon(Icons.RotateCw).Outline().OnClick(() =>
+                        {
+                            _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                            _jobService.StartJob("ExecutePlan", _selectedPlan.FolderPath, "-Note",
+                                "User requested you to execute this plan another time. Go through all code, verifications and artifacts one more time.");
+                            _refreshPlans();
+                        })
                         | new Button("Suggest Changes").Icon(Icons.MessageSquare).Outline().OnClick(() =>
                         {
                             suggestChangesOpen.Set(true);
