@@ -8,6 +8,7 @@ public class OnboardingSetupService(IConfigService config, IServiceProvider serv
         Directory.CreateDirectory(tendrilHome);
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Inbox"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Plans"));
+        await FileHelper.WriteAllTextAsync(Path.Combine(tendrilHome, "Plans", ".counter"), "1");
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Trash"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Promptwares"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Hooks"));
