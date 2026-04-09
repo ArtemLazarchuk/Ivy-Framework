@@ -998,10 +998,14 @@ public class JobService : IJobService
             if (!Directory.Exists(plansDir)) return;
 
             var outputText = string.Join("\n", job.OutputLines);
-            var created = Regex.IsMatch(outputText, @"Plan created:");
+            var createdMatch = Regex.Match(outputText, @"Plan created:\s*(\S+)");
             var duplicate = Regex.IsMatch(outputText, @"identified as duplicate:");
 
-            if (!created && !duplicate)
+            if (createdMatch.Success)
+            {
+                job.PlanFile = createdMatch.Groups[1].Value;
+            }
+            else if (!duplicate)
             {
                 // Agent exited 0 but didn't create a plan or detect a duplicate — flag it
                 job.EnqueueOutput(
