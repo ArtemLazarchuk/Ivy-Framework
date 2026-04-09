@@ -34,7 +34,14 @@ public class PullRequestApp : ViewBase
                 {
                     var parts = repoKey.Split('/');
                     if (parts.Length != 2) return new Dictionary<string, string>();
-                    return await githubService.GetPrStatusesAsync(parts[0], parts[1]);
+                    try
+                    {
+                        return await githubService.GetPrStatusesAsync(parts[0], parts[1]);
+                    }
+                    catch
+                    {
+                        return new Dictionary<string, string>();
+                    }
                 }).ToList();
 
                 var results = await Task.WhenAll(tasks);
