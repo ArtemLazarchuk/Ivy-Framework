@@ -470,7 +470,7 @@ public class ContentView(
 
         // Action bar
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
-                        | new Button("Rerun").Icon(Icons.RotateCw).Outline().OnClick(() =>
+                        | new Button("Rerun").Icon(Icons.RotateCw).Outline().ShortcutKey("r").OnClick(() =>
                         {
                             _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
                             _jobService.StartJob("ExecutePlan", _selectedPlan.FolderPath, "-Note",
@@ -481,7 +481,7 @@ public class ContentView(
                         {
                             suggestChangesOpen.Set(true);
                         }).ShortcutKey("d")
-                        | new Button("Discard").Icon(Icons.Trash).Outline().OnClick(() =>
+                        | new Button("Discard").Icon(Icons.Trash).Outline().ShortcutKey("Delete").OnClick(() =>
                         {
                             discardDialogOpen.Set(true);
                         })
