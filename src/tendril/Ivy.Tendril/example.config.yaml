@@ -47,6 +47,16 @@ maxConcurrentJobs: 5  # Maximum number of jobs to run concurrently (default: 5)
 projects: []
 verifications: []
 
+levels:
+  - name: Bug
+    badge: Destructive
+  - name: Critical
+    badge: Warning
+  - name: NiceToHave
+    badge: Outline
+  - name: Epic
+    badge: Info
+
 editor:
   command: code
   label: VS Code
