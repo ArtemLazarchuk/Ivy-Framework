@@ -8,6 +8,7 @@ The firmware header contains:
 
 - **Args** / **PlanFolder** — path to the plan folder
 - **CurrentTime** — current UTC timestamp
+- **Note** (optional) — Additional instructions from the reviewer. If present, follow these instructions in addition to the plan.
 
 Read the plan structure in `../.shared/Plans.md`.
 Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and context.

@@ -1,6 +1,9 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$PlanPath
+    [string]$PlanPath,
+
+    [Parameter(Mandatory = $false)]
+    [string]$Note = ""
 )
 
 . "$PSScriptRoot/../.shared/Utils.ps1"
@@ -25,11 +28,16 @@ Write-Host "Log file: $logFile"
 
 $workDir = GetProjectWorkDir $planInfo.Project
 
-$promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder @{
+$firmwareValues = @{
     Args       = $PlanPath
     PlanFolder = $PlanPath
     Project    = $planInfo.Project
 }
+if ($Note) {
+    $firmwareValues["Note"] = $Note
+}
+
+$promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder $firmwareValues
 
 $agent = GetAgentCommand -Promptware "ExecutePlan"
 $sessionId = $env:TENDRIL_SESSION_ID
