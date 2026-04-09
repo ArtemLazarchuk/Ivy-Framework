@@ -45,7 +45,12 @@ public record JobItem
     public ConcurrentQueue<string> OutputLines { get; set; } = new();
     public DateTime? LastOutputAt { get; set; }
     public CancellationTokenSource? TimeoutCts { get; set; }
-    public bool StaleOutputDetected { get; set; }
+    private volatile bool _staleOutputDetected;
+    public bool StaleOutputDetected
+    {
+        get => _staleOutputDetected;
+        set => _staleOutputDetected = value;
+    }
 
     // Path to the .processing inbox file for MakePlan job recovery
     public string? InboxFile { get; set; }
