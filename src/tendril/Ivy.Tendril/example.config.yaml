@@ -53,6 +53,25 @@ editor:
 
 telemetry: true
 
+planTemplate: >
+  # {title}
+
+  ## Problem
+
+  ## Solution
+
+  ## Tests
+
+  **New tests:**
+
+  (specify tests to write for new functionality, or "None" if no new tests needed)
+
+  **Test scope (dotnet test --filter):**
+
+  `FullyQualifiedName~Namespace.SpecificTestClass` (or "No existing test coverage" / "Run all tests — <justification>")
+
+  ## Verification
+
 # Example project configuration:
 # projects:
 #   - name: MyProject
