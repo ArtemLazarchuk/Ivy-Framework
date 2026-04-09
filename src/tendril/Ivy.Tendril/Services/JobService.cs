@@ -270,6 +270,15 @@ public class JobService : IJobService
         // Persist completed job to SQLite
         PersistJob(job);
 
+        // Free output buffer — all consumers (failure reason, hooks, log writing) are done.
+        // Output for failed jobs was already written to logs/ above.
+        job.TrimOutput();
+
+        // Evict stale finished jobs from memory to prevent unbounded dictionary growth.
+        // Job metadata is already persisted to SQLite; the in-memory copy is only needed
+        // for active display and is reloaded from DB on next startup.
+        EvictStaleJobs();
+
         RaiseJobsChanged();
 
         // After successful completion of jobs that may unblock dependencies
@@ -320,6 +329,7 @@ public class JobService : IJobService
 
         CleanupInboxFile(job);
         ResetPlanState(job);
+        job.TrimOutput();
         RaiseJobsChanged();
 
         // Try to start queued jobs now that a slot is free
@@ -335,6 +345,29 @@ public class JobService : IJobService
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         RaiseJobsChanged();
+    }
+
+    /// <summary>
+    ///     Removes finished jobs older than 1 hour from the in-memory dictionary.
+    ///     Job metadata remains in SQLite and is reloaded on next startup via LoadHistoricalJobs.
+    ///     Keeps the most recent 20 finished jobs regardless of age so the UI stays useful.
+    /// </summary>
+    private void EvictStaleJobs()
+    {
+        const int keepRecent = 20;
+        var cutoff = DateTime.UtcNow.AddHours(-1);
+
+        var staleJobs = _jobs.Values
+            .Where(j => j.Status is JobStatus.Completed or JobStatus.Failed or JobStatus.Timeout or JobStatus.Stopped)
+            .Where(j => j.CompletedAt.HasValue && j.CompletedAt.Value < cutoff)
+            .OrderByDescending(j => j.CompletedAt)
+            .Skip(keepRecent)
+            .Select(j => j.Id)
+            .ToList();
+
+        foreach (var id in staleJobs)
+            if (_jobs.TryRemove(id, out var removed))
+                removed.DisposeResources();
     }
 
     public void ClearCompletedJobs()

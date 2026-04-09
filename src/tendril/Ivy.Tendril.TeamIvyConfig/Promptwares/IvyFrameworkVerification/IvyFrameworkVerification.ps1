@@ -106,3 +106,24 @@ InvokePromptwareAgent $PSScriptRoot $programFolder $logFile @{
     ArtifactsDir     = $artifactsDir
     IvyFrameworkPath = $frameworkPath
 } -PlanPath $PlanPath -Action "IvyFrameworkVerification" -Promptware "IvyFrameworkVerification"
+
+# Post-agent cleanup: kill orphaned Chromium processes spawned by Playwright tests.
+# These live under ms-playwright, not under the plan folder, so the pre-run cleanup misses them.
+Write-Host "Cleaning up orphaned Playwright browser processes..." -ForegroundColor Yellow
+$playwrightKilled = 0
+Get-Process -Name "chrome","chromium" -ErrorAction SilentlyContinue | Where-Object {
+    $_.Path -and $_.Path -match 'ms-playwright'
+} | ForEach-Object {
+    Write-Host "  Killing: $($_.ProcessName) (PID $($_.Id))" -ForegroundColor Yellow
+    try {
+        $_ | Stop-Process -Force -ErrorAction Stop
+        $playwrightKilled++
+    } catch {
+        Write-Warning "  Failed to kill PID $($_.Id): $_"
+    }
+}
+if ($playwrightKilled -gt 0) {
+    Write-Host "  Killed $playwrightKilled Playwright browser process(es)." -ForegroundColor Yellow
+} else {
+    Write-Host "  No orphaned Playwright browsers found." -ForegroundColor Green
+}

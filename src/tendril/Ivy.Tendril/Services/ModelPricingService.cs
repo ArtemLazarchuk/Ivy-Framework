@@ -268,13 +268,13 @@ public class ModelPricingService : IModelPricingService
     {
         var processedIds = new HashSet<string>();
 
-        foreach (var line in FileHelper.ReadAllLines(filePath))
+        foreach (var line in FileHelper.EnumerateLines(filePath))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             try
             {
-                var obj = JsonDocument.Parse(line);
+                using var obj = JsonDocument.Parse(line);
                 var root = obj.RootElement;
 
                 if (root.GetProperty("type").GetString() != "assistant") continue;

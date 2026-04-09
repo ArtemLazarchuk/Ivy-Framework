@@ -69,6 +69,19 @@ public record JobItem
         Process = null;
         TimeoutCts = null;
     }
+
+    /// <summary>
+    ///     Trims the output buffer to the most recent lines to free memory after completion.
+    ///     Called after all completion logic (failure reason extraction, log writing, hooks)
+    ///     has finished. Retains a small tail for UI inspection of recent hook/status output.
+    /// </summary>
+    public void TrimOutput()
+    {
+        const int keepLines = 50;
+        if (OutputLines.Count <= keepLines) return;
+        var trimmed = new ConcurrentQueue<string>(OutputLines.Skip(OutputLines.Count - keepLines));
+        OutputLines = trimmed;
+    }
 }
 
 public record JobItemRow
