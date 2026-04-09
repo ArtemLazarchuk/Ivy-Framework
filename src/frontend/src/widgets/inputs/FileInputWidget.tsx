@@ -366,7 +366,7 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
                       : "default"
                 }
                 className={cn(
-                  "flex items-center gap-2",
+                  "flex items-center gap-2 max-w-xs overflow-hidden",
                   isDragging && "border-primary ring-2 ring-primary",
                 )}
                 disabled={disabled}
@@ -374,12 +374,14 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
                 onClick={handleButtonClick}
                 title={hasFiles ? fileList.map((f) => f.fileName).join(", ") : undefined}
               >
-                <Upload className="h-4 w-4" />
-                {hasFiles
-                  ? fileList.length === 1
-                    ? fileList[0].fileName
-                    : `${fileList.length} files selected`
-                  : (placeholder || `Select ${multiple ? "files" : "file"}`)}
+                <Upload className="h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {hasFiles
+                    ? fileList.length === 1
+                      ? fileList[0].fileName
+                      : `${fileList.length} files selected`
+                    : placeholder || `Select ${multiple ? "files" : "file"}`}
+                </span>
               </Button>
               {invalid && (
                 <div className="pointer-events-none">

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reactive.Disposables;
 using Ivy.Core;
 using Ivy.Core.Apps;
@@ -100,7 +101,7 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                                                     StringComparison.OrdinalIgnoreCase) ||
                                                 targetAppId.Equals("onboarding-app",
                                                     StringComparison.OrdinalIgnoreCase)))
-                    targetAppId = settings.DefaultAppId ?? "dashboard";
+                    targetAppId = settings.DefaultAppId;
 
                 var appArgs = args.GetArgs<object>();
                 OpenApp(new NavigateArgs(targetAppId, appArgs), true);
@@ -374,7 +375,19 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                     MenuItem.Checkbox("Dark").Icon(Icons.Moon).OnSelect(() => client.SetThemeMode(ThemeMode.Dark)),
                     MenuItem.Checkbox("System").Icon(Icons.SunMoon)
                         .OnSelect(() => client.SetThemeMode(ThemeMode.System))
-                )
+                ),
+            MenuItem.Default("Open config.yaml")
+                .Tag("$open-config")
+                .Icon(Icons.FileText)
+                .OnSelect(() =>
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = config.Editor.Command,
+                        Arguments = $"\"{config.ConfigPath}\"",
+                        UseShellExecute = true
+                    });
+                })
         };
 
         var authSession = auth?.GetAuthSession();

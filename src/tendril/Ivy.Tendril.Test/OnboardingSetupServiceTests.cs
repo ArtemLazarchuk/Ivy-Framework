@@ -168,4 +168,59 @@ public class OnboardingSetupServiceTests : IAsyncLifetime
         Assert.False(config.NeedsOnboarding);
         Assert.Equal(_tempDir, config.TendrilHome);
     }
+
+    [Fact]
+    public async Task CompleteSetupAsync_InitializesPlanCounter()
+    {
+        var (service, _) = CreateService();
+
+        await service.CompleteSetupAsync(_tempDir);
+
+        var counterPath = Path.Combine(_tempDir, "Plans", ".counter");
+        Assert.True(File.Exists(counterPath));
+        var content = (await File.ReadAllTextAsync(counterPath)).Trim();
+        Assert.Equal("1", content);
+    }
+
+    [Fact]
+    public async Task CompleteSetupAsync_PersistsEnvironmentVariable_Windows()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var (service, _) = CreateService();
+        var originalValue = Environment.GetEnvironmentVariable("TENDRIL_HOME", EnvironmentVariableTarget.User);
+
+        try
+        {
+            await service.CompleteSetupAsync(_tempDir);
+
+            var persisted = Environment.GetEnvironmentVariable("TENDRIL_HOME", EnvironmentVariableTarget.User);
+            Assert.Equal(_tempDir, persisted);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TENDRIL_HOME", originalValue, EnvironmentVariableTarget.User);
+        }
+    }
+
+    [Fact]
+    public async Task CompleteSetupAsync_PersistsEnvironmentVariable_UnixShellRc()
+    {
+        if (OperatingSystem.IsWindows())
+            return;
+
+        var (service, _) = CreateService();
+
+        await service.CompleteSetupAsync(_tempDir);
+
+        var shell = Environment.GetEnvironmentVariable("SHELL") ?? "";
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var rcFile = shell.EndsWith("/zsh") ? Path.Combine(home, ".zshrc")
+                   : shell.EndsWith("/bash") ? Path.Combine(home, ".bashrc")
+                   : Path.Combine(home, ".profile");
+
+        var content = await File.ReadAllTextAsync(rcFile);
+        Assert.Contains($"export TENDRIL_HOME=\"{_tempDir}\"", content);
+    }
 }

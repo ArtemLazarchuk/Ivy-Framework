@@ -31,32 +31,73 @@
   overflow-wrap: break-word;
 }
 
-/* Dark mode overrides for react-diff-view */
-.dark {
-  --diff-background-color: var(--background);
-  --diff-text-color: var(--foreground);
-  --diff-font-family: var(--font-mono, Consolas, Courier, monospace);
+/* Core colors */
+.diff {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-boxes);
+  font-family: var(--font-mono);
+}
 
-  --diff-selection-background-color: hsl(212 60% 30%);
-  --diff-selection-text-color: var(--foreground);
+.diff-gutter {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border-right: 1px solid var(--border);
+  user-select: none;
+}
 
-  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.30);
-  --diff-gutter-insert-text-color: var(--foreground);
-  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.30);
-  --diff-gutter-delete-text-color: var(--foreground);
-  --diff-gutter-selected-background-color: rgba(187, 128, 9, 0.30);
-  --diff-gutter-selected-text-color: var(--foreground);
+.diff-code {
+  background-color: transparent;
+  color: inherit;
+}
 
-  --diff-code-insert-background-color: rgba(46, 160, 67, 0.15);
-  --diff-code-insert-text-color: var(--foreground);
-  --diff-code-delete-background-color: rgba(248, 81, 73, 0.15);
-  --diff-code-delete-text-color: var(--foreground);
-  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.30);
-  --diff-code-insert-edit-text-color: var(--foreground);
-  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.30);
-  --diff-code-delete-edit-text-color: var(--foreground);
-  --diff-code-selected-background-color: rgba(187, 128, 9, 0.20);
-  --diff-code-selected-text-color: var(--foreground);
+/* Hunk header */
+.diff-hunk-header {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
 
-  --diff-omit-gutter-line-color: rgba(248, 81, 73, 0.60);
+.diff-hunk-header-gutter {
+  background-color: var(--muted);
+  border-right: 1px solid var(--border);
+}
+
+.diff-hunk-header-content {
+  padding: 4px 8px;
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Insertions */
+.diff-code-insert {
+  background-color: color-mix(in srgb, var(--success), transparent 85%) !important;
+}
+
+.diff-gutter-insert {
+  background-color: color-mix(in srgb, var(--success), transparent 75%) !important;
+  color: var(--success) !important;
+}
+
+/* Deletions */
+.diff-code-delete {
+  background-color: color-mix(in srgb, var(--destructive), transparent 85%) !important;
+}
+
+.diff-gutter-delete {
+  background-color: color-mix(in srgb, var(--destructive), transparent 75%) !important;
+  color: var(--destructive) !important;
+}
+
+/* Highlights within lines */
+.diff-code-edit-mark {
+  background-color: color-mix(in srgb, currentColor, transparent 70%);
+}
+
+/* Selection */
+.diff-code::selection,
+.diff-code *::selection {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
 }

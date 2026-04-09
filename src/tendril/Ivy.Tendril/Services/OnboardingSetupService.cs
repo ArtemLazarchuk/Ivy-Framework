@@ -8,6 +8,7 @@ public class OnboardingSetupService(IConfigService config, IServiceProvider serv
         Directory.CreateDirectory(tendrilHome);
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Inbox"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Plans"));
+        await FileHelper.WriteAllTextAsync(Path.Combine(tendrilHome, "Plans", ".counter"), "1");
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Trash"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Promptwares"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Hooks"));
@@ -41,24 +42,33 @@ public class OnboardingSetupService(IConfigService config, IServiceProvider serv
         // Set environment variable for current session
         Environment.SetEnvironmentVariable("TENDRIL_HOME", tendrilHome);
 
-        // Persist to shell for Mac users
-        if (OperatingSystem.IsMacOS())
-            try
+        // Persist environment variable across restarts
+        try
+        {
+            if (OperatingSystem.IsWindows())
             {
-                var zshrc = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".zshrc");
+                Environment.SetEnvironmentVariable("TENDRIL_HOME", tendrilHome, EnvironmentVariableTarget.User);
+            }
+            else
+            {
+                // Determine shell rc file
+                var shell = Environment.GetEnvironmentVariable("SHELL") ?? "";
+                var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                var rcFile = shell.EndsWith("/zsh") ? Path.Combine(home, ".zshrc")
+                           : shell.EndsWith("/bash") ? Path.Combine(home, ".bashrc")
+                           : Path.Combine(home, ".profile");
+
                 var exportLine = $"export TENDRIL_HOME=\"{tendrilHome}\"";
-                if (File.Exists(zshrc))
-                {
-                    var content = await FileHelper.ReadAllTextAsync(zshrc);
-                    if (!content.Contains(exportLine))
-                        await File.AppendAllLinesAsync(zshrc, new[] { "", "# Tendril Home", exportLine });
-                }
+
+                var content = File.Exists(rcFile) ? await FileHelper.ReadAllTextAsync(rcFile) : "";
+                if (!content.Contains(exportLine))
+                    await File.AppendAllLinesAsync(rcFile, new[] { "", "# Tendril Home", exportLine });
             }
-            catch
-            {
-                /* Best effort */
-            }
+        }
+        catch
+        {
+            /* Best effort — env var is set for current session regardless */
+        }
 
         // Mark onboarding complete (this reloads config from the file we just wrote)
         config.CompleteOnboarding(tendrilHome);

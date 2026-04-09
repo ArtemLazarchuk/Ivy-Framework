@@ -47,11 +47,40 @@ maxConcurrentJobs: 5  # Maximum number of jobs to run concurrently (default: 5)
 projects: []
 verifications: []
 
+levels:
+  - name: Bug
+    badge: Destructive
+  - name: Critical
+    badge: Warning
+  - name: NiceToHave
+    badge: Outline
+  - name: Epic
+    badge: Info
+
 editor:
   command: code
   label: VS Code
 
 telemetry: true
+
+planTemplate: >
+  # {title}
+
+  ## Problem
+
+  ## Solution
+
+  ## Tests
+
+  **New tests:**
+
+  (specify tests to write for new functionality, or "None" if no new tests needed)
+
+  **Test scope (dotnet test --filter):**
+
+  `FullyQualifiedName~Namespace.SpecificTestClass` (or "No existing test coverage" / "Run all tests — <justification>")
+
+  ## Verification
 
 # Example project configuration:
 # projects:

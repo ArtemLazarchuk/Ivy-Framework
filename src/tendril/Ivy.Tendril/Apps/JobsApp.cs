@@ -381,10 +381,10 @@ public class JobsApp : ViewBase
 
     private static string GetPromptDisplay(JobItem j, IPlanReaderService planService)
     {
-        // MakePlan jobs already have the description in PlanFile
+        // MakePlan jobs: use the -Description arg for display (PlanFile may now hold the folder name)
         if (j.Type == "MakePlan")
         {
-            var desc = j.PlanFile;
+            var desc = GetFullPrompt(j) ?? j.PlanFile;
             return desc.Length > 50 ? desc[..50] + "..." : desc;
         }
 

@@ -107,7 +107,7 @@ export const FolderInputWidget: React.FC<FolderInputWidgetProps> = ({
       <div
         className={cn(
           inputVariant({ density }),
-          "flex items-center gap-2 bg-background pr-1",
+          "flex items-center gap-2 bg-background dark:bg-white/5 pr-1",
           isInvalid && inputStyles.invalidInput,
           disabled
             ? "cursor-not-allowed opacity-50"
