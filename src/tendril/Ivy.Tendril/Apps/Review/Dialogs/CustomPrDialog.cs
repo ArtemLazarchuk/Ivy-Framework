@@ -22,21 +22,11 @@ public class CustomPrDialog(
 
     public override object? Build()
     {
-        var customPrApprove = UseState(true);
         var customPrMerge = UseState(true);
         var customPrDeleteBranch = UseState(true);
         var customPrIncludeArtifacts = UseState(true);
         var customPrAssignee = UseState<string?>(null);
         var customPrComment = UseState("");
-
-        UseEffect(() =>
-        {
-            if (!customPrApprove.Value)
-            {
-                customPrMerge.Set(false);
-                customPrDeleteBranch.Set(false);
-            }
-        }, customPrApprove);
 
         UseEffect(() =>
         {
@@ -50,10 +40,9 @@ public class CustomPrDialog(
             new DialogHeader($"Custom PR for #{_selectedPlan.Id}"),
             new DialogBody(
                 Layout.Vertical().Gap(2)
-                | customPrApprove.ToBoolInput("Approve").AutoFocus()
-                | customPrMerge.ToBoolInput("Merge").Disabled(!customPrApprove.Value)
+                | customPrMerge.ToBoolInput("Merge").AutoFocus()
                 | customPrDeleteBranch.ToBoolInput("Delete Branch")
-                    .Disabled(!customPrMerge.Value || !customPrApprove.Value)
+                    .Disabled(!customPrMerge.Value)
                 | customPrIncludeArtifacts.ToBoolInput("Include Artifacts")
                 | customPrAssignee.ToSelectInput((_assigneesQuery.Value ?? Array.Empty<string>()).ToOptions())
                     .Nullable().WithField().Label("Assignee")
@@ -65,9 +54,8 @@ public class CustomPrDialog(
                 {
                     var options = new Dictionary<string, object>
                     {
-                        ["approve"] = customPrApprove.Value,
-                        ["merge"] = customPrMerge.Value && customPrApprove.Value,
-                        ["deleteBranch"] = customPrDeleteBranch.Value && customPrMerge.Value && customPrApprove.Value,
+                        ["merge"] = customPrMerge.Value,
+                        ["deleteBranch"] = customPrDeleteBranch.Value && customPrMerge.Value,
                         ["includeArtifacts"] = customPrIncludeArtifacts.Value,
                         ["assignee"] = customPrAssignee.Value ?? "",
                         ["comment"] = customPrComment.Value

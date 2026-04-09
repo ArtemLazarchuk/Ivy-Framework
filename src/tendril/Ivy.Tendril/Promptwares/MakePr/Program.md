@@ -33,7 +33,6 @@ Before processing, read `plan.yaml` and check the `state` field:
 - Read config.yaml to find the `prRule` for each repo
 - **Check for custom options:** If `<PlanFolder>/.custom-pr-options.yaml` exists, read it. The file contains:
   ```yaml
-  approve: true/false
   merge: true/false
   deleteBranch: true/false
   includeArtifacts: true/false
@@ -100,10 +99,9 @@ If no custom options or `comment` is empty, skip this step.
 **!MANDATORY** — look up the `prRule` for this repo in config.yaml under the project's repos list.
 
 **Custom options override:** If custom options exist, the flags override the yolo behavior:
-- If `approve` is `false`: skip the entire merge step (treat as `default` rule regardless of prRule)
-- If `approve` is `true` but `merge` is `false`: approve the PR with `gh pr review <pr-number> --repo <owner/repo> --approve` but do not merge
+- If `merge` is `false`: skip the entire merge step (treat as `default` rule regardless of prRule)
 - If `merge` is `true` but `deleteBranch` is `false`: merge without `--delete-branch` flag
-- If all flags are `true`: behave exactly like `yolo`
+- If `merge` and `deleteBranch` are both `true`: behave exactly like `yolo`
 
 **Merge conflict handling (applies to ALL merge paths below):**
 
