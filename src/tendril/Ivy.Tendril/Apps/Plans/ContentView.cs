@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Ivy.Core;
 using Ivy.Tendril.Apps.Plans.Dialogs;
@@ -387,12 +386,7 @@ public class ContentView(
                             new MenuItem($"Open in {_config.Editor.Label}", Icon: Icons.Code, Tag: "OpenInEditor")
                                 .OnSelect(() =>
                                 {
-                                    Process.Start(new ProcessStartInfo
-                                    {
-                                        FileName = _config.Editor.Command,
-                                        Arguments = $"\"{_selectedPlan.FolderPath}\"",
-                                        UseShellExecute = true
-                                    });
+                                    PlatformHelper.OpenInEditor(_config.Editor.Command, _selectedPlan.FolderPath);
                                 }),
                             new MenuItem("Copy Path to Clipboard", Icon: Icons.ClipboardCopy, Tag: "CopyPath")
                                 .OnSelect(() =>
@@ -409,12 +403,7 @@ public class ContentView(
                             new MenuItem("Open plan.yaml", Icon: Icons.FileText, Tag: "OpenPlanYaml").OnSelect(() =>
                             {
                                 var yamlPath = Path.Combine(_selectedPlan.FolderPath, "plan.yaml");
-                                Process.Start(new ProcessStartInfo
-                                {
-                                    FileName = _config.Editor.Command,
-                                    Arguments = yamlPath,
-                                    UseShellExecute = true
-                                });
+                                PlatformHelper.OpenInEditor(_config.Editor.Command, yamlPath);
                             })
                         );
 

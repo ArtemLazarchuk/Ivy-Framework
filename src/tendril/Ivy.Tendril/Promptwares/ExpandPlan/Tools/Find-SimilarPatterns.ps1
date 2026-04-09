@@ -1,12 +1,14 @@
 # Find Similar Implementation Patterns in Codebase
-# Usage: .\Find-SimilarPatterns.ps1 -Pattern "StateHasChanged" -Context "Dialog"
+# Usage: .\Find-SimilarPatterns.ps1 -Pattern "StateHasChanged" -Context "Dialog" -SearchPath "./src" -FileTypes cs,tsx,ts
 param(
     [Parameter(Mandatory=$true)]
     [string]$Pattern,
 
     [string]$Context = "",
 
-    [string]$SearchPath = "D:\Repos\_Ivy\Ivy-Framework\src",
+    [string]$SearchPath = ".",
+
+    [string[]]$FileTypes = @(),
 
     [int]$ContextLines = 3
 )
@@ -21,10 +23,12 @@ $results = @()
 # Search for the pattern using ripgrep
 $rgArgs = @(
     $Pattern,
-    $SearchPath,
-    "--type", "cs",
-    "--type", "tsx",
-    "--type", "ts",
+    $SearchPath
+)
+foreach ($ft in $FileTypes) {
+    $rgArgs += @("--type", $ft)
+}
+$rgArgs += @(
     "--line-number",
     "--context", $ContextLines,
     "--heading",

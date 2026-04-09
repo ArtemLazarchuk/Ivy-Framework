@@ -540,4 +540,73 @@ promptwares:
             Directory.Delete(tempDir, true);
         }
     }
+
+    [Fact]
+    public void Should_Parse_Default_Key_In_Promptwares()
+    {
+        var yaml = @"
+promptwares:
+  _default:
+    model: sonnet
+    effort: high
+    allowedTools:
+      - Read
+      - Glob
+  ExecutePlan:
+    model: opus
+    effort: max
+    allowedTools:
+      - Read
+      - Write
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.NotNull(service.Settings.Promptwares);
+            Assert.True(service.Settings.Promptwares.ContainsKey("_default"));
+            Assert.True(service.Settings.Promptwares.ContainsKey("ExecutePlan"));
+
+            var defaultConfig = service.Settings.Promptwares["_default"];
+            Assert.Equal("sonnet", defaultConfig.Model);
+            Assert.Equal("high", defaultConfig.Effort);
+            Assert.Equal(2, defaultConfig.AllowedTools.Count);
+            Assert.Contains("Read", defaultConfig.AllowedTools);
+            Assert.Contains("Glob", defaultConfig.AllowedTools);
+
+            var execConfig = service.Settings.Promptwares["ExecutePlan"];
+            Assert.Equal("opus", execConfig.Model);
+            Assert.Equal("max", execConfig.Effort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void EditorConfig_IsAvailable_WhenCommandExists()
+    {
+        // "dotnet" should be available on any machine running these tests
+        var result = ConfigService.IsCommandAvailable("dotnet");
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void EditorConfig_IsAvailable_WhenCommandMissing()
+    {
+        var result = ConfigService.IsCommandAvailable("nonexistent-command-xyz-12345");
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void PlatformHelper_OpenInEditor_ReturnsFalse_WhenCommandInvalid()
+    {
+        var result = PlatformHelper.OpenInEditor("nonexistent-editor-xyz-12345", "somefile.txt");
+        Assert.False(result);
+    }
 }
