@@ -160,9 +160,9 @@ In `plan.yaml`, populate the `verifications` list with each verification from th
 
 ```yaml
 verifications:
-  - name: DotnetBuild
+  - name: Build
     status: Pending
-  - name: DotnetTest
+  - name: Test
     status: Pending
 ```
 
@@ -199,34 +199,16 @@ The `## Tests` section MUST include two parts:
    - Identify the namespaces/classes being modified
    - Search for existing test classes that cover those areas
    - **Filters MUST target specific test classes, not broad namespaces.** 
-     - Good: `FullyQualifiedName~Ivy.Console.Test.CommandParserTests`
-     - Good: `FullyQualifiedName~Ivy.Test.Helpers.StringHelperTests|FullyQualifiedName~Ivy.Test.ValidationHelperTests`
-     - Bad: `FullyQualifiedName~Ivy.Console` (matches entire project including E2E)
-     - Bad: `FullyQualifiedName~Ivy.Test` (matches hundreds of unrelated tests)
+     - Good: `FullyQualifiedName~MyApp.Tests.CommandParserTests`
+     - Good: `FullyQualifiedName~MyApp.Tests.StringHelperTests|FullyQualifiedName~MyApp.Tests.ValidationHelperTests`
+     - Bad: `FullyQualifiedName~MyApp` (matches entire project including E2E)
+     - Bad: `FullyQualifiedName~MyApp.Tests` (matches hundreds of unrelated tests)
    - **Exclude E2E/integration test classes** unless the plan specifically changes E2E-level behavior. E2E tests are environment-dependent and should only run when explicitly needed.
    - When multiple test classes are relevant, combine with `|` operator: `FullyQualifiedName~ClassA|FullyQualifiedName~ClassB`
    - If no existing tests cover the changed code, state: "No existing test coverage for this area."
    - If the change is so broad that all tests are genuinely needed, explicitly state: "Run all tests (broad cross-cutting change)." and justify why.
    
    Never leave test scope unspecified — this causes the full suite to run unnecessarily.
-
-### 4.7. API Validation
-
-When suggesting Ivy Framework code in plan revisions:
-
-1. **Read Memory** — Check `Memory/ivy-framework-api-reference.md` for known patterns
-2. **Verify APIs** — Before suggesting any Ivy API (widgets, layouts, properties):
-   - Use `Grep` to find actual usage in `D:\Repos\_Ivy\Ivy-Framework\src\Ivy`
-   - Read the source file to confirm method signatures
-   - Check AGENTS.md for documented patterns
-3. **Never Guess** — If you can't verify an API, either:
-   - Use a verified alternative from memory/AGENTS.md
-   - Suggest the user verify the API (in ## Questions section)
-   - Omit the specific API and describe behavior instead
-
-**Example violation**: Writing `AlignItems(Alignment.Center)` without verifying it exists.
-
-**Correct approach**: Grep for `AlignContent` → Read `LayoutView.cs` → Confirm `AlignContent(Align align)` exists → Suggest verified API.
 
 ### 5. Verification Checklist
 
@@ -236,15 +218,15 @@ For each verification assigned to the project:
 - **Required** (`required: true`) → `- [x] VerificationName`
 - **Optional** (`required: false`) → `- [ ] VerificationName`
 
-Example for a Framework project plan:
+Example (verification names come from config.yaml):
 ```markdown
 ## Verification
 
-- [x] DotnetBuild
-- [x] DotnetFormat
-- [x] DotnetTest
-- [x] FrontendLint
-- [x] IvyFrameworkVerification
+- [x] Build
+- [x] Format
+- [x] Test
+- [x] Lint
+- [x] CheckResult
 ```
 
 If the project has no verifications (e.g. `[Auto]`), leave the section empty or omit it.
