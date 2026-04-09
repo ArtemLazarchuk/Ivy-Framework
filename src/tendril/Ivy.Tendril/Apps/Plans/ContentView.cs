@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Ivy.Core;
 using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
+using Ivy.Widgets.DiffView;
 
 namespace Ivy.Tendril.Apps.Plans;
 
@@ -13,10 +14,12 @@ public class ContentView(
     IPlanReaderService planService,
     IJobService jobService,
     Action refreshPlans,
-    IConfigService config) : ViewBase
+    IConfigService config,
+    IGitService gitService) : ViewBase
 {
     private readonly List<PlanFile> _allPlans = allPlans;
     private readonly IConfigService _config = config;
+    private readonly IGitService _gitService = gitService;
     private readonly IJobService _jobService = jobService;
     private readonly IPlanReaderService _planService = planService;
     private readonly Action _refreshPlans = refreshPlans;
@@ -44,7 +47,92 @@ public class ContentView(
         var isEditingPrev = UseState(false);
         var lastPlanId = UseState(_selectedPlan?.Id ?? -1);
 
+        var selectedTab = UseState(0);
+        var openVerification = UseState<string?>(null);
+        var openCommit = UseState<string?>(null);
+
         var selectedPlanRef = UseRef(_selectedPlan);
+
+        var verificationReportQuery = UseQuery<string, string>(
+            openVerification.Value ?? "",
+            async (name, ct) =>
+            {
+                if (string.IsNullOrEmpty(name) || _selectedPlan is null) return "";
+                var verificationDir = Path.GetFullPath(Path.Combine(_selectedPlan.FolderPath, "verification"));
+                var resolvedPath = Path.GetFullPath(Path.Combine(verificationDir, $"{name}.md"));
+                if (!resolvedPath.StartsWith(verificationDir, StringComparison.OrdinalIgnoreCase))
+                    return "Access denied: file is outside the verification folder.";
+                return await Task.Run(() =>
+                    File.Exists(resolvedPath) ? FileHelper.ReadAllText(resolvedPath) : $"No report found for {name}.", ct);
+            },
+            initialValue: ""
+        );
+
+        var commitQuery = UseQuery<CommitDetailData?, string>(
+            openCommit.Value ?? "",
+            async (hash, ct) =>
+            {
+                if (string.IsNullOrEmpty(hash)) return null;
+                var repoPaths2 = _selectedPlan!.GetEffectiveRepoPaths(_config);
+                return await Task.Run(() =>
+                {
+                    foreach (var repo in repoPaths2)
+                    {
+                        var title = _gitService.GetCommitTitle(repo, hash);
+                        if (title != null)
+                        {
+                            var diff = _gitService.GetCommitDiff(repo, hash);
+                            var files = _gitService.GetCommitFiles(repo, hash);
+                            return new CommitDetailData(title, diff, files);
+                        }
+                    }
+                    return null;
+                }, ct);
+            },
+            initialValue: null
+        );
+
+        var planContentQuery = UseQuery<PlanContentData, string>(
+            _selectedPlan?.FolderPath ?? "",
+            async (folderPath, ct) =>
+            {
+                return await Task.Run(() =>
+                {
+                    if (_selectedPlan is null)
+                        return new PlanContentData(null,
+                            new Dictionary<string, List<string>>(), new List<CommitRow>(),
+                            new Dictionary<string, bool>());
+
+                    // Summary
+                    var summPath = Path.Combine(folderPath, "artifacts", "summary.md");
+                    var summaryMd = File.Exists(summPath) ? FileHelper.ReadAllText(summPath) : null;
+
+                    // Artifacts
+                    var artifacts = GetArtifacts(folderPath);
+
+                    // Commit rows
+                    var repoPaths = _selectedPlan!.GetEffectiveRepoPaths(_config);
+                    var commitRows = _selectedPlan.Commits.Select(commit =>
+                    {
+                        var title = repoPaths
+                            .AsParallel()
+                            .Select(repo => _gitService.GetCommitTitle(repo, commit))
+                            .FirstOrDefault(t => t != null) ?? "";
+                        var shortHash = commit.Length > 7 ? commit[..7] : commit;
+                        return new CommitRow(commit, shortHash, title);
+                    }).ToList();
+
+                    // Verification report existence
+                    var verReports = _selectedPlan.Verifications.ToDictionary(
+                        v => v.Name,
+                        v => File.Exists(Path.Combine(folderPath, "verification", $"{v.Name}.md")));
+
+                    return new PlanContentData(summaryMd, artifacts, commitRows, verReports);
+                }, ct);
+            },
+            initialValue: new PlanContentData(null,
+                new Dictionary<string, List<string>>(), new List<CommitRow>(), new Dictionary<string, bool>())
+        );
 
         UseEffect(() =>
         {
@@ -73,6 +161,8 @@ public class ContentView(
 
             isEditingPrev.Set(isEditing.Value);
         }, isEditing);
+
+        UseEffect(() => { selectedTab.Set(0); }, _selectedPlanState);
 
 #pragma warning disable CS8601
         selectedPlanRef.Value = _selectedPlan;
@@ -128,19 +218,202 @@ public class ContentView(
             _refreshPlans();
         });
 
-        var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200)));
+        // Build tab contents
+        var content = Layout.Vertical();
+        var planData = planContentQuery.Value;
 
-        if (_selectedPlan.Status == PlanStatus.Failed) scrollableContent |= BuildFailureCallout(_selectedPlan);
-
+        // Plan tab content
+        object planTabContent;
         if (isEditing.Value)
-            scrollableContent |= editContent.ToCodeInput()
+            planTabContent = editContent.ToCodeInput()
                 .Language(Languages.Markdown)
                 .Width(Size.Full());
         else
-            scrollableContent |=
-                new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
-                    .DangerouslyAllowLocalFiles()
-                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
+        {
+            var planLayout = Layout.Vertical();
+            if (_selectedPlan.Status == PlanStatus.Failed) planLayout |= BuildFailureCallout(_selectedPlan);
+            planLayout |= new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
+                .DangerouslyAllowLocalFiles()
+                .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
+            planTabContent = planLayout;
+        }
+
+        if (planContentQuery.Loading)
+        {
+            content |= Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
+                       | Text.Muted("Loading...");
+        }
+        else
+        {
+            // Summary tab content
+            object summaryTabContent;
+            if (planData.SummaryMarkdown is { } summaryMd)
+                summaryTabContent = new Markdown(summaryMd).DangerouslyAllowLocalFiles();
+            else
+                summaryTabContent = Text.Muted("No summary available.");
+
+            // Verifications tab content
+            var verificationsTable = new Table(
+                new TableRow(
+                        new TableCell("Status").IsHeader(),
+                        new TableCell("Name").IsHeader()
+                    )
+                { IsHeader = true }
+            );
+            foreach (var v in _selectedPlan.Verifications)
+            {
+                var hasReport = planData.VerificationReports.TryGetValue(v.Name, out var exists) && exists;
+                var nameCapture = v.Name;
+                var nameCell = hasReport
+                    ? new Button(v.Name).Inline().OnClick(() => openVerification.Set(nameCapture))
+                    : (object)Text.Block(v.Name);
+
+                verificationsTable |= new TableRow(
+                    new TableCell(new Badge(v.Status).Variant(
+                        StatusMappings.VerificationStatusBadgeVariants.TryGetValue(v.Status, out var variant)
+                            ? variant
+                            : BadgeVariant.Outline)),
+                    new TableCell(nameCell)
+                );
+            }
+
+            // Commits tab content
+            var commitsTable = new Table(
+                new TableRow(
+                        new TableCell("Commit").IsHeader(),
+                        new TableCell("Message").IsHeader()
+                    )
+                { IsHeader = true }
+            );
+            foreach (var row in planData.CommitRows)
+                commitsTable |= new TableRow(
+                    new TableCell(new Button(row.ShortHash).Inline().OnClick(() => openCommit.Set(row.Hash))),
+                    new TableCell(row.Title)
+                );
+
+            // PRs tab content
+            object prsContent;
+            if (_selectedPlan.Prs.Count > 0)
+            {
+                var prsTable = new Table(
+                    new TableRow(
+                            new TableCell("Repository").IsHeader(),
+                            new TableCell("PR").IsHeader()
+                        )
+                    { IsHeader = true }
+                );
+                foreach (var pr in _selectedPlan.Prs.Where(PullRequestApp.IsValidUrl))
+                {
+                    var prCapture = pr;
+                    prsTable |= new TableRow(
+                        new TableCell(PullRequestApp.ExtractRepo(pr)),
+                        new TableCell(new Button(pr).Link().OnClick(() => client.OpenUrl(prCapture)))
+                    );
+                }
+
+                prsContent = prsTable;
+            }
+            else
+            {
+                prsContent = new Empty();
+            }
+
+            // Artifacts tab content
+            var artifactsLayout = Layout.Vertical().Gap(2);
+
+            if (planData.Artifacts.TryGetValue("screenshots", out var screenshotFiles))
+            {
+                var screenshotsLayout = Layout.Horizontal().Gap(2).Wrap();
+                foreach (var file in screenshotFiles)
+                {
+                    var imageUrl = $"/ivy/local-file?path={Uri.EscapeDataString(file)}";
+                    screenshotsLayout |= new Image(imageUrl)
+                    { ObjectFit = ImageFit.Contain, Alt = Path.GetFileName(file), Overlay = true }
+                        .Height(Size.Units(15)).Width(Size.Units(22))
+                        .BorderColor(Colors.Neutral)
+                        .BorderStyle(BorderStyle.Solid)
+                        .BorderThickness(1)
+                        .BorderRadius(BorderRadius.Rounded);
+                }
+
+                artifactsLayout |= screenshotsLayout;
+            }
+
+            var totalArtifacts = (planData.Artifacts.GetValueOrDefault("screenshots")?.Count ?? 0)
+                                 + (planData.Artifacts.ContainsKey("sample") ? 1 : 0);
+
+            // Build tabs
+            var tabs = new TabsLayout(
+                e => selectedTab.Set(e.Value), null, null, null, selectedTab.Value,
+                new Tab("Plan", Cap(planTabContent)),
+                new Tab("Summary", Cap(summaryTabContent)),
+                new Tab("Verifications", Cap(verificationsTable)).Badge(_selectedPlan.Verifications.Count.ToString()),
+                new Tab("Commits", Cap(commitsTable)).Badge(_selectedPlan.Commits.Count.ToString()),
+                new Tab("PRs", Cap(prsContent)).Badge(_selectedPlan.Prs.Count.ToString()),
+                new Tab("Artifacts", Cap(artifactsLayout)).Badge(totalArtifacts.ToString())
+            ).Variant(TabsVariant.Content);
+
+            content |= tabs;
+        }
+
+        // Sheet modals
+        if (openVerification.Value is { } verName)
+            content |= new Sheet(
+                () => openVerification.Set(null),
+                verificationReportQuery.Loading
+                    ? Text.Muted("Loading...")
+                    : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
+                verName
+            ).Width(Size.Half()).Resizable();
+
+        if (openCommit.Value is { } commitHash && _selectedPlan is not null)
+        {
+            var shortHash = commitHash.Length > 7 ? commitHash[..7] : commitHash;
+            object sheetContent;
+
+            if (commitQuery.Loading || commitQuery.Value is null && !string.IsNullOrEmpty(openCommit.Value))
+            {
+                sheetContent = Text.Muted("Loading...");
+            }
+            else
+            {
+                var data = commitQuery.Value;
+                var commitSheetContent = Layout.Vertical().Gap(4).Padding(2);
+
+                if (data?.Files is { Count: > 0 })
+                {
+                    var filesLayout = Layout.Vertical().Gap(1);
+                    filesLayout |= Text.Block("Changed Files").Bold();
+                    foreach (var (status, filePath) in data.Files)
+                    {
+                        var (label, variant) = status switch
+                        {
+                            "A" => ("Added", BadgeVariant.Success),
+                            "D" => ("Deleted", BadgeVariant.Destructive),
+                            _ => ("Modified", BadgeVariant.Outline)
+                        };
+                        filesLayout |= Layout.Horizontal().Gap(2)
+                            | new Badge(label).Variant(variant).Small()
+                            | Text.Block(filePath);
+                    }
+                    commitSheetContent |= filesLayout;
+                }
+
+                if (!string.IsNullOrWhiteSpace(data?.Diff))
+                {
+                    commitSheetContent |= Text.Block("Diff").Bold();
+                    commitSheetContent |= new DiffView().Diff(data.Diff).Split();
+                }
+
+                sheetContent = commitSheetContent;
+            }
+
+            content |= new Sheet(
+                onClose: () => openCommit.Set(null),
+                content: sheetContent,
+                title: $"Commit {shortHash} — {commitQuery.Value?.Title ?? ""}"
+            ).Width(Size.Half()).Resizable();
+        }
 
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
                         | new Button("Update").Icon(Icons.Pencil).Outline().ShortcutKey("u")
@@ -212,14 +485,11 @@ public class ContentView(
                             })
                         );
 
-        var mainContent = Layout.Vertical()
-                          | scrollableContent;
-
         var mainLayout = new HeaderLayout(
             header,
             new FooterLayout(
                 actionBar,
-                mainContent
+                content
             ).Size(Size.Full())
         ).Scroll(Scroll.None).Size(Size.Full()).Key(_selectedPlan.Id);
 
@@ -239,6 +509,8 @@ public class ContentView(
             elements.Add(fileLinkSheet);
 
         return new Fragment(elements.ToArray());
+
+        object Cap(object inner) => Layout.Vertical().Width(Size.Auto().Max(Size.Units(200))) | inner;
     }
 
     internal static object BuildFailureCallout(PlanFile plan)
@@ -315,6 +587,27 @@ public class ContentView(
         return Callout.Destructive("No details available. Check the logs folder.", "Execution Failed");
     }
 
+    private static Dictionary<string, List<string>> GetArtifacts(string folderPath)
+    {
+        var artifactsDir = Path.Combine(folderPath, "artifacts");
+        var result = new Dictionary<string, List<string>>();
+        if (!Directory.Exists(artifactsDir)) return result;
+
+        foreach (var subDir in Directory.GetDirectories(artifactsDir))
+        {
+            var category = Path.GetFileName(subDir);
+            var files = Directory.GetFiles(subDir, "*", SearchOption.AllDirectories).ToList();
+            if (files.Count > 0)
+                result[category] = files;
+        }
+
+        var rootFiles = Directory.GetFiles(artifactsDir).ToList();
+        if (rootFiles.Count > 0)
+            result["other"] = rootFiles;
+
+        return result;
+    }
+
     private void GoToNext()
     {
         if (_allPlans.Count == 0) return;
@@ -330,4 +623,18 @@ public class ContentView(
         var prevIndex = (currentIndex - 1 + _allPlans.Count) % _allPlans.Count;
         _selectedPlanState.Set(_allPlans[prevIndex]);
     }
+
+    private record CommitRow(string Hash, string ShortHash, string Title);
+
+    private record CommitDetailData(
+        string Title,
+        string? Diff,
+        List<(string Status, string FilePath)>? Files
+    );
+
+    private record PlanContentData(
+        string? SummaryMarkdown,
+        Dictionary<string, List<string>> Artifacts,
+        List<CommitRow> CommitRows,
+        Dictionary<string, bool> VerificationReports);
 }

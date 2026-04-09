@@ -12,6 +12,7 @@ public class PlansApp : ViewBase
         var planService = UseService<IPlanReaderService>();
         var jobService = UseService<IJobService>();
         var configService = UseService<IConfigService>();
+        var gitService = UseService<IGitService>();
         var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
         var projectFilter = UseState<string?>(null);
@@ -66,7 +67,7 @@ public class PlansApp : ViewBase
 
         return new SidebarLayout(
             new ContentView(selectedPlanState.Value, filteredPlans, selectedPlanState, planService, jobService,
-                RefreshPlans, configService),
+                RefreshPlans, configService, gitService),
             sidebar
         );
     }
