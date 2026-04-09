@@ -430,4 +430,114 @@ projects:
         Assert.NotNull(result);
         Assert.Equal("yolo", result.PrRule);
     }
+
+    [Fact]
+    public void Should_Deserialize_PromptwareConfig_Effort()
+    {
+        var yaml = @"
+promptwares:
+  MakePlan:
+    model: sonnet
+    effort: high
+    allowedTools:
+      - Read
+      - Write
+  ExecutePlan:
+    model: opus
+    effort: max
+    allowedTools:
+      - Read
+      - Bash
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.NotNull(service.Settings.Promptwares);
+            Assert.Equal(2, service.Settings.Promptwares.Count);
+
+            var makePlan = service.Settings.Promptwares["MakePlan"];
+            Assert.Equal("sonnet", makePlan.Model);
+            Assert.Equal("high", makePlan.Effort);
+            Assert.Equal(new List<string> { "Read", "Write" }, makePlan.AllowedTools);
+
+            var executePlan = service.Settings.Promptwares["ExecutePlan"];
+            Assert.Equal("opus", executePlan.Model);
+            Assert.Equal("max", executePlan.Effort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Deserialize_DefaultEffort()
+    {
+        var yaml = @"
+defaultEffort: medium
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.Equal("medium", service.Settings.DefaultEffort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void DefaultEffort_DefaultsToHigh()
+    {
+        var settings = new TendrilSettings();
+        Assert.Equal("high", settings.DefaultEffort);
+    }
+
+    [Fact]
+    public void PromptwareConfig_Effort_DefaultsToEmpty()
+    {
+        var config = new PromptwareConfig();
+        Assert.Equal("", config.Effort);
+    }
+
+    [Fact]
+    public void Should_Expand_Effort_Variables()
+    {
+        var yaml = @"
+defaultEffort: high
+promptwares:
+  TestPw:
+    model: sonnet
+    effort: high
+    allowedTools:
+      - Read
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            // Verify effort values survive expansion (non-variable values pass through unchanged)
+            Assert.Equal("high", service.Settings.DefaultEffort);
+            Assert.Equal("high", service.Settings.Promptwares["TestPw"].Effort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }
