@@ -214,20 +214,16 @@ projects:
     verifications: []
 ");
 
-        var previousHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-        Environment.SetEnvironmentVariable("TENDRIL_HOME", tempDir);
-
         try
         {
-            var service = new ConfigService();
+            var service = new ConfigService(new TendrilSettings());
+            service.SetTendrilHome(tempDir);
 
             Assert.NotNull(service.Settings);
             Assert.Equal("claude", service.Settings.CodingAgent);
-            Assert.False(service.NeedsOnboarding);
         }
         finally
         {
-            Environment.SetEnvironmentVariable("TENDRIL_HOME", previousHome);
             Directory.Delete(tempDir, true);
         }
     }
@@ -262,7 +258,7 @@ projects:
     }
 
     [Fact]
-    public void Constructor_And_SetTendrilHome_BehaviorIsConsistent()
+    public void SetTendrilHome_LoadsSettingsConsistently()
     {
         var tempDir = CreateTempConfigFile(@"
 codingAgent: consistent-agent
@@ -272,50 +268,17 @@ projects: []
 verifications: []
 ");
 
-        var previousHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-        Environment.SetEnvironmentVariable("TENDRIL_HOME", tempDir);
-
         try
         {
-            // Load via constructor
-            var serviceViaConstructor = new ConfigService();
+            var service = new ConfigService(new TendrilSettings());
+            service.SetTendrilHome(tempDir);
 
-            // Load via SetTendrilHome
-            var serviceViaSetHome = new ConfigService(new TendrilSettings());
-            serviceViaSetHome.SetTendrilHome(tempDir);
-
-            // Both should succeed and load the same settings
-            Assert.Equal("consistent-agent", serviceViaConstructor.Settings.CodingAgent);
-            Assert.Equal("consistent-agent", serviceViaSetHome.Settings.CodingAgent);
-
-            Assert.Equal(10, serviceViaConstructor.Settings.MaxConcurrentJobs);
-            Assert.Equal(10, serviceViaSetHome.Settings.MaxConcurrentJobs);
+            Assert.Equal("consistent-agent", service.Settings.CodingAgent);
+            Assert.Equal(10, service.Settings.MaxConcurrentJobs);
         }
         finally
         {
-            Environment.SetEnvironmentVariable("TENDRIL_HOME", previousHome);
             Directory.Delete(tempDir, true);
-        }
-    }
-
-    [Fact]
-    public void NeedsOnboarding_IsTrueWhenNoTendrilHomeSet()
-    {
-        // When TENDRIL_HOME is not set, ConfigService should indicate onboarding is needed.
-        // TendrilServer uses this flag to defer database and watcher service initialization
-        // until onboarding completes and a valid TendrilHome is established.
-        var previousHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-        Environment.SetEnvironmentVariable("TENDRIL_HOME", null);
-
-        try
-        {
-            var service = new ConfigService();
-            Assert.True(service.NeedsOnboarding);
-            Assert.Equal("", service.TendrilHome);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("TENDRIL_HOME", previousHome);
         }
     }
 

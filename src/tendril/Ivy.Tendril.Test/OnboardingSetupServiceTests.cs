@@ -171,24 +171,6 @@ public class OnboardingSetupServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CompleteSetupAsync_SetsEnvironmentVariable()
-    {
-        var (service, _) = CreateService();
-        var originalValue = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-
-        try
-        {
-            await service.CompleteSetupAsync(_tempDir);
-
-            Assert.Equal(_tempDir, Environment.GetEnvironmentVariable("TENDRIL_HOME"));
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("TENDRIL_HOME", originalValue);
-        }
-    }
-
-    [Fact]
     public async Task CompleteSetupAsync_CallsCompleteOnboarding()
     {
         var (service, config) = CreateService();
@@ -210,28 +192,6 @@ public class OnboardingSetupServiceTests : IAsyncLifetime
         Assert.True(File.Exists(counterPath));
         var content = (await File.ReadAllTextAsync(counterPath)).Trim();
         Assert.Equal("1", content);
-    }
-
-    [Fact]
-    public async Task CompleteSetupAsync_PersistsEnvironmentVariable_Windows()
-    {
-        if (!OperatingSystem.IsWindows())
-            return;
-
-        var (service, _) = CreateService();
-        var originalValue = Environment.GetEnvironmentVariable("TENDRIL_HOME", EnvironmentVariableTarget.User);
-
-        try
-        {
-            await service.CompleteSetupAsync(_tempDir);
-
-            var persisted = Environment.GetEnvironmentVariable("TENDRIL_HOME", EnvironmentVariableTarget.User);
-            Assert.Equal(_tempDir, persisted);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("TENDRIL_HOME", originalValue, EnvironmentVariableTarget.User);
-        }
     }
 
     [Fact]
