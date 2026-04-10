@@ -1,4 +1,35 @@
 codingAgent: claude
+agents:
+- name: ClaudeCode
+  profiles:
+  - name: deep
+    model: claude-opus-4-6
+    effort: max
+  - name: balanced
+    model: claude-sonnet-4-6
+    effort: high
+  - name: quick
+    model: claude-haiku-4-5
+    effort: low
+- name: Codex
+  profiles:
+  - name: deep
+    model: gpt-5.4
+    effort: high
+  - name: balanced
+    model: gpt-5.4-mini
+    effort: medium
+  - name: quick
+    model: gpt-5.3-codex
+    effort: low
+- name: Gemini
+  profiles:
+  - name: deep
+    model: gemini-3-flash-preview
+  - name: balanced
+    model: gemini-2.5-flash
+  - name: quick
+    model: gemini-2.5-flash-lite
 jobTimeout: 30
 staleOutputTimeout: 10
 maxConcurrentJobs: 10
@@ -253,8 +284,7 @@ llm:
   model: gpt-4o-mini
 promptwares:
   MakePlan:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
     - Read
     - Glob
@@ -263,8 +293,7 @@ promptwares:
     - Write
     - Edit
   ExecutePlan:
-    model: opus
-    effort: max
+    profile: deep
     allowedTools:
     - Read
     - Write
@@ -273,8 +302,7 @@ promptwares:
     - Grep
     - Bash
   ExpandPlan:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
     - Read
     - Glob
@@ -282,16 +310,14 @@ promptwares:
     - Bash
     - Write
   MakePr:
-    model: sonnet
-    effort: medium
+    profile: balanced
     allowedTools:
     - Read
     - Bash
     - Write
     - Edit
   UpdatePlan:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
     - Read
     - Glob
@@ -299,21 +325,18 @@ promptwares:
     - Bash
     - Write
   SplitPlan:
-    model: sonnet
-    effort: medium
+    profile: balanced
     allowedTools:
     - Read
     - Bash
     - Write
   CreateIssue:
-    model: sonnet
-    effort: medium
+    profile: balanced
     allowedTools:
     - Read
     - Bash
   IvyFrameworkVerification:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
     - Read
     - Write

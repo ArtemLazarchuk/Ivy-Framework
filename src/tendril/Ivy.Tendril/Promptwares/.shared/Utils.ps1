@@ -607,6 +607,7 @@ function GetAgentCommand {
                 if ($defaultConfig) {
                     if ($defaultConfig.model) { $pwConfig.model = $defaultConfig.model }
                     if ($defaultConfig.effort) { $pwConfig.effort = $defaultConfig.effort }
+                    if ($defaultConfig.profile) { $pwConfig.profile = $defaultConfig.profile }
                     if ($defaultConfig.allowedTools) { $pwConfig.allowedTools = $defaultConfig.allowedTools }
                 }
 
@@ -614,6 +615,7 @@ function GetAgentCommand {
                 if ($specificConfig) {
                     if ($specificConfig.model) { $pwConfig.model = $specificConfig.model }
                     if ($specificConfig.effort) { $pwConfig.effort = $specificConfig.effort }
+                    if ($specificConfig.profile) { $pwConfig.profile = $specificConfig.profile }
                     if ($specificConfig.allowedTools) { $pwConfig.allowedTools = $specificConfig.allowedTools }
                 }
             }
@@ -640,6 +642,23 @@ function GetAgentCommand {
                 }
             }
 
+            # Resolve model and effort from agent profile if profile is specified
+            if ($pwConfig -and $pwConfig.profile -and $config.agents) {
+                $agentEntry = $config.agents | Where-Object {
+                    ($_.name -eq "ClaudeCode" -and $codingAgent -eq "claude") -or
+                    ($_.name -eq "Codex" -and $codingAgent -eq "codex") -or
+                    ($_.name -eq "Gemini" -and $codingAgent -eq "gemini") -or
+                    ($_.name.ToLower() -eq $codingAgent)
+                } | Select-Object -First 1
+                if ($agentEntry) {
+                    $profile = $agentEntry.profiles | Where-Object { $_.name -eq $pwConfig.profile } | Select-Object -First 1
+                    if ($profile) {
+                        if ($profile.model) { $model = $profile.model }
+                        if ($profile.effort) { $effort = $profile.effort }
+                    }
+                }
+            }
+
             # Fall back to defaultEffort if no per-promptware effort set
             if (-not $effort -and $config.defaultEffort) {
                 $effort = $config.defaultEffort
@@ -653,8 +672,8 @@ function GetAgentCommand {
     # Build command from codingAgent
     $raw = switch ($codingAgent) {
         "claude"  { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
-        "codex"   { "codex --print --verbose" }
-        "gemini"  { "gemini --print --verbose" }
+        "codex"   { "codex --full-auto" }
+        "gemini"  { "gemini --sandbox" }
         default   { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
     }
 
@@ -664,9 +683,12 @@ function GetAgentCommand {
         $raw += " --model $model"
     }
 
-    # Apply effort level if set (claude only)
-    if ($effort -and $codingAgent -eq "claude") {
-        $raw += " --effort $effort"
+    # Apply effort level with agent-specific flag name
+    if ($effort) {
+        switch ($codingAgent) {
+            "claude" { $raw += " --effort $effort" }
+            "codex"  { $raw += " --reasoning-effort $effort" }
+        }
     }
 
     # Build args with quote-aware parsing
@@ -686,8 +708,9 @@ function GetAgentCommand {
 
     # Append allowedTools as a single comma-separated argument
     # Note: avoid using $args as it's an automatic variable in PowerShell
+    # Only pass --allowedTools to Claude; Codex/Gemini handle tool permissions differently
     $cmdArgs = @($parts[1..($parts.Length - 1)])
-    if ($allowedTools.Count -gt 0) {
+    if ($allowedTools.Count -gt 0 -and $codingAgent -eq "claude") {
         $cmdArgs += "--allowedTools"
         $cmdArgs += ($allowedTools -join ",")
     }

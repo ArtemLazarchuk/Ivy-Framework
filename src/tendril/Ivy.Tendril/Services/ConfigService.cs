@@ -87,7 +87,23 @@ public record PromptwareConfig
 {
     public string Model { get; set; } = "";
     public string Effort { get; set; } = "";
+    public string Profile { get; set; } = "";
     public List<string> AllowedTools { get; set; } = new();
+}
+
+public record AgentProfileConfig
+{
+    public string Name { get; set; } = "";
+    public string Model { get; set; } = "";
+    public string Effort { get; set; } = "";
+    public string Arguments { get; set; } = "";
+}
+
+public record AgentConfig
+{
+    public string Name { get; set; } = "";
+    public string Arguments { get; set; } = "";
+    public List<AgentProfileConfig> Profiles { get; set; } = new();
 }
 
 public record LlmConfig
@@ -110,6 +126,7 @@ public class TendrilSettings
     public EditorConfig Editor { get; set; } = new();
     public LlmConfig? Llm { get; set; }
     public Dictionary<string, PromptwareConfig> Promptwares { get; set; } = new();
+    public List<AgentConfig> Agents { get; set; } = new();
     public bool Telemetry { get; set; } = true;
 
     public List<LevelConfig> Levels { get; set; } = new()

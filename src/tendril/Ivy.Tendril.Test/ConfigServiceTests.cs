@@ -647,4 +647,128 @@ promptwares:
         var result = PlatformHelper.OpenInEditor("nonexistent-editor-xyz-12345", "somefile.txt");
         Assert.False(result);
     }
+
+    [Fact]
+    public void Should_Deserialize_Agents_Section_With_Profiles()
+    {
+        var yaml = @"
+agents:
+  - name: ClaudeCode
+    profiles:
+      - name: deep
+        model: claude-opus-4-6
+        effort: max
+      - name: balanced
+        model: claude-sonnet-4-6
+        effort: high
+      - name: quick
+        model: claude-haiku-4-5
+        effort: low
+  - name: Codex
+    profiles:
+      - name: deep
+        model: gpt-5.4
+        effort: high
+      - name: balanced
+        model: gpt-5.4-mini
+        effort: medium
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            Assert.NotNull(service.Settings.Agents);
+            Assert.Equal(2, service.Settings.Agents.Count);
+
+            var claude = service.Settings.Agents[0];
+            Assert.Equal("ClaudeCode", claude.Name);
+            Assert.Equal(3, claude.Profiles.Count);
+
+            var claudeDeep = claude.Profiles[0];
+            Assert.Equal("deep", claudeDeep.Name);
+            Assert.Equal("claude-opus-4-6", claudeDeep.Model);
+            Assert.Equal("max", claudeDeep.Effort);
+
+            var claudeBalanced = claude.Profiles[1];
+            Assert.Equal("balanced", claudeBalanced.Name);
+            Assert.Equal("claude-sonnet-4-6", claudeBalanced.Model);
+            Assert.Equal("high", claudeBalanced.Effort);
+
+            var codex = service.Settings.Agents[1];
+            Assert.Equal("Codex", codex.Name);
+            Assert.Equal(2, codex.Profiles.Count);
+            Assert.Equal("gpt-5.4", codex.Profiles[0].Model);
+            Assert.Equal("high", codex.Profiles[0].Effort);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Deserialize_PromptwareConfig_Profile_Field()
+    {
+        var yaml = @"
+promptwares:
+  ExecutePlan:
+    profile: deep
+    allowedTools:
+      - Read
+      - Bash
+  MakePlan:
+    profile: balanced
+    allowedTools:
+      - Read
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            var execute = service.Settings.Promptwares["ExecutePlan"];
+            Assert.Equal("deep", execute.Profile);
+            Assert.Equal("", execute.Model);
+            Assert.Equal("", execute.Effort);
+
+            var make = service.Settings.Promptwares["MakePlan"];
+            Assert.Equal("balanced", make.Profile);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Agents_DefaultsToEmptyList()
+    {
+        var settings = new TendrilSettings();
+        Assert.NotNull(settings.Agents);
+        Assert.Empty(settings.Agents);
+    }
+
+    [Fact]
+    public void PromptwareConfig_Profile_DefaultsToEmpty()
+    {
+        var config = new PromptwareConfig();
+        Assert.Equal("", config.Profile);
+    }
+
+    [Fact]
+    public void AgentProfileConfig_Fields_DefaultsToEmpty()
+    {
+        var profile = new AgentProfileConfig();
+        Assert.Equal("", profile.Name);
+        Assert.Equal("", profile.Model);
+        Assert.Equal("", profile.Effort);
+        Assert.Equal("", profile.Arguments);
+    }
 }
