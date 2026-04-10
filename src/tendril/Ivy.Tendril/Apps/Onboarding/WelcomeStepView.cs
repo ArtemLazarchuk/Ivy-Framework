@@ -4,7 +4,7 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
 {
     public override object Build()
     {
-        return Layout.Vertical()
+        return Layout.Vertical().Margin(0, 0, 0, 20)
                | Text.H1("Welcome to Ivy Tendril")
                | Text.Markdown(
                    """

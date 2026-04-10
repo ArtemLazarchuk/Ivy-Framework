@@ -56,7 +56,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                                    });
         }
 
-        return Layout.Vertical().Gap(4)
+        return Layout.Vertical().Gap(4).Margin(0, 0, 0, 20)
                | Text.H2("Project Setup")
                | Text.Muted("Set up your first project. You can add more projects later in Settings.")
                | (error.Value != null ? Text.Danger(error.Value) : null!)

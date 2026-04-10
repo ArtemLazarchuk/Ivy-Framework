@@ -36,7 +36,7 @@ public class CodingAgentStepView(
                 : _installedOptions.First().Label;
         });
 
-        return Layout.Vertical()
+        return Layout.Vertical().Margin(0, 0, 0, 20)
                 | Text.H2("Choose Your Coding Agent")
                 | Text.Muted("You can change this later under Settings.")
                 | selectedAgent.ToSelectInput(_installedOptions.Select(a => a.Label).ToArray())
