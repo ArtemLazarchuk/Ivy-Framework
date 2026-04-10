@@ -53,7 +53,15 @@ public class SoftwareCheckStepView(
                    """)
                | (checkResults.Value != null
                    ? Layout.Vertical()
-                     | Text.H3("Results")
+                     | (Layout.Horizontal().AlignContent(Align.Center)
+                        | Text.H3("Results")
+                        | new Button("Recheck")
+                            .Outline()
+                            .Small()
+                            .Icon(Icons.RefreshCw, Align.Right)
+                            .Loading(isChecking.Value)
+                            .Disabled(isChecking.Value)
+                            .OnClick(async () => await CheckSoftware()))
                      | new Table(
                          new TableRow(
                              new TableCell("Software").IsHeader(),
@@ -83,13 +91,8 @@ public class SoftwareCheckStepView(
                            .Large()
                            .Icon(Icons.ArrowRight, Align.Right)
                            .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
-                       : Layout.Vertical()
-                         | Text.Warning(
-                             "Please install and authenticate all required software before continuing. GitHub CLI must be logged in, and at least one coding agent must be working.")
-                            | new Button("Check Again")
-                                .Outline()
-                                .Icon(Icons.CheckCheck, Align.Right)
-                                .OnClick(async () => await CheckSoftware())
+                       : Text.Warning(
+                           "Please install and authenticate all required software before continuing. GitHub CLI must be logged in, and at least one coding agent must be working.")
                );
 
         async Task CheckSoftware()
