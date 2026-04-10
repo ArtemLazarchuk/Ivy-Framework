@@ -208,10 +208,10 @@ projects:
   - D:\Repos\_Ivy\Ivy-Mcp
 verifications:
 - name: DotnetBuild
-  prompt: Run `dotnet build --warnaserror` in the project repo and verify it succeeds with zero errors and zero warnings.
+  prompt: Run `dotnet build --warnaserror` in the plan's worktree directory (not the original repo) and verify it succeeds with zero errors and zero warnings.
 - name: DotnetTest
   prompt: >
-    Run dotnet tests in the project repo. 1. Read the plan revision's **## Tests** section for test scope instructions. 2. If the plan specifies a `dotnet test --filter` expression, run:
+    Run dotnet tests in the plan's worktree directory (not the original repo). 1. Read the plan revision's **## Tests** section for test scope instructions. 2. If the plan specifies a `dotnet test --filter` expression, run:
        `dotnet test --filter "<filter from plan>"`
        Common filter examples:
        - By class: `dotnet test --filter "FullyQualifiedName~MyTestClass"`
@@ -221,7 +221,7 @@ verifications:
        "No test filter specified in plan. Plans must specify a dotnet test --filter expression in the ## Tests section."
     6. Verify all executed tests pass.
 - name: DotnetFormat
-  prompt: Run `dotnet format` in the project repo, scoped to only the files changed by this plan's commits. Get the list of changed .cs files with `git diff --name-only --diff-filter=ACM HEAD~<N> -- '*.cs'` (where N is the number of commits in this execution), then run `dotnet format --include <files>`. If it modifies any files, stage and commit them. If no .cs files were changed, skip this verification.
+  prompt: Run `dotnet format` in the plan's worktree directory (not the original repo), scoped to only the files changed by this plan's commits. Get the list of changed .cs files with `git diff --name-only --diff-filter=ACM HEAD~<N> -- '*.cs'` (where N is the number of commits in this execution), then run `dotnet format --include <files>`. If it modifies any files, stage and commit them. If no .cs files were changed, skip this verification.
 - name: FrontendLint
   prompt: Run `cd src\frontend && npm run lint && npm run format:check` and verify no errors.
 - name: IvyFrameworkVerification

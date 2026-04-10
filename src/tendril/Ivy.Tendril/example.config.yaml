@@ -114,16 +114,16 @@ projects: []
 # Standard verification definitions — these prompts are used when verifications are referenced by projects.
 verifications:
 - name: DotnetBuild
-  prompt: Run `dotnet build --warnaserror` in the project repo and verify it succeeds with zero errors and zero warnings.
+  prompt: Run `dotnet build --warnaserror` in the plan's worktree directory (not the original repo) and verify it succeeds with zero errors and zero warnings.
 - name: DotnetFormat
   prompt: >
-    Run `dotnet format` in the project repo, scoped to only the files changed by this plan's commits.
+    Run `dotnet format` in the plan's worktree directory (not the original repo), scoped to only the files changed by this plan's commits.
     Get the list of changed .cs files with `git diff --name-only --diff-filter=ACM HEAD~<N> -- '*.cs'`
     (where N is the number of commits in this execution), then run `dotnet format --include <files>`.
     If it modifies any files, stage and commit them. If no .cs files were changed, skip this verification.
 - name: DotnetTest
   prompt: >
-    Run dotnet tests in the project repo.
+    Run dotnet tests in the plan's worktree directory (not the original repo).
     1. Read the plan revision's **## Tests** section for test scope instructions.
     2. If the plan specifies a `dotnet test --filter` expression, run it.
     3. If the plan says "No existing test coverage" or "No dotnet tests needed", skip with Pass.
