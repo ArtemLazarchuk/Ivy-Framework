@@ -459,22 +459,23 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
 
         if (config.NeedsOnboarding) return new OnboardingApp();
 
-        return Layout.Vertical()
-               | new SidebarLayout(
-                   body ?? null!,
-                   sidebarMenu,
-                   Layout.Vertical().Gap(2)
-                   | settings.Header
-                   | new NewPlanButton()
-                   ,
-                   Layout.Vertical(
-                       new SidebarNews("https://ivy.app/news.json"),
-                       settings.Footer,
-                       footer
-                   ),
-                   settings.Width
-               ).Open(sidebarOpen.Value).MainAppSidebar()
-               | new ImportIssuesDialog(importIssuesDialogOpen, config);
+        return new Fragment(
+            new SidebarLayout(
+                body ?? null!,
+                sidebarMenu,
+                Layout.Vertical().Gap(2)
+                | settings.Header
+                | new NewPlanButton()
+                ,
+                Layout.Vertical(
+                    new SidebarNews("https://ivy.app/news.json"),
+                    settings.Footer,
+                    footer
+                ),
+                settings.Width
+            ).Open(sidebarOpen.Value).MainAppSidebar(),
+            new ImportIssuesDialog(importIssuesDialogOpen, config)
+        );
     }
 
     private record TabState(string Id, string AppId, string Title, AppHost AppHost, Icons? Icon, string RefreshToken)
