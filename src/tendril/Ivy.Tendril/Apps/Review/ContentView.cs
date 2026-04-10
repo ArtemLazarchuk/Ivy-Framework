@@ -300,14 +300,16 @@ public class ContentView(
             var commitsTable = new Table(
                 new TableRow(
                         new TableCell("Commit").IsHeader(),
-                        new TableCell("Message").IsHeader()
+                        new TableCell("Message").IsHeader(),
+                        new TableCell("Files").IsHeader()
                     )
                 { IsHeader = true }
             );
             foreach (var row in planData.CommitRows)
                 commitsTable |= new TableRow(
                     new TableCell(new Button(row.ShortHash).Inline().OnClick(() => openCommit.Set(row.Hash))),
-                    new TableCell(row.Title)
+                    new TableCell(row.Title),
+                    new TableCell(row.FileCount?.ToString() ?? "–")
                 );
 
             commitsLayout |= commitsTable;
