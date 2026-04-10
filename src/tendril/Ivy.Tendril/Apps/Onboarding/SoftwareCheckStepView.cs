@@ -131,7 +131,7 @@ public class SoftwareCheckStepView(
                 health["codex"] = await CheckHealth("codex", "login status");
 
             if (results["gemini"])
-                health["gemini"] = await CheckHealth("gemini", "-p \"Reply OK\" --max-turns 0");
+                health["gemini"] = await CheckHealth("gemini", "-p \"Reply OK\"");
 
             healthResults.Set(health);
             isChecking.Set(false);
@@ -183,7 +183,7 @@ public class SoftwareCheckStepView(
         => CheckProcess(fileName, arguments, 10000);
 
     private static Task<bool> CheckHealth(string fileName, string arguments)
-        => CheckProcess(fileName, arguments, 15000);
+        => CheckProcess(fileName, arguments, 30000);
 
     private static async Task<bool> CheckProcess(string fileName, string arguments, int timeoutMs)
     {
