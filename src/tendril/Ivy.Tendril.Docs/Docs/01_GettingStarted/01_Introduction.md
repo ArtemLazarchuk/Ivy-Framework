@@ -15,7 +15,7 @@ icon: Rocket
 Tendril is an AI orchestration app on the Ivy stack: a cross-platform UI plus autonomous agents for real software workflows—not a black box.
 </Ingress>
 
-<Embed Url="https://youtu.be/O5lBceYZt-4"/>
+<Embed Url="https://youtu.be/Gkj5aj5nEKA"/>
 
 <Callout type="tip">
 You can always report issues and suggestions on the [GitHub repository](https://github.com/Ivy-Interactive/Ivy-Framework/issues).
