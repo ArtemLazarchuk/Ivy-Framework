@@ -138,7 +138,7 @@ public class OnboardingSetupServiceTests : IAsyncLifetime
         var content = await File.ReadAllTextAsync(configPath);
         Assert.Contains("codingAgent: claude", content);
         Assert.Contains("projects: []", content);
-        Assert.Contains("agents:", content);
+        Assert.Contains("codingAgents:", content);
         Assert.Contains("ClaudeCode", content);
         Assert.Contains("Codex", content);
         Assert.Contains("Gemini", content);
