@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Ivy.Tendril.Apps.Plans;
 using Microsoft.Extensions.Logging;
@@ -98,8 +99,7 @@ public class WorktreeCleanupService : IStartable, IDisposable
         {
             try
             {
-                PlanReaderService.ClearReadOnlyAttributes(wtDir);
-                Directory.Delete(wtDir, true);
+                ForceDeleteDirectory(wtDir);
             }
             catch (Exception ex)
             {
@@ -111,12 +111,50 @@ public class WorktreeCleanupService : IStartable, IDisposable
         try
         {
             if (Directory.Exists(worktreesDir))
-                Directory.Delete(worktreesDir, true);
+                ForceDeleteDirectory(worktreesDir);
         }
         catch
         {
             // Best-effort: directory may be locked
         }
+    }
+
+    internal static void ForceDeleteDirectory(string path)
+    {
+        // First attempt: standard .NET deletion
+        try
+        {
+            PlanReaderService.ClearReadOnlyAttributes(path);
+            Directory.Delete(path, true);
+            return;
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+
+        // Windows fallback: cmd /c rmdir handles some locked-dir cases that .NET can't
+        if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("cmd.exe", $"/c rmdir /s /q \"{path}\"")
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var process = Process.Start(psi);
+                process?.WaitForExit(10_000);
+            }
+            catch { }
+
+            if (!Directory.Exists(path)) return;
+        }
+
+        // Final attempt after a short delay (transient lock release)
+        Thread.Sleep(500);
+        PlanReaderService.ClearReadOnlyAttributes(path);
+        Directory.Delete(path, true); // Let this throw if it still fails
     }
 
     private void CleanupPlanWorktrees(string planFolderPath)

@@ -223,6 +223,59 @@ public class WorktreeCleanupServiceTests : IDisposable
     }
 
     [Fact]
+    public void ForceDeleteDirectory_Deletes_Normal_Directory()
+    {
+        var dir = Path.Combine(_tempDir, "force-delete-normal");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "file.txt"), "content");
+
+        WorktreeCleanupService.ForceDeleteDirectory(dir);
+
+        Assert.False(Directory.Exists(dir), "Normal directory should be deleted by ForceDeleteDirectory");
+    }
+
+    [Fact]
+    public void ForceDeleteDirectory_Deletes_ReadOnly_Directory()
+    {
+        var dir = Path.Combine(_tempDir, "force-delete-readonly");
+        var subDir = Path.Combine(dir, "sub");
+        Directory.CreateDirectory(subDir);
+
+        var roFile = Path.Combine(subDir, "readonly.dat");
+        File.WriteAllText(roFile, "locked content");
+        File.SetAttributes(roFile, FileAttributes.ReadOnly);
+
+        WorktreeCleanupService.ForceDeleteDirectory(dir);
+
+        Assert.False(Directory.Exists(dir), "Directory with read-only files should be deleted by ForceDeleteDirectory");
+    }
+
+    [Fact]
+    public void ForceDeleteDirectory_Handles_Nonexistent_Path_Gracefully()
+    {
+        var dir = Path.Combine(_tempDir, "force-delete-nonexistent");
+
+        // DirectoryNotFoundException inherits from IOException, so the first catch handles it.
+        // The Windows rmdir fallback also tolerates missing paths.
+        // Verify the method does not throw on nonexistent directories.
+        var ex = Record.Exception(() => WorktreeCleanupService.ForceDeleteDirectory(dir));
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public void ForceDeleteDirectory_Deletes_Deeply_Nested_Directory()
+    {
+        var dir = Path.Combine(_tempDir, "force-delete-deep");
+        var deep = Path.Combine(dir, "a", "b", "c", "d");
+        Directory.CreateDirectory(deep);
+        File.WriteAllText(Path.Combine(deep, "leaf.txt"), "deep");
+
+        WorktreeCleanupService.ForceDeleteDirectory(dir);
+
+        Assert.False(Directory.Exists(dir), "Deeply nested directory should be deleted by ForceDeleteDirectory");
+    }
+
+    [Fact]
     public void RemoveWorktrees_Logs_Warning_When_GitFile_Missing()
     {
         var dir = CreatePlan("10000-LogWarningTest", "Failed", DateTime.UtcNow.AddHours(-2));
