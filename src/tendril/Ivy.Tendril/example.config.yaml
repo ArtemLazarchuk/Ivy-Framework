@@ -20,27 +20,68 @@ defaultEffort: high    # Default effort level for promptwares (low/medium/high/m
 #   apiKey: %DotnetUserSecrets:OpenAi:ApiKey%
 #   model: gpt-4o-mini
 
-# Default promptware configuration — controls model, effort, and tool permissions per promptware.
-# Without these, promptwares inherit global permissions from codingAgent.
+# Agent profiles — define model and effort per profile for each coding agent.
+# Each agent has three profiles: deep, balanced, quick.
+# Promptwares reference profiles by name so switching codingAgent automatically
+# picks the right model and effort without per-promptware changes.
+agents:
+- name: ClaudeCode
+  profiles:
+  - name: deep
+    model: claude-opus-4-6
+    effort: max
+  - name: balanced
+    model: claude-sonnet-4-6
+    effort: high
+  - name: quick
+    model: claude-haiku-4-5
+    effort: low
+- name: Codex
+  profiles:
+  - name: deep
+    model: gpt-5.4
+    effort: high
+  - name: balanced
+    model: gpt-5.4-mini
+    effort: medium
+  - name: quick
+    model: gpt-5.3-codex
+    effort: low
+- name: Gemini
+  profiles:
+  - name: deep
+    model: gemini-3-flash-preview
+  - name: balanced
+    model: gemini-2.5-flash
+  - name: quick
+    model: gemini-2.5-flash-lite
+
+# Promptware configuration — each promptware is connected to a profile (deep/balanced/quick).
+# The profile determines model and effort from the active coding agent above.
 # _default provides base values. Specific entries override only the fields they define;
 # unspecified fields are inherited from _default.
 promptwares:
   MakePlan:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools: [Read, Glob, Grep, Bash, Write, Edit]
   ExecutePlan:
-    model: opus
-    effort: max
+    profile: deep
     allowedTools: [Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch]
   ExpandPlan:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools: [Read, Glob, Grep, Bash, Write, Edit]
+  UpdatePlan:
+    profile: balanced
+    allowedTools: [Read, Glob, Grep, Bash, Write]
+  SplitPlan:
+    profile: balanced
+    allowedTools: [Read, Bash, Write]
   MakePr:
-    model: sonnet
-    effort: medium
+    profile: balanced
     allowedTools: [Read, Glob, Grep, Bash, Write, Edit]
+  CreateIssue:
+    profile: balanced
+    allowedTools: [Read, Bash]
 
 # Projects — add your projects here. Each project groups repos, verifications, and context.
 # projects:
