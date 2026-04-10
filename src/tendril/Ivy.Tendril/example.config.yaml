@@ -24,7 +24,7 @@ maxConcurrentJobs: 5  # Maximum number of jobs to run concurrently (default: 5)
 # Agent profiles — each agent has three profiles: deep, balanced, quick.
 # Promptwares reference profiles by name so switching codingAgent automatically
 # picks the right model and effort without per-promptware changes.
-agents:
+codingAgents:
 - name: claude
   profiles:
   - name: deep

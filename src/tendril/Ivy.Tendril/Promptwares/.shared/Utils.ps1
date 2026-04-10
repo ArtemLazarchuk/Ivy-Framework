@@ -631,8 +631,8 @@ function GetAgentCommand {
             }
 
             # Resolve model, effort, and arguments from agent profile if profile is specified
-            if ($pwConfig -and $pwConfig.profile -and $config.agents) {
-                $agentEntry = $config.agents | Where-Object {
+            if ($pwConfig -and $pwConfig.profile -and $config.codingAgents) {
+                $agentEntry = $config.codingAgents | Where-Object {
                     ($_.name -eq "ClaudeCode" -and $codingAgent -eq "claude") -or
                     ($_.name -eq "Codex" -and $codingAgent -eq "codex") -or
                     ($_.name -eq "Gemini" -and $codingAgent -eq "gemini") -or

@@ -123,7 +123,7 @@ public class TendrilSettings
     public EditorConfig Editor { get; set; } = new();
     public LlmConfig? Llm { get; set; }
     public Dictionary<string, PromptwareConfig> Promptwares { get; set; } = new();
-    public List<AgentConfig> Agents { get; set; } = new();
+    public List<AgentConfig> CodingAgents { get; set; } = new();
     public bool Telemetry { get; set; } = true;
 
     public List<LevelConfig> Levels { get; set; } = new()

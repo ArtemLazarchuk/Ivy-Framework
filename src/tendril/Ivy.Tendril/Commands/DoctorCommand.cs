@@ -200,7 +200,7 @@ public static class DoctorCommand
         }
 
         // 5. Agent model verification
-        if (configService?.Settings.Agents is { Count: > 0 } agents)
+        if (configService?.Settings.CodingAgents is { Count: > 0 } agents)
         {
             PrintHeader("Agent Models");
 
@@ -287,7 +287,7 @@ public static class DoctorCommand
         var codingAgent = configService?.Settings.CodingAgent ?? "claude";
         var clis = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (configService?.Settings.Agents is { Count: > 0 } agents)
+        if (configService?.Settings.CodingAgents is { Count: > 0 } agents)
         {
             foreach (var agent in agents)
             {

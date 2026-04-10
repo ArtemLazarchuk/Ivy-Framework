@@ -36,7 +36,7 @@ public class OnboardingSetupService(IConfigService config, IServiceProvider serv
             var basicConfig = "codingAgent: claude\n" +
                               "jobTimeout: 30\n" +
                               "staleOutputTimeout: 10\n" +
-                              "agents:\n" +
+                              "codingAgents:\n" +
                               "- name: ClaudeCode\n" +
                               "  profiles:\n" +
                               "  - name: deep\n" +
