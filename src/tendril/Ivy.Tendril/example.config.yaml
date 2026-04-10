@@ -5,7 +5,6 @@ codingAgent: claude
 jobTimeout: 30
 staleOutputTimeout: 10
 maxConcurrentJobs: 5  # Maximum number of jobs to run concurrently (default: 5)
-defaultEffort: high    # Default effort level for promptwares (low/medium/high/max)
 
 # Variable Expansion Support:
 # - %DotnetUserSecrets:Section:Key% - Read from .NET user secrets (requires .csproj with UserSecretsId)

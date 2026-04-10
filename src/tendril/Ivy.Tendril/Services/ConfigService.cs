@@ -138,6 +138,7 @@ public class TendrilSettings
 public class ConfigService : IConfigService
 {
     private string[]? _levelNamesCache;
+    private string? _pendingCodingAgent;
     private ProjectConfig? _pendingProject;
     private string? _pendingTendrilHome;
     private List<VerificationConfig>? _pendingVerificationDefinitions;
@@ -286,6 +287,16 @@ public class ConfigService : IConfigService
         return _pendingTendrilHome;
     }
 
+    public void SetPendingCodingAgent(string name)
+    {
+        _pendingCodingAgent = name;
+    }
+
+    public string? GetPendingCodingAgent()
+    {
+        return _pendingCodingAgent;
+    }
+
     public void SetPendingProject(ProjectConfig project)
     {
         _pendingProject = project;
@@ -313,13 +324,12 @@ public class ConfigService : IConfigService
 
     public void CompleteOnboarding(string tendrilHome)
     {
-        // Update paths
         SetTendrilHome(tendrilHome);
 
-        // Use current settings (already initialized or updated during onboarding)
-        // If they are empty, serialize defaults
-        SaveSettings();
+        if (_pendingCodingAgent != null)
+            Settings.CodingAgent = _pendingCodingAgent;
 
+        SaveSettings();
         NeedsOnboarding = false;
     }
 

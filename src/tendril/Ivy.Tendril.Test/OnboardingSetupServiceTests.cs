@@ -138,6 +138,36 @@ public class OnboardingSetupServiceTests : IAsyncLifetime
         var content = await File.ReadAllTextAsync(configPath);
         Assert.Contains("codingAgent: claude", content);
         Assert.Contains("projects: []", content);
+        Assert.Contains("agents:", content);
+        Assert.Contains("ClaudeCode", content);
+        Assert.Contains("Codex", content);
+        Assert.Contains("Gemini", content);
+    }
+
+    [Fact]
+    public async Task CompleteSetupAsync_PreservesPendingCodingAgent()
+    {
+        var (service, config) = CreateService();
+
+        var baseDir = System.AppContext.BaseDirectory;
+        var examplePath = Path.Combine(baseDir, "example.config.yaml");
+        var exampleContent = "codingAgent: claude\nprojects: []\nverifications: []\n";
+        await File.WriteAllTextAsync(examplePath, exampleContent);
+
+        try
+        {
+            config.SetPendingCodingAgent("codex");
+
+            await service.CompleteSetupAsync(_tempDir);
+
+            Assert.Equal("codex", config.Settings.CodingAgent);
+            var savedContent = await File.ReadAllTextAsync(Path.Combine(_tempDir, "config.yaml"));
+            Assert.Contains("codingAgent: codex", savedContent);
+        }
+        finally
+        {
+            File.Delete(examplePath);
+        }
     }
 
     [Fact]

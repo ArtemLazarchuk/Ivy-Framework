@@ -45,7 +45,9 @@ public class CodingAgentStepView(
                 | new Button("Continue").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
                    .OnClick(() =>
                    {
-                       config.Settings.CodingAgent = _installedOptions.First(a => a.Label == selectedAgent.Value).Name;
+                       var agent = _installedOptions.First(a => a.Label == selectedAgent.Value).Name;
+                       config.Settings.CodingAgent = agent;
+                       config.SetPendingCodingAgent(agent);
                        stepperIndex.Set(stepperIndex.Value + 1);
                    });
     }
