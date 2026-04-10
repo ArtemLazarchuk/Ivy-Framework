@@ -36,7 +36,7 @@ public class SoftwareCheckStepView(
                                 && checkResults.Value["git"]
                                 && checkResults.Value["powershell"];
 
-        return Layout.Vertical()
+        return Layout.Vertical().Margin(0, 0, 0, 20)
                | Text.H2("Required Software")
                | Text.Markdown(
                    """
