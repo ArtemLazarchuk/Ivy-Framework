@@ -60,7 +60,7 @@ try {
     }
 
     $startTs = (Get-Date).ToUniversalTime().ToString("o")
-    Add-Content -Path $rawLogFile -Value "[tendril] Claude invocation started at $startTs" -Encoding UTF8
+    Add-Content -Path $rawLogFile -Value "[tendril] Agent invocation started at $startTs (provider: $($agent.CodingAgent))" -Encoding UTF8
     Add-Content -Path $rawLogFile -Value "[tendril] Command: $($agent.Executable) $($agent.Args -join ' ') $($extraArgs -join ' ')" -Encoding UTF8
 
     # Claude uses -- separator; Codex/Gemini take prompt as positional argument
