@@ -6,6 +6,7 @@ searchHints:
   - agent
   - orchestration
   - architecture
+icon: Rocket
 ---
 
 # Welcome to Tendril
@@ -14,9 +15,17 @@ searchHints:
 Tendril is an AI orchestration app on the Ivy stack: a cross-platform UI plus autonomous agents for real software workflows—not a black box.
 </Ingress>
 
+<Callout type="warning">
+You can always report issues and suggestions on the [GitHub repository](https://github.com/Ivy-Interactive/Ivy-Framework/issues).
+</Callout>
+
+<Callout type="tip">
+If you need direct help, please join our [Discord](https://discord.gg/FHgxkDga3y).
+</Callout>
+
 You see each stage of the work. Tasks are **Plans**; orchestrated **Promptwares** (Claude-based agents) generate code, verify it, and open PRs—without hiding what ran.
 
-<Embed Url="https://www.youtube.com/watch?v=PLACEHOLDER"/>
+<Embed Url="https://youtu.be/O5lBceYZt-4"/>
 
 ## The Concept
 
@@ -41,9 +50,3 @@ You see each stage of the work. Tasks are **Plans**; orchestrated **Promptwares*
 5. **`MakePr`** — Approved work – GitHub PR.
 
 That loop turns the assistant from autocomplete into something you can ship with.
-
-## Quick Install
-
-```bash
-curl -sSf https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Framework/main/src/tendril/install.sh | sh
-```
