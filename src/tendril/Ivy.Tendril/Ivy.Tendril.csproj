@@ -65,6 +65,9 @@
   <ItemGroup>
     <Folder Include="Apps" />
   </ItemGroup>
+  <ItemGroup>
+    <Watch Remove="Promptwares\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="example.config.yaml">
