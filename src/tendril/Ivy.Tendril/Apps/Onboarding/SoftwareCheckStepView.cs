@@ -53,21 +53,22 @@ public class SoftwareCheckStepView(
                    """)
                | (checkResults.Value != null
                    ? Layout.Vertical()
-                     | (Layout.Horizontal().AlignContent(Align.Center)
+                     | new Separator()
+                     | (Layout.Horizontal()
                         | Text.H3("Results")
-                        | new Button("Recheck")
+                        | new Spacer()
+                        | new Button(!isChecking.Value ? "Recheck" : "Checking...")
                             .Outline()
                             .Small()
                             .Icon(Icons.RefreshCw, Align.Right)
                             .Loading(isChecking.Value)
                             .Disabled(isChecking.Value)
                             .OnClick(async () => await CheckSoftware()))
-                     | Layout.Spacer()
                      | new Table(
                          new TableRow(
                              new TableCell("Software").IsHeader(),
                              new TableCell("Status").IsHeader(),
-                             new TableCell("Notes").IsHeader()
+                             new TableCell("Instructions").IsHeader()
                          ).IsHeader(),
                          MakeSoftwareRow(checkResults.Value, healthResults.Value, "GitHub CLI", "gh", "https://cli.github.com/", true),
                          MakeSoftwareRow(checkResults.Value, healthResults.Value, "Claude CLI", "claude", "https://docs.anthropic.com/en/docs/claude-code", false),
@@ -82,7 +83,7 @@ public class SoftwareCheckStepView(
                    ? new Button("Check Software")
                        .Primary()
                        .Large()
-                       .Icon(Icons.CheckCheck, Align.Right)
+                       .Icon(Icons.ArrowRight, Align.Right)
                        .Loading(isChecking.Value)
                        .Disabled(isChecking.Value)
                        .OnClick(async () => await CheckSoftware())
@@ -92,8 +93,7 @@ public class SoftwareCheckStepView(
                            .Large()
                            .Icon(Icons.ArrowRight, Align.Right)
                            .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
-                       : Text.Warning(
-                           "Please install and authenticate all required software before continuing. GitHub CLI must be logged in, and at least one coding agent must be working.")
+                       : Text.Muted("Please Wait...")
                );
 
         async Task CheckSoftware()

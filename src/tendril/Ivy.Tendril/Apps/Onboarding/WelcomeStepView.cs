@@ -9,7 +9,9 @@ public class WelcomeStepView(IState<int> stepperIndex) : ViewBase
                | Text.Markdown(
                    """
                    >[!NOTE]
-                   >Ivy Tendril is a coding orchestrator powered by agents like Claude Code, Codex, or Gemini. It's designed to help you complete large amounts of work quickly. Be aware that Tendril will consume lots of tokens rapidly.
+                   >Ivy Tendril is a coding orchestrator powered by agents like Claude Code, Codex, or Gemini. It's designed to help you complete large amounts of work quickly. 
+                   >
+                   >**Please be aware that Tendril will consume lots of tokens rapidly.**
                    """)
                | new Button("Get Started").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
                    .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1));

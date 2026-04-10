@@ -65,10 +65,12 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                    .Rows(4)
                    .WithField()
                    .Label("Context (Optional)")
+               | new Separator()
                | (Layout.Vertical().Gap(2)
                   | Text.Block("Repositories").Bold()
                   | Text.Muted("Add at least one repository path for this project.")
                   | reposLayout)
+               | new Separator()
                | (Layout.Vertical().Gap(2)
                   | Text.Block("Verifications").Bold()
                   | Text.Muted("Define verifications to run for this project.")
@@ -77,6 +79,7 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
                   {
                       editIndex.Set(null);
                   }))
+               | new Separator()
                | (Layout.Horizontal().Gap(2)
                   | new Button("Next").Primary().Large().Icon(Icons.ArrowRight, Align.Right)
                       .OnClick(() =>

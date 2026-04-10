@@ -32,6 +32,7 @@ public class WallpaperApp : ViewBase
                    | Text.Muted(subtitle)
                    | new Button(buttonLabel, () => dialogOpen.Set(true))
                        .Variant(ButtonVariant.Primary)
+                       .Icon(Icons.Plus, Align.Right)
                 )
         };
 

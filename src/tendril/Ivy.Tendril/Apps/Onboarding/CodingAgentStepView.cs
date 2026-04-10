@@ -7,7 +7,7 @@ public class CodingAgentStepView(
     IReadOnlyDictionary<string, bool> checkResults,
     IReadOnlyDictionary<string, HealthCheckStatus?>? healthResults) : ViewBase
 {
-    private static readonly (string Label, string Name)[] AgentOptions = [("Claude Code", "claude"), ("Codex", "codex"), ("Gemini", "gemini")];
+    private static readonly (string Label, string Name)[] AgentOptions = [("Claude", "claude"), ("Codex", "codex"), ("Gemini", "gemini")];
     private readonly (string Label, string Name)[] _installedOptions = GetInstalledOptions(checkResults, healthResults);
 
     private static (string Label, string Name)[] GetInstalledOptions(
@@ -38,6 +38,7 @@ public class CodingAgentStepView(
 
         return Layout.Vertical()
                 | Text.H2("Choose Your Coding Agent")
+                | Text.Muted("You can change this later under Settings.")
                 | selectedAgent.ToSelectInput(_installedOptions.Select(a => a.Label).ToArray())
                    .Variant(SelectInputVariant.Toggle)
                    .WithField()
