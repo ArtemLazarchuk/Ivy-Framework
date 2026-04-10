@@ -122,11 +122,7 @@ public class SoftwareCheckStepView(
 
             checkResults.Set(results);
 
-            var health = new Dictionary<string, HealthCheckStatus?>();
-
-            if (results["gh"])
-                health["gh"] = await CheckHealth("gh", "auth status");
-
+            var ghHealthTask = results["gh"] ? CheckHealth("gh", "auth status") : null;
             // --max-turns 1 caps Claude at a single agentic turn so the process exits cleanly.
             // Without it, `claude -p` still starts an interactive session on some versions and
             // blocks until the 30 s timeout fires, falsely reporting "not authenticated".
@@ -134,14 +130,21 @@ public class SoftwareCheckStepView(
             // could be silently removed in a future release — exactly what happened to Gemini CLI
             // in 0.37.1+ (see plan 00030). If this check starts failing without auth changes,
             // verify --max-turns is still a recognized flag (`claude --help | grep max-turns`).
-            if (results["claude"])
-                health["claude"] = await CheckHealth("claude", "-p \"ping\" --max-turns 1");
+            var claudeHealthTask = results["claude"] ? CheckHealth("claude", "-p \"ping\" --max-turns 1") : null;
+            var codexHealthTask = results["codex"] ? CheckHealth("codex", "login status") : null;
+            var geminiHealthTask = results["gemini"] ? CheckHealth("gemini", "-p \"Reply OK\"") : null;
 
-            if (results["codex"])
-                health["codex"] = await CheckHealth("codex", "login status");
+            var activeHealthTasks = new[] { ghHealthTask, claudeHealthTask, codexHealthTask, geminiHealthTask }
+                .OfType<Task<HealthCheckStatus>>()
+                .ToArray();
+            if (activeHealthTasks.Length > 0)
+                await Task.WhenAll(activeHealthTasks);
 
-            if (results["gemini"])
-                health["gemini"] = await CheckHealth("gemini", "-p \"Reply OK\"");
+            var health = new Dictionary<string, HealthCheckStatus?>();
+            if (ghHealthTask != null) health["gh"] = ghHealthTask.Result;
+            if (claudeHealthTask != null) health["claude"] = claudeHealthTask.Result;
+            if (codexHealthTask != null) health["codex"] = codexHealthTask.Result;
+            if (geminiHealthTask != null) health["gemini"] = geminiHealthTask.Result;
 
             healthResults.Set(health);
             isChecking.Set(false);
