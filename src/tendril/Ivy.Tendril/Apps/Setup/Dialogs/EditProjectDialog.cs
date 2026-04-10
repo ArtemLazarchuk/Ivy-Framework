@@ -21,7 +21,6 @@ public class EditProjectDialog(
     {
         var editName = UseState("");
         var editColor = UseState<Colors?>(null);
-        var editSlackEmoji = UseState("");
         var editContext = UseState("");
         var editRepos = UseState(new List<RepoRef>());
         var editVerifications = UseState(new List<ProjectVerificationRef>());
@@ -38,7 +37,6 @@ public class EditProjectDialog(
             {
                 editName.Set("");
                 editColor.Set(null);
-                editSlackEmoji.Set("");
                 editContext.Set("");
                 editRepos.Set(new List<RepoRef>());
                 editVerifications.Set(new List<ProjectVerificationRef>());
@@ -48,7 +46,6 @@ public class EditProjectDialog(
                 var project = _projects[_editIndex.Value.Value];
                 editName.Set(project.Name);
                 editColor.Set(Enum.TryParse<Colors>(project.Color, out var c) ? c : null);
-                editSlackEmoji.Set(project.GetMeta("slackEmoji") ?? "");
                 editContext.Set(project.Context);
                 editRepos.Set(
                     new List<RepoRef>(project.Repos.Select(r => new RepoRef { Path = r.Path, PrRule = r.PrRule })));
@@ -243,7 +240,6 @@ public class EditProjectDialog(
                 Layout.Vertical().Gap(4)
                 | editName.ToTextInput("Project name...").WithField().Label("Name")
                 | editColor.ToSelectInput().WithField().Label("Color")
-                | editSlackEmoji.ToTextInput(":emoji:").WithField().Label("Slack Emoji")
                 | editContext.ToTextareaInput("Project context or prompt for AI agents (optional)...").Rows(4)
                     .WithField().Label("Context / Prompt (Optional)")
                 | (Layout.Vertical().Gap(2)
@@ -266,7 +262,6 @@ public class EditProjectDialog(
                     var project = isNew ? new ProjectConfig() : _projects[_editIndex.Value!.Value];
                     project.Name = editName.Value;
                     project.Color = editColor.Value?.ToString() ?? "";
-                    project.Meta["slackEmoji"] = editSlackEmoji.Value;
                     project.Context = editContext.Value;
                     project.Repos = new List<RepoRef>(editRepos.Value);
                     project.Verifications = new List<ProjectVerificationRef>(editVerifications.Value);

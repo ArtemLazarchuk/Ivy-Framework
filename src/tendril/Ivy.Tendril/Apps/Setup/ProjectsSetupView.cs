@@ -16,7 +16,7 @@ public class ProjectsSetupView : ViewBase
         var projects = config.Settings.Projects;
         var allVerifications = config.Settings.Verifications.Select(v => v.Name).ToList();
 
-        var rows = projects.Select((p, i) => new ProjectRow(p.Name, p.Color, p.GetMeta("slackEmoji"), p.Repos.Count, p.Verifications.Count, i)).ToList();
+        var rows = projects.Select((p, i) => new ProjectRow(p.Name, p.Color, p.Repos.Count, p.Verifications.Count, i)).ToList();
 
         var table = new TableBuilder<ProjectRow>(rows)
             .Header(t => t.Index, "Actions")
@@ -27,12 +27,6 @@ public class ProjectsSetupView : ViewBase
                     editIndex.Set(idx);
                 })
                 | new Button().Icon(Icons.Trash).Outline().Small().OnClick(() => { deleteIndex.Set(idx); })
-            ))
-            .Header(t => t.Icon, "Icon")
-            .Builder(t => t.Icon, f => f.Func<ProjectRow, string?>(emoji =>
-                !string.IsNullOrEmpty(emoji)
-                    ? Text.Block(emoji)
-                    : new Spacer()
             ));
 
         return Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
@@ -46,5 +40,5 @@ public class ProjectsSetupView : ViewBase
                | new DeleteProjectDialog(deleteIndex, projects, config, client, refreshToken);
     }
 
-    private record ProjectRow(string Name, string Color, string? Icon, int RepoCount, int VerificationCount, int Index);
+    private record ProjectRow(string Name, string Color, int RepoCount, int VerificationCount, int Index);
 }
