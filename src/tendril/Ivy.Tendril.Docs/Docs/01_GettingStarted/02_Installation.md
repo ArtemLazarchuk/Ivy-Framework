@@ -36,7 +36,7 @@ Invoke-RestMethod -Uri https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Fra
 Global install from NuGet:
 
 ```bash
-dotnet tool install -g Ivy.Tendril --prerelease
+dotnet tool install --g Ivy.Tendril
 ```
 
 <Callout type="Tip">
@@ -48,4 +48,12 @@ Powershell 7, Git and gh CLI need to be present on your machine if you install u
 
 ```bash
 tendril
+```
+
+## Update
+
+You can update Ivy Tendril at anytime after the initial install using the dotnet tool update command:
+
+```bash
+dotnet tool install --g Ivy.Tendril
 ```
