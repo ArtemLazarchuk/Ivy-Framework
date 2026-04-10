@@ -126,6 +126,15 @@ public static class TendrilServer
             return new WorktreeCleanupService(config.PlanFolder, logger);
         });
         server.Services.AddSingleton<IStartable>(sp => sp.GetRequiredService<WorktreeCleanupService>());
+        server.Services.AddSingleton<PrStatusSyncService>(sp =>
+        {
+            var database = sp.GetRequiredService<IPlanDatabaseService>();
+            var githubService = sp.GetRequiredService<IGithubService>();
+            var planReader = sp.GetRequiredService<IPlanReaderService>();
+            var logger = sp.GetRequiredService<ILogger<PrStatusSyncService>>();
+            return new PrStatusSyncService(database, githubService, planReader, logger);
+        });
+        server.Services.AddSingleton<IStartable>(sp => sp.GetRequiredService<PrStatusSyncService>());
 
         server.UseWebApplication(app =>
         {
