@@ -156,17 +156,6 @@ public static class ProcessHelper
         if (string.IsNullOrWhiteSpace(localUrl))
             throw new ArgumentNullException(nameof(localUrl));
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            Process.Start(new ProcessStartInfo("cmd", $"/c start {localUrl}") { CreateNoWindow = true });
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            Process.Start("xdg-open", localUrl);
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            Process.Start("open", localUrl);
-        }
+        Process.Start(new ProcessStartInfo(localUrl) { UseShellExecute = true });
     }
 }
