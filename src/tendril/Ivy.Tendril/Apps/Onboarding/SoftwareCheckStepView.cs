@@ -62,6 +62,7 @@ public class SoftwareCheckStepView(
                             .Loading(isChecking.Value)
                             .Disabled(isChecking.Value)
                             .OnClick(async () => await CheckSoftware()))
+                     | Layout.Spacer()
                      | new Table(
                          new TableRow(
                              new TableCell("Software").IsHeader(),
