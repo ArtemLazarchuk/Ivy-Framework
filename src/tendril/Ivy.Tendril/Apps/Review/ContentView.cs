@@ -2,6 +2,7 @@ using Ivy.Core;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.Review.Dialogs;
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Ivy.Tendril.Apps.Review;
 
@@ -27,6 +28,7 @@ public class ContentView(
     public override object Build()
     {
         var client = UseService<IClientProvider>();
+        var logger = UseService<ILogger<ContentView>>();
         var copyToClipboard = UseClipboard();
         var openVerification = UseState<string?>(null);
         var openArtifact = UseState<string?>(null);
@@ -130,9 +132,9 @@ public class ContentView(
                                 FileHelper.ReadAllText(recsPath)) ?? new List<RecommendationYaml>()
                             : new List<RecommendationYaml>();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Malformed YAML must not crash the process — file may be partially written by a promptware.
+                        logger.LogWarning(ex, "Failed to parse recommendations.yaml for plan {FolderPath}", folderPath);
                         recs = new List<RecommendationYaml>();
                     }
 

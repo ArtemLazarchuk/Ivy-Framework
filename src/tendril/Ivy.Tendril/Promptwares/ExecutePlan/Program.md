@@ -362,6 +362,8 @@ If you identified items in ANY category, write them to `<PlanFolder>/artifacts/r
   state: Pending
 ```
 
+**YAML quoting rules:** Titles containing backticks, colons, brackets, braces, or other YAML special characters MUST be double-quoted. Alternatively, use block scalar style (`>` or `|`) for values with special characters.
+
 Do NOT include items that are part of the current plan's scope.
 
 Do NOT include recommendations about code formatting, linting, or style issues (e.g., line wrapping, indentation, trailing whitespace, import ordering). These are handled automatically by DotnetFormat and FrontendLint verifications.
