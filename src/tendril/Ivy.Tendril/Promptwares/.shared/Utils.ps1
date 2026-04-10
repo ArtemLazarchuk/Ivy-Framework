@@ -605,27 +605,18 @@ function GetAgentCommand {
 
                 # Layer 1: _default values
                 if ($defaultConfig) {
-                    if ($defaultConfig.model) { $pwConfig.model = $defaultConfig.model }
-                    if ($defaultConfig.effort) { $pwConfig.effort = $defaultConfig.effort }
                     if ($defaultConfig.profile) { $pwConfig.profile = $defaultConfig.profile }
                     if ($defaultConfig.allowedTools) { $pwConfig.allowedTools = $defaultConfig.allowedTools }
                 }
 
                 # Layer 2: specific promptware values override
                 if ($specificConfig) {
-                    if ($specificConfig.model) { $pwConfig.model = $specificConfig.model }
-                    if ($specificConfig.effort) { $pwConfig.effort = $specificConfig.effort }
                     if ($specificConfig.profile) { $pwConfig.profile = $specificConfig.profile }
                     if ($specificConfig.allowedTools) { $pwConfig.allowedTools = $specificConfig.allowedTools }
                 }
             }
 
             if ($pwConfig) {
-                # Apply model override
-                if ($pwConfig.model) {
-                    $model = $pwConfig.model
-                }
-
                 # Apply allowedTools with environment variable expansion
                 if ($pwConfig.allowedTools) {
                     foreach ($tool in $pwConfig.allowedTools) {
@@ -634,11 +625,6 @@ function GetAgentCommand {
                         $resolvedTool = $resolvedTool -replace '\\', '/'
                         $allowedTools += $resolvedTool
                     }
-                }
-
-                # Apply effort override
-                if ($pwConfig.effort) {
-                    $effort = $pwConfig.effort
                 }
             }
 

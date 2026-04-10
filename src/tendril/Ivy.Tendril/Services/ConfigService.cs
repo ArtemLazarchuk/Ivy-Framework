@@ -85,8 +85,6 @@ public record EditorConfig
 
 public record PromptwareConfig
 {
-    public string Model { get; set; } = "";
-    public string Effort { get; set; } = "";
     public string Profile { get; set; } = "";
     public List<string> AllowedTools { get; set; } = new();
 }
@@ -448,9 +446,6 @@ public class ConfigService : IConfigService
             foreach (var kvp in Settings.Promptwares.ToList())
             {
                 var config = kvp.Value;
-                config.Model = VariableExpansion.ExpandVariables(config.Model, TendrilHome);
-                config.Effort = VariableExpansion.ExpandVariables(config.Effort, TendrilHome);
-
                 if (config.AllowedTools != null)
                     for (var i = 0; i < config.AllowedTools.Count; i++)
                         config.AllowedTools[i] = VariableExpansion.ExpandVariables(config.AllowedTools[i], TendrilHome);

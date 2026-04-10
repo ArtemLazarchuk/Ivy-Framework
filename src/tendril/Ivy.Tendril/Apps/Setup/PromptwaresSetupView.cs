@@ -16,8 +16,7 @@ public class PromptwaresSetupView : ViewBase
 
         var rows = promptwares.Select(kvp => new PromptwareRow(
             kvp.Key,
-            kvp.Value.Model,
-            kvp.Value.Effort,
+            kvp.Value.Profile,
             string.Join(", ", kvp.Value.AllowedTools)
         )).ToList();
 
@@ -40,7 +39,7 @@ public class PromptwaresSetupView : ViewBase
 
         return Layout.Vertical().Gap(4).Padding(4).Width(Size.Auto().Max(Size.Units(120)))
                | Text.Block("Promptware Configuration").Bold()
-               | Text.Block("Configure model, effort level, and tool permissions for each promptware.")
+               | Text.Block("Configure agent profile and tool permissions for each promptware.")
                    .Muted().Small()
                | table
                | new Button("Add Promptware").Icon(Icons.Plus).Outline().OnClick(() =>
@@ -50,5 +49,5 @@ public class PromptwaresSetupView : ViewBase
                | new EditPromptwareDialog(editKey, promptwares, config, client, refreshToken);
     }
 
-    private record PromptwareRow(string Name, string Model, string Effort, string AllowedTools);
+    private record PromptwareRow(string Name, string Profile, string AllowedTools);
 }

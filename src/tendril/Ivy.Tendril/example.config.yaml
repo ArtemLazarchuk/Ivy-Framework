@@ -20,8 +20,7 @@ defaultEffort: high    # Default effort level for promptwares (low/medium/high/m
 #   apiKey: %DotnetUserSecrets:OpenAi:ApiKey%
 #   model: gpt-4o-mini
 
-# Agent profiles — define model and effort per profile for each coding agent.
-# Each agent has three profiles: deep, balanced, quick.
+# Agent profiles — each agent has three profiles: deep, balanced, quick.
 # Promptwares reference profiles by name so switching codingAgent automatically
 # picks the right model and effort without per-promptware changes.
 agents:
@@ -56,7 +55,7 @@ agents:
   - name: quick
     model: gemini-2.5-flash-lite
 
-# Promptware configuration — each promptware is connected to a profile (deep/balanced/quick).
+# Each promptware is connected to a profile (deep/balanced/quick).
 # The profile determines model and effort from the active coding agent above.
 # _default provides base values. Specific entries override only the fields they define;
 # unspecified fields are inherited from _default.

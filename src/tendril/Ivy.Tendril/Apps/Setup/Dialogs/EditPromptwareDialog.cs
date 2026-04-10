@@ -9,13 +9,10 @@ public class EditPromptwareDialog(
     IClientProvider client,
     RefreshToken refreshToken) : ViewBase
 {
-    private static readonly string[] EffortOptions = ["", "low", "medium", "high", "max"];
-
     public override object? Build()
     {
         var editName = UseState("");
-        var editModel = UseState("");
-        var editEffort = UseState("");
+        var editProfile = UseState("");
         var editAllowedTools = UseState("");
 
         UseEffect(() =>
@@ -23,16 +20,14 @@ public class EditPromptwareDialog(
             if (editKey.Value == null)
             {
                 editName.Set("");
-                editModel.Set("");
-                editEffort.Set("");
+                editProfile.Set("");
                 editAllowedTools.Set("");
             }
             else if (editKey.Value != "__closed__" && promptwares.ContainsKey(editKey.Value))
             {
                 var pw = promptwares[editKey.Value];
                 editName.Set(editKey.Value);
-                editModel.Set(pw.Model);
-                editEffort.Set(pw.Effort);
+                editProfile.Set(pw.Profile);
                 editAllowedTools.Set(string.Join(", ", pw.AllowedTools));
             }
         }, editKey);
@@ -47,8 +42,7 @@ public class EditPromptwareDialog(
             new DialogBody(
                 Layout.Vertical().Gap(2)
                 | editName.ToTextInput("Promptware name (e.g. MakePlan)...").WithField().Label("Name")
-                | editModel.ToTextInput("Model (e.g. sonnet, opus)...").WithField().Label("Model")
-                | editEffort.ToSelectInput(EffortOptions).WithField().Label("Effort")
+                | editProfile.ToTextInput("Profile name (e.g. deep, balanced, quick)...").WithField().Label("Profile")
                 | editAllowedTools.ToTextInput("Comma-separated tools (e.g. Read, Write, Edit)...").WithField()
                     .Label("Allowed Tools")
             ),
@@ -65,8 +59,7 @@ public class EditPromptwareDialog(
 
                     var pwConfig = new PromptwareConfig
                     {
-                        Model = editModel.Value,
-                        Effort = editEffort.Value,
+                        Profile = editProfile.Value,
                         AllowedTools = tools
                     };
 

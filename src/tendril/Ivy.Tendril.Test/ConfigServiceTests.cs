@@ -432,50 +432,6 @@ projects:
     }
 
     [Fact]
-    public void Should_Deserialize_PromptwareConfig_Effort()
-    {
-        var yaml = @"
-promptwares:
-  MakePlan:
-    model: sonnet
-    effort: high
-    allowedTools:
-      - Read
-      - Write
-  ExecutePlan:
-    model: opus
-    effort: max
-    allowedTools:
-      - Read
-      - Bash
-";
-
-        var tempDir = CreateTempConfigFile(yaml);
-        var service = new ConfigService(new TendrilSettings());
-
-        try
-        {
-            service.SetTendrilHome(tempDir);
-
-            Assert.NotNull(service.Settings.Promptwares);
-            Assert.Equal(2, service.Settings.Promptwares.Count);
-
-            var makePlan = service.Settings.Promptwares["MakePlan"];
-            Assert.Equal("sonnet", makePlan.Model);
-            Assert.Equal("high", makePlan.Effort);
-            Assert.Equal(new List<string> { "Read", "Write" }, makePlan.AllowedTools);
-
-            var executePlan = service.Settings.Promptwares["ExecutePlan"];
-            Assert.Equal("opus", executePlan.Model);
-            Assert.Equal("max", executePlan.Effort);
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
-    }
-
-    [Fact]
     public void Should_Deserialize_DefaultEffort()
     {
         var yaml = @"
@@ -505,56 +461,17 @@ defaultEffort: medium
     }
 
     [Fact]
-    public void PromptwareConfig_Effort_DefaultsToEmpty()
-    {
-        var config = new PromptwareConfig();
-        Assert.Equal("", config.Effort);
-    }
-
-    [Fact]
-    public void Should_Expand_Effort_Variables()
-    {
-        var yaml = @"
-defaultEffort: high
-promptwares:
-  TestPw:
-    model: sonnet
-    effort: high
-    allowedTools:
-      - Read
-";
-
-        var tempDir = CreateTempConfigFile(yaml);
-        var service = new ConfigService(new TendrilSettings());
-
-        try
-        {
-            service.SetTendrilHome(tempDir);
-
-            // Verify effort values survive expansion (non-variable values pass through unchanged)
-            Assert.Equal("high", service.Settings.DefaultEffort);
-            Assert.Equal("high", service.Settings.Promptwares["TestPw"].Effort);
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
-    }
-
-    [Fact]
     public void Should_Parse_Default_Key_In_Promptwares()
     {
         var yaml = @"
 promptwares:
   _default:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
       - Read
       - Glob
   ExecutePlan:
-    model: opus
-    effort: max
+    profile: deep
     allowedTools:
       - Read
       - Write
@@ -572,15 +489,13 @@ promptwares:
             Assert.True(service.Settings.Promptwares.ContainsKey("ExecutePlan"));
 
             var defaultConfig = service.Settings.Promptwares["_default"];
-            Assert.Equal("sonnet", defaultConfig.Model);
-            Assert.Equal("high", defaultConfig.Effort);
+            Assert.Equal("balanced", defaultConfig.Profile);
             Assert.Equal(2, defaultConfig.AllowedTools.Count);
             Assert.Contains("Read", defaultConfig.AllowedTools);
             Assert.Contains("Glob", defaultConfig.AllowedTools);
 
             var execConfig = service.Settings.Promptwares["ExecutePlan"];
-            Assert.Equal("opus", execConfig.Model);
-            Assert.Equal("max", execConfig.Effort);
+            Assert.Equal("deep", execConfig.Profile);
         }
         finally
         {
@@ -594,13 +509,12 @@ promptwares:
         var yaml = @"
 promptwares:
   _default:
-    model: sonnet
-    effort: high
+    profile: balanced
     allowedTools:
       - Read
       - Glob
   ExecutePlan:
-    model: opus
+    profile: deep
 ";
 
         var tempDir = CreateTempConfigFile(yaml);
@@ -611,13 +525,11 @@ promptwares:
             service.SetTendrilHome(tempDir);
 
             var defaultConfig = service.Settings.Promptwares["_default"];
-            Assert.Equal("sonnet", defaultConfig.Model);
-            Assert.Equal("high", defaultConfig.Effort);
+            Assert.Equal("balanced", defaultConfig.Profile);
             Assert.Equal(2, defaultConfig.AllowedTools.Count);
 
             var execConfig = service.Settings.Promptwares["ExecutePlan"];
-            Assert.Equal("opus", execConfig.Model);
-            Assert.Equal("", execConfig.Effort); // Not specified — PowerShell merge will inherit from _default
+            Assert.Equal("deep", execConfig.Profile);
             Assert.Empty(execConfig.AllowedTools); // Not specified — PowerShell merge will inherit from _default
         }
         finally
@@ -735,8 +647,6 @@ promptwares:
 
             var execute = service.Settings.Promptwares["ExecutePlan"];
             Assert.Equal("deep", execute.Profile);
-            Assert.Equal("", execute.Model);
-            Assert.Equal("", execute.Effort);
 
             var make = service.Settings.Promptwares["MakePlan"];
             Assert.Equal("balanced", make.Profile);
