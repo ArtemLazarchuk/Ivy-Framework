@@ -11,10 +11,10 @@ public class WallpaperApp : ViewBase
         var jobService = UseService<IJobService>();
         var configService = UseService<IConfigService>();
         var countsService = UseService<IPlanCountsService>();
-        var counts = countsService.Current;
         var dialogOpen = UseState(false);
         var lastSelectedProject = UseState("[Auto]");
 
+        var counts = countsService.Current;
         var projectNames = configService.Projects.Select(p => p.Name).ToList();
 
         var hasActivity = counts.Drafts > 0 || counts.ActiveJobs > 0 || counts.Reviews > 0;
