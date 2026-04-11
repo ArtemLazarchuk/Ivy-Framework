@@ -265,11 +265,39 @@ public class ConfigService : IConfigService
         return !string.IsNullOrEmpty(colorStr) && Enum.TryParse<Colors>(colorStr, out var c) ? c : null;
     }
 
+    public event EventHandler? SettingsReloaded;
+
     public void SaveSettings()
     {
         _levelNamesCache = null;
         var yaml = YamlHelper.SerializerCompact.Serialize(Settings);
         FileHelper.WriteAllText(ConfigPath, yaml);
+        ReloadSettings();
+    }
+
+    public void ReloadSettings()
+    {
+        if (!File.Exists(ConfigPath))
+            return;
+
+        try
+        {
+            var yaml = FileHelper.ReadAllText(ConfigPath);
+            yaml = Regex.Replace(yaml, @"(?m)(?<=:\s+)(%\w+%.*)$", "'$1'");
+            yaml = Regex.Replace(yaml, @"(?m)^(\s*-\s+)(%\w+%.*)$", "$1'$2'");
+            Settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml) ?? new TendrilSettings();
+
+            MigrateProjectColors();
+            _levelNamesCache = null;
+            VariableExpansion.InitializeUserSecrets(TendrilHome);
+            ExpandSettingsVariables();
+
+            SettingsReloaded?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to reload settings: {ex}");
+        }
     }
 
     // Onboarding support

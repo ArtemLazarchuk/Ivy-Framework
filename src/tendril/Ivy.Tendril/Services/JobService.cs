@@ -59,13 +59,13 @@ public class JobService : IJobService
     private readonly PriorityQueue<string, int> _jobQueue = new();
     private readonly object _queueLock = new();
     private readonly SemaphoreSlim _jobSlotSemaphore;
-    private readonly TimeSpan _jobTimeout;
+    private TimeSpan _jobTimeout;
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
-    private readonly int _maxConcurrentJobs;
+    private int _maxConcurrentJobs;
     private readonly ModelPricingService? _modelPricingService;
     private readonly IPlanReaderService? _planReaderService;
     private readonly IPlanWatcherService? _planWatcherService;
-    private readonly TimeSpan _staleOutputTimeout;
+    private TimeSpan _staleOutputTimeout;
     private readonly SynchronizationContext? _syncContext;
     private readonly ITelemetryService? _telemetryService;
     private readonly IWorktreeLifecycleLogger? _worktreeLifecycleLogger;
@@ -95,6 +95,7 @@ public class JobService : IJobService
             ? new SemaphoreSlim(_maxConcurrentJobs, _maxConcurrentJobs)
             : new SemaphoreSlim(0, 1);
         _inboxPath = Path.Combine(configService.TendrilHome, "Inbox");
+        configService.SettingsReloaded += OnSettingsReloaded;
         LoadHistoricalJobs();
     }
 
@@ -610,6 +611,21 @@ public class JobService : IJobService
     ///     Removes a job from the dictionary. Used by tests to simulate concurrent removal.
     /// </summary>
     internal bool RemoveJob(string id) => _jobs.TryRemove(id, out _);
+
+    public void Dispose()
+    {
+        if (_configService != null)
+            _configService.SettingsReloaded -= OnSettingsReloaded;
+        _jobSlotSemaphore.Dispose();
+    }
+
+    private void OnSettingsReloaded(object? sender, EventArgs e)
+    {
+        if (_configService == null) return;
+        _jobTimeout = TimeSpan.FromMinutes(_configService.Settings.JobTimeout);
+        _staleOutputTimeout = TimeSpan.FromMinutes(_configService.Settings.StaleOutputTimeout);
+        _maxConcurrentJobs = _configService.Settings.MaxConcurrentJobs;
+    }
 
     private void LaunchJob(JobItem job)
     {
