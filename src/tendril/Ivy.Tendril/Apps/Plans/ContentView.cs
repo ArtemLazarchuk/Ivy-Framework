@@ -322,15 +322,14 @@ public class ContentView(
                                  + (planData.Artifacts.ContainsKey("sample") ? 1 : 0);
 
             // Build tabs
-            var tabs = new TabsLayout(
-                e => selectedTab.Set(e.Value), null, null, null, selectedTab.Value,
+            var tabs = Layout.Tabs(
                 new Tab("Plan", Cap(planTabContent)),
                 new Tab("Summary", Cap(summaryTabContent)),
                 new Tab("Verifications", Cap(verificationsTable)).Badge(_selectedPlan.Verifications.Count.ToString()),
                 new Tab("Commits", Cap(commitsContent)).Badge(_selectedPlan.Commits.Count.ToString()),
                 new Tab("PRs", Cap(prsContent)).Badge(_selectedPlan.Prs.Count.ToString()),
                 new Tab("Artifacts", Cap(artifactsLayout)).Badge(totalArtifacts.ToString())
-            ).Variant(TabsVariant.Content);
+            ).OnSelect(v => selectedTab.Set(v)).SelectedIndex(selectedTab.Value).Variant(TabsVariant.Content);
 
             content |= tabs;
         }

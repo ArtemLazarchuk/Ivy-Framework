@@ -400,12 +400,7 @@ public class ContentView(
                 }
 
             // Build tabs
-            var tabs = new TabsLayout(
-                e => selectedTab.Set(e.Value),
-                null,
-                null,
-                null,
-                selectedTab.Value,
+            var tabs = Layout.Tabs(
                 new Tab("Summary", Cap(summaryTabContent)),
                 new Tab("Verifications", Cap(verificationsTable)).Badge(_selectedPlan.Verifications.Count.ToString()),
                 new Tab("Commits", Cap(commitsLayout)).Badge(_selectedPlan.Commits.Count.ToString()),
@@ -413,7 +408,7 @@ public class ContentView(
                 new Tab("Artifacts", Cap(artifactsLayout)).Badge(totalArtifacts.ToString()),
                 new Tab("Recommendations", Cap(recommendationsLayout)).Badge(planData.Recommendations.Count.ToString()),
                 new Tab("Plan", Cap(planTabContent))
-            ).Variant(TabsVariant.Content);
+            ).OnSelect(v => selectedTab.Set(v)).SelectedIndex(selectedTab.Value).Variant(TabsVariant.Content);
 
             content |= tabs;
         }
