@@ -321,6 +321,8 @@ export type PieProps = {
 
 export interface ToolTipProps {
   animated?: boolean;
+  valueFormat?: string | null;
+  valueFormatType?: "Auto" | "Number" | "Date" | null;
 }
 
 export interface PieLegendProps {
