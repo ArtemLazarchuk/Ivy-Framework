@@ -45,6 +45,12 @@ describe("FileInputWidget", () => {
     it("should import useEventHandler", () => {
       expect(source).toContain('import { useEventHandler } from "@/components/event-handler"');
     });
+
+    it("should import useDialogBlurTracking from shared", () => {
+      expect(source).toContain(
+        'import { useDialogBlurTracking } from "./shared/useDialogBlurTracking"',
+      );
+    });
   });
 
   describe("handleUploadFile", () => {
@@ -214,19 +220,9 @@ describe("FileInputWidget", () => {
       expect(block).toContain("!disabled && inputRef.current");
     });
 
-    it("should set dialogWasOpenRef when hasBlurHandler is true", () => {
+    it("should call markDialogOpened when hasBlurHandler is true", () => {
       const block = extractBlock("openFileDialog");
-      expect(block).toContain("dialogWasOpenRef.current = true");
-    });
-
-    it("should reset filesSelectedInCurrentDialogRef when hasBlurHandler", () => {
-      const block = extractBlock("openFileDialog");
-      expect(block).toContain("filesSelectedInCurrentDialogRef.current = false");
-    });
-
-    it("should reset blurFiredRef when hasBlurHandler", () => {
-      const block = extractBlock("openFileDialog");
-      expect(block).toContain("blurFiredRef.current = false");
+      expect(block).toContain("markDialogOpened()");
     });
 
     it("should call inputRef.current.click()", () => {
@@ -234,77 +230,44 @@ describe("FileInputWidget", () => {
       expect(block).toContain("inputRef.current.click()");
     });
 
-    it("should include disabled and hasBlurHandler in dependency array", () => {
+    it("should include disabled, hasBlurHandler, and markDialogOpened in dependency array", () => {
       const block = extractBlock("openFileDialog");
-      expect(block).toContain("[disabled, hasBlurHandler]");
+      expect(block).toContain("[disabled, hasBlurHandler, markDialogOpened]");
     });
   });
 
-  describe("window focus blur-tracking useEffect", () => {
-    /**
-     * Helper: extract the useEffect block that contains handleWindowFocus.
-     */
-    function extractUseEffectBlock(): string {
-      const marker = "const handleWindowFocus = ()";
-      const start = source.lastIndexOf("useEffect(", source.indexOf(marker));
-      const depsEnd = "}, [hasBlurHandler, handleEvent, id]);";
-      const deps = source.indexOf(depsEnd, start);
-      return source.slice(start, deps + depsEnd.length);
-    }
-
-    it("should early return when no blur handler", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("if (!hasBlurHandler) return");
+  describe("blur-tracking via useDialogBlurTracking hook", () => {
+    it("should use useDialogBlurTracking hook instead of inline useEffect", () => {
+      expect(source).toContain("useDialogBlurTracking({");
+      // The inline useEffect with handleWindowFocus should no longer exist
+      expect(source).not.toContain("const handleWindowFocus = ()");
     });
 
-    it("should register window focus listener", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain('window.addEventListener("focus", handleWindowFocus)');
+    it("should pass enabled: hasBlurHandler to the hook", () => {
+      expect(source).toContain("enabled: hasBlurHandler");
     });
 
-    it("should cleanup by removing listener", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain('window.removeEventListener("focus", handleWindowFocus)');
+    it("should pass onBlur callback that fires OnBlur event", () => {
+      expect(source).toContain('onBlur: () => handleEvent("OnBlur", id, [])');
     });
 
-    it("should check dialogWasOpenRef", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("if (dialogWasOpenRef.current)");
+    it("should destructure markDialogOpened, markFilesSelected, markBlurFired from hook", () => {
+      expect(source).toContain("{ markDialogOpened, markFilesSelected, markBlurFired }");
     });
 
-    it("should reset dialogWasOpenRef", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("dialogWasOpenRef.current = false");
+    it("should call markFilesSelected in handleChange when files are selected", () => {
+      const block = extractBlock("handleChange");
+      expect(block).toContain("markFilesSelected()");
     });
 
-    it("should use queueMicrotask for timing", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("queueMicrotask(");
+    it("should call markBlurFired in handleChange after upload", () => {
+      const block = extractBlock("handleChange");
+      expect(block).toContain("markBlurFired()");
     });
 
-    it("should skip blur if files were selected", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("!filesSelectedInCurrentDialogRef.current");
-    });
-
-    it("should skip blur if already fired", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("!blurFiredRef.current");
-    });
-
-    it("should set blurFiredRef on fire", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("blurFiredRef.current = true");
-    });
-
-    it("should fire OnBlur event", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain('handleEvent("OnBlur", id, [])');
-    });
-
-    it("should have correct dependency array", () => {
-      const block = extractUseEffectBlock();
-      expect(block).toContain("[hasBlurHandler, handleEvent, id]");
+    it("should include markBlurFired in handleChange dependency array", () => {
+      const block = extractBlock("handleChange");
+      expect(block).toContain("markBlurFired");
     });
   });
 });
