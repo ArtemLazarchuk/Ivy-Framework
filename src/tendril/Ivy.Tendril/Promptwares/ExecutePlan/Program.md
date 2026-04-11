@@ -58,6 +58,43 @@ If `plan.yaml` has a `dependsOn` list, for each entry:
 
 **Note:** The JobService also performs this check before launching ExecutePlan, but this step acts as a safety net in case the dependency state changed between job launch and execution.
 
+### 1.6. Validate Worktree Isolation
+
+Before creating worktrees, verify the execution environment is safe:
+
+1. **Check each repo is not itself a worktree** — If `<repo-path>/.git` is a file containing `gitdir:`, the repo is a worktree. Fail with error:
+   > ERROR: Repository at <repo-path> is itself a worktree. ExecutePlan cannot create worktrees inside worktrees. Update config.yaml to use the main repo path.
+
+2. **Check Plans directory is not inside a worktree** — If `$TENDRIL_HOME` or its parent contains a worktree `.git` file, fail with error:
+   > ERROR: TENDRIL_HOME is inside a git worktree. Move your Tendril installation or change the Plans directory.
+
+```bash
+# For each repo in plan.yaml repos (or project repos if empty):
+cd <repo-path>
+
+# Check if current directory is a worktree
+if [ -f .git ] && grep -q "gitdir:" .git; then
+    echo "ERROR: Repository at <repo-path> is itself a worktree."
+    echo "ExecutePlan cannot create worktrees inside worktrees."
+    echo "Check that config.yaml repo paths point to main repositories, not worktrees."
+    exit 1
+fi
+
+# Check if Plans directory would be created inside a worktree
+PLANS_DIR_PARENT=$(dirname "$TENDRIL_HOME")
+cd "$PLANS_DIR_PARENT"
+if git rev-parse --is-inside-work-tree 2>/dev/null && [ -f "$PLANS_DIR_PARENT/.git" ]; then
+    if grep -q "gitdir:" "$PLANS_DIR_PARENT/.git"; then
+        echo "ERROR: TENDRIL_HOME ($TENDRIL_HOME) is inside a git worktree."
+        echo "Plans and their worktrees cannot be created inside worktrees."
+        echo "Move your Tendril installation outside the worktree or use a different Plans directory."
+        exit 1
+    fi
+fi
+```
+
+This prevents recursive worktree scenarios that would corrupt git state and cause massive repo bloat.
+
 ### 1.7. Validate Code State
 
 After reading the plan revision, scan it for code validation markers to detect stale plans (where the described code has already been changed by another plan).

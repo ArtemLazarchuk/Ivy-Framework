@@ -425,3 +425,9 @@ Ivy.Samples/.claude/settings.local.json
 # Claude Code worktrees
 .worktrees/
 
+# Tendril plan worktrees (without leading dot)
+worktrees/
+
+# Nested Plans artifacts (belt-and-suspenders)
+**/worktrees/**/Plans/
+

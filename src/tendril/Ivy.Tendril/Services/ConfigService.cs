@@ -211,6 +211,9 @@ public class ConfigService : IConfigService
                         foreach (var repo in proj.Repos)
                             repo.Path = VariableExpansion.ExpandVariables(repo.Path, TendrilHome);
 
+            // Validate repo paths are not worktrees
+            ValidateRepoPathsAreNotWorktrees();
+
             // Ensure directories exist
             Directory.CreateDirectory(TendrilHome);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Inbox"));
@@ -357,6 +360,30 @@ public class ConfigService : IConfigService
 
         SaveSettings();
         NeedsOnboarding = false;
+    }
+
+    internal void ValidateRepoPathsAreNotWorktrees()
+    {
+        if (Settings?.Projects == null) return;
+
+        foreach (var project in Settings.Projects)
+        {
+            if (project.Repos == null) continue;
+
+            foreach (var repo in project.Repos)
+            {
+                if (string.IsNullOrEmpty(repo.Path) || !Directory.Exists(repo.Path))
+                    continue;
+
+                if (WorktreeValidationHelper.IsWorktree(repo.Path))
+                {
+                    Console.Error.WriteLine(
+                        $"CRITICAL: Project '{project.Name}' repo path is a worktree, not a main repository: {repo.Path}. " +
+                        "This will cause nested worktrees during plan execution. " +
+                        "Update config.yaml to point to the main repo, not a worktree.");
+                }
+            }
+        }
     }
 
     internal static bool IsCommandAvailable(string command)
