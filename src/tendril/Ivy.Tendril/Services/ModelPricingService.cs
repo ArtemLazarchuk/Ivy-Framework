@@ -34,7 +34,7 @@ public class ModelPricingService : IModelPricingService
 
     public ModelPricing GetPricing(string modelName)
     {
-        foreach (var key in Pricing.Keys)
+        foreach (var key in Pricing.Keys.OrderByDescending(k => k.Length))
             if (modelName.Contains(key, StringComparison.OrdinalIgnoreCase))
                 return Pricing[key];
 
