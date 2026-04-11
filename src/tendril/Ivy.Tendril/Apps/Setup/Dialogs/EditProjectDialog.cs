@@ -72,7 +72,7 @@ public class EditProjectDialog(
         {
             var ri = i;
             var repo = currentRepos[ri];
-            var expandedPath = Environment.ExpandEnvironmentVariables(repo.Path);
+            var expandedPath = VariableExpansion.ExpandVariables(repo.Path, _config.TendrilHome);
             var pathExists = Directory.Exists(expandedPath);
             var isGitRepo = pathExists && Path.Exists(Path.Combine(expandedPath, ".git"));
             var isEditing = editingRepoIndex.Value == ri;
@@ -99,7 +99,7 @@ public class EditProjectDialog(
                                        return;
                                    }
 
-                                   var expandedNewPath = Environment.ExpandEnvironmentVariables(newPath);
+                                   var expandedNewPath = VariableExpansion.ExpandVariables(newPath, _config.TendrilHome);
                                    if (!Directory.Exists(expandedNewPath))
                                    {
                                        editingRepoError.Set($"Directory does not exist: {expandedNewPath}");
@@ -167,7 +167,7 @@ public class EditProjectDialog(
                        {
                            if (!string.IsNullOrWhiteSpace(newRepoPath.Value))
                            {
-                               var expandedNewPath = Environment.ExpandEnvironmentVariables(newRepoPath.Value);
+                               var expandedNewPath = VariableExpansion.ExpandVariables(newRepoPath.Value, _config.TendrilHome);
 
                                if (!Directory.Exists(expandedNewPath))
                                {

@@ -35,7 +35,7 @@ public class TendrilHomeStepView(IState<int> stepperIndex) : ViewBase
                        try
                        {
                            var tendrilHome = folderPath.Value;
-                           tendrilHome = Environment.ExpandEnvironmentVariables(tendrilHome);
+                           tendrilHome = VariableExpansion.ExpandVariables(tendrilHome, "");
 
                            if (tendrilHome.StartsWith("~"))
                            {
