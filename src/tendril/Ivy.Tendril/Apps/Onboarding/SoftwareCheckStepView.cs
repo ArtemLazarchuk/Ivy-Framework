@@ -163,7 +163,7 @@ public class SoftwareCheckStepView(
         string installUrl,
         bool isRequired)
     {
-        var installed = results[key];
+        var installed = results.GetValueOrDefault(key);
         var healthStatus = health?.GetValueOrDefault(key);
 
         string statusText;
