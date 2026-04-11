@@ -796,4 +796,201 @@ editor:
             Directory.Delete(tempDir, true);
         }
     }
+
+    [Fact]
+    public void Should_Capture_Parse_Error_When_Config_Malformed()
+    {
+        var tempDir = CreateTempConfigFile("invalid: yaml: [unclosed");
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            // SetTendrilHome silently catches errors, so test via constructor-like reload
+            // Write malformed config and retry
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "invalid: yaml: [unclosed");
+            service.RetryLoadConfig();
+
+            Assert.NotNull(service.ParseError);
+            Assert.Contains(tempDir, service.ParseError.FilePath);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Backup_Broken_Config_On_Parse_Error()
+    {
+        var malformedYaml = "projects:\n  - name: [invalid\n    bad: {unclosed";
+        var tempDir = CreateTempConfigFile(malformedYaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+            service.RetryLoadConfig();
+
+            var backupFiles = Directory.GetFiles(tempDir, "config.yaml.broken.*.bak");
+            Assert.NotEmpty(backupFiles);
+
+            var backupContent = File.ReadAllText(backupFiles[0]);
+            Assert.Contains("[invalid", backupContent);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Auto_Heal_With_Minimal_Config()
+    {
+        var malformedYaml = "projects:\n  - name: [invalid";
+        var tempDir = CreateTempConfigFile(malformedYaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            // Force a parse error
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), malformedYaml);
+            service.RetryLoadConfig();
+            Assert.NotNull(service.ParseError);
+
+            var healed = service.TryAutoHeal();
+            Assert.True(healed);
+
+            // Verify the healed config can be parsed
+            var yaml = File.ReadAllText(Path.Combine(tempDir, "config.yaml"));
+            var settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
+            Assert.NotNull(settings);
+            Assert.Equal("claude", settings.CodingAgent);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Restore_From_Backup_When_Available()
+    {
+        var validYaml = @"
+codingAgent: test-agent
+jobTimeout: 42
+projects: []
+";
+        var tempDir = CreateTempConfigFile(validYaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            // SaveSettings creates a .backup
+            service.SaveSettings();
+            Assert.True(File.Exists(Path.Combine(tempDir, "config.yaml.backup")));
+
+            // Break the main config
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "broken: [yaml");
+            service.RetryLoadConfig();
+            Assert.NotNull(service.ParseError);
+
+            // TryAutoHeal should restore from backup
+            var healed = service.TryAutoHeal();
+            Assert.True(healed);
+
+            // Verify it restored from the backup
+            Assert.Equal(42, service.Settings.JobTimeout);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Create_Backup_On_Successful_Save()
+    {
+        var yaml = @"
+codingAgent: claude
+jobTimeout: 30
+";
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+            service.SaveSettings();
+
+            var backupPath = Path.Combine(tempDir, "config.yaml.backup");
+            Assert.True(File.Exists(backupPath));
+
+            var backupSettings =
+                YamlHelper.Deserializer.Deserialize<TendrilSettings>(File.ReadAllText(backupPath));
+            Assert.NotNull(backupSettings);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void RetryLoadConfig_Clears_ParseError_On_Success()
+    {
+        var tempDir = CreateTempConfigFile("broken: [yaml");
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+            service.RetryLoadConfig();
+            Assert.NotNull(service.ParseError);
+
+            // Fix the config
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "codingAgent: claude\n");
+            service.RetryLoadConfig();
+
+            Assert.Null(service.ParseError);
+            Assert.False(service.NeedsOnboarding);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void ResetToDefaults_Clears_Error_And_Sets_Onboarding()
+    {
+        var tempDir = CreateTempConfigFile("broken: [yaml");
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+            service.RetryLoadConfig();
+            Assert.NotNull(service.ParseError);
+
+            service.ResetToDefaults();
+
+            Assert.Null(service.ParseError);
+            Assert.True(service.NeedsOnboarding);
+
+            // Verify the new config is valid
+            var yaml = File.ReadAllText(Path.Combine(tempDir, "config.yaml"));
+            var settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
+            Assert.NotNull(settings);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }
