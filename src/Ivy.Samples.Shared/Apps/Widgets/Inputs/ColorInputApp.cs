@@ -6,48 +6,17 @@ public class ColorInputApp : SampleBase
 {
     protected override object? BuildSample()
     {
-        var onBlurState = UseState("#ff0000");
-        var onBlurLabel = UseState("");
-        var onFocusState = UseState("#ff0000");
-        var onFocusLabel = UseState("");
-
         return Layout.Vertical()
                | Text.H1("Color Input")
-               | Text.H2("Size Variants")
-               | new ColorInputSizeVariants()
-               | Text.H2("Non-Generic Constructor")
-               | new ColorInputConstructorTests()
-               | Text.H2("Variants")
-               | new ColorInputVariantTests()
-               | Text.H2("Alpha Channel")
-               | new ColorInputAlphaTests()
-               | Text.H2("Format Tests")
-               | new ColorInputFormatTests()
-               | Text.H2("Data Binding")
-               | new ColorInputDataBindings()
-               | Text.H2("Events")
-               | (Layout.Vertical()
-                   | new Card(
-                       Layout.Vertical().Gap(2)
-                           | Text.P("The blur event fires when the color input loses focus.").Small()
-                           | onBlurState.ToColorInput().OnBlur(e => onBlurLabel.Set("Blur Event Triggered"))
-                           | (onBlurLabel.Value != ""
-                               ? Callout.Success(onBlurLabel.Value)
-                               : Callout.Info("Interact then click away to see blur events"))
-                   ).Title("OnBlur Handler")
-                   | new Card(
-                       Layout.Vertical().Gap(2)
-                           | Text.P("The focus event fires when you click on or tab into the color input.").Small()
-                           | onFocusState.ToColorInput().OnFocus(e => onFocusLabel.Set("Focus Event Triggered"))
-                           | (onFocusLabel.Value != ""
-                               ? Callout.Success(onFocusLabel.Value)
-                               : Callout.Info("Click or tab into the input to see focus events"))
-                   ).Title("OnFocus Handler")
-               )
-            ;
+               | Layout.Tabs(
+                   new Tab("Variants", new ColorInputVariants()),
+                   new Tab("Size Variants", new ColorInputSizeVariants()),
+                   new Tab("Alpha Channel", new ColorInputAlphaTests()),
+                   new Tab("Format Tests", new ColorInputFormatTests()),
+                   new Tab("Data Binding", new ColorInputDataBindings()),
+                   new Tab("Events", new ColorInputEvents())
+               ).Variant(TabsVariant.Content);
     }
-
-    // Helper methods moved to respective classes
 }
 
 public class ColorInputSizeVariants : ViewBase
@@ -339,3 +308,16 @@ public class ColorInputAlphaTests : ViewBase
             | Text.Monospaced(bothAlphaState.Value ?? "null");
     }
 }
+
+public class ColorInputVariants : ViewBase
+{
+    public override object Build()
+    {
+        return Layout.Vertical()
+               | Text.H3("Variants")
+               | new ColorInputVariantTests()
+               | Text.H3("Non-Generic Constructor")
+               | new ColorInputConstructorTests();
+    }
+}
+
