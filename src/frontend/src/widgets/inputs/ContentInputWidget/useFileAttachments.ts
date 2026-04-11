@@ -111,11 +111,19 @@ export function useFileAttachments(options: UseFileAttachmentsOptions) {
       e.stopPropagation();
       setIsDragging(false);
       if (disabled) return;
+      if (!uploadUrl) {
+        toast({
+          title: "Upload not available",
+          description: "File uploads are not configured for this input.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const files = Array.from(e.dataTransfer.files);
       await uploadFiles(files);
     },
-    [disabled, uploadFiles],
+    [disabled, uploadUrl, uploadFiles],
   );
 
   const openFilePicker = useCallback(() => {

@@ -35,10 +35,6 @@ describe("useFileAttachments", () => {
   });
 
   describe("handlePaste guards", () => {
-    it("should contain disabled || !uploadUrl guard for early return", () => {
-      expect(source).toContain("disabled || !uploadUrl");
-    });
-
     it("should access e.clipboardData.items", () => {
       expect(source).toContain("e.clipboardData");
     });
@@ -56,6 +52,19 @@ describe("useFileAttachments", () => {
         source.indexOf("\n  const", handlePasteIndex + 1),
       );
       expect(handlePasteBlock).toContain("e.preventDefault()");
+    });
+
+    it("should show toast when uploadUrl is missing for file paste", () => {
+      const handlePasteIndex = source.indexOf("const handlePaste");
+      expect(handlePasteIndex).toBeGreaterThan(-1);
+
+      const handlePasteBlock = source.slice(
+        handlePasteIndex,
+        source.indexOf("\n  const", handlePasteIndex + 1),
+      );
+      expect(handlePasteBlock).toContain("!uploadUrl");
+      expect(handlePasteBlock).toContain("toast(");
+      expect(handlePasteBlock).toContain('"Upload not available"');
     });
   });
 
@@ -92,6 +101,30 @@ describe("useFileAttachments", () => {
         source.indexOf("\n  const", handleDropIndex + 1),
       );
       expect(handleDropBlock).toContain("disabled");
+    });
+
+    it("should show toast when uploadUrl is missing on drop", () => {
+      const handleDropIndex = source.indexOf("const handleDrop");
+      expect(handleDropIndex).toBeGreaterThan(-1);
+
+      const handleDropBlock = source.slice(
+        handleDropIndex,
+        source.indexOf("\n  const", handleDropIndex + 1),
+      );
+      expect(handleDropBlock).toContain("!uploadUrl");
+      expect(handleDropBlock).toContain("toast(");
+      expect(handleDropBlock).toContain('"Upload not available"');
+    });
+
+    it("should include uploadUrl in handleDrop dependency array", () => {
+      const handleDropIndex = source.indexOf("const handleDrop");
+      expect(handleDropIndex).toBeGreaterThan(-1);
+
+      const handleDropBlock = source.slice(
+        handleDropIndex,
+        source.indexOf("\n  const", handleDropIndex + 1),
+      );
+      expect(handleDropBlock).toContain("[disabled, uploadUrl, uploadFiles],");
     });
 
     it("should access e.dataTransfer.files", () => {
