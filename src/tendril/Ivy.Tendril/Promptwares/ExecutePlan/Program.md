@@ -470,6 +470,19 @@ After all verifications pass:
 
 3. Run `git status` in every worktree. If there are any uncommitted files (from verification fixes, generated files, etc.), commit or discard them. The worktrees must be completely clean before finishing.
 
+### 8.5. Clean Up Worktrees
+
+After all verifications pass and the worktrees are clean, the launcher script automatically removes all worktree directories to free disk space.
+
+**Worktree cleanup includes:**
+1. Deregister each worktree from git via `git worktree remove --force`
+2. Force-delete the worktree directory (with Windows `rmdir /s /q` fallback for locked files)
+3. Remove the parent `worktrees/` directory
+
+**Git branches are preserved** — MakePr uses the `plan-<ID>-<repo>` branch to create pull requests. Only the worktree filesystem directories are removed.
+
+**Debugging tip:** To keep worktrees for manual inspection after failure, set the `KEEP_WORKTREES=1` environment variable before running ExecutePlan. The WorktreeCleanupService will still clean them up after the grace period (10 minutes + 30 minute cycle).
+
 ### 9. Plan State
 
 The launcher script handles state transitions (Completed/Failed) based on exit code.
