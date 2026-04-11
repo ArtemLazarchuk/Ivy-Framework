@@ -416,10 +416,13 @@ public class ModelPricingServiceTests
     }
 
     [Fact]
-    public void GetPricing_OrderMatters_MiniBeforeBase()
+    public void GetPricing_LongestMatchFirst_SelectsMostSpecificKey()
     {
         var mini = _service.GetPricing("gpt-5.4-mini");
         Assert.Equal(1.10, mini.Input);
+
+        var baseModel = _service.GetPricing("gpt-5.4");
+        Assert.Equal(10.00, baseModel.Input);
     }
 
     [Fact]

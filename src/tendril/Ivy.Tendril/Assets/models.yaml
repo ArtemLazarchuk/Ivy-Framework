@@ -1,7 +1,7 @@
 # Source: https://www.anthropic.com/pricing, https://openai.com/api/pricing/, https://ai.google.dev/pricing
 # Last verified: 2026-04-09
-# IMPORTANT: Entries are ordered most-specific first because GetPricing() uses
-# Contains-based matching and returns the first hit.
+# IMPORTANT: GetPricing() uses longest-match-first ordering to ensure
+# deterministic matching when model names contain multiple keys as substrings.
 # NOTE: Some entries below (gpt-5.4*, gpt-5.3-codex, gemini-3-flash-preview,
 # gemini-2.5-flash-lite) are fictional placeholder models used in example.config.yaml.
 # Replace with actual model names and pricing when configuring real agents.
