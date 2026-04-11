@@ -16,13 +16,6 @@ public class FeedbackInputApp : SampleBase
         var decimalState = UseState(3.5m);
         var nullableDecimalState = UseState((decimal?)null);
 
-        var intState = UseState(0);
-        var nullableIntState = UseState((int?)null);
-        var floatState = UseState(0.0f);
-        var nullableFloatState = UseState((float?)null);
-        var boolState = UseState(false);
-        var nullableBoolState = UseState((bool?)null);
-
         var onBlurState = UseState(0);
         var onBlurLabel = UseState("");
         var onFocusState = UseState(0);
@@ -81,35 +74,7 @@ public class FeedbackInputApp : SampleBase
         ;
 
 
-        var dataBinding = Layout.Grid().Columns(3)
-                          | Text.Monospaced("var")
-                          | Text.Monospaced("rating")
-                          | Text.Monospaced("state")
-
-                          | Text.Monospaced("int")
-                          | intState.ToFeedbackInput()
-                          | Text.Monospaced(intState.Value.ToString())
-
-                          | Text.Monospaced("int?")
-                          | nullableIntState.ToFeedbackInput()
-                          | (nullableIntState.Value == null ? Text.Monospaced("null") : Text.Monospaced(nullableIntState.Value.ToString() ?? "null"))
-
-                          | Text.Monospaced("float")
-                          | floatState.ToFeedbackInput()
-                          | Text.Monospaced(floatState.Value.ToString())
-
-                          | Text.Monospaced("float?")
-                          | nullableFloatState.ToFeedbackInput()
-                          | (nullableFloatState.Value == null ? Text.Monospaced("null") : Text.Monospaced(nullableFloatState.Value.ToString() ?? "null"))
-
-                          | Text.Monospaced("bool")
-                          | boolState.ToFeedbackInput()
-                          | (boolState.Value == false ? Text.Monospaced("false") : Text.Monospaced("true"))
-
-                          | Text.Monospaced("bool?")
-                          | nullableBoolState.ToFeedbackInput()
-                          | (nullableBoolState.Value == null ? Text.Monospaced("null") : (nullableBoolState.Value == false ? Text.Monospaced("false") : Text.Monospaced("true")))
-        ;
+        var dataBinding = (object)new FeedbackInputDataBinding();
 
         var allowHalfExamples = Layout.Grid().Columns(3)
                                 | Text.Monospaced("Variant")
@@ -185,5 +150,47 @@ public class FeedbackInputApp : SampleBase
 
             ;
 
+    }
+}
+
+public class FeedbackInputDataBinding : ViewBase
+{
+    public override object Build()
+    {
+        var intState = UseState(0);
+        var nullableIntState = UseState((int?)null);
+        var floatState = UseState(0.0f);
+        var nullableFloatState = UseState((float?)null);
+        var boolState = UseState(false);
+        var nullableBoolState = UseState((bool?)null);
+
+        return Layout.Grid().Columns(3)
+               | Text.Monospaced("var")
+               | Text.Monospaced("rating")
+               | Text.Monospaced("state")
+
+               | Text.Monospaced("int")
+               | intState.ToFeedbackInput()
+               | Text.Monospaced(intState.Value.ToString())
+
+               | Text.Monospaced("int?")
+               | nullableIntState.ToFeedbackInput()
+               | (nullableIntState.Value == null ? Text.Monospaced("null") : Text.Monospaced(nullableIntState.Value.ToString() ?? "null"))
+
+               | Text.Monospaced("float")
+               | floatState.ToFeedbackInput()
+               | Text.Monospaced(floatState.Value.ToString())
+
+               | Text.Monospaced("float?")
+               | nullableFloatState.ToFeedbackInput()
+               | (nullableFloatState.Value == null ? Text.Monospaced("null") : Text.Monospaced(nullableFloatState.Value.ToString() ?? "null"))
+
+               | Text.Monospaced("bool")
+               | boolState.ToFeedbackInput()
+               | (boolState.Value == false ? Text.Monospaced("false") : Text.Monospaced("true"))
+
+               | Text.Monospaced("bool?")
+               | nullableBoolState.ToFeedbackInput()
+               | (nullableBoolState.Value == null ? Text.Monospaced("null") : (nullableBoolState.Value == false ? Text.Monospaced("false") : Text.Monospaced("true")));
     }
 }

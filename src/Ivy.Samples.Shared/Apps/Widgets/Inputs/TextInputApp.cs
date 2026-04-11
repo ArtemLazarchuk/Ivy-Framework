@@ -16,29 +16,7 @@ public class TextInputApp : SampleBase
         var onFocusState = UseState("");
         var onFocusLabel = UseState("");
 
-        var stringState = UseState("");
-        var nullStringState = UseState<string?>();
-
-        var dataBinding = Layout.Grid().Columns(3)
-
-                          | Text.Monospaced("string")
-                          | (Layout.Vertical()
-                             | stringState.ToTextInput()
-                             | stringState.ToTextareaInput()
-                             | stringState.ToPasswordInput()
-                             | stringState.ToSearchInput()
-                          )
-                          | stringState
-
-                          | Text.Monospaced("string?")
-                          | (Layout.Vertical()
-                             | nullStringState.ToTextInput()
-                             | nullStringState.ToTextareaInput()
-                             | nullStringState.ToPasswordInput()
-                             | nullStringState.ToSearchInput()
-                          )
-                          | nullStringState
-            ;
+        var dataBinding = (object)new TextInputDataBinding();
 
         return Layout.Vertical()
                | Text.H1("Text Input")
@@ -275,5 +253,34 @@ public class TextInputSubmitDemo : ViewBase
                                : "Login submitted")),
                    loginResult
                );
+    }
+}
+
+public class TextInputDataBinding : ViewBase
+{
+    public override object Build()
+    {
+        var stringState = UseState("");
+        var nullStringState = UseState<string?>();
+
+        return Layout.Grid().Columns(3)
+
+               | Text.Monospaced("string")
+               | (Layout.Vertical()
+                  | stringState.ToTextInput()
+                  | stringState.ToTextareaInput()
+                  | stringState.ToPasswordInput()
+                  | stringState.ToSearchInput()
+               )
+               | stringState
+
+               | Text.Monospaced("string?")
+               | (Layout.Vertical()
+                  | nullStringState.ToTextInput()
+                  | nullStringState.ToTextareaInput()
+                  | nullStringState.ToPasswordInput()
+                  | nullStringState.ToSearchInput()
+               )
+               | nullStringState;
     }
 }

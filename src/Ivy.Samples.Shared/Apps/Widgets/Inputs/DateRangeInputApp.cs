@@ -6,9 +6,6 @@ public class DateRangeInputApp : SampleBase
 {
     protected override object? BuildSample()
     {
-        // Add missing states for data binding and current values
-        var dateOnlyRangeState = UseState<(DateOnly, DateOnly)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
-        var nullableDateOnlyRangeState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
         // States for variants
         var nullableDateOnlyState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
         var disabledNullableDateOnlyState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
@@ -55,30 +52,6 @@ public class DateRangeInputApp : SampleBase
             | nullableInvalidDateOnlyState.ToDateRangeInput().Placeholder("Select date range").Format("yyyy-MM-dd").TestId("daterange-input-dateonly-nullable-nullable-main")
             | nullableInvalidDateOnlyState.ToDateRangeInput().Placeholder("Select date range").Format("yyyy-MM-dd").Invalid("Invalid").TestId("daterange-input-dateonly-nullable-nullable-invalid-main");
 
-        // Data binding grid
-        var dataBindingGrid = Layout.Grid().Columns(3)
-            | Text.Monospaced("Type")
-            | Text.Monospaced("Input")
-            | Text.Monospaced("Current Value")
-
-            | Text.Monospaced("(DateOnly, DateOnly)")
-            | dateOnlyRangeState
-                .ToDateRangeInput()
-                .TestId("daterange-input-dateonly-binding")
-            | Text.Monospaced($"({dateOnlyRangeState.Value.Item1:yyyy-MM-dd}, {dateOnlyRangeState.Value.Item2:yyyy-MM-dd})")
-
-            | Text.Monospaced("(DateOnly?, DateOnly?)")
-            | nullableDateOnlyRangeState
-                .ToDateRangeInput()
-                .TestId("daterange-input-dateonly-nullable-binding")
-            | Text.Monospaced($"({nullableDateOnlyRangeState.Value.Item1?.ToString("yyyy-MM-dd") ?? "null"}, {nullableDateOnlyRangeState.Value.Item2?.ToString("yyyy-MM-dd") ?? "null"})");
-
-        // Current values section
-        var currentValues = Layout.Vertical()
-            | Text.H3("Current Values")
-            | Text.Block($"DateOnly Range: {dateOnlyRangeState.Value.Item1:yyyy-MM-dd} to {dateOnlyRangeState.Value.Item2:yyyy-MM-dd}")
-            | Text.Block($"Nullable DateOnly Range: {nullableDateOnlyRangeState.Value.Item1?.ToString("yyyy-MM-dd") ?? "null"} to {nullableDateOnlyRangeState.Value.Item2?.ToString("yyyy-MM-dd") ?? "null"}");
-
         // Start/End Placeholders
         var startEndPlaceholderExample = emptyNullableDateOnlyState.ToDateRangeInput()
             .StartPlaceholder("Check-in")
@@ -107,7 +80,7 @@ public class DateRangeInputApp : SampleBase
             | Text.H2("Min/Max Constraints")
             | minMaxExample
             | Text.H2("Data Binding")
-            | dataBindingGrid
+            | new DateRangeInputDataBinding()
             | Text.H2("Events")
             | (Layout.Vertical()
                 | new Card(
@@ -126,7 +99,37 @@ public class DateRangeInputApp : SampleBase
                             ? Callout.Success(onFocusLabel.Value)
                             : Callout.Info("Click or tab into the input to see focus events"))
                 ).Title("OnFocus Handler")
+            );
+    }
+}
+
+public class DateRangeInputDataBinding : ViewBase
+{
+    public override object Build()
+    {
+        var dateOnlyRangeState = UseState<(DateOnly, DateOnly)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
+        var nullableDateOnlyRangeState = UseState<(DateOnly?, DateOnly?)>(() => (DateOnly.FromDateTime(DateTime.Today.AddDays(-7)), DateOnly.FromDateTime(DateTime.Today)));
+
+        return Layout.Vertical()
+            | (Layout.Grid().Columns(3)
+                | Text.Monospaced("Type")
+                | Text.Monospaced("Input")
+                | Text.Monospaced("Current Value")
+
+                | Text.Monospaced("(DateOnly, DateOnly)")
+                | dateOnlyRangeState
+                    .ToDateRangeInput()
+                    .TestId("daterange-input-dateonly-binding")
+                | Text.Monospaced($"({dateOnlyRangeState.Value.Item1:yyyy-MM-dd}, {dateOnlyRangeState.Value.Item2:yyyy-MM-dd})")
+
+                | Text.Monospaced("(DateOnly?, DateOnly?)")
+                | nullableDateOnlyRangeState
+                    .ToDateRangeInput()
+                    .TestId("daterange-input-dateonly-nullable-binding")
+                | Text.Monospaced($"({nullableDateOnlyRangeState.Value.Item1?.ToString("yyyy-MM-dd") ?? "null"}, {nullableDateOnlyRangeState.Value.Item2?.ToString("yyyy-MM-dd") ?? "null"})")
             )
-            | currentValues;
+            | Text.H3("Current Values")
+            | Text.Block($"DateOnly Range: {dateOnlyRangeState.Value.Item1:yyyy-MM-dd} to {dateOnlyRangeState.Value.Item2:yyyy-MM-dd}")
+            | Text.Block($"Nullable DateOnly Range: {nullableDateOnlyRangeState.Value.Item1?.ToString("yyyy-MM-dd") ?? "null"} to {nullableDateOnlyRangeState.Value.Item2?.ToString("yyyy-MM-dd") ?? "null"}");
     }
 }

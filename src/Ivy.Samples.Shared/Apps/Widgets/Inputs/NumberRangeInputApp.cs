@@ -34,33 +34,6 @@ public class NumberRangeInputApp : SampleBase
         // Size examples
         var sizeRange = UseState<(int, int)>(() => (30, 70));
 
-        var shortRangeState = UseState<(short, short)>(() => (10, 90));
-        var shortNullRangeState = UseState<(short?, short?)>(() => (10, 90));
-        var intRangeState = UseState<(int, int)>(() => (10, 90));
-        var intNullRangeState = UseState<(int?, int?)>(() => (10, 90));
-        var longRangeState = UseState<(long, long)>(() => (10, 90));
-        var longNullRangeState = UseState<(long?, long?)>(() => (10, 90));
-        var byteRangeState = UseState<(byte, byte)>(() => (10, 90));
-        var byteNullRangeState = UseState<(byte?, byte?)>(() => (10, 90));
-        var floatRangeState = UseState<(float, float)>(() => (10.0f, 90.0f));
-        var floatNullRangeState = UseState<(float?, float?)>(() => (10.0f, 90.0f));
-        var doubleRangeState = UseState<(double, double)>(() => (10.0, 90.0));
-        var doubleNullRangeState = UseState<(double?, double?)>(() => (10.0, 90.0));
-        var decimalRangeState = UseState<(decimal, decimal)>(() => (10.0m, 90.0m));
-        var decimalNullRangeState = UseState<(decimal?, decimal?)>(() => (10.0m, 90.0m));
-
-        // Numeric type tests
-        var numericTypes = new (string TypeName, object NonNullableState, object NullableState)[]
-        {
-            ("short", shortRangeState, shortNullRangeState),
-            ("int", intRangeState, intNullRangeState),
-            ("long", longRangeState, longNullRangeState),
-            ("byte", byteRangeState, byteNullRangeState),
-            ("float", floatRangeState, floatNullRangeState),
-            ("double", doubleRangeState, doubleNullRangeState),
-            ("decimal", decimalRangeState, decimalNullRangeState)
-        };
-
         const string loremIpsumString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec eros";
 
         return Layout.Vertical()
@@ -106,7 +79,7 @@ public class NumberRangeInputApp : SampleBase
 
             // Data Binding
             | Text.H2("Data Binding")
-            | CreateDataBindingGrid(numericTypes)
+            | new NumberRangeInputDataBinding()
 
             // Format Styles
             | Text.H2("Format Styles")
@@ -295,8 +268,38 @@ public class NumberRangeInputApp : SampleBase
             | Text.Block($"Nullable Range: {(nullableIntRange.Value.Item1?.ToString() ?? "null")} - {(nullableIntRange.Value.Item2?.ToString() ?? "null")}");
     }
 
-    private object CreateDataBindingGrid((string TypeName, object NonNullableState, object NullableState)[] numericTypes)
+}
+
+public class NumberRangeInputDataBinding : ViewBase
+{
+    public override object Build()
     {
+        var shortRangeState = UseState<(short, short)>(() => (10, 90));
+        var shortNullRangeState = UseState<(short?, short?)>(() => (10, 90));
+        var intRangeState = UseState<(int, int)>(() => (10, 90));
+        var intNullRangeState = UseState<(int?, int?)>(() => (10, 90));
+        var longRangeState = UseState<(long, long)>(() => (10, 90));
+        var longNullRangeState = UseState<(long?, long?)>(() => (10, 90));
+        var byteRangeState = UseState<(byte, byte)>(() => (10, 90));
+        var byteNullRangeState = UseState<(byte?, byte?)>(() => (10, 90));
+        var floatRangeState = UseState<(float, float)>(() => (10.0f, 90.0f));
+        var floatNullRangeState = UseState<(float?, float?)>(() => (10.0f, 90.0f));
+        var doubleRangeState = UseState<(double, double)>(() => (10.0, 90.0));
+        var doubleNullRangeState = UseState<(double?, double?)>(() => (10.0, 90.0));
+        var decimalRangeState = UseState<(decimal, decimal)>(() => (10.0m, 90.0m));
+        var decimalNullRangeState = UseState<(decimal?, decimal?)>(() => (10.0m, 90.0m));
+
+        var numericTypes = new (string TypeName, object NonNullableState, object NullableState)[]
+        {
+            ("short", shortRangeState, shortNullRangeState),
+            ("int", intRangeState, intNullRangeState),
+            ("long", longRangeState, longNullRangeState),
+            ("byte", byteRangeState, byteNullRangeState),
+            ("float", floatRangeState, floatNullRangeState),
+            ("double", doubleRangeState, doubleNullRangeState),
+            ("decimal", decimalRangeState, decimalNullRangeState)
+        };
+
         var gridItems = new List<object>
         {
             Text.Monospaced("Type"),
@@ -306,7 +309,6 @@ public class NumberRangeInputApp : SampleBase
 
         foreach (var (typeName, nonNullableState, nullableState) in numericTypes)
         {
-            // Non-nullable row
             gridItems.Add(Text.Monospaced($"({typeName}, {typeName})"));
 
             if (nonNullableState is IAnyState anyState)
@@ -334,7 +336,6 @@ public class NumberRangeInputApp : SampleBase
                 gridItems.Add(Text.Block(""));
             }
 
-            // Nullable row
             gridItems.Add(Text.Monospaced($"({typeName}?, {typeName}?)"));
 
             if (nullableState is IAnyState nullableAnyState)
