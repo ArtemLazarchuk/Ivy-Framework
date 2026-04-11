@@ -13,7 +13,7 @@ public class CodeInputApp : SampleBase
                    new Tab("Sizes", new CodeInputSizes()),
                    new Tab("Data Binding", new CodeInputDataBindings()),
                    new Tab("CodeInput in Card", new CodeInputInCard()),
-                   new Tab("Events", new CodeInputEvents())
+                   new Tab("Events", new CodeInputEventsTab())
                ).Variant(TabsVariant.Content);
     }
 }
@@ -322,7 +322,7 @@ public class CodeInputInCard : ViewBase
     }
 }
 
-public class CodeInputEvents : ViewBase
+public class CodeInputEventsTab : ViewBase
 {
     public override object Build()
     {
