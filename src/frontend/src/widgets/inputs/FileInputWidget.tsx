@@ -75,7 +75,14 @@ export const FileInputWidget: React.FC<FileInputWidgetProps> = ({
 
   const handleUploadFile = useCallback(
     async (file: File): Promise<void> => {
-      if (!uploadUrl) return;
+      if (!uploadUrl) {
+        toast({
+          title: "Upload not available",
+          description: "File uploads are not configured for this input.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Validate file before upload - show toast on error
       if (!validateFileWithToast({ file, accept, maxFileSize, minFileSize })) {
