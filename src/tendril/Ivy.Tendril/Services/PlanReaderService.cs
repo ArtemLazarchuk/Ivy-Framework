@@ -897,10 +897,21 @@ public class PlanReaderService(
             if (!File.Exists(gitFile))
             {
                 var dirAge = DateTime.UtcNow - new DirectoryInfo(wtDir).CreationTimeUtc;
-                logger?.LogWarning(
-                    "Worktree directory has no .git file (created {Age} ago), skipping git removal: {Path}",
-                    dirAge, wtDir);
-                lifecycleLogger?.LogCleanupAttempt(planId, wtDir, "RemoveWorktrees", gitFileExists: false);
+                logger?.LogInformation(
+                    "Worktree directory has no .git file (created {Age} ago), force-deleting: {Path}",
+                    dirAge, Path.GetFileName(wtDir));
+                lifecycleLogger?.LogCleanupAttempt(planId, wtDir, "RemoveWorktrees(force)", gitFileExists: false);
+
+                try
+                {
+                    WorktreeCleanupService.ForceDeleteDirectory(wtDir, logger);
+                    lifecycleLogger?.LogCleanupSuccess(planId, wtDir);
+                }
+                catch (Exception ex)
+                {
+                    lifecycleLogger?.LogCleanupFailed(planId, wtDir, ex.Message);
+                    logger?.LogWarning(ex, "Failed to force-delete worktree directory {Dir}", Path.GetFileName(wtDir));
+                }
                 continue;
             }
 
