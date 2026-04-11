@@ -116,6 +116,12 @@ public class TextInputEventsTab : ViewBase
         var onBlurLabel = UseState("");
         var onFocusState = UseState("");
         var onFocusLabel = UseState("");
+        var searchQuery = UseState("");
+        var searchResult = UseState("");
+        var tag = UseState("");
+        var tags = UseState<List<string>>(new List<string>());
+        var password = UseState("");
+        var loginResult = UseState("");
 
         return Layout.Vertical()
                | Text.H3("OnChange")
@@ -142,7 +148,38 @@ public class TextInputEventsTab : ViewBase
                    ).Title("OnFocus Handler")
                )
                | Text.H3("OnSubmit (press Enter)")
-               | new TextInputSubmitDemo();
+               | Text.P("Search example (type and press Enter):")
+               | Layout.Horizontal(
+                   searchQuery.ToSearchInput()
+                       .Placeholder("Search...")
+                       .OnSubmit(() => searchResult.Set($"Searched for: {searchQuery.Value}")),
+                   searchResult
+               )
+               | Text.P("Quick-add tags (type and press Enter to add):")
+               | Layout.Horizontal(
+                   tag.ToTextInput()
+                       .Placeholder("Add a tag...")
+                       .OnSubmit(() =>
+                       {
+                           if (!string.IsNullOrWhiteSpace(tag.Value))
+                           {
+                               tags.Set(new List<string>(tags.Value) { tag.Value });
+                               tag.Set("");
+                           }
+                       }),
+                   Layout.Horizontal().Gap(2) | tags.Value.Select(t => new Badge(t))
+               )
+               | Text.P("Password submit (type and press Enter to login):")
+               | Layout.Horizontal(
+                   password.ToPasswordInput()
+                       .Placeholder("Enter password...")
+                       .ShortcutKey("Ctrl+Enter")
+                       .OnSubmit(() => loginResult.Set(
+                           string.IsNullOrWhiteSpace(password.Value)
+                               ? "Password cannot be empty"
+                               : "Login submitted")),
+                   loginResult
+               );
     }
 }
 
@@ -233,52 +270,5 @@ public class TextInputAffixes : ViewBase
                | nullableState.ToTextInput().Prefix("@").Invalid("Required field").ShortcutKey("Ctrl+P")
                | nullableState.ToTextInput().Suffix(Icons.Search).Invalid("Invalid input").ShortcutKey("Ctrl+F")
                | nullableState.ToTextInput().Prefix(Icons.Mail).Suffix(".com").Invalid("Error").ShortcutKey("Ctrl+B");
-    }
-}
-
-public class TextInputSubmitDemo : ViewBase
-{
-    public override object Build()
-    {
-        var searchQuery = UseState("");
-        var searchResult = UseState("");
-        var tag = UseState("");
-        var tags = UseState<List<string>>(new List<string>());
-        var password = UseState("");
-        var loginResult = UseState("");
-
-        return Layout.Vertical()
-               | Text.P("Search example (type and press Enter):")
-               | Layout.Horizontal(
-                   searchQuery.ToSearchInput()
-                       .Placeholder("Search...")
-                       .OnSubmit(() => searchResult.Set($"Searched for: {searchQuery.Value}")),
-                   searchResult
-               )
-               | Text.P("Quick-add tags (type and press Enter to add):")
-               | Layout.Horizontal(
-                   tag.ToTextInput()
-                       .Placeholder("Add a tag...")
-                       .OnSubmit(() =>
-                       {
-                           if (!string.IsNullOrWhiteSpace(tag.Value))
-                           {
-                               tags.Set(new List<string>(tags.Value) { tag.Value });
-                               tag.Set("");
-                           }
-                       }),
-                   Layout.Horizontal().Gap(2) | tags.Value.Select(t => new Badge(t))
-               )
-               | Text.P("Password submit (type and press Enter to login):")
-               | Layout.Horizontal(
-                   password.ToPasswordInput()
-                       .Placeholder("Enter password...")
-                       .ShortcutKey("Ctrl+Enter")
-                       .OnSubmit(() => loginResult.Set(
-                           string.IsNullOrWhiteSpace(password.Value)
-                               ? "Password cannot be empty"
-                               : "Login submitted")),
-                   loginResult
-               );
     }
 }
