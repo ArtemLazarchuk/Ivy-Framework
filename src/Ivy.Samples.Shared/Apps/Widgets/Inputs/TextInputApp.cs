@@ -261,6 +261,16 @@ public class TextInputAffixes : ViewBase
                | textState.ToTextInput().Suffix(Icons.Mail)
                | textState.ToTextInput().Prefix(Icons.Mail).Suffix(Icons.Mail)
 
+               | Text.Monospaced("Button prefix/suffix")
+               | textState.ToTextInput().Prefix(new Button("Copy", () => { }, icon: Icons.Copy).Ghost().Small())
+               | textState.ToTextInput().Suffix(new Button("Clear", () => { textState.Value = ""; }).Ghost().Small())
+               | textState.ToTextInput().Prefix(new Button("Copy", () => { }, icon: Icons.Copy).Ghost().Small()).Suffix(new Button("Send").Ghost().Small())
+
+               | Text.Monospaced("Badge prefix/suffix")
+               | textState.ToTextInput().Prefix(new Badge("NEW", BadgeVariant.Success))
+               | textState.ToTextInput().Suffix(new Badge($"{textState.Value.Length} chars", BadgeVariant.Secondary))
+               | textState.ToTextInput().Prefix(new Badge("v2", BadgeVariant.Info)).Suffix(new Badge("OK", BadgeVariant.Success))
+
                | Text.Monospaced("Nullable with prefix/suffix")
                | nullableState.ToTextInput().Prefix("$").Placeholder("Amount")
                | nullableState.ToTextInput().Suffix("%").Placeholder("Percentage")
