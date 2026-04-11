@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Channels;
 using Ivy.Helpers;
 using Ivy.Tendril.Apps;
 using Ivy.Tendril.Apps.Jobs;
@@ -57,7 +56,8 @@ public class JobService : IJobService
     private readonly IPlanDatabaseService? _database;
 
     private readonly string? _inboxPath;
-    private readonly Channel<string> _jobQueue = Channel.CreateUnbounded<string>();
+    private readonly PriorityQueue<string, int> _jobQueue = new();
+    private readonly object _queueLock = new();
     private readonly SemaphoreSlim _jobSlotSemaphore;
     private readonly TimeSpan _jobTimeout;
     private readonly ConcurrentDictionary<string, JobItem> _jobs = new();
@@ -481,12 +481,15 @@ public class JobService : IJobService
 
         // For MakePlan: args are named params like -Description "..." -Project "..."
         // For others: args[0] is the plan folder path
+        var priority = 0;
         if (type == "MakePlan")
         {
             planFile = GetNamedArg(args, "-Description") is { Length: > 0 } desc
                 ? desc.Length > 50 ? desc[..50] + "..." : desc
                 : "New Plan";
             project = GetNamedArg(args, "-Project") ?? "[Auto]";
+            if (int.TryParse(GetNamedArg(args, "-Priority"), out var parsedPriority))
+                priority = parsedPriority;
         }
         else
         {
@@ -495,7 +498,11 @@ public class JobService : IJobService
             if (Directory.Exists(planFolder))
             {
                 var plan = ReadPlanYaml(planFolder);
-                if (plan != null) project = plan.Project;
+                if (plan != null)
+                {
+                    project = plan.Project;
+                    priority = plan.Priority;
+                }
             }
         }
 
@@ -508,7 +515,8 @@ public class JobService : IJobService
             Status = JobStatus.Pending,
             ScriptPath = scriptPath,
             Args = args,
-            Provider = _configService?.Settings.CodingAgent ?? "claude"
+            Provider = _configService?.Settings.CodingAgent ?? "claude",
+            Priority = priority
         };
 
         // For MakePlan jobs: track the inbox file for crash recovery
@@ -563,7 +571,7 @@ public class JobService : IJobService
         {
             job.Status = JobStatus.Queued;
             job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
-            _jobQueue.Writer.TryWrite(id);
+            lock (_queueLock) { _jobQueue.Enqueue(id, -job.Priority); }
             RaiseJobsChanged();
             return id;
         }
@@ -877,22 +885,23 @@ public class JobService : IJobService
 
     private void ProcessJobQueue()
     {
-        while (_jobQueue.Reader.TryPeek(out var queuedId))
+        while (true)
         {
-            // Try to acquire a job slot (non-blocking)
             if (!_jobSlotSemaphore.Wait(0))
                 break;
 
-            if (!_jobQueue.Reader.TryRead(out queuedId))
+            string? queuedId;
+            lock (_queueLock)
             {
-                // Failed to dequeue — release the slot we just acquired
-                _jobSlotSemaphore.Release();
-                break;
+                if (!_jobQueue.TryDequeue(out queuedId, out _))
+                {
+                    _jobSlotSemaphore.Release();
+                    break;
+                }
             }
 
             if (!_jobs.TryGetValue(queuedId, out var queuedJob) || queuedJob.Status != JobStatus.Queued)
             {
-                // Job was removed or state changed — release the slot
                 _jobSlotSemaphore.Release();
                 continue;
             }
