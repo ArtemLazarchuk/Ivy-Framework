@@ -505,17 +505,12 @@ public class NumberInputApp : SampleBase
         }
     }
 
-    private static object CreateNumberInputVariants(object state)
-    {
-        if (state is not IAnyState anyState)
-            return Text.Block("Not an IAnyState");
-
-        var stateType = anyState.GetStateType();
-        var isNullable = stateType.IsNullableType();
-
-        // For both nullable and non-nullable states, show both number input and slider variants
-        return Layout.Vertical()
-               | anyState.ToNumberInput()
-               | anyState.ToSliderInput();
-    }
+    private static object CreateNumberInputVariants(object state) =>
+        InputDataBindingHelper.CreateInputVariants(state,
+            anyState => Layout.Vertical()
+                | anyState.ToNumberInput()
+                | anyState.ToSliderInput(),
+            anyState => Layout.Vertical()
+                | anyState.ToNumberInput()
+                | anyState.ToSliderInput());
 }
