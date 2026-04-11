@@ -27,10 +27,10 @@ public class NewPlanButton : ViewBase
         if (dialogOpen.Value)
             elements.Add(new CreatePlanDialog(
                 projectNames,
-                (description, project) =>
+                (description, project, priority) =>
                 {
                     lastSelectedProject.Set(project);
-                    jobService.StartJob("MakePlan", "-Description", $"{description} [FORCE]", "-Project", project);
+                    jobService.StartJob("MakePlan", "-Description", $"{description} [FORCE]", "-Project", project, "-Priority", priority.ToString());
                 },
                 () => dialogOpen.Set(false),
                 lastSelectedProject.Value

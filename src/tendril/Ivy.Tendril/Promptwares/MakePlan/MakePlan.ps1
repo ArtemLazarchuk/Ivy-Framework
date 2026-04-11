@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Description,
     [string]$Project = "[Auto]",
-    [string]$SourcePath = ""
+    [string]$SourcePath = "",
+    [int]$Priority = 0
 )
 
 . "$PSScriptRoot/../.shared/Utils.ps1"
@@ -28,6 +29,7 @@ $firmwareValues = @{
     Project         = $Project
 }
 if ($SourcePath) { $firmwareValues["SourcePath"] = $SourcePath }
+if ($Priority -ne 0) { $firmwareValues["Priority"] = $Priority }
 
 # Pre-compute duplicate detection and active plans (skip duplicates if FORCE flag)
 if ($Description -notmatch '\[FORCE\]') {
@@ -98,6 +100,19 @@ $planIdFormatted = "{0:D5}" -f $planId
 $planFolder = Get-ChildItem -Path $script:PlansDir -Filter "$planIdFormatted-*" -Directory | Select-Object -First 1
 if ($planFolder) {
     Write-Host "Plan created: $($planFolder.Name)" -ForegroundColor Green
+    if ($Priority -ne 0) {
+        $planYamlPath = Join-Path $planFolder.FullName "plan.yaml"
+        if (Test-Path $planYamlPath) {
+            $content = Get-Content $planYamlPath -Raw
+            if ($content -match '(?m)^priority:\s') {
+                $content = $content -replace '(?m)^priority:\s.*$', "priority: $Priority"
+            } else {
+                $content = $content -replace '(?m)^(level:\s)', "priority: $Priority`n`$1"
+            }
+            Set-Content $planYamlPath $content -NoNewline
+            Write-Host "Set priority: $Priority" -ForegroundColor Cyan
+        }
+    }
 }
 else {
     # Check if it was a duplicate (written to Trash)
