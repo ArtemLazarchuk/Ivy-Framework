@@ -46,6 +46,9 @@ public class WorktreeCleanupService : IStartable, IDisposable
             // First pass: remove recursive Plans artifacts within worktrees
             CleanupRecursiveArtifacts();
 
+            // Clean up legacy .promptwares directories (pre-migration artifacts)
+            CleanupLegacyPromptwaresDirs();
+
             // Second pass: regular plan-level worktree cleanup
             foreach (var dir in Directory.GetDirectories(_plansDirectory))
             {
@@ -269,6 +272,54 @@ public class WorktreeCleanupService : IStartable, IDisposable
         catch
         {
             // handle.exe not installed or failed — silently skip
+        }
+    }
+
+    internal void CleanupLegacyPromptwaresDirs()
+    {
+        try
+        {
+            if (!Directory.Exists(_plansDirectory)) return;
+
+            foreach (var planDir in Directory.GetDirectories(_plansDirectory))
+            {
+                try
+                {
+                    var worktreesDir = Path.Combine(planDir, "worktrees");
+                    if (!Directory.Exists(worktreesDir)) continue;
+
+                    var legacyDirs = Directory.GetDirectories(worktreesDir, ".promptwares", SearchOption.AllDirectories);
+
+                    foreach (var legacyDir in legacyDirs)
+                    {
+                        try
+                        {
+                            _logger.LogInformation(
+                                "Removing legacy .promptwares directory at {Path} (parent: {Parent})",
+                                legacyDir.Replace(_plansDirectory + Path.DirectorySeparatorChar, ""),
+                                Path.GetFileName(planDir));
+
+                            ForceDeleteDirectory(legacyDir, _logger);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex,
+                                "Failed to delete legacy .promptwares directory {Path}",
+                                legacyDir.Replace(_plansDirectory + Path.DirectorySeparatorChar, ""));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to scan for legacy .promptwares in {PlanFolder}",
+                        Path.GetFileName(planDir));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Legacy .promptwares cleanup scan failed");
         }
     }
 
