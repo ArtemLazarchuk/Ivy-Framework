@@ -397,6 +397,13 @@ public class ContentView(
                                     copyToClipboard(_selectedPlan.FolderPath);
                                     client.Toast("Copied path to clipboard", "Path Copied");
                                 }),
+                            new MenuItem("Copy Plan to Clipboard", Icon: Icons.Share, Tag: "CopyPlan")
+                                .OnSelect(() =>
+                                {
+                                    var exported = PlanExportHelper.ExportToClipboard(_selectedPlan);
+                                    copyToClipboard(exported);
+                                    client.Toast("Plan copied to clipboard", "Plan Exported");
+                                }),
                             new MenuItem("Mark as Completed", Icon: Icons.CircleCheck, Tag: "MarkCompleted")
                                 .OnSelect(() =>
                                 {
