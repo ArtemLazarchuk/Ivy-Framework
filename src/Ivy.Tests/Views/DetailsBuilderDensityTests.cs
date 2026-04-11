@@ -1,5 +1,3 @@
-using Ivy.Views.Builders;
-
 namespace Ivy.Tests.Views;
 
 public class DetailsBuilderDensityTests
