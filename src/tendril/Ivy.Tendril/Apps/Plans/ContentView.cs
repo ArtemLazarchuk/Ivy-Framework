@@ -369,7 +369,7 @@ public class ContentView(
                             _jobService.StartJob("ExpandPlan", planPath);
                             _refreshPlans();
                         })
-                        | new Button("Delete").Icon(Icons.Trash).Outline().ShortcutKey("Delete")
+                        | new Button("Delete").Icon(Icons.Trash).Outline().ShortcutKey("Backspace")
                             .OnClick(() => deleteDialogOpen.Set(true))
                         | new Button("Previous").Icon(Icons.ChevronLeft).Outline().OnClick(() => GoToPrevious())
                             .ShortcutKey("p")

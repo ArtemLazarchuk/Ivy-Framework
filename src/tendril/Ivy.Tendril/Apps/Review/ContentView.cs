@@ -474,7 +474,7 @@ public class ContentView(
                         {
                             suggestChangesOpen.Set(true);
                         }).ShortcutKey("d")
-                        | new Button("Discard").Icon(Icons.Trash).Outline().ShortcutKey("Delete").OnClick(() =>
+                        | new Button("Discard").Icon(Icons.Trash).Outline().ShortcutKey("Backspace").OnClick(() =>
                         {
                             discardDialogOpen.Set(true);
                         })
