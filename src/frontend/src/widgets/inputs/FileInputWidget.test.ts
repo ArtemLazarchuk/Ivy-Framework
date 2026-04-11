@@ -155,6 +155,40 @@ describe("FileInputWidget", () => {
     });
   });
 
+  describe("handleCancel", () => {
+    it("should check uploadProgress.has(fileId) for client-side cancel", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain("uploadProgress.has(fileId)");
+    });
+
+    it("should call cancelClientUpload(fileId) when upload is in progress", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain("cancelClientUpload(fileId)");
+    });
+
+    it("should dispatch OnCancel server event when not a client upload", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain('handleEvent("OnCancel", id, [fileId])');
+    });
+
+    it("should check hasCancelHandler before dispatching server event", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain("hasCancelHandler");
+    });
+
+    it("should reset inputRef.current.value to empty string", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain('inputRef.current.value = ""');
+    });
+
+    it("should include uploadProgress, cancelClientUpload, hasCancelHandler, handleEvent, id in dependency array", () => {
+      const block = extractBlock("handleCancel");
+      expect(block).toContain(
+        "[uploadProgress, cancelClientUpload, hasCancelHandler, handleEvent, id]",
+      );
+    });
+  });
+
   describe("drag handlers", () => {
     it("handleDragEnter should check !disabled before setIsDragging(true)", () => {
       const block = extractBlock("handleDragEnter");
@@ -171,6 +205,38 @@ describe("FileInputWidget", () => {
     it("handleDragLeave should call setIsDragging(false)", () => {
       const block = extractBlock("handleDragLeave");
       expect(block).toContain("setIsDragging(false)");
+    });
+  });
+
+  describe("openFileDialog", () => {
+    it("should guard on !disabled && inputRef.current", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("!disabled && inputRef.current");
+    });
+
+    it("should set dialogWasOpenRef when hasBlurHandler is true", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("dialogWasOpenRef.current = true");
+    });
+
+    it("should reset filesSelectedInCurrentDialogRef when hasBlurHandler", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("filesSelectedInCurrentDialogRef.current = false");
+    });
+
+    it("should reset blurFiredRef when hasBlurHandler", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("blurFiredRef.current = false");
+    });
+
+    it("should call inputRef.current.click()", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("inputRef.current.click()");
+    });
+
+    it("should include disabled and hasBlurHandler in dependency array", () => {
+      const block = extractBlock("openFileDialog");
+      expect(block).toContain("[disabled, hasBlurHandler]");
     });
   });
 });
