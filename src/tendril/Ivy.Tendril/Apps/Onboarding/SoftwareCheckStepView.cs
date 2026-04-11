@@ -25,10 +25,10 @@ public class SoftwareCheckStepView(
                                     checkResults.Value["gemini"]);
 
         var ghHealthy = healthResults.Value?.GetValueOrDefault("gh") == HealthCheckStatus.Authenticated;
-        var anyAgentHealthy = healthResults.Value != null
-                              && (healthResults.Value.GetValueOrDefault("claude") == HealthCheckStatus.Authenticated
-                                  || healthResults.Value.GetValueOrDefault("codex") == HealthCheckStatus.Authenticated
-                                  || healthResults.Value.GetValueOrDefault("gemini") == HealthCheckStatus.Authenticated);
+        var anyAgentHealthy = (healthResults.Value != null
+                               && (healthResults.Value.GetValueOrDefault("claude") == HealthCheckStatus.Authenticated
+                                   || healthResults.Value.GetValueOrDefault("codex") == HealthCheckStatus.Authenticated))
+                              || (checkResults.Value != null && checkResults.Value.GetValueOrDefault("gemini"));
 
         var allRequiredPassed = checkResults.Value != null
                                 && checkResults.Value["gh"] && ghHealthy
