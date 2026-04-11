@@ -97,7 +97,7 @@ public class DateRangeInputApp : SampleBase
                 .TestId("daterange-input-min-max-example");
 
         return Layout.Vertical()
-            | Text.H1("DateRang Input")
+            | Text.H1("DateRange Input")
             | Text.H2("Size Examples")
             | sizeExamplesGrid
             | Text.H2("Variants")
