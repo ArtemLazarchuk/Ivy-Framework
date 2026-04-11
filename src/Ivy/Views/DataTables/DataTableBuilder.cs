@@ -27,7 +27,7 @@ public class DataTableBuilder<TModel>(
     private FuncViewBuilder? _headerLeftFactory;
     private FuncViewBuilder? _headerRightFactory;
     private Dictionary<string, object>? _footerValuesByColumn;
-    private Density _density = Density.Medium;
+    private Density _density = Ivy.Density.Medium;
 
     private readonly string? _idColumnName =
         idSelector != null ? TypeHelper.GetNameFromMemberExpression(idSelector.Body) : null;
@@ -477,7 +477,7 @@ public class DataTableBuilder<TModel>(
         return this;
     }
 
-    public DataTableBuilder<TModel> Density(Density density)
+    public DataTableBuilder<TModel> Density(Ivy.Density density)
     {
         _density = density;
         return this;
