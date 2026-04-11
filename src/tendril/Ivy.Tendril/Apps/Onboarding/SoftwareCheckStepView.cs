@@ -134,18 +134,23 @@ public class SoftwareCheckStepView(
             var claudeHealthTask = results["claude"] ? CheckHealth("claude", "-p \"ping\" --max-turns 1") : null;
             var codexHealthTask = results["codex"] ? CheckHealth("codex", "login status") : null;
 
-            var activeHealthTasks = new[] { ghHealthTask, claudeHealthTask, codexHealthTask }
-                .OfType<Task<HealthCheckStatus>>()
-                .ToArray();
-            if (activeHealthTasks.Length > 0)
-                await Task.WhenAll(activeHealthTasks);
+            var pendingTasks = new List<(string key, Task<HealthCheckStatus> task)>();
+            if (ghHealthTask != null) pendingTasks.Add(("gh", ghHealthTask));
+            if (claudeHealthTask != null) pendingTasks.Add(("claude", claudeHealthTask));
+            if (codexHealthTask != null) pendingTasks.Add(("codex", codexHealthTask));
 
             var health = new Dictionary<string, HealthCheckStatus?>();
-            if (ghHealthTask != null) health["gh"] = ghHealthTask.Result;
-            if (claudeHealthTask != null) health["claude"] = claudeHealthTask.Result;
-            if (codexHealthTask != null) health["codex"] = codexHealthTask.Result;
 
-            healthResults.Set(health);
+            while (pendingTasks.Count > 0)
+            {
+                var completedTask = await Task.WhenAny(pendingTasks.Select(t => t.task));
+                var (key, _) = pendingTasks.First(t => t.task == completedTask);
+                pendingTasks.RemoveAll(t => t.task == completedTask);
+
+                health[key] = await completedTask;
+                healthResults.Set(new Dictionary<string, HealthCheckStatus?>(health));
+            }
+
             isChecking.Set(false);
         }
     }
