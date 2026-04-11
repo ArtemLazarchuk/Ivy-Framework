@@ -135,6 +135,8 @@ public class TendrilSettings
     };
 }
 
+public record ConfigParseError(string Message, string FilePath, Exception? InnerException);
+
 public class ConfigService : IConfigService
 {
     private string[]? _levelNamesCache;
@@ -182,13 +184,22 @@ public class ConfigService : IConfigService
                 yaml = Regex.Replace(yaml, @"(?m)^(\s*-\s+)(%\w+%.*)$", "$1'$2'");
                 Settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml) ?? new TendrilSettings();
                 MigrateProjectColors();
+                CreateConfigBackup();
                 NeedsOnboarding = false;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Failed to load Tendril config '{ConfigPath}': {ex}");
-                NeedsOnboarding = true;
+                ParseError = new ConfigParseError(ex.Message, ConfigPath, ex);
+                BackupBrokenConfig();
                 Settings = new TendrilSettings();
+                NeedsOnboarding = true;
+
+                if (TryAutoHeal())
+                {
+                    ParseError = null;
+                    NeedsOnboarding = false;
+                }
             }
         }
         else
@@ -200,21 +211,13 @@ public class ConfigService : IConfigService
 
         if (Settings != null && !NeedsOnboarding)
         {
-            // Initialize basic stuff
             VariableExpansion.InitializeUserSecrets(TendrilHome);
             ExpandSettingsVariables();
-
-            // Expand repo paths
-            if (Settings.Projects != null)
-                foreach (var proj in Settings.Projects)
-                    if (proj.Repos != null)
-                        foreach (var repo in proj.Repos)
-                            repo.Path = VariableExpansion.ExpandVariables(repo.Path, TendrilHome);
+            ExpandRepoPaths();
 
             // Validate repo paths are not worktrees
             ValidateRepoPathsAreNotWorktrees();
 
-            // Ensure directories exist
             Directory.CreateDirectory(TendrilHome);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Inbox"));
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Plans"));
@@ -274,7 +277,20 @@ public class ConfigService : IConfigService
     {
         _levelNamesCache = null;
         var yaml = YamlHelper.SerializerCompact.Serialize(Settings);
+
+        // Validate the YAML can be deserialized back before writing
+        try
+        {
+            YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"Generated YAML failed validation and was not saved: {ex.Message}", ex);
+        }
+
         FileHelper.WriteAllText(ConfigPath, yaml);
+        CreateConfigBackup();
         ReloadSettings();
     }
 
@@ -305,6 +321,8 @@ public class ConfigService : IConfigService
 
     // Onboarding support
     public bool NeedsOnboarding { get; private set; }
+
+    public ConfigParseError? ParseError { get; private set; }
 
     public void SetPendingTendrilHome(string path)
     {
@@ -407,6 +425,134 @@ public class ConfigService : IConfigService
         {
             return false;
         }
+    }
+
+    public bool TryAutoHeal()
+    {
+        // Strategy 1: Restore from last known good backup
+        var backupPath = ConfigPath + ".backup";
+        if (File.Exists(backupPath))
+        {
+            try
+            {
+                var backupYaml = FileHelper.ReadAllText(backupPath);
+                var restored = YamlHelper.Deserializer.Deserialize<TendrilSettings>(backupYaml);
+                if (restored != null)
+                {
+                    FileHelper.WriteAllText(ConfigPath, backupYaml);
+                    Settings = restored;
+                    MigrateProjectColors();
+                    VariableExpansion.InitializeUserSecrets(TendrilHome);
+                    ExpandSettingsVariables();
+                    ExpandRepoPaths();
+                    return true;
+                }
+            }
+            catch
+            {
+                // Backup is also corrupt, fall through
+            }
+        }
+
+        // Strategy 2: Create minimal valid config
+        Settings = CreateMinimalSettings();
+        var minimalYaml = YamlHelper.SerializerCompact.Serialize(Settings);
+        FileHelper.WriteAllText(ConfigPath, minimalYaml);
+        return true;
+    }
+
+    public void ResetToDefaults()
+    {
+        BackupBrokenConfig();
+        Settings = CreateMinimalSettings();
+        var yaml = YamlHelper.SerializerCompact.Serialize(Settings);
+        FileHelper.WriteAllText(ConfigPath, yaml);
+        ParseError = null;
+        NeedsOnboarding = true;
+    }
+
+    public void RetryLoadConfig()
+    {
+        if (!File.Exists(ConfigPath)) return;
+
+        try
+        {
+            var yaml = FileHelper.ReadAllText(ConfigPath);
+            yaml = Regex.Replace(yaml, @"(?m)(?<=:\s+)(%\w+%.*)$", "'$1'");
+            yaml = Regex.Replace(yaml, @"(?m)^(\s*-\s+)(%\w+%.*)$", "$1'$2'");
+            Settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml) ?? new TendrilSettings();
+            MigrateProjectColors();
+            CreateConfigBackup();
+            ParseError = null;
+            NeedsOnboarding = false;
+            _levelNamesCache = null;
+            VariableExpansion.InitializeUserSecrets(TendrilHome);
+            ExpandSettingsVariables();
+            ExpandRepoPaths();
+            SettingsReloaded?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            BackupBrokenConfig();
+            ParseError = new ConfigParseError(ex.Message, ConfigPath, ex);
+        }
+    }
+
+    private void BackupBrokenConfig()
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath)) return;
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddTHHmmss");
+            var brokenPath = Path.Combine(
+                Path.GetDirectoryName(ConfigPath)!,
+                $"config.yaml.broken.{timestamp}.bak");
+            File.Copy(ConfigPath, brokenPath, true);
+        }
+        catch
+        {
+            // Best-effort backup
+        }
+    }
+
+    private void CreateConfigBackup()
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath)) return;
+            var backupPath = ConfigPath + ".backup";
+            File.Copy(ConfigPath, backupPath, true);
+        }
+        catch
+        {
+            // Best-effort backup
+        }
+    }
+
+    private static TendrilSettings CreateMinimalSettings()
+    {
+        return new TendrilSettings
+        {
+            CodingAgent = "claude",
+            Projects = new List<ProjectConfig>(),
+            Verifications = new List<VerificationConfig>(),
+            Levels = new List<LevelConfig>
+            {
+                new() { Name = "Bug", Badge = "Destructive" },
+                new() { Name = "Critical", Badge = "Warning" },
+                new() { Name = "NiceToHave", Badge = "Outline" },
+                new() { Name = "Epic", Badge = "Info" }
+            }
+        };
+    }
+
+    private void ExpandRepoPaths()
+    {
+        if (Settings.Projects != null)
+            foreach (var proj in Settings.Projects)
+                if (proj.Repos != null)
+                    foreach (var repo in proj.Repos)
+                        repo.Path = VariableExpansion.ExpandVariables(repo.Path, TendrilHome);
     }
 
     internal static string? MigrateProjectColor(string? colorValue)

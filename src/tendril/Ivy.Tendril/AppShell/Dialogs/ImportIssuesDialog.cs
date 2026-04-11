@@ -21,16 +21,29 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
         var errorMessage = UseState<string?>(null);
         var isFetching = UseState(false);
         var isImporting = UseState(false);
+        var assigneesError = UseState<string?>(null);
+        var labelsError = UseState<string?>(null);
 
         var assigneesQuery = UseQuery<string[], string>(
             selectedRepo.Value ?? "",
             async (repoName, _) =>
             {
-                if (string.IsNullOrEmpty(repoName)) return Array.Empty<string>();
+                if (string.IsNullOrEmpty(repoName))
+                {
+                    assigneesError.Set(null);
+                    return Array.Empty<string>();
+                }
                 var repos = githubService.GetRepos();
                 var repo = repos.FirstOrDefault(r => r.DisplayName == repoName);
-                if (repo is null) return Array.Empty<string>();
-                return (await githubService.GetAssigneesAsync(repo.Owner, repo.Name)).ToArray();
+                if (repo is null)
+                {
+                    assigneesError.Set(null);
+                    return Array.Empty<string>();
+                }
+
+                var (assignees, error) = await githubService.GetAssigneesAsync(repo.Owner, repo.Name);
+                assigneesError.Set(error);
+                return assignees.ToArray();
             },
             initialValue: Array.Empty<string>()
         );
@@ -39,11 +52,22 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
             selectedRepo.Value ?? "",
             async (repoName, _) =>
             {
-                if (string.IsNullOrEmpty(repoName)) return Array.Empty<string>();
+                if (string.IsNullOrEmpty(repoName))
+                {
+                    labelsError.Set(null);
+                    return Array.Empty<string>();
+                }
                 var repos = githubService.GetRepos();
                 var repo = repos.FirstOrDefault(r => r.DisplayName == repoName);
-                if (repo is null) return Array.Empty<string>();
-                return (await githubService.GetLabelsAsync(repo.Owner, repo.Name)).ToArray();
+                if (repo is null)
+                {
+                    labelsError.Set(null);
+                    return Array.Empty<string>();
+                }
+
+                var (labels, error) = await githubService.GetLabelsAsync(repo.Owner, repo.Name);
+                labelsError.Set(error);
+                return labels.ToArray();
             },
             initialValue: Array.Empty<string>()
         );
@@ -54,6 +78,8 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
             errorMessage.Set(null);
             selectedAssignee.Set(null);
             selectedLabels.Set(Array.Empty<string>());
+            assigneesError.Set(null);
+            labelsError.Set(null);
         }, selectedRepo);
 
         if (!_dialogOpen.Value) return null;
@@ -193,6 +219,12 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
                     .Nullable().WithField().Label("Assignee")
                 | selectedLabels.ToSelectInput(labelsQuery.Value.ToOptions())
                     .Placeholder("Select labels...").WithField().Label("Labels")
+                | (assigneesError.Value is { } assigneeErr
+                    ? Text.Danger(assigneeErr).Small()
+                    : null)
+                | (labelsError.Value is { } labelErr
+                    ? Text.Danger(labelErr).Small()
+                    : null)
                 | new Button("Fetch Issues").Outline().Loading(isFetching.Value)
                     .OnClick(async () => await FetchIssues())
                 | (errorMessage.Value is { } error

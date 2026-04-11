@@ -91,8 +91,8 @@ public class WorktreeCleanupServiceTests : IDisposable
     [Fact]
     public void RunCleanup_Respects_Grace_Period()
     {
-        // Plan just failed 10 minutes ago — should NOT be cleaned
-        var dir = CreatePlan("03000-RecentFail", "Failed", DateTime.UtcNow.AddMinutes(-10));
+        // Plan just failed 5 minutes ago — should NOT be cleaned (grace period is 10 minutes)
+        var dir = CreatePlan("03000-RecentFail", "Failed", DateTime.UtcNow.AddMinutes(-5));
         CreateWorktreeDir(dir, "Repo");
 
         _service.RunCleanup();

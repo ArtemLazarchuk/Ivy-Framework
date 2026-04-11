@@ -36,26 +36,32 @@ public class GithubService(IConfigService config) : IGithubService
         return repos;
     }
 
-    public async Task<List<string>> GetAssigneesAsync(string owner, string repo)
+    public async Task<(List<string> assignees, string? error)> GetAssigneesAsync(string owner, string repo)
     {
         var key = $"{owner}/{repo}";
         if (_assigneeCache.TryGetValue(key, out var cached))
-            return cached;
+            return (cached, null);
 
-        var assignees = await FetchAssigneesFromGhCliAsync(owner, repo);
-        _assigneeCache[key] = assignees;
-        return assignees;
+        var (assignees, error) = await FetchAssigneesFromGhCliAsync(owner, repo);
+
+        if (error is null)
+            _assigneeCache[key] = assignees;
+
+        return (assignees, error);
     }
 
-    public async Task<List<string>> GetLabelsAsync(string owner, string repo)
+    public async Task<(List<string> labels, string? error)> GetLabelsAsync(string owner, string repo)
     {
         var key = $"{owner}/{repo}";
         if (_labelCache.TryGetValue(key, out var cached))
-            return cached;
+            return (cached, null);
 
-        var labels = await FetchLabelsFromGhCliAsync(owner, repo);
-        _labelCache[key] = labels;
-        return labels;
+        var (labels, error) = await FetchLabelsFromGhCliAsync(owner, repo);
+
+        if (error is null)
+            _labelCache[key] = labels;
+
+        return (labels, error);
     }
 
     public async Task<Dictionary<string, string>> GetPrStatusesAsync(string owner, string repo)
@@ -182,7 +188,7 @@ public class GithubService(IConfigService config) : IGithubService
         };
     }
 
-    private static async Task<List<string>> FetchLabelsFromGhCliAsync(string owner, string repo)
+    private static async Task<(List<string> labels, string? error)> FetchLabelsFromGhCliAsync(string owner, string repo)
     {
         try
         {
@@ -197,7 +203,8 @@ public class GithubService(IConfigService config) : IGithubService
             };
 
             using var process = Process.Start(psi);
-            if (process is null) return new List<string>();
+            if (process is null)
+                return ([], "GitHub CLI (gh) is not available. Please install it from https://cli.github.com/");
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
@@ -206,17 +213,21 @@ public class GithubService(IConfigService config) : IGithubService
             if (process.ExitCode != 0)
             {
                 Console.Error.WriteLine($"[GithubService] gh api labels failed for {owner}/{repo}: {stderr}");
-                return new List<string>();
+                var errorMsg = !string.IsNullOrWhiteSpace(stderr)
+                    ? stderr.Trim()
+                    : $"GitHub CLI exited with code {process.ExitCode}";
+                return ([], errorMsg);
             }
 
-            return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            var labels = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .OrderBy(x => x)
                 .ToList();
+            return (labels, null);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[GithubService] Failed to fetch labels for {owner}/{repo}: {ex.Message}");
-            return new List<string>();
+            return ([], $"Failed to fetch labels: {ex.Message}");
         }
     }
 
@@ -278,7 +289,7 @@ public class GithubService(IConfigService config) : IGithubService
         }
     }
 
-    private static async Task<List<string>> FetchAssigneesFromGhCliAsync(string owner, string repo)
+    private static async Task<(List<string> assignees, string? error)> FetchAssigneesFromGhCliAsync(string owner, string repo)
     {
         try
         {
@@ -293,7 +304,8 @@ public class GithubService(IConfigService config) : IGithubService
             };
 
             using var process = Process.Start(psi);
-            if (process is null) return new List<string>();
+            if (process is null)
+                return ([], "GitHub CLI (gh) is not available. Please install it from https://cli.github.com/");
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var stderr = await process.StandardError.ReadToEndAsync();
@@ -302,17 +314,21 @@ public class GithubService(IConfigService config) : IGithubService
             if (process.ExitCode != 0)
             {
                 Console.Error.WriteLine($"[GithubService] gh api assignees failed for {owner}/{repo}: {stderr}");
-                return new List<string>();
+                var errorMsg = !string.IsNullOrWhiteSpace(stderr)
+                    ? stderr.Trim()
+                    : $"GitHub CLI exited with code {process.ExitCode}";
+                return ([], errorMsg);
             }
 
-            return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            var assignees = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .OrderBy(x => x)
                 .ToList();
+            return (assignees, null);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[GithubService] Failed to fetch assignees for {owner}/{repo}: {ex.Message}");
-            return new List<string>();
+            return ([], $"Failed to fetch assignees: {ex.Message}");
         }
     }
 }

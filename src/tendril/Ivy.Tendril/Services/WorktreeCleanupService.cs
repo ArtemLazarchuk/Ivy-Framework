@@ -12,7 +12,7 @@ public class WorktreeCleanupService : IStartable, IDisposable
     private static readonly HashSet<string> TerminalStates = new(StringComparer.OrdinalIgnoreCase)
         { "Completed", "Failed", "Skipped", "Icebox" };
 
-    private static readonly TimeSpan GracePeriod = TimeSpan.FromHours(1);
+    private static readonly TimeSpan GracePeriod = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan TimerInterval = TimeSpan.FromMinutes(30);
 
     private readonly string _plansDirectory;

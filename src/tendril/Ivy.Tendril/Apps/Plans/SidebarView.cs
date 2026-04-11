@@ -1,3 +1,4 @@
+using Ivy.Tendril.Helpers;
 using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps.Plans;
@@ -67,8 +68,12 @@ public class SidebarView(
             var badges = Layout.Horizontal().Gap(1);
             if (plan.Status != PlanStatus.Draft)
                 badges |= new Badge(plan.Status.ToString()).Variant(stateBadgeVariant).Small();
-            badges |= new Badge(plan.Project).Variant(BadgeVariant.Outline).Small()
-                .WithProjectColor(_config, plan.Project);
+            var projects = ProjectHelper.ParseProjects(plan.Project);
+            foreach (var proj in projects)
+            {
+                badges |= new Badge(proj).Variant(BadgeVariant.Outline).Small()
+                    .WithProjectColor(_config, proj);
+            }
             badges |= new Badge(plan.Level).Variant(_config.GetBadgeVariant(plan.Level)).Small();
 
             return new ListItem($"#{plan.Id} {plan.Title}")

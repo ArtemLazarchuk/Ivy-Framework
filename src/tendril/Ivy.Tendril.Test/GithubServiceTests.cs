@@ -152,6 +152,32 @@ public class GithubServiceTests
         Assert.Empty(issues);
     }
 
+    [Fact]
+    public async Task GetAssigneesAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (assignees, error) = await githubService.GetAssigneesAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000");
+
+        Assert.Empty(assignees);
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetLabelsAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (labels, error) = await githubService.GetLabelsAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000");
+
+        Assert.Empty(labels);
+        Assert.NotNull(error);
+    }
+
     private static string CreateTempGitRepo(string remoteUrl)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"ivy-github-test-{Guid.NewGuid()}");

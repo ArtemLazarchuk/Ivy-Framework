@@ -99,12 +99,12 @@ public class ProjectSetupStepView(IState<int> stepperIndex) : ViewBase
 
                           var invalidRepo = filledRepos.FirstOrDefault(p =>
                           {
-                              var expanded = Environment.ExpandEnvironmentVariables(p);
+                              var expanded = VariableExpansion.ExpandVariables(p, "");
                               return !Directory.Exists(expanded) || !Path.Exists(Path.Combine(expanded, ".git"));
                           });
                           if (invalidRepo != null)
                           {
-                              var expanded = Environment.ExpandEnvironmentVariables(invalidRepo);
+                              var expanded = VariableExpansion.ExpandVariables(invalidRepo, "");
                               error.Set(!Directory.Exists(expanded)
                                   ? $"Directory does not exist: {expanded}"
                                   : $"Directory is not a git repository: {expanded}");

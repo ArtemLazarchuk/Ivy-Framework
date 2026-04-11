@@ -461,6 +461,9 @@ public class TendrilAppShell(AppShellSettings settings) : ViewBase
                 );
         }
 
+        if (config.ParseError != null)
+            return new ConfigErrorApp(config);
+
         if (config.NeedsOnboarding) return new OnboardingApp();
 
         return new Fragment(

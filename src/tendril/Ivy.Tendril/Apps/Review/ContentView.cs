@@ -50,8 +50,8 @@ public class ContentView(
                 if (repoPath is null) return Array.Empty<string>();
                 var repoConfig = GithubService.GetRepoConfigFromPath(repoPath);
                 if (repoConfig is null) return Array.Empty<string>();
-                var result = await githubService.GetAssigneesAsync(repoConfig.Owner, repoConfig.Name);
-                return result.ToArray();
+                var (assignees, _) = await githubService.GetAssigneesAsync(repoConfig.Owner, repoConfig.Name);
+                return assignees.ToArray();
             },
             initialValue: Array.Empty<string>()
         );

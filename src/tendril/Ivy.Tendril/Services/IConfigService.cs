@@ -11,8 +11,12 @@ public interface IConfigService
     string[] LevelNames { get; }
     EditorConfig Editor { get; }
     bool NeedsOnboarding { get; }
+    ConfigParseError? ParseError { get; }
 
     ProjectConfig? GetProject(string name);
+    bool TryAutoHeal();
+    void ResetToDefaults();
+    void RetryLoadConfig();
     BadgeVariant GetBadgeVariant(string level);
     Colors? GetProjectColor(string projectName);
     void SaveSettings();
