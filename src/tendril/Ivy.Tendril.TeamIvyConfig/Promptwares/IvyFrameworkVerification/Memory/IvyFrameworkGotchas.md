@@ -615,6 +615,13 @@ Number columns had `type: undefined` because `ColType.Number` (enum 0) was strip
 ### Mobile-First Cascading May Surprise with HideOn
 📝 `HideOn(Breakpoint.Mobile)` creates `{ default: true, mobile: false }`. With mobile-first cascading, `false` cascades to tablet, desktop, and wide — effectively hiding at ALL viewports. The API name suggests "hide only on mobile" but the cascading behavior produces "hide everywhere."
 
+## ImmutableArray Default Value Crash
+
+### UseState<ImmutableArray<T>>() creates uninitialized array
+❌ **`UseState<ImmutableArray<FileUpload<byte[]>>>()`** — default `ImmutableArray<T>` is uninitialized (`IsDefault = true`); accessing `.Length`, iterating, or calling `.Select()` throws `InvalidOperationException: This operation cannot be performed on a default instance of ImmutableArray`
+✅ **`UseState(() => ImmutableArray<FileUpload<byte[]>>.Empty)`** — explicitly initialize with `.Empty`
+📝 **Why**: `default(ImmutableArray<T>)` has a null backing array (unlike `List<T>` which is just empty). The `UseState<T>()` overload without initializer uses `default(T)`, which for `ImmutableArray` produces an unusable instance. Always use the `Func<T>` overload with `.Empty`.
+
 ## Future Gotchas
 
 As we encounter more issues, add them with:
