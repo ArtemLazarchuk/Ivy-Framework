@@ -665,7 +665,7 @@ public class JobService : IJobService
         job.SessionId = Guid.NewGuid().ToString();
 
         psi.Environment["TENDRIL_JOB_ID"] = id;
-        psi.Environment["TENDRIL_URL"] = Environment.GetEnvironmentVariable("TENDRIL_URL") ?? "http://localhost:5010";
+        psi.Environment["TENDRIL_URL"] = Environment.GetEnvironmentVariable("TENDRIL_URL") ?? "https://localhost:5010";
         psi.Environment["TENDRIL_SHARED"] = SharedRoot;
         psi.Environment["TENDRIL_SESSION_ID"] = job.SessionId;
         if (_configService != null)
