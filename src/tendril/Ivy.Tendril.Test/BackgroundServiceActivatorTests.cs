@@ -116,7 +116,7 @@ public class BackgroundServiceActivatorTests : IAsyncLifetime
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfigService>(config);
-        services.AddSingleton(new ModelPricingService());
+        services.AddSingleton(new ModelPricingService(NullLogger<ModelPricingService>.Instance));
         services.AddSingleton<IPlanReaderService>(sp =>
             new PlanReaderService(sp.GetRequiredService<IConfigService>(), NullLogger<PlanReaderService>.Instance));
         services.AddSingleton<ITelemetryService>(sp => new TelemetryService(false));

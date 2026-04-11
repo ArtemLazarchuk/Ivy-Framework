@@ -24,9 +24,9 @@ public static class TendrilServer
         server.Services.AddSingleton<IConfigService>(configService);
         server.Services.AddSingleton<ConfigService>(configService);
 
-        var modelPricingService = new ModelPricingService();
-        server.Services.AddSingleton<IModelPricingService>(modelPricingService);
-        server.Services.AddSingleton(modelPricingService);
+        server.Services.AddSingleton<ModelPricingService>(sp =>
+            new ModelPricingService(sp.GetRequiredService<ILogger<ModelPricingService>>()));
+        server.Services.AddSingleton<IModelPricingService>(sp => sp.GetRequiredService<ModelPricingService>());
 
         // Register IChatClient if LLM is configured
         if (configService.Settings.Llm is { } llmConfig && !string.IsNullOrEmpty(llmConfig.ApiKey))
