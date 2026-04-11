@@ -12,7 +12,6 @@ public class GithubService(IConfigService config) : IGithubService
     private readonly ConcurrentDictionary<string, List<string>> _assigneeCache = new();
     private readonly IConfigService _config = config;
     private readonly ConcurrentDictionary<string, List<string>> _labelCache = new();
-    private readonly ConcurrentDictionary<string, Dictionary<string, string>> _prStatusCache = new();
     private List<RepoConfig>? _repoCache;
 
     public List<RepoConfig> GetRepos()
@@ -61,13 +60,7 @@ public class GithubService(IConfigService config) : IGithubService
 
     public async Task<Dictionary<string, string>> GetPrStatusesAsync(string owner, string repo)
     {
-        var key = $"{owner}/{repo}";
-        if (_prStatusCache.TryGetValue(key, out var cached))
-            return cached;
-
-        var statuses = await FetchPrStatusesFromGhCliAsync(owner, repo);
-        _prStatusCache[key] = statuses;
-        return statuses;
+        return await FetchPrStatusesFromGhCliAsync(owner, repo);
     }
 
     public async Task<List<GitHubIssue>> SearchIssuesAsync(string owner, string repo, string? query, string? assignee,
