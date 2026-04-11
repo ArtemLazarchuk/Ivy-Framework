@@ -1,6 +1,14 @@
 
 namespace Ivy.Samples.Shared.Apps.Widgets.Inputs;
 
+file static class CameraInputHelpers
+{
+    internal static readonly UploadDelegate NoOpUploadHandler =
+        (fileUpload, stream, cancellationToken) => Task.CompletedTask;
+
+    internal const string DefaultImageContentType = "image/png";
+}
+
 [App(icon: Icons.Camera, group: ["Widgets", "Inputs"], searchHints: ["camera", "webcam", "photo", "capture", "snapshot", "picture"])]
 
 public class CameraInputApp() : SampleBase
@@ -53,8 +61,8 @@ public class CameraInputStates : ViewBase
     public override object? Build()
     {
         var dummyUpload = UseUpload(
-            (fileUpload, stream, cancellationToken) => System.Threading.Tasks.Task.CompletedTask,
-            defaultContentType: "image/png"
+            CameraInputHelpers.NoOpUploadHandler,
+            defaultContentType: CameraInputHelpers.DefaultImageContentType
         );
 
         return Layout.Grid().Columns(4)
@@ -75,8 +83,8 @@ public class CameraInputValidation : ViewBase
     public override object? Build()
     {
         var dummyUpload = UseUpload(
-            (fileUpload, stream, cancellationToken) => System.Threading.Tasks.Task.CompletedTask,
-            defaultContentType: "image/png"
+            CameraInputHelpers.NoOpUploadHandler,
+            defaultContentType: CameraInputHelpers.DefaultImageContentType
         );
 
         return Layout.Vertical().Gap(4)
@@ -91,8 +99,8 @@ public class CameraInputSizes : ViewBase
     public override object? Build()
     {
         var dummyUpload = UseUpload(
-            (fileUpload, stream, cancellationToken) => System.Threading.Tasks.Task.CompletedTask,
-            defaultContentType: "image/png"
+            CameraInputHelpers.NoOpUploadHandler,
+            defaultContentType: CameraInputHelpers.DefaultImageContentType
         );
 
         return Layout.Grid().Columns(4)
