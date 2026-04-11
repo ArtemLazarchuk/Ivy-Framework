@@ -166,18 +166,14 @@ public class NumberInputDataBindingTab : ViewBase
         }
     }
 
-    private static object CreateNumberInputVariants(object state)
-    {
-        if (state is not IAnyState anyState)
-            return Text.Block("Not an IAnyState");
-
-        var stateType = anyState.GetStateType();
-        var isNullable = stateType.IsNullableType();
-
-        return Layout.Vertical()
-               | anyState.ToNumberInput()
-               | anyState.ToSliderInput();
-    }
+    private static object CreateNumberInputVariants(object state) =>
+        InputDataBindingHelper.CreateInputVariants(state,
+            anyState => Layout.Vertical()
+                | anyState.ToNumberInput()
+                | anyState.ToSliderInput(),
+            anyState => Layout.Vertical()
+                | anyState.ToNumberInput()
+                | anyState.ToSliderInput());
 }
 
 public class NumberInputPrefixSuffixTab : ViewBase
