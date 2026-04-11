@@ -239,4 +239,72 @@ describe("FileInputWidget", () => {
       expect(block).toContain("[disabled, hasBlurHandler]");
     });
   });
+
+  describe("window focus blur-tracking useEffect", () => {
+    /**
+     * Helper: extract the useEffect block that contains handleWindowFocus.
+     */
+    function extractUseEffectBlock(): string {
+      const marker = "const handleWindowFocus = ()";
+      const start = source.lastIndexOf("useEffect(", source.indexOf(marker));
+      const depsEnd = "}, [hasBlurHandler, handleEvent, id]);";
+      const deps = source.indexOf(depsEnd, start);
+      return source.slice(start, deps + depsEnd.length);
+    }
+
+    it("should early return when no blur handler", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("if (!hasBlurHandler) return");
+    });
+
+    it("should register window focus listener", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain('window.addEventListener("focus", handleWindowFocus)');
+    });
+
+    it("should cleanup by removing listener", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain('window.removeEventListener("focus", handleWindowFocus)');
+    });
+
+    it("should check dialogWasOpenRef", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("if (dialogWasOpenRef.current)");
+    });
+
+    it("should reset dialogWasOpenRef", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("dialogWasOpenRef.current = false");
+    });
+
+    it("should use queueMicrotask for timing", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("queueMicrotask(");
+    });
+
+    it("should skip blur if files were selected", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("!filesSelectedInCurrentDialogRef.current");
+    });
+
+    it("should skip blur if already fired", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("!blurFiredRef.current");
+    });
+
+    it("should set blurFiredRef on fire", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("blurFiredRef.current = true");
+    });
+
+    it("should fire OnBlur event", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain('handleEvent("OnBlur", id, [])');
+    });
+
+    it("should have correct dependency array", () => {
+      const block = extractUseEffectBlock();
+      expect(block).toContain("[hasBlurHandler, handleEvent, id]");
+    });
+  });
 });
