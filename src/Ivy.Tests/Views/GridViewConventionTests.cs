@@ -57,4 +57,18 @@ public class GridViewConventionTests
         var view = Layout.Grid("item1").Padding(4);
         Assert.Equal(new Thickness(4), GetPadding(view));
     }
+
+    [Fact]
+    public void Padding_HorizontalVertical_SetsCorrectly()
+    {
+        var view = Layout.Grid("item1").Padding(4, 8);
+        Assert.Equal(new Thickness(4, 8), GetPadding(view));
+    }
+
+    [Fact]
+    public void Padding_FourSided_SetsCorrectly()
+    {
+        var view = Layout.Grid("item1").Padding(1, 2, 3, 4);
+        Assert.Equal(new Thickness(1, 2, 3, 4), GetPadding(view));
+    }
 }
