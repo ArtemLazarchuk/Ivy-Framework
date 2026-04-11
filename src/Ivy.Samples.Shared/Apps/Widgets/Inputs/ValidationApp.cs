@@ -1,14 +1,14 @@
-namespace Ivy.Samples.Shared.Apps.Tests;
+namespace Ivy.Samples.Shared.Apps.Widgets.Inputs;
 
 public record ValidationFormModel(string Email, string Password, string? PhoneNumber, string? Website);
 
-[App(icon: Icons.ShieldCheck, group: ["Tests"], searchHints: ["validation", "email", "password", "tel", "url", "form", "field", "textinput"])]
-public class ValidationTestApp : SampleBase
+[App(icon: Icons.ShieldCheck, group: ["Widgets", "Inputs"], searchHints: ["validation", "email", "password", "tel", "url", "form", "field", "textinput"])]
+public class ValidationApp : SampleBase
 {
     protected override object? BuildSample()
     {
         return Layout.Vertical()
-            | Text.H1("Validation test")
+            | Text.H1("Validation")
             | Text.P("Text input variants, field-wrapped inputs, and form fields.")
             | Layout.Tabs(
                 new Tab("Text input variants", new TextInputVariantsTab()),
