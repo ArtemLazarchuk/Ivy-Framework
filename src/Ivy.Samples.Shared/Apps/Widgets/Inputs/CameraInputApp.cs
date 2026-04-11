@@ -119,11 +119,20 @@ public class CameraInputEvents : ViewBase
     {
         var focused = UseState(false);
         var lastEvent = UseState<string?>(() => null);
+        var photo = UseState<FileUpload<byte[]>?>();
 
-        var dummyUpload = UseUpload(
-            (fileUpload, stream, cancellationToken) => System.Threading.Tasks.Task.CompletedTask,
+        var upload = UseUpload(
+            MemoryStreamUploadHandler.Create(photo),
             defaultContentType: "image/png"
         );
+
+        UseEffect(() =>
+        {
+            if (photo.Value?.Status == FileUploadStatus.Finished)
+            {
+                lastEvent.Set("Captured");
+            }
+        }, photo);
 
         void onFocus()
         {
@@ -138,11 +147,12 @@ public class CameraInputEvents : ViewBase
         }
 
         return Layout.Vertical()
-               | Text.P("Focus the camera input (Tab / click), then blur it to trigger events.")
-               | new CameraInput(dummyUpload.Value, "Take a photo")
+               | Text.P("Focus, blur, and capture the camera input to trigger events.")
+               | new CameraInput(upload.Value, "Take a photo")
                    .OnFocus(onFocus)
                    .OnBlur(onBlur)
                | Text.P($"Focused: {focused.Value}").Small()
-               | Text.P($"Last event: {lastEvent.Value ?? "—"}").Small();
+               | Text.P($"Last event: {lastEvent.Value ?? "—"}").Small()
+               | Text.P($"Captured: {(photo.Value != null ? photo.Value.FileName : "—")}").Small();
     }
 }
