@@ -2,19 +2,19 @@ namespace Ivy.Tendril.Apps.Plans.Dialogs;
 
 public class CreatePlanDialog(
     List<string> projectNames,
-    Action<string, string> onCreatePlan,
+    Action<string, string[]> onCreatePlan,
     Action onClose,
-    string defaultProject = "[Auto]") : ViewBase
+    string[]? defaultProjects = null) : ViewBase
 {
-    private readonly string _defaultProject = defaultProject;
+    private readonly string[] _defaultProjects = defaultProjects ?? ["[Auto]"];
     private readonly Action _onClose = onClose;
-    private readonly Action<string, string> _onCreatePlan = onCreatePlan;
+    private readonly Action<string, string[]> _onCreatePlan = onCreatePlan;
     private readonly List<string> _projectNames = projectNames;
 
     public override object Build()
     {
         var createPlanText = UseState("");
-        var selectedProject = UseState(_defaultProject);
+        var selectedProjects = UseState(_defaultProjects);
 
         var options = new List<string> { "[Auto]" };
         options.AddRange(_projectNames);
@@ -24,7 +24,7 @@ public class CreatePlanDialog(
             new DialogHeader("Create New Plan"),
             new DialogBody(
                 Layout.Vertical()
-                | selectedProject.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithLabel("Select project")
+                | selectedProjects.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithLabel("Select project(s)")
                 | createPlanText.ToTextareaInput("Enter task description...").Rows(6).AutoFocus().WithField()
                     .Label("Describe the task for the new plan")
             ),
@@ -34,7 +34,11 @@ public class CreatePlanDialog(
                 {
                     if (!string.IsNullOrWhiteSpace(createPlanText.Value))
                     {
-                        _onCreatePlan(createPlanText.Value, selectedProject.Value);
+                        var projects = selectedProjects.Value
+                            .Where(p => p != "[Auto]")
+                            .ToArray();
+                        if (projects.Length == 0) projects = ["[Auto]"];
+                        _onCreatePlan(createPlanText.Value, projects);
                         _onClose();
                     }
                 })
