@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Ivy.Core;
 using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
+using Ivy.Tendril.Views;
 
 namespace Ivy.Tendril.Apps.Plans;
 
@@ -168,7 +169,8 @@ public class ContentView(
             if (_allPlans.Count == 0)
                 return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(2)
                        | new Icon(Icons.Inbox).Large().Color(Colors.Gray)
-                       | Text.Muted("No draft plans yet");
+                       | Text.Muted("No draft plans yet")
+                       | new NewPlanButton();
 
             return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
                    | Text.Muted("Select a plan from the sidebar");
