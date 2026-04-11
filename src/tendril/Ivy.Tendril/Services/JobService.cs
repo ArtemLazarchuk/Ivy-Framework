@@ -287,8 +287,6 @@ public class JobService : IJobService
         // Try to start queued jobs now that a slot is free
         ProcessJobQueue();
 
-        if (!_jobs.Values.Any(j => j.Status == JobStatus.Running))
-            SendNativeNotification();
     }
 
     public void StopJob(string id)
@@ -1266,38 +1264,6 @@ public class JobService : IJobService
         }
     }
 
-    private void SendNativeNotification()
-    {
-        if (!OperatingSystem.IsWindows())
-            return;
-
-        var completed = _jobs.Values.Count(j => j.Status == JobStatus.Completed);
-        var failed = _jobs.Values.Count(j => j.Status is JobStatus.Failed or JobStatus.Timeout);
-        var title = "Tendril \u2014 All Jobs Finished";
-        var body = failed > 0
-            ? $"{completed} completed, {failed} failed"
-            : $"{completed} job(s) completed successfully";
-
-        Task.Run(() =>
-        {
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "pwsh",
-                    Arguments = $"-NoProfile -NonInteractive -Command \"New-BurntToastNotification -Text '{title}', '{body}'\"",
-                    RedirectStandardInput = true,
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                };
-                Process.Start(psi);
-            }
-            catch
-            {
-                /* Notification is best-effort */
-            }
-        });
-    }
 
     internal static void LogCostToCsv(string planFolder, string jobType, int tokens, double cost)
     {

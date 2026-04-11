@@ -39,6 +39,7 @@ public class PlanWatcherService : IPlanWatcherService
 
         _watcher = new FileSystemWatcher(planFolder)
         {
+            InternalBufferSize = 65536,
             IncludeSubdirectories = true,
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.DirectoryName,
             EnableRaisingEvents = true
@@ -48,6 +49,8 @@ public class PlanWatcherService : IPlanWatcherService
         _watcher.Created += OnFileEvent;
         _watcher.Deleted += OnFileEvent;
         _watcher.Renamed += (_, _) => ScheduleDebounce(null);
+        _watcher.Error += (_, e) =>
+            Program.WriteCrashLog($"[{DateTime.UtcNow:O}] PlanWatcher FSW error: {e.GetException()}");
     }
 
     public event Action<string?>? PlansChanged;
