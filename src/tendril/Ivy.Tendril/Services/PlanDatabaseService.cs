@@ -238,9 +238,9 @@ public class PlanDatabaseService : IPlanDatabaseService
         try
         {
             var cutoff = DateTime.UtcNow.Date.AddDays(-6).ToString("yyyy-MM-dd");
-            var pf = projectFilter != null ? " AND Project = @project" : "";
-            var pfAlias = projectFilter != null ? " AND p.Project = @project" : "";
-            var pfAlias2 = projectFilter != null ? " AND p2.Project = @project2" : "";
+            var pf = projectFilter != null ? " AND (Project = @project OR Project LIKE @projectPattern)" : "";
+            var pfAlias = projectFilter != null ? " AND (p.Project = @project OR p.Project LIKE @projectPattern)" : "";
+            var pfAlias2 = projectFilter != null ? " AND (p2.Project = @project2 OR p2.Project LIKE @projectPattern2)" : "";
 
             // Query 1: Status counts + avg cost
             int totalCount, draftCount, inProgressCount, reviewCount, completedCount, failedCount;
@@ -265,7 +265,9 @@ public class PlanDatabaseService : IPlanDatabaseService
                 if (projectFilter != null)
                 {
                     cmd.Parameters.AddWithValue("@project", projectFilter);
+                    cmd.Parameters.AddWithValue("@projectPattern", $"%{projectFilter}%");
                     cmd.Parameters.AddWithValue("@project2", projectFilter);
+                    cmd.Parameters.AddWithValue("@projectPattern2", $"%{projectFilter}%");
                 }
 
                 using var r = cmd.ExecuteReader();
@@ -338,7 +340,11 @@ public class PlanDatabaseService : IPlanDatabaseService
                     """;
 
                 cmd.Parameters.AddWithValue("@cutoff", cutoff);
-                if (projectFilter != null) cmd.Parameters.AddWithValue("@project", projectFilter);
+                if (projectFilter != null)
+                {
+                    cmd.Parameters.AddWithValue("@project", projectFilter);
+                    cmd.Parameters.AddWithValue("@projectPattern", $"%{projectFilter}%");
+                }
                 for (var i = 0; i < days.Count; i++)
                     cmd.Parameters.AddWithValue($"@day{i}", days[i]);
 
@@ -433,7 +439,7 @@ public class PlanDatabaseService : IPlanDatabaseService
             var cutoff = DateTime.UtcNow.AddDays(-days);
 
             using var cmd = _connection.CreateCommand();
-            var projectClause = projectFilter != null ? " AND p.Project = @project" : "";
+            var projectClause = projectFilter != null ? " AND (p.Project = @project OR p.Project LIKE @projectPattern)" : "";
             cmd.CommandText = $"""
                                SELECT
                                    strftime('%Y-%m-%d %H:00:00', COALESCE(c.LogTimestamp, p.Updated)) as Hour,
@@ -448,7 +454,10 @@ public class PlanDatabaseService : IPlanDatabaseService
                                """;
             cmd.Parameters.AddWithValue("@cutoff", cutoff.ToString("O", CultureInfo.InvariantCulture));
             if (projectFilter != null)
+            {
                 cmd.Parameters.AddWithValue("@project", projectFilter);
+                cmd.Parameters.AddWithValue("@projectPattern", $"%{projectFilter}%");
+            }
 
             var result = new List<HourlyTokenBurn>();
             using var reader = cmd.ExecuteReader();
