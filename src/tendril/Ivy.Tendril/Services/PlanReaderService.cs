@@ -1116,9 +1116,12 @@ public class PlanReaderService(
                         item.DeclineReason
                     ));
             }
-            catch
+            catch (Exception ex)
             {
-                // Skip malformed YAML files
+                _logger.LogWarning(
+                    "Failed to load recommendations from {RecommendationsPath}: {Message}",
+                    recommendationsPath,
+                    ex.Message);
             }
         }
 
