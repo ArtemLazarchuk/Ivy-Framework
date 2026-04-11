@@ -143,12 +143,10 @@ public class ConfigService : IConfigService
     private string? _pendingTendrilHome;
     private List<VerificationConfig>? _pendingVerificationDefinitions;
 
-    internal ConfigService(TendrilSettings settings, string tendrilHome = "")
+    internal ConfigService(TendrilSettings settings, string? tendrilHome = null)
     {
         Settings = settings;
-        TendrilHome = !string.IsNullOrEmpty(tendrilHome)
-            ? tendrilHome
-            : Environment.GetEnvironmentVariable("TENDRIL_HOME") ?? "";
+        TendrilHome = tendrilHome ?? Environment.GetEnvironmentVariable("TENDRIL_HOME") ?? "";
         ConfigPath = !string.IsNullOrEmpty(TendrilHome)
             ? Path.Combine(TendrilHome, "config.yaml")
             : Path.Combine(System.AppContext.BaseDirectory, "config.yaml");

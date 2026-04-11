@@ -659,6 +659,21 @@ promptwares:
     }
 
     [Fact]
+    public void Constructor_WithEmptyString_SetsNoHome()
+    {
+        var service = new ConfigService(new TendrilSettings(), "");
+        Assert.Equal("", service.TendrilHome);
+    }
+
+    [Fact]
+    public void Constructor_WithNull_FallsBackToEnvVar()
+    {
+        var service = new ConfigService(new TendrilSettings(), null);
+        var expected = Environment.GetEnvironmentVariable("TENDRIL_HOME") ?? "";
+        Assert.Equal(expected, service.TendrilHome);
+    }
+
+    [Fact]
     public void SaveSettings_PersistsAdvancedSettings()
     {
         var yaml = @"
