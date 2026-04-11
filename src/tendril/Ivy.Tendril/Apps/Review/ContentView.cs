@@ -77,7 +77,8 @@ public class ContentView(
             async (filePath, ct) =>
             {
                 if (string.IsNullOrEmpty(filePath)) return "";
-                var artifactsDir = Path.GetFullPath(Path.Combine(_selectedPlan!.FolderPath, "artifacts"));
+                if (_selectedPlan is null) return "";
+                var artifactsDir = Path.GetFullPath(Path.Combine(_selectedPlan.FolderPath, "artifacts"));
                 var resolvedPath = Path.GetFullPath(filePath);
                 if (!resolvedPath.StartsWith(artifactsDir, StringComparison.OrdinalIgnoreCase))
                     return "Access denied: file is outside the artifacts folder.";
@@ -92,7 +93,8 @@ public class ContentView(
             async (hash, ct) =>
             {
                 if (string.IsNullOrEmpty(hash)) return null;
-                var repoPaths2 = _selectedPlan!.GetEffectiveRepoPaths(_config);
+                if (_selectedPlan is null) return null;
+                var repoPaths2 = _selectedPlan.GetEffectiveRepoPaths(_config);
                 return await Task.Run(() =>
                 {
                     foreach (var repo in repoPaths2)
