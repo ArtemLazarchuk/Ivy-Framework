@@ -41,6 +41,10 @@ public class WorktreeCleanupService : IStartable, IDisposable
         {
             if (!Directory.Exists(_plansDirectory)) return;
 
+            // First pass: remove recursive Plans artifacts within worktrees
+            CleanupRecursiveArtifacts();
+
+            // Second pass: regular plan-level worktree cleanup
             foreach (var dir in Directory.GetDirectories(_plansDirectory))
             {
                 try
@@ -56,6 +60,54 @@ public class WorktreeCleanupService : IStartable, IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Worktree cleanup scan failed");
+        }
+    }
+
+    internal void CleanupRecursiveArtifacts()
+    {
+        try
+        {
+            if (!Directory.Exists(_plansDirectory)) return;
+
+            foreach (var planDir in Directory.GetDirectories(_plansDirectory))
+            {
+                try
+                {
+                    var worktreesDir = Path.Combine(planDir, "worktrees");
+                    if (!Directory.Exists(worktreesDir)) continue;
+
+                    var nestedPlans = Directory.GetDirectories(worktreesDir, "Plans", SearchOption.AllDirectories);
+
+                    foreach (var nestedPlanDir in nestedPlans)
+                    {
+                        try
+                        {
+                            _logger.LogInformation(
+                                "Removing recursive Plans artifact at {Path} (parent: {Parent})",
+                                nestedPlanDir.Replace(_plansDirectory + Path.DirectorySeparatorChar, ""),
+                                Path.GetFileName(planDir));
+
+                            ForceDeleteDirectory(nestedPlanDir, _logger);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex,
+                                "Failed to delete nested Plans directory {Path}",
+                                nestedPlanDir.Replace(_plansDirectory + Path.DirectorySeparatorChar, ""));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to scan for recursive artifacts in {PlanFolder}",
+                        Path.GetFileName(planDir));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Recursive artifact cleanup scan failed");
         }
     }
 
