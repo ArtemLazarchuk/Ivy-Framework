@@ -93,10 +93,17 @@ public class WorktreeCleanupService : IStartable, IDisposable
 
         PlanReaderService.RemoveWorktrees(planFolderPath, logger);
 
-        // Force-delete any remaining worktree directories that git couldn't remove
-        // (orphaned .git files, missing entries, Windows file locks, etc.)
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
         {
+            var gitFile = Path.Combine(wtDir, ".git");
+            if (!File.Exists(gitFile))
+            {
+                var dirAge = DateTime.UtcNow - new DirectoryInfo(wtDir).CreationTimeUtc;
+                logger?.LogWarning(
+                    "Force-deleting orphaned worktree directory (no .git file, created {Age} ago): {Path}",
+                    dirAge, Path.GetFileName(wtDir));
+            }
+
             try
             {
                 ForceDeleteDirectory(wtDir, logger);

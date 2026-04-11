@@ -386,6 +386,41 @@ public class WorktreeCleanupServiceTests : IDisposable
             Directory.Delete(testDir, true);
     }
 
+    [Fact]
+    public void CleanupPlanWorktrees_LogsMissingGitFileAge()
+    {
+        var dir = CreatePlan("12000-MissingGitAge", "Completed", DateTime.UtcNow.AddHours(-2));
+        var worktreeDir = Path.Combine(dir, "worktrees", "TestRepo");
+        Directory.CreateDirectory(worktreeDir);
+        File.WriteAllText(Path.Combine(worktreeDir, "file.txt"), "content");
+
+        var logEntries = new List<string>();
+        var logger = new CapturingLogger(logEntries);
+
+        WorktreeCleanupService.CleanupPlanWorktrees(dir, logger);
+
+        Assert.Contains(logEntries, e => e.Contains("no .git file") && e.Contains("ago"));
+        Assert.False(Directory.Exists(worktreeDir), "Orphan directory should still be cleaned up");
+    }
+
+    [Fact]
+    public void CleanupPlanWorktrees_HandlesVeryRecentOrphanedDirectory()
+    {
+        var dir = CreatePlan("12001-RecentOrphan", "Completed", DateTime.UtcNow.AddHours(-2));
+        var worktreeDir = Path.Combine(dir, "worktrees", "TestRepo");
+        Directory.CreateDirectory(worktreeDir);
+        File.WriteAllText(Path.Combine(worktreeDir, "file.txt"), "content");
+
+        var logEntries = new List<string>();
+        var logger = new CapturingLogger(logEntries);
+
+        WorktreeCleanupService.CleanupPlanWorktrees(dir, logger);
+
+        var ageLog = logEntries.FirstOrDefault(e => e.Contains("no .git file") && e.Contains("ago"));
+        Assert.NotNull(ageLog);
+        Assert.False(Directory.Exists(worktreeDir), "Very recent orphan should still be cleaned up");
+    }
+
     private class CapturingLogger(List<string> entries) : ILogger
     {
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;

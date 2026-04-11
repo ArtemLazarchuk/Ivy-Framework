@@ -892,7 +892,10 @@ public class PlanReaderService(
             var gitFile = Path.Combine(wtDir, ".git");
             if (!File.Exists(gitFile))
             {
-                logger?.LogWarning("Worktree directory has no .git file, skipping git removal: {Path}", wtDir);
+                var dirAge = DateTime.UtcNow - new DirectoryInfo(wtDir).CreationTimeUtc;
+                logger?.LogWarning(
+                    "Worktree directory has no .git file (created {Age} ago), skipping git removal: {Path}",
+                    dirAge, wtDir);
                 continue;
             }
 

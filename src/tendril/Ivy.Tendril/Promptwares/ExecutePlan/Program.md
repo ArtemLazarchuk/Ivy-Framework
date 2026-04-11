@@ -210,6 +210,19 @@ git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName
 
 **Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.
 
+4. After creating the worktree, **verify the `.git` file exists** and fail fast if it's missing:
+
+```bash
+if [ ! -f "<PlanFolder>/worktrees/<repo-folder-name>/.git" ]; then
+    echo "ERROR: Worktree creation failed - .git file missing at <PlanFolder>/worktrees/<repo-folder-name>/.git"
+    echo "This indicates git worktree add did not fully initialize the worktree."
+    exit 1
+fi
+cat "<PlanFolder>/worktrees/<repo-folder-name>/.git"
+```
+
+This ensures ExecutePlan fails immediately if worktree creation is incomplete, rather than leaving orphaned directories that trigger warnings during cleanup.
+
 ### 2.5. Setup Frontend Dependencies (JavaScript/TypeScript Projects Only)
 
 **Note:** This section applies only to projects using npm/pnpm. Skip if not applicable.
