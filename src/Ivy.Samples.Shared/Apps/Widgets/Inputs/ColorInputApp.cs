@@ -293,26 +293,13 @@ public class ColorInputDataBindings : ViewBase
         return Layout.Grid().Columns(6) | gridItems.ToArray();
     }
 
-    private static object CreateColorInputVariants(object state)
-    {
-        if (state is not IAnyState anyState)
-            return Text.Block("Not an IAnyState");
-
-        var stateType = anyState.GetStateType();
-        var isNullable = stateType.IsNullableType();
-
-        if (isNullable)
-        {
-            // For nullable states, show basic variant
-            return anyState.ToColorInput();
-        }
-
-        // For non-nullable states, show all variants
-        return Layout.Vertical()
-               | anyState.ToColorInput()
-               | anyState.ToColorInput().Placeholder("Select color")
-               | anyState.ToColorInput().Disabled();
-    }
+    private static object CreateColorInputVariants(object state) =>
+        InputDataBindingHelper.CreateInputVariants(state,
+            anyState => Layout.Vertical()
+                | anyState.ToColorInput()
+                | anyState.ToColorInput().Placeholder("Select color")
+                | anyState.ToColorInput().Disabled(),
+            anyState => anyState.ToColorInput());
 
     private static object FormatStateValue(string typeName, object? value, bool isNullable)
     {
