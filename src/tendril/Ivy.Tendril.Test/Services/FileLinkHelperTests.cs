@@ -109,12 +109,16 @@ public class FileLinkHelperTests
         public string[] LevelNames => [];
         public EditorConfig Editor => new() { Command = "code", Label = "VS Code" };
         public bool NeedsOnboarding => false;
+        public ConfigParseError? ParseError => null;
 
         public ProjectConfig? GetProject(string name) => null;
         public BadgeVariant GetBadgeVariant(string level) => BadgeVariant.Outline;
         public Colors? GetProjectColor(string projectName) => null;
         public void SaveSettings() { }
         public void ReloadSettings() { }
+        public bool TryAutoHeal() => false;
+        public void ResetToDefaults() { }
+        public void RetryLoadConfig() { }
 #pragma warning disable CS0067
         public event EventHandler? SettingsReloaded;
 #pragma warning restore CS0067
