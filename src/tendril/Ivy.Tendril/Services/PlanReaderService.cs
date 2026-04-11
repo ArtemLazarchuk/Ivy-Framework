@@ -959,6 +959,13 @@ public class PlanReaderService(
         try
         {
             var planYamlPath = Path.Combine(folderPath, "plan.yaml");
+
+            if (!File.Exists(planYamlPath))
+            {
+                _logger.LogWarning("Plan folder is missing plan.yaml: {FolderPath}", folderPath);
+                return null;
+            }
+
             var yamlContent = FileHelper.ReadAllText(planYamlPath);
             PlanYaml? planYaml;
 
