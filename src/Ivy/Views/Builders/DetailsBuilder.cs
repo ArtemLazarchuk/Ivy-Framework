@@ -103,23 +103,17 @@ public class DetailsBuilder<TModel> : ViewBase, IStateless
         return this;
     }
 
-    public DetailsBuilder<TModel> Large()
+    public DetailsBuilder<TModel> Density(Density density)
     {
-        _density = Density.Large;
+        _density = density;
         return this;
     }
 
-    public DetailsBuilder<TModel> Small()
-    {
-        _density = Density.Small;
-        return this;
-    }
+    public DetailsBuilder<TModel> Large() => Density(Ivy.Density.Large);
 
-    public DetailsBuilder<TModel> Medium()
-    {
-        _density = Density.Medium;
-        return this;
-    }
+    public DetailsBuilder<TModel> Small() => Density(Ivy.Density.Small);
+
+    public DetailsBuilder<TModel> Medium() => Density(Ivy.Density.Medium);
 
     public DetailsBuilder<TModel> Remove(params Expression<Func<TModel, object>>[] fields)
     {
