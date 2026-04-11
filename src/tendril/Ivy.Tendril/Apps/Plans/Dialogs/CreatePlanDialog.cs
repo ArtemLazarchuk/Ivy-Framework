@@ -2,13 +2,13 @@ namespace Ivy.Tendril.Apps.Plans.Dialogs;
 
 public class CreatePlanDialog(
     List<string> projectNames,
-    Action<string, string, int> onCreatePlan,
+    Action<string, string[], int> onCreatePlan,
     Action onClose,
-    string defaultProject = "[Auto]") : ViewBase
+    string[]? defaultProjects = null) : ViewBase
 {
-    private readonly string _defaultProject = defaultProject;
+    private readonly string[] _defaultProjects = defaultProjects ?? ["[Auto]"];
     private readonly Action _onClose = onClose;
-    private readonly Action<string, string, int> _onCreatePlan = onCreatePlan;
+    private readonly Action<string, string[], int> _onCreatePlan = onCreatePlan;
     private readonly List<string> _projectNames = projectNames;
 
     internal static readonly List<string> PriorityOptions = ["Normal (0)", "High (1)", "Urgent (2)"];
@@ -19,7 +19,7 @@ public class CreatePlanDialog(
     public override object Build()
     {
         var createPlanText = UseState("");
-        var selectedProject = UseState(_defaultProject);
+        var selectedProjects = UseState(_defaultProjects);
         var selectedPriority = UseState("Normal (0)");
 
         var options = new List<string> { "[Auto]" };
@@ -30,7 +30,7 @@ public class CreatePlanDialog(
             new DialogHeader("Create New Plan"),
             new DialogBody(
                 Layout.Vertical()
-                | selectedProject.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithLabel("Select project")
+                | selectedProjects.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithLabel("Select project(s)")
                 | selectedPriority.ToSelectInput(PriorityOptions).Variant(SelectInputVariant.Toggle).WithLabel("Priority")
                 | createPlanText.ToTextareaInput("Enter task description...").Rows(6).AutoFocus().WithField()
                     .Label("Describe the task for the new plan")
@@ -41,7 +41,11 @@ public class CreatePlanDialog(
                 {
                     if (!string.IsNullOrWhiteSpace(createPlanText.Value))
                     {
-                        _onCreatePlan(createPlanText.Value, selectedProject.Value, ParsePriority(selectedPriority.Value));
+                        var projects = selectedProjects.Value
+                            .Where(p => p != "[Auto]")
+                            .ToArray();
+                        if (projects.Length == 0) projects = ["[Auto]"];
+                        _onCreatePlan(createPlanText.Value, projects, ParsePriority(selectedPriority.Value));
                         _onClose();
                     }
                 })
