@@ -327,26 +327,13 @@ public class CodeInputDataBindings : ViewBase
         return Layout.Grid().Columns(6) | gridItems.ToArray();
     }
 
-    private static object CreateCodeInputVariants(object state)
-    {
-        if (state is not IAnyState anyState)
-            return Text.Block("Not an IAnyState");
-
-        var stateType = anyState.GetStateType();
-        var isNullable = stateType.IsNullableType();
-
-        if (isNullable)
-        {
-            // For nullable states, show with placeholder
-            return anyState.ToCodeInput().Placeholder("Enter code here...");
-        }
-
-        // For non-nullable states, show all variants
-        return Layout.Vertical()
-               | anyState.ToCodeInput()
-               | anyState.ToCodeInput().Language(Languages.Csharp)
-               | anyState.ToCodeInput().Language(Languages.Csharp).ShowCopyButton();
-    }
+    private static object CreateCodeInputVariants(object state) =>
+        InputDataBindingHelper.CreateInputVariants(state,
+            anyState => Layout.Vertical()
+                | anyState.ToCodeInput()
+                | anyState.ToCodeInput().Language(Languages.Csharp)
+                | anyState.ToCodeInput().Language(Languages.Csharp).ShowCopyButton(),
+            anyState => anyState.ToCodeInput().Placeholder("Enter code here..."));
 
     private object FormatStateValue(string typeName, object? value, bool isNullable)
     {
