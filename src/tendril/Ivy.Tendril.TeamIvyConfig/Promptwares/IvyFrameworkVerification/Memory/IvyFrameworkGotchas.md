@@ -563,11 +563,6 @@ When passing structured children to widgets:
 2. Use `widgetNodeChildren` for metadata, `slots.default[index]` for rendered content
 3. Register both parent and child in `widgetMap.ts`
 4. Check `widgetNode.children && widgetNode.children.length > 0` before using slot content (empty fragments are truthy)
-
-### Ivy.csproj Rust Binary Build — MSBuild Glob Issue
-❌ `dotnet build` fails with MSB3024 for `*rustserver*.dll` glob
-✅ Create CI/CD artifacts path: `mkdir -p src/RustServer/artifacts/native/win-x64 && cp src/RustServer/target/release/rustserver.dll src/RustServer/artifacts/native/win-x64/`
-
 ## Historical Issues (Fixed)
 
 These bugs have been fixed. Kept for reference in case of regressions.
