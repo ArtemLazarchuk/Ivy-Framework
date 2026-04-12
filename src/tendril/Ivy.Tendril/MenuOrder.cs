@@ -7,6 +7,7 @@ namespace Ivy.Tendril;
 public static class MenuOrder
 {
     public const int Dashboard = 10;
+    public const int Dashboard2 = 15;
     public const int Recommendations = 20;
     public const int Drafts = 30;
     public const int Review = 40;
