@@ -64,9 +64,9 @@
       },
       "Ivy.NativeJsonDiff": {
         "type": "Direct",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "xtjtSJRA1MFilciXzW7LbadkUHA5BZahtQMdegd+e++ci4uJg1NwE6WIom/ufz6hsn6mG54nAMqPnhaF8JGL3w=="
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "ZZgMZ+Q/i++tVP6igeW+LH+BF1GJqjOq6DwUNqiPoGGn2YC5fYz46jkA6loMNO6UCsb/GlFpIgb4rjAFJb2NtQ=="
       },
       "Ivy.SystemTextJson.JsonDiffPatch": {
         "type": "Direct",

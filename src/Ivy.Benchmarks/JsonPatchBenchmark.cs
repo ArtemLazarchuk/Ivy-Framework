@@ -4,7 +4,7 @@ using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.JsonDiffPatch.Diffs.Formatters;
 using BenchmarkDotNet.Attributes;
 using Ivy.Core;
-using NativeJsonDiffLib = Ivy.NativeJsonDiff.NativeJsonDiff;
+using Ivy.NativeJsonDiff;
 
 namespace Ivy.Benchmarks;
 
@@ -68,6 +68,6 @@ public class JsonPatchBenchmark
     [Benchmark]
     public JsonNode? NativeJsonDiff_ComputePatch()
     {
-        return NativeJsonDiffLib.ComputePatch(_oldBytes, _newBytes);
+        return JsonDiffer.ComputePatch(_oldBytes, _newBytes);
     }
 }
