@@ -11,8 +11,10 @@ public class CustomPrDialog(
     IJobService jobService,
     IPlanReaderService planService,
     Action refreshPlans,
-    QueryResult<string[]> assigneesQuery) : ViewBase
+    QueryResult<string[]> assigneesQuery,
+    IState<string?> assigneesError) : ViewBase
 {
+    private readonly IState<string?> _assigneesError = assigneesError;
     private readonly QueryResult<string[]> _assigneesQuery = assigneesQuery;
     private readonly IState<bool> _dialogOpen = dialogOpen;
     private readonly IJobService _jobService = jobService;
@@ -54,6 +56,9 @@ public class CustomPrDialog(
                 | customPrIncludeArtifacts.ToBoolInput("Include Artifacts")
                 | customPrAssignee.ToSelectInput((_assigneesQuery.Value ?? Array.Empty<string>()).ToOptions())
                     .Nullable().WithField().Label("Assignee")
+                | (_assigneesError.Value is { } err
+                    ? Text.Danger(err).Small()
+                    : null)
                 | customPrComment.ToTextareaInput("Comment").Rows(3)
             ),
             new DialogFooter(
