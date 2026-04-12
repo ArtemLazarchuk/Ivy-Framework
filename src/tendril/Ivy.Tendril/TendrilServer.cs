@@ -26,6 +26,11 @@ public static class TendrilServer
         server.Services.AddSingleton<IConfigService>(configService);
         server.Services.AddSingleton<ConfigService>(configService);
 
+        if (configService.Settings.Auth != null)
+        {
+            server.UseAuth<Auth.TendrilAuthProvider>();
+        }
+
         server.Services.AddSingleton<ModelPricingService>(sp =>
             new ModelPricingService(sp.GetRequiredService<ILogger<ModelPricingService>>()));
         server.Services.AddSingleton<IModelPricingService>(sp => sp.GetRequiredService<ModelPricingService>());

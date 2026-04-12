@@ -111,6 +111,12 @@ public record LlmConfig
     public string Model { get; set; } = "gpt-4o-mini";
 }
 
+public record AuthConfig
+{
+    public string Password { get; set; } = "";
+    public string HashSecret { get; set; } = "";
+}
+
 public record ApiSettings
 {
     public string? ApiKey { get; set; }
@@ -127,6 +133,7 @@ public class TendrilSettings
     public string PlanTemplate { get; set; } = "";
     public EditorConfig Editor { get; set; } = new();
     public LlmConfig? Llm { get; set; }
+    public AuthConfig? Auth { get; set; }
     public ApiSettings? Api { get; set; }
     public Dictionary<string, PromptwareConfig> Promptwares { get; set; } = new();
     public List<AgentConfig> CodingAgents { get; set; } = new();
