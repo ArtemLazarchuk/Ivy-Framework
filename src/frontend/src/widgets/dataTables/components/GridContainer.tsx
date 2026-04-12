@@ -7,6 +7,7 @@ import DataEditor, {
   GridMouseEventArgs,
   GridSelection,
   GroupHeaderClickedEventArgs,
+  Highlight,
   Item,
   SpriteMap,
   Theme,
@@ -37,7 +38,6 @@ interface GridContainerProps {
   rangeSelect: "none" | "cell" | "rect" | "multi-cell" | "multi-rect";
   gridSelection: GridSelection;
   onGridSelectionChange: (newSelection: GridSelection) => void;
-  width: number;
   rowMarkers: "number" | "checkbox" | "both" | "none";
   onColumnMoved?: (startIndex: number, endIndex: number) => void;
   groupHeaderHeight?: number;
@@ -46,6 +46,8 @@ interface GridContainerProps {
   onGroupHeaderClicked?: (colIndex: number, event: GroupHeaderClickedEventArgs) => void;
   showSearch: boolean;
   onSearchClose: () => void;
+  onSearchResultsChanged?: (results: readonly Item[], navIndex: number) => void;
+  highlightRegions?: readonly Highlight[];
   onItemHovered?: (args: GridMouseEventArgs) => void;
   getRowThemeOverride?: ((row: number) => Partial<Theme> | undefined) | undefined;
   rowActions?: MenuItem[];
@@ -83,7 +85,6 @@ export const GridContainer: React.FC<GridContainerProps> = ({
   rangeSelect,
   gridSelection,
   onGridSelectionChange,
-  width,
   rowMarkers,
   onColumnMoved,
   groupHeaderHeight,
@@ -92,6 +93,8 @@ export const GridContainer: React.FC<GridContainerProps> = ({
   onGroupHeaderClicked,
   showSearch,
   onSearchClose,
+  onSearchResultsChanged,
+  highlightRegions,
   onItemHovered,
   getRowThemeOverride,
   rowActions,
@@ -145,7 +148,6 @@ export const GridContainer: React.FC<GridContainerProps> = ({
           rangeSelect={rangeSelect}
           gridSelection={gridSelection}
           onGridSelectionChange={onGridSelectionChange}
-          width={width}
           height={height}
           rowMarkers={rowMarkers}
           onColumnMoved={onColumnMoved}
@@ -156,6 +158,8 @@ export const GridContainer: React.FC<GridContainerProps> = ({
           onGroupHeaderClicked={onGroupHeaderClicked}
           showSearch={showSearch}
           onSearchClose={onSearchClose}
+          onSearchResultsChanged={onSearchResultsChanged}
+          highlightRegions={highlightRegions}
           onItemHovered={onItemHovered}
           getRowThemeOverride={getRowThemeOverride}
         />

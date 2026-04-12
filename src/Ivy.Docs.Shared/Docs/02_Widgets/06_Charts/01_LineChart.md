@@ -148,7 +148,8 @@ public class BitcoinChart : ViewBase
                  | Text.P($"Showing {bitcoinData.Length} days of data").Small()
                  | Text.Html($"<i>From {bitcoinData.First().Date:yyyy-MM-dd} to {bitcoinData.Last().Date:yyyy-MM-dd}</i>")
                  | bitcoinData.ToLineChart(
-                        style: LineChartStyles.Dashboard)
+                        style: LineChartStyles.Dashboard,
+                        polish: c => c.ReferenceLine(50, null, null))
                     .Dimension("Date", e => e.Date)
                     .Measure("Price", e => e.Sum(f => f.Price))
                     .Toolbox();
@@ -158,3 +159,55 @@ public class BitcoinChart : ViewBase
 
 </Body>
 </Details>
+
+## Customizing with polish
+
+When building charts from queryable data with `ToLineChart()`, use the `polish` callback to customize the scaffolded chart before it renders. The callback receives the fully built `LineChart` with lines from your measures already configured by the selected style.
+
+Common use cases for `polish`:
+- Override line colors, widths, or curve types
+- Add reference lines or reference areas
+- Replace the default lines array with custom line configurations
+- Add or modify tooltips, legends, or grids
+
+### Example: Custom line styling
+
+```csharp demo-below
+public class PolishLineChartDemo : ViewBase
+{
+    record SalesData(string Month, int Desktop, int Mobile);
+
+    public override object? Build()
+    {
+        var data = new SalesData[]
+        {
+            new("Jan", 186, 100),
+            new("Feb", 305, 200),
+            new("Mar", 237, 300),
+            new("Apr", 186, 100),
+            new("May", 325, 200),
+        };
+
+        return Layout.Vertical()
+            | data.ToLineChart(
+                polish: chart =>
+                {
+                    return (chart with
+                    {
+                        Lines =
+                        [
+                            new Line("Desktop").Stroke(Colors.Blue).StrokeWidth(3).CurveType(CurveTypes.Step),
+                            new Line("Mobile").Stroke(Colors.Orange).StrokeWidth(2).StrokeDashArray("5 5")
+                        ]
+                    }).ReferenceLine(null, 300, null);
+                }
+            )
+            .Dimension("Month", e => e.Month)
+            .Measure("Desktop", e => e.Sum(f => f.Desktop))
+            .Measure("Mobile", e => e.Sum(f => f.Mobile))
+            .Toolbox();
+    }
+}
+```
+
+> **Note:** The `polish` callback receives the fully scaffolded `LineChart` which already includes lines from the style. Use `chart with { ... }` syntax to replace or modify chart properties while preserving others.

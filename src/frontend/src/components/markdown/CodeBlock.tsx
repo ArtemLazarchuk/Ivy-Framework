@@ -1,17 +1,18 @@
-import React, { memo, useMemo, lazy, Suspense } from "react";
+import React, { memo, useMemo, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { createPrismTheme } from "@/lib/prismTheme";
 import { useTypography } from "@/contexts/TypographyContext";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
-const SyntaxHighlighter = lazy(() =>
+const SyntaxHighlighter = lazyWithRetry(() =>
   import("react-syntax-highlighter").then((mod) => ({ default: mod.Prism })),
 );
 
-const MermaidRenderer = lazy(() => import("../MermaidRenderer"));
-const GraphvizRenderer = lazy(() => import("../GraphvizRenderer"));
+const MermaidRenderer = lazyWithRetry(() => import("../MermaidRenderer"));
+const GraphvizRenderer = lazyWithRetry(() => import("../GraphvizRenderer"));
 
 interface CodeBlockProps {
   className?: string;
@@ -108,6 +109,28 @@ export const CodeBlock = memo(
         );
       }
 
+      const language = match ? match[1] : "text";
+      const useHighlighter = language !== "markdown" && language !== "md";
+
+      if (!useHighlighter) {
+        return (
+          <div className="relative">
+            <div className="absolute top-2 right-2 z-10">
+              <CopyToClipboardButton textToCopy={content} />
+            </div>
+            <ScrollArea className="w-full border border-border rounded-md">
+              <pre
+                className="p-4 rounded-md font-mono text-sm"
+                style={{ margin: 0, whiteSpace: "pre", overflowX: "auto" }}
+              >
+                {content}
+              </pre>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+        );
+      }
+
       return (
         <Suspense
           fallback={
@@ -128,7 +151,7 @@ export const CodeBlock = memo(
             </div>
             <ScrollArea className="w-full border border-border rounded-md">
               <SyntaxHighlighter
-                language={match ? match[1] : "text"}
+                language={language}
                 style={dynamicTheme}
                 customStyle={{
                   margin: 0,

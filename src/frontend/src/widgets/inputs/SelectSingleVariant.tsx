@@ -39,7 +39,16 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   "data-testid": dataTestId,
   width,
   events = EMPTY_ARRAY,
+  autoFocus,
 }) => {
+  const hasAutoFocusedRef = useRef(false);
+  useEffect(() => {
+    if (autoFocus && !disabled && !hasAutoFocusedRef.current) {
+      hasAutoFocusedRef.current = true;
+      triggerRef.current?.focus();
+      setIsOpen(true);
+    }
+  }, [autoFocus, disabled]);
   const validOptions = options.filter(
     (option) => option.value != null && option.value.toString().trim() !== "",
   );

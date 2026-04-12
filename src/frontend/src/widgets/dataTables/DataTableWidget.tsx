@@ -11,6 +11,7 @@ import { DataTableOption } from "./DataTableOption";
 import { DataTableFilterOption } from "./options/DataTableFilterOption";
 import { Filter as FilterIcon } from "lucide-react";
 import { tableStyles } from "./styles/style";
+import { Densities } from "@/types/density";
 import { TableProps } from "./types/types";
 import { getWidth, getHeight } from "@/lib/styles";
 import { applyConfigDefaults, applyColumnsDefaults } from "./DataTableDefaults";
@@ -37,6 +38,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({ children, emptyView }) => {
 };
 
 interface DataTableWidgetProps extends TableProps {
+  density?: Densities;
   slots?: {
     EmptyView?: React.ReactNode[];
     HeaderLeft?: React.ReactNode[];
@@ -52,6 +54,7 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
   editable = false,
   width = "Full",
   height = "Full",
+  density,
   rowActions,
   slots,
   "data-testid": dataTestId,
@@ -79,11 +82,17 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
     ...getHeight(height),
   };
 
-  // If height is Full, ensure it can shrink and grow properly within a flex container
-  // to avoid "infinite growth" when no height constraint is provided by the parent.
+  // If height is Full, use flex-based sizing instead of height: 100%.
+  // In unconstrained parents (e.g. Layout.Vertical() with no explicit height),
+  // height: 100% resolves to 0 because the parent has no definite height.
+  // flexGrow fills available space in flex parents, while minHeight ensures
+  // at least ~5 rows are visible in unconstrained parents.
   if (height === "Full") {
+    delete containerStyle.height;
+    containerStyle.display = "flex";
+    containerStyle.flexDirection = "column";
     containerStyle.flexGrow = 1;
-    containerStyle.minHeight = 0;
+    containerStyle.minHeight = "200px";
   }
 
   return (
@@ -93,6 +102,7 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
         connection={connection}
         config={finalConfig}
         editable={editable}
+        density={density}
       >
         <TableLayout emptyView={slots?.EmptyView}>
           <DataTableHeader>

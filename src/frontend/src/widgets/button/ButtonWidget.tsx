@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useRef } from "react";
 import { m, LazyMotion, domAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/Icon";
@@ -17,10 +17,8 @@ import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BorderRadius, getColor, getWidth } from "@/lib/styles";
 import { Densities } from "@/types/density";
-import {
-  parseShortcut,
-  formatShortcutForDisplay,
-} from "@/widgets/inputs/TextInputWidget/utils/shortcut";
+import { parseShortcut, formatShortcutForDisplay } from "@/lib/shortcut";
+import { useShortcut } from "@/lib/useShortcut";
 
 const ButtonWithTooltip = withTooltip(Button);
 
@@ -112,6 +110,15 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
 }) => {
   const eventHandler = useEventHandler();
   const shortcutDisplay = formatShortcutForDisplay(shortcutKey);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoFocusedRef = useRef(false);
+
+  React.useEffect(() => {
+    if (autoFocus && !disabled && !hasAutoFocusedRef.current) {
+      hasAutoFocusedRef.current = true;
+      buttonRef.current?.focus();
+    }
+  }, [autoFocus, disabled]);
 
   // For 'Rounded' (default), rely on the 'rounded-field' class from buttonVariant.
   // Only add inline style to override the class for 'None'/'Full'.
@@ -180,54 +187,34 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
   // Check if URL is a mailto link (should not open in new tab)
   const isMailto = validatedHref ? isMailtoUrl(validatedHref) : false;
 
-  useEffect(() => {
-    if (!shortcutKey || disabled) return;
+  const parsedShortcut = shortcutKey ? parseShortcut(shortcutKey) : null;
+  const hasModifierChord = !!(
+    parsedShortcut &&
+    (parsedShortcut.ctrl || parsedShortcut.meta || parsedShortcut.alt)
+  );
 
-    const shortcutObj = parseShortcut(shortcutKey);
-    if (!shortcutObj) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const eventTarget = event.target as HTMLElement;
-      if (
-        eventTarget.tagName === "INPUT" ||
-        eventTarget.tagName === "TEXTAREA" ||
-        eventTarget.isContentEditable
-      ) {
-        return; // Don't intercept shortcuts while typing
-      }
-
-      const modifierMatch =
-        (shortcutObj.meta && event.metaKey) ||
-        (shortcutObj.ctrl && event.ctrlKey) ||
-        (!shortcutObj.meta && !shortcutObj.ctrl && !event.metaKey && !event.ctrlKey);
-
-      const isShortcutPressed =
-        modifierMatch &&
-        event.shiftKey === shortcutObj.shift &&
-        event.altKey === shortcutObj.alt &&
-        event.key.toLowerCase() === shortcutObj.key.toLowerCase();
-
-      if (isShortcutPressed) {
-        event.preventDefault();
-        if (!effectiveUrl) {
-          eventHandler("OnClick", id, []);
-        } else if (validatedHref) {
-          if (isDownloadUrl || isMailto) {
-            window.location.href = validatedHref;
-          } else if (target === "Blank") {
-            window.open(validatedHref, "_blank", "noopener,noreferrer");
-          } else {
-            window.location.href = validatedHref;
-          }
+  useShortcut(
+    id,
+    shortcutKey,
+    () => {
+      if (!effectiveUrl) {
+        eventHandler("OnClick", id, []);
+      } else if (validatedHref) {
+        if (isDownloadUrl || isMailto) {
+          window.location.href = validatedHref;
+        } else if (target === "Blank") {
+          window.open(validatedHref, "_blank", "noopener,noreferrer");
+        } else {
+          window.location.href = validatedHref;
         }
       }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [shortcutKey, disabled, id, effectiveUrl, eventHandler]);
+    },
+    {
+      disabled,
+      skipInInputs: !hasModifierChord,
+      elementRef: buttonRef,
+    },
+  );
 
   const hasChildren = !!children;
 
@@ -343,6 +330,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
           />
         </LazyMotion>
         <ButtonWithTooltip
+          ref={buttonRef}
           asChild={hasUrl}
           size={buttonSize}
           onClick={hasUrl ? undefined : handleClick}
@@ -357,8 +345,8 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
           )}
           style={borderRadiusClasses.buttonStyle}
           tooltipText={tooltip || undefined}
-          autoFocus={autoFocus}
           data-testid={dataTestId}
+          data-shortcut-id={shortcutKey ? id : undefined}
         >
           {hasUrl && validatedHref ? (
             <a
@@ -382,11 +370,11 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
 
   return (
     <ButtonWithTooltip
+      ref={buttonRef}
       asChild={hasUrl}
       style={styles}
       size={buttonSize}
       onClick={hasUrl ? undefined : handleClick}
-      autoFocus={autoFocus}
       variant={
         (variant === "Primary" ? "default" : camelCase(variant)) as
           | "default"
@@ -407,6 +395,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
         tooltip || ((variant === "Link" || variant === "Inline") && title ? title : undefined)
       }
       data-testid={dataTestId}
+      data-shortcut-id={shortcutKey ? id : undefined}
     >
       {hasUrl && validatedHref ? (
         <a

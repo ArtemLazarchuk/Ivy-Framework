@@ -3,11 +3,21 @@ import { useEventHandler } from "@/components/event-handler";
 import Icon from "@/components/Icon";
 import { camelCase } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { getColor } from "@/lib/styles";
 import { cn } from "@/lib/utils";
+import { getColor } from "@/lib/styles";
 import { Densities } from "@/types/density";
 
 const EMPTY_ARRAY: never[] = [];
+
+const BADGE_VARIANT_MAP = {
+  Primary: "primary",
+  Destructive: "destructive",
+  Outline: "outline",
+  Secondary: "secondary",
+  Success: "success",
+  Warning: "warning",
+  Info: "info",
+} as const;
 
 interface BadgeWidgetProps {
   title: string;
@@ -38,6 +48,10 @@ export const BadgeWidget: React.FC<BadgeWidgetProps> = ({
       eventHandler("OnClick", id, []);
     }
   }, [id, isClickable, eventHandler]);
+
+  const hasIcon = icon && icon !== "None";
+  if (!title?.trim() && !hasIcon) return null;
+
   let iconSize: number = 4;
 
   switch (density) {
@@ -58,47 +72,29 @@ export const BadgeWidget: React.FC<BadgeWidgetProps> = ({
 
   // Map backend variant names to frontend badge variants
   const getBadgeVariant = (variant: string) => {
-    switch (variant) {
-      case "Primary":
-        return "primary";
-      case "Destructive":
-        return "destructive";
-      case "Outline":
-        return "outline";
-      case "Secondary":
-        return "secondary";
-      case "Success":
-        return "success";
-      case "Warning":
-        return "warning";
-      case "Info":
-        return "info";
-      default:
-        return camelCase(variant) as
-          | "primary"
-          | "destructive"
-          | "outline"
-          | "secondary"
-          | "success"
-          | "warning"
-          | "info";
+    if (variant in BADGE_VARIANT_MAP) {
+      return BADGE_VARIANT_MAP[variant as keyof typeof BADGE_VARIANT_MAP];
     }
+    return camelCase(variant) as
+      | "primary"
+      | "destructive"
+      | "outline"
+      | "secondary"
+      | "success"
+      | "warning"
+      | "info";
   };
 
-  const hasIcon = icon && icon !== "None";
-
-  const colorStyles: React.CSSProperties = color
-    ? {
-        ...getColor(color, "backgroundColor", "background"),
-        ...getColor(color, "color", "foreground"),
-      }
-    : {};
+  const colorStyles: React.CSSProperties = {
+    ...getColor(color, "backgroundColor", "background"),
+    ...getColor(color, "color", "foreground"),
+  };
 
   return (
     <Badge
       variant={getBadgeVariant(variant)}
       density={density.toLowerCase() as "small" | "medium" | "large"}
-      style={color ? colorStyles : undefined}
+      style={colorStyles}
       className={cn(
         "whitespace-nowrap gap-1",
         hasIcon &&
@@ -112,6 +108,18 @@ export const BadgeWidget: React.FC<BadgeWidgetProps> = ({
         isClickable && "cursor-pointer hover:opacity-80 transition-opacity",
       )}
       onClick={isClickable ? handleClick : undefined}
+      {...(isClickable
+        ? {
+            role: "button",
+            tabIndex: 0,
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleClick();
+              }
+            },
+          }
+        : {})}
     >
       {iconPosition === "Left" && icon && icon !== "None" && (
         <Icon style={iconStyles} name={icon} />

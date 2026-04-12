@@ -306,6 +306,29 @@ public class ManualTableDemo : ViewBase
 }
 ```
 
+#### TableRow Properties
+
+| Method | Description |
+|--------|-------------|
+| `.IsHeader(bool)` | Marks the entire row as a header row |
+
+`TableRow` accepts `TableCell` elements as children. Use the `|` operator to pipe cells into a row:
+
+```csharp
+var row = new TableRow()
+    | new TableCell("Name")
+    | new TableCell("Email");
+```
+
+#### TableCell Properties
+
+| Method | Description |
+|--------|-------------|
+| `.IsHeader(bool)` | Marks the cell as a header cell (renders with bold/emphasis) |
+| `.IsFooter(bool)` | Marks the cell as a footer cell |
+| `.AlignContent(Align)` | Controls text alignment within the cell (`Align.Left`, `Align.Center`, `Align.Right`) |
+| `.Multiline(bool)` | Enables multi-line text wrapping instead of truncation with ellipsis |
+
 ### Builder Factory Methods
 
 The `Builder()` method allows you to specify how different data types should be rendered. Use the builder factory methods to create appropriate renderers for your data.
@@ -362,6 +385,71 @@ public class ProgressBuilderExample : ViewBase
     }
 }
 ```
+
+### Image Builder
+
+The `Image()` builder renders string values (URLs, SVG data URIs, or base64-encoded data URIs) as inline images within table cells.
+
+```csharp demo-tabs
+public class ImageBuilderExample : ViewBase
+{
+    public override object? Build()
+    {
+        var team = new[]
+        {
+            new { Name = "Alice Johnson", Role = "Engineer", Avatar = "https://picsum.photos/seed/alice/200/200" },
+            new { Name = "Bob Smith", Role = "Designer", Avatar = "https://picsum.photos/seed/bob/200/200" },
+            new { Name = "Charlie Brown", Role = "PM", Avatar = "https://picsum.photos/seed/charlie/200/200" }
+        };
+
+        return team.ToTable()
+            .Width(Size.Full())
+            .Builder(t => t.Avatar, f => f.Image())
+            .ColumnWidth(t => t.Name, Size.Fraction(0.3f))
+            .ColumnWidth(t => t.Role, Size.Fraction(0.3f))
+            .ColumnWidth(t => t.Avatar, Size.Fraction(0.4f));
+    }
+}
+```
+
+The `Image()` builder supports a fluent API for customization:
+
+| Method | Description |
+|--------|-------------|
+| `.Width(Size)` | Sets the image width using [Size](../../04_ApiReference/Ivy/Size.md) API (default: `Size.Units(8)` = 32px) |
+| `.Height(Size)` | Sets the image height using [Size](../../04_ApiReference/Ivy/Size.md) API (default: `Size.Units(8)` = 32px) |
+| `.Alt(string)` | Sets the alt text for the image |
+| `.ObjectFit(ImageFit)` | Controls how the image fills its container (`Contain`, `Cover`, `Fill`, `None`, `ScaleDown`) |
+
+```csharp demo-tabs
+public class ImageBuilderCustomSizeExample : ViewBase
+{
+    public override object? Build()
+    {
+        var products = new[]
+        {
+            new { Sku = "PRD-001", Title = "T-Shirt", Price = 29.99, Thumbnail = "https://picsum.photos/seed/tshirt/200/200" },
+            new { Sku = "PRD-002", Title = "Jeans", Price = 59.99, Thumbnail = "https://picsum.photos/seed/jeans/200/200" },
+            new { Sku = "PRD-003", Title = "Sneakers", Price = 89.99, Thumbnail = "https://picsum.photos/seed/sneakers/200/200" }
+        };
+
+        return products.ToTable()
+            .Width(Size.Full())
+            .Builder(p => p.Thumbnail, f => f.Image()
+                .Width(Size.Units(12))
+                .Height(Size.Units(12))
+                .ObjectFit(ImageFit.Cover))
+            .ColumnWidth(p => p.Sku, Size.Fraction(0.15f))
+            .ColumnWidth(p => p.Title, Size.Fraction(0.3f))
+            .ColumnWidth(p => p.Price, Size.Fraction(0.15f))
+            .ColumnWidth(p => p.Thumbnail, Size.Fraction(0.4f));
+    }
+}
+```
+
+<Callout Type="tip">
+Null or empty string values render as empty cells. The default image size (8 units = 32px) fits within typical table row heights without distortion.
+</Callout>
 
 ### Automatic Table Conversion
 
@@ -511,3 +599,5 @@ See [DataTable](../07_Advanced/01_DataTable.md) for full grid capabilities.
 </Details>
 
 <WidgetDocs Type="Ivy.Table" ExtensionTypes="Ivy.TableExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Tables/Table.cs"/>
+<WidgetDocs Type="Ivy.TableRow" ExtensionTypes="Ivy.TableRowExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Tables/TableRow.cs"/>
+<WidgetDocs Type="Ivy.TableCell" ExtensionTypes="Ivy.TableCellExtensions" SourceUrl="https://github.com/Ivy-Interactive/Ivy-Framework/blob/main/src/Ivy/Widgets/Tables/TableCell.cs"/>

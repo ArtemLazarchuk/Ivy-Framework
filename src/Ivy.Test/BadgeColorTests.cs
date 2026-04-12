@@ -1,6 +1,3 @@
-using Ivy;
-using Xunit;
-
 namespace Ivy.Test;
 
 public class BadgeColorTests
@@ -42,5 +39,29 @@ public class BadgeColorTests
         Assert.Null(original.Color);
         Assert.Equal(Colors.Green, colored.Color);
         Assert.NotSame(original, colored);
+    }
+
+    [Fact]
+    public void Color_ExtensionMethod_SetsIvyGreen()
+    {
+        var badge = new Badge("text").Color(Colors.IvyGreen);
+        Assert.Equal(Colors.IvyGreen, badge.Color);
+    }
+
+    [Fact]
+    public void Color_ExtensionMethod_DoesNotAllowStringOverload()
+    {
+        var hasStringOverload = typeof(BadgeExtensions)
+            .GetMethods()
+            .Where(m => m.Name == nameof(BadgeExtensions.Color))
+            .Any(m =>
+            {
+                var parameters = m.GetParameters();
+                return parameters.Length == 2
+                       && parameters[0].ParameterType == typeof(Badge)
+                       && parameters[1].ParameterType == typeof(string);
+            });
+
+        Assert.False(hasStringOverload);
     }
 }

@@ -1,5 +1,3 @@
-using Ivy.Core;
-
 // ReSharper disable once CheckNamespace
 namespace Ivy;
 
@@ -45,6 +43,12 @@ public class GridDefinition
 
     public Align? AlignContent { get; set; } = null;
 
+    public Responsive<int?>? ResponsiveColumns { get; set; } = null;
+
+    public Responsive<int?>? ResponsiveRowGap { get; set; } = null;
+
+    public Responsive<int?>? ResponsiveColumnGap { get; set; } = null;
+
     public Func<int, object, object>? HeaderBuilder { get; set; } = null;
 
     public Func<int, object, object>? FooterBuilder { get; set; } = null;
@@ -55,7 +59,7 @@ public class GridDefinition
 /// <summary>
 /// A layout using the CSS Grid system for complex arrangements.
 /// </summary>
-public record GridLayout : WidgetBase<GridLayout>
+internal record GridLayout : WidgetBase<GridLayout>
 {
     public GridLayout(GridDefinition def, params object[] children) : base(children)
     {
@@ -70,6 +74,9 @@ public record GridLayout : WidgetBase<GridLayout>
         Height = def.Height;
         ColumnWidths = def.ColumnWidths;
         RowHeights = def.RowHeights;
+        ResponsiveColumns = def.ResponsiveColumns;
+        ResponsiveRowGap = def.ResponsiveRowGap;
+        ResponsiveColumnGap = def.ResponsiveColumnGap;
     }
 
     internal GridLayout()
@@ -93,6 +100,12 @@ public record GridLayout : WidgetBase<GridLayout>
     [Prop] public Size?[]? ColumnWidths { get; set; }
 
     [Prop] public Size?[]? RowHeights { get; set; }
+
+    [Prop] public Responsive<int?>? ResponsiveColumns { get; set; }
+
+    [Prop] public Responsive<int?>? ResponsiveRowGap { get; set; }
+
+    [Prop] public Responsive<int?>? ResponsiveColumnGap { get; set; }
 
     [Prop(attached: nameof(GridExtensions.GridColumn))] public int?[] ChildColumn { get; set; } = null!;
 

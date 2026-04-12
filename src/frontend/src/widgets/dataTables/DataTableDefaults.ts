@@ -19,6 +19,7 @@ export const DATA_COLUMN_DEFAULTS: Partial<DataColumn> = {
   icon: null,
   help: null,
   footer: null,
+  color: null,
 };
 
 // DataTableConfig defaults (DataTableConfig.cs)

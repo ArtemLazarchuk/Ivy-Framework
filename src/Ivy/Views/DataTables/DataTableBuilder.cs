@@ -27,6 +27,7 @@ public class DataTableBuilder<TModel>(
     private FuncViewBuilder? _headerLeftFactory;
     private FuncViewBuilder? _headerRightFactory;
     private Dictionary<string, object>? _footerValuesByColumn;
+    private Density _density = Ivy.Density.Medium;
 
     private readonly string? _idColumnName =
         idSelector != null ? TypeHelper.GetNameFromMemberExpression(idSelector.Body) : null;
@@ -325,6 +326,29 @@ public class DataTableBuilder<TModel>(
             column.Column.Precision = numRenderer.Precision;
             column.Column.Currency = numRenderer.Currency;
         }
+
+        if (renderer is LabelsDisplayRenderer labelsRenderer)
+        {
+            column.Column.Color = labelsRenderer.Color;
+            column.Column.BadgeColorMapping = labelsRenderer.BadgeColorMapping;
+        }
+
+        return this;
+    }
+
+    public DataTableBuilder<TModel> Badges(Expression<Func<TModel, object>> field, Colors? color = null)
+    {
+        var column = GetColumn(field);
+        column.Column.ColType = ColType.Labels;
+        column.Column.Color = color;
+        return this;
+    }
+
+    public DataTableBuilder<TModel> Badges(Expression<Func<TModel, object>> field, Dictionary<string, Colors> mapping)
+    {
+        var column = GetColumn(field);
+        column.Column.ColType = ColType.Labels;
+        column.Column.BadgeColorMapping = mapping.ToDictionary(k => k.Key, v => v.Value.ToString());
         return this;
     }
 
@@ -444,6 +468,30 @@ public class DataTableBuilder<TModel>(
         return this;
     }
 
+    public DataTableBuilder<TModel> Density(Ivy.Density density)
+    {
+        _density = density;
+        return this;
+    }
+
+    public DataTableBuilder<TModel> Small()
+    {
+        _density = Ivy.Density.Small;
+        return this;
+    }
+
+    public DataTableBuilder<TModel> Medium()
+    {
+        _density = Ivy.Density.Medium;
+        return this;
+    }
+
+    public DataTableBuilder<TModel> Large()
+    {
+        _density = Ivy.Density.Large;
+        return this;
+    }
+
     public override object? Build()
     {
         Context.TryUseService<IChatClient>(out var chatClient);
@@ -508,6 +556,7 @@ public class DataTableBuilder<TModel>(
             _height,
             columns,
             configuration,
+            density: _density,
             onCellClick: onCellClick,
             onCellActivated: _onCellActivated,
             rowActions: _menuItemRowActions,

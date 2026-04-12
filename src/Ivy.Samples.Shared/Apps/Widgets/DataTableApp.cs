@@ -1,5 +1,3 @@
-using Ivy.Samples.Shared.Apps;
-
 namespace Ivy.Samples.Shared.Apps.Widgets;
 
 [App(icon: Icons.DatabaseZap, group: ["Widgets"], searchHints: ["datatable", "table", "grid", "rows", "columns", "footer", "aggregation", "million", "performance"])]
@@ -12,6 +10,7 @@ public class DataTableApp : SampleBase
             new Tab("Header Slots", new DataTableHeaderSlotsSample()),
             new Tab("Footer", new DataTableFooterSample()),
             new Tab("Multi Agg", new DataTableMultiAggSample()),
+            new Tab("Density", new DataTableDensitySample()),
             new Tab("Million Rows", new DataTablesMillionRowsSample())
         ).Variant(TabsVariant.Content);
     }
@@ -111,6 +110,21 @@ public class DataTableMainSample : ViewBase
             .Group(e => e.Notes, "Other")
             .Group(e => e.OptionalId, "Other")
             .Group(e => e.Skills, "Personal")
+            .Badges(e => e.Skills, new Dictionary<string, Colors>
+            {
+                // Languages & tech
+                ["C#"] = Colors.Indigo,
+                ["JavaScript"] = Colors.Amber,
+                ["Python"] = Colors.Emerald,
+                ["SQL"] = Colors.Cyan,
+                ["React"] = Colors.Sky,
+                // Soft skills
+                ["Leadership"] = Colors.Violet,
+                ["Communication"] = Colors.Rose,
+                ["Problem Solving"] = Colors.Orange,
+                ["Team Player"] = Colors.Teal,
+                ["Agile"] = Colors.Lime,
+            })
             .Group(e => e.WidgetLink, "Links")
             .Group(e => e.ProfileLink, "Links")
 
@@ -139,13 +153,13 @@ public class DataTableMainSample : ViewBase
                 config.ShowSearch = true;
             })
             .RowActions(
-                MenuItem.Default(Icons.Pencil).Tag(RowAction.Edit),
-                MenuItem.Default(Icons.Trash2).Tag(RowAction.Delete),
-                MenuItem.Default(Icons.Eye).Tag(RowAction.View),
-                MenuItem.Default(Icons.EllipsisVertical).Tag(RowAction.Menu)
+                MenuItem.Default(Icons.Pencil).Tag(RowAction.Edit).Tooltip("Edit employee").Primary(),
+                MenuItem.Default(Icons.Trash2).Tag(RowAction.Delete).Tooltip("Delete employee").Destructive(),
+                MenuItem.Default(Icons.Eye).Tag(RowAction.View).Tooltip("View details").Color(Colors.Violet),
+                MenuItem.Default(Icons.EllipsisVertical).Tag(RowAction.Menu).Tooltip("More actions")
                     .Children([
-                        MenuItem.Default(Icons.Archive).Tag(RowAction.Archive).Label("Archive"),
-                        MenuItem.Default(Icons.Download).Tag(RowAction.Export).Label("Export"),
+                        MenuItem.Default(Icons.Archive).Tag(RowAction.Archive).Label("Archive").Warning(),
+                        MenuItem.Default(Icons.Download).Tag(RowAction.Export).Label("Export").Color(Colors.Cyan),
                         MenuItem.Default(Icons.Share2).Tag(RowAction.Share).Label("Share")
                     ])
             )
@@ -202,10 +216,12 @@ public class DataTableHeaderSlotsSample : ViewBase
         }.AsQueryable();
 
         return products.ToDataTable()
-            .HeaderLeft(ctx => new Button("Export", icon: Icons.Download).Small())
+            .HeaderLeft(ctx => Layout.Horizontal().Gap(2)
+                | new Button("Export", icon: Icons.Download).Small()
+                | new Badge("Live").Color(Colors.Blue).Small())
             .HeaderRight(ctx => Layout.Horizontal().Gap(2)
-                | new Badge($"{products.Count()} items")
-                | new Button("Settings", icon: Icons.Settings).Small())
+                | new Badge($"{products.Count()} items").Color(Colors.Green).Small()
+                | new Button("Settings", icon: Icons.Settings).Primary().Small())
             .Height(Size.Units(80));
     }
 }
@@ -275,6 +291,46 @@ public class DataTableMultiAggSample : ViewBase
             .AlignContent(x => x.Sales, Align.Right)
             .AlignContent(x => x.Target, Align.Right)
             .Height(Size.Units(60));
+    }
+}
+
+public class DataTableDensitySample : ViewBase
+{
+    public override object? Build()
+    {
+        var density = UseState(() => Density.Medium);
+
+        var data = new[]
+        {
+            new { Id = 1, Name = "Alpha", Category = "A", Price = 10.00m },
+            new { Id = 2, Name = "Beta", Category = "B", Price = 25.50m },
+            new { Id = 3, Name = "Gamma", Category = "A", Price = 17.99m },
+            new { Id = 4, Name = "Delta", Category = "C", Price = 42.00m },
+            new { Id = 5, Name = "Epsilon", Category = "B", Price = 8.75m },
+        }.AsQueryable();
+
+        var table = data.ToDataTable()
+            .Header(x => x.Id, "ID")
+            .Header(x => x.Name, "Name")
+            .Header(x => x.Category, "Category")
+            .Header(x => x.Price, "Price")
+            .Width(x => x.Id, Size.Px(60))
+            .Width(x => x.Name, Size.Px(120))
+            .Width(x => x.Category, Size.Px(100))
+            .Width(x => x.Price, Size.Px(100))
+            .AlignContent(x => x.Price, Align.Right)
+            .Density(density.Value)
+            .Height(Size.Units(60));
+
+        return Layout.Vertical().Gap(4)
+            | Layout.Horizontal().Gap(2)
+                | new Button("Small").OnClick(_ => density.Set(Density.Small))
+                    .Variant(density.Value == Density.Small ? ButtonVariant.Primary : ButtonVariant.Outline).Small()
+                | new Button("Medium").OnClick(_ => density.Set(Density.Medium))
+                    .Variant(density.Value == Density.Medium ? ButtonVariant.Primary : ButtonVariant.Outline).Small()
+                | new Button("Large").OnClick(_ => density.Set(Density.Large))
+                    .Variant(density.Value == Density.Large ? ButtonVariant.Primary : ButtonVariant.Outline).Small()
+            | table;
     }
 }
 

@@ -75,6 +75,7 @@ interface MultipleSelectorProps {
   maxSelections?: number;
   minSelections?: number;
   onNullableClear?: () => void;
+  autoFocus?: boolean;
 }
 
 const MultipleSelector = React.forwardRef<
@@ -102,6 +103,7 @@ const MultipleSelector = React.forwardRef<
       maxSelections,
       minSelections,
       onNullableClear,
+      autoFocus = false,
     },
     ref,
   ) => {
@@ -114,20 +116,38 @@ const MultipleSelector = React.forwardRef<
     const [inputValue, setInputValue] = React.useState("");
     const measureRef = React.useRef<HTMLDivElement>(null);
     const [visibleCount, setVisibleCount] = React.useState(maxVisibleBadges ?? 1);
+    const hasAutoFocusedRef = React.useRef(false);
 
     React.useEffect(() => {
-      if (open && triggerWrapperRef.current) {
-        requestAnimationFrame(() => {
-          if (!triggerWrapperRef.current) return;
-          const rect = triggerWrapperRef.current.getBoundingClientRect();
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const dropdownHeight = dropdownRef.current?.offsetHeight ?? 0;
-          setOpenUpward(spaceBelow < dropdownHeight + 8);
-        });
-      } else {
-        setOpenUpward(false);
+      if (autoFocus && !disabled && !hasAutoFocusedRef.current) {
+        hasAutoFocusedRef.current = true;
+        inputRef.current?.focus();
       }
-    }, [open]);
+    }, [autoFocus, disabled]);
+
+    const updateOpenDirection = React.useCallback(() => {
+      const trigger = triggerWrapperRef.current;
+      if (!trigger) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const dropdownHeight = dropdownRef.current?.offsetHeight ?? 0;
+
+      const dialogBoundary = trigger.closest<HTMLElement>("[role='dialog']");
+      const boundaryBottom = dialogBoundary?.getBoundingClientRect().bottom ?? window.innerHeight;
+      const spaceBelow = Math.max(0, boundaryBottom - triggerRect.bottom);
+
+      setOpenUpward(spaceBelow < dropdownHeight + 8);
+    }, []);
+
+    React.useLayoutEffect(() => {
+      if (!open) {
+        setOpenUpward(false);
+        return;
+      }
+      updateOpenDirection();
+      const id = requestAnimationFrame(updateOpenDirection);
+      return () => cancelAnimationFrame(id);
+    }, [open, updateOpenDirection, defaultOptions.length, showActions]);
 
     React.useEffect(() => {
       if (open && dropdownRef.current) {
@@ -264,16 +284,19 @@ const MultipleSelector = React.forwardRef<
       return defaultOptions.filter((o) => set.has(o.value) && !o.disable);
     }, [defaultOptions, filteredForBulk]);
 
-    const bulkSelectAllDisabled =
-      visibleEnabledForBulk.length === 0 ||
-      visibleEnabledForBulk.every((o) => selectedValueStrings.includes(o.value));
+    const bulkSelectAllDisabled = visibleEnabledForBulk.every((o) =>
+      selectedValueStrings.includes(o.value),
+    );
 
     const bulkClearAllDisabled = selectedValueStrings.length <= (minSelections ?? 0);
 
     const handleBulkSelectAll = React.useCallback(() => {
       const merged = computeSelectAllValues(
         selectedValueStrings,
-        visibleEnabledForBulk.map((o) => ({ value: o.value, disabled: !!o.disable })),
+        visibleEnabledForBulk.map((o) => ({
+          value: o.value,
+          disabled: !!o.disable,
+        })),
         maxSelections,
       );
       const newOptions: Option[] = merged.map((v) => {
@@ -315,6 +338,7 @@ const MultipleSelector = React.forwardRef<
           className,
         )}
         {...commandProps}
+        shouldFilter={false}
       >
         <div ref={triggerWrapperRef} className="relative w-full">
           {maxVisibleBadges === undefined && value.length > 0 && (
@@ -415,11 +439,17 @@ const MultipleSelector = React.forwardRef<
                 value={inputValue}
                 onValueChange={setInputValue}
                 onBlur={(e) => {
-                  setOpen(false);
-                  if (containerRef.current) {
-                    containerRef.current.scrollLeft = 0;
-                  }
-                  onBlur?.(e);
+                  window.requestAnimationFrame(() => {
+                    window.requestAnimationFrame(() => {
+                      if (triggerWrapperRef.current?.contains(document.activeElement)) return;
+                      setOpen(false);
+                      setInputValue("");
+                      if (containerRef.current) {
+                        containerRef.current.scrollLeft = 0;
+                      }
+                      onBlur?.(e);
+                    });
+                  });
                 }}
                 onFocus={(e) => {
                   setOpen(true);
@@ -434,7 +464,6 @@ const MultipleSelector = React.forwardRef<
                   hidePlaceholderWhenSelected && value.length > 0 ? undefined : placeholder
                 }
                 disabled={disabled}
-                readOnly={!open}
                 className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1 min-w-[120px] cursor-pointer"
               />
             </span>
@@ -474,7 +503,7 @@ const MultipleSelector = React.forwardRef<
               aria-label="Toggle dropdown"
             />
           </div>
-          {open && defaultOptions.length > 0 && (
+          {open && (
             <div
               ref={dropdownRef}
               className={cn(
@@ -482,98 +511,98 @@ const MultipleSelector = React.forwardRef<
                 openUpward ? "bottom-full mb-1" : "top-full mt-1",
               )}
             >
-              <CommandGroup className="h-full overflow-auto max-h-[300px]">
-                {defaultOptions.map((option) => {
-                  const selected = isSelected(option);
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onSelect={() => {
-                        setInputValue("");
-                        toggleOption(option);
-                      }}
-                      className={cn(
-                        menuItemVariant({ density }),
-                        "flex items-center justify-between",
-                      )}
-                      disabled={option.disable}
-                    >
-                      {option.tooltip ? (
-                        <TooltipProvider>
-                          <Tooltip delayDuration={300}>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center justify-between w-full">
-                                <span>{option.label}</span>
-                                {selected && (
-                                  <X
-                                    className={cn(
-                                      xIconVariant({ density }),
-                                      "text-muted-foreground hover:text-foreground",
-                                    )}
-                                  />
-                                )}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>{option.tooltip}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <>
-                          <span>{option.label}</span>
-                          {selected && (
-                            <X
-                              className={cn(
-                                xIconVariant({ density }),
-                                "text-muted-foreground hover:text-foreground",
-                              )}
-                            />
+              {defaultOptions.length > 0 ? (
+                <>
+                  <CommandGroup className="h-full overflow-auto max-h-[300px] slim-scrollbar">
+                    {defaultOptions.map((option) => {
+                      const selected = isSelected(option);
+                      return (
+                        <CommandItem
+                          key={option.value}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onSelect={() => {
+                            setInputValue("");
+                            toggleOption(option);
+                          }}
+                          className={cn(
+                            menuItemVariant({ density }),
+                            "flex items-center justify-between",
                           )}
-                        </>
-                      )}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-              {showActions && (
-                <div
-                  className="border-t border-border px-2 py-2 flex justify-between items-center gap-2 text-sm shrink-0"
-                  role="group"
-                  aria-label="Bulk selection"
-                >
-                  <button
-                    type="button"
-                    className="text-primary hover:underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-0.5"
-                    disabled={bulkSelectAllDisabled || disabled}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleBulkSelectAll()}
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    className="text-primary hover:underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-0.5"
-                    disabled={bulkClearAllDisabled || disabled}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleBulkClearAll()}
-                  >
-                    Clear All
-                  </button>
+                          disabled={option.disable}
+                        >
+                          {option.tooltip ? (
+                            <TooltipProvider>
+                              <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>{option.label}</span>
+                                    {selected && (
+                                      <X
+                                        className={cn(
+                                          xIconVariant({ density }),
+                                          "text-muted-foreground hover:text-foreground",
+                                        )}
+                                      />
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>{option.tooltip}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <>
+                              <span>{option.label}</span>
+                              {selected && (
+                                <X
+                                  className={cn(
+                                    xIconVariant({ density }),
+                                    "text-muted-foreground hover:text-foreground",
+                                  )}
+                                />
+                              )}
+                            </>
+                          )}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                  {showActions && (
+                    <div
+                      className="border-t border-border px-2 py-2 flex justify-between items-center gap-2 text-sm shrink-0"
+                      role="group"
+                      aria-label="Bulk selection"
+                    >
+                      <button
+                        type="button"
+                        className="text-primary hover:underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-0.5"
+                        disabled={bulkSelectAllDisabled || disabled}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleBulkSelectAll()}
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        className="text-primary hover:underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-0.5"
+                        disabled={bulkClearAllDisabled || disabled}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleBulkClearAll()}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : emptyIndicator ? (
+                <div className="p-2">{emptyIndicator}</div>
+              ) : (
+                <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                  No options available
                 </div>
               )}
-            </div>
-          )}
-          {open && defaultOptions.length === 0 && emptyIndicator && (
-            <div
-              className={cn(
-                "absolute w-full z-50 rounded-box border bg-popover text-popover-foreground shadow-md outline-none p-2",
-                openUpward ? "bottom-full mb-1" : "top-full mt-1",
-              )}
-            >
-              {emptyIndicator}
             </div>
           )}
         </div>

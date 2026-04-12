@@ -103,7 +103,13 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
   return (
     <div className="relative w-full select-none" style={styles}>
       <Search className={searchIconVariant({ density })} />
-      <div className="rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10">
+      <div
+        className={cn(
+          "rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10",
+          props.ghost &&
+            "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
+        )}
+      >
         <Input
           ref={mergedRef}
           id={props.id}
@@ -114,7 +120,6 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
           maxLength={props.maxLength}
           minLength={props.minLength}
           pattern={props.pattern}
-          autoFocus={props.autoFocus}
           onChange={handleChange}
           onBlur={handleBlur}
           onFocus={onFocus}
