@@ -62,6 +62,12 @@
         "resolved": "1.1.31",
         "contentHash": "aXfUn+P1qe441TeZ6ZdYYPAXWFCAH8q6uVlU3dfMFlELqX1e7TMCgDkgFSnw72fapRsbRobi7gOJTFVPcz93Aw=="
       },
+      "Ivy.NativeJsonDiff": {
+        "type": "Direct",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "xtjtSJRA1MFilciXzW7LbadkUHA5BZahtQMdegd+e++ci4uJg1NwE6WIom/ufz6hsn6mG54nAMqPnhaF8JGL3w=="
+      },
       "Ivy.SystemTextJson.JsonDiffPatch": {
         "type": "Direct",
         "requested": "[2.0.4, )",
