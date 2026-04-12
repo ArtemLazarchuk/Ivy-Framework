@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.JsonDiffPatch.Diffs.Formatters;
 using Ivy.Core;
-using NativeJsonDiffLib = Ivy.NativeJsonDiff.NativeJsonDiff;
+using NativeJsonDiffLib = Ivy.NativeJsonDiff.JsonDiffer;
 
 namespace Ivy.Benchmarks;
 
