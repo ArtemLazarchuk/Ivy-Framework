@@ -1,3 +1,5 @@
+using YamlDotNet.Serialization;
+
 namespace Ivy.Tendril.Apps.Plans;
 
 public class PlanVerificationEntry
@@ -20,6 +22,7 @@ public class PlanYaml
     public List<PlanVerificationEntry> Verifications { get; set; } = new();
     public List<string> RelatedPlans { get; set; } = new();
     public List<string> DependsOn { get; set; } = new();
+    [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
     public int Priority { get; set; }
     public string? InitialPrompt { get; set; }
     public string? SourceUrl { get; set; }
