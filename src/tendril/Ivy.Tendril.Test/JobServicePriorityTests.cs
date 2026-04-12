@@ -117,17 +117,17 @@ public class JobServicePriorityTests
     [Fact]
     public void CreatePlanDialog_ParsePriority_ExtractsValueFromOption()
     {
-        Assert.Equal(0, CreatePlanDialog.ParsePriority("Normal (0)"));
-        Assert.Equal(1, CreatePlanDialog.ParsePriority("High (1)"));
-        Assert.Equal(2, CreatePlanDialog.ParsePriority("Urgent (2)"));
+        Assert.Equal(0, CreatePlanDialog.ParsePriority("Normal"));
+        Assert.Equal(1, CreatePlanDialog.ParsePriority("High"));
+        Assert.Equal(2, CreatePlanDialog.ParsePriority("Urgent"));
     }
 
     [Fact]
     public void CreatePlanDialog_PriorityOptions_ContainsExpectedValues()
     {
         Assert.Equal(3, CreatePlanDialog.PriorityOptions.Count);
-        Assert.Contains("Normal (0)", CreatePlanDialog.PriorityOptions);
-        Assert.Contains("High (1)", CreatePlanDialog.PriorityOptions);
-        Assert.Contains("Urgent (2)", CreatePlanDialog.PriorityOptions);
+        Assert.Contains("Normal", CreatePlanDialog.PriorityOptions);
+        Assert.Contains("High", CreatePlanDialog.PriorityOptions);
+        Assert.Contains("Urgent", CreatePlanDialog.PriorityOptions);
     }
 }

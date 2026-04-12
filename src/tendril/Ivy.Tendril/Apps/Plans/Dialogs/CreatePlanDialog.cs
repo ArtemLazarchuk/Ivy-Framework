@@ -11,7 +11,7 @@ public class CreatePlanDialog(
     private readonly Action<string, string[], int> _onCreatePlan = onCreatePlan;
     private readonly List<string> _projectNames = projectNames;
 
-    internal static readonly List<string> PriorityOptions = ["Normal (0)", "High (1)", "Urgent (2)"];
+    internal static readonly List<string> PriorityOptions = ["Normal", "High", "Urgent"];
 
     internal static int ParsePriority(string option) =>
         int.TryParse(option.AsSpan(option.LastIndexOf('(') + 1, 1), out var v) ? v : 0;
@@ -20,7 +20,7 @@ public class CreatePlanDialog(
     {
         var createPlanText = UseState("");
         var selectedProjects = UseState(_defaultProjects);
-        var selectedPriority = UseState("Normal (0)");
+        var selectedPriority = UseState("Normal");
 
         var options = new List<string> { "[Auto]" };
         options.AddRange(_projectNames);
