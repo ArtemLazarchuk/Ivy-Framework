@@ -115,7 +115,7 @@ public class JobsApp : ViewBase
             .Width(t => t.Status, Size.Px(100))
             .Width(t => t.PlanId, Size.Px(100))
             .Width(t => t.Type, Size.Px(100))
-            .Width(t => t.Plan, Size.Auto())
+            .Width(t => t.Plan, Size.Px(250))
             .Width(t => t.Project, Size.Px(100))
             .Width(t => t.Timer, Size.Px(100))
             .Width(t => t.LastOutput, Size.Px(100))
