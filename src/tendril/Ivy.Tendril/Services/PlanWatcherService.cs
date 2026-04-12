@@ -39,6 +39,7 @@ public class PlanWatcherService : IPlanWatcherService
         _watcher = new FileSystemWatcher(planFolder)
         {
             NotifyFilter = NotifyFilters.DirectoryName,
+            InternalBufferSize = 65536,
             EnableRaisingEvents = true
         };
 
@@ -46,7 +47,10 @@ public class PlanWatcherService : IPlanWatcherService
         _watcher.Deleted += (_, _) => ScheduleDebounce(null);
         _watcher.Renamed += (_, _) => ScheduleDebounce(null);
         _watcher.Error += (_, e) =>
+        {
             Program.WriteCrashLog($"[{DateTime.UtcNow:O}] PlanWatcher FSW error: {e.GetException()}");
+            ScheduleDebounce(null);
+        };
 
         // Poll as a safety net for external edits to plan.yaml or metadata files
         // that aren't covered by explicit NotifyChanged() calls from JobService.

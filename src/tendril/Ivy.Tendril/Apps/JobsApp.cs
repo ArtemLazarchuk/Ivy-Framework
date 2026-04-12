@@ -235,7 +235,16 @@ public class JobsApp : ViewBase
                             }
 
                             jobService.DeleteJob(job.Id);
-                            jobService.StartJob(job.Type, job.Args);
+
+                            if (job.Type == "MakePlan" && !job.Args.Contains("-Description"))
+                            {
+                                client.Toast("Cannot rerun MakePlan: original description was not preserved.", "Rerun Failed");
+                            }
+                            else
+                            {
+                                jobService.StartJob(job.Type, job.Args);
+                            }
+
                             refreshToken.Refresh();
                         }
                     }
