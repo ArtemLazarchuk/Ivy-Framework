@@ -517,7 +517,7 @@ Worktrees are **not** cleaned up by ExecutePlan. They remain on disk so that Mak
 
 **Git branches are preserved** until MakePr consumes them — only the worktree filesystem directories are removed.
 
-**Debugging tip:** To keep worktrees for manual inspection after failure, set the `KEEP_WORKTREES=1` environment variable. The WorktreeCleanupService will still clean them up after the grace period.
+**Manual inspection:** If you need to inspect worktrees after failure, check the plan folder's `worktrees/` directory before MakePr runs. After PR creation, worktrees are cleaned up automatically. You can also temporarily pause WorktreeCleanupService if needed for extended debugging.
 
 ### 9. Plan State
 
