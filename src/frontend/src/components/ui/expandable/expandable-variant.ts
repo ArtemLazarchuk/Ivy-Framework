@@ -5,9 +5,9 @@ export const expandableTriggerVariant = cva(
   {
     variants: {
       density: {
-        Small: "h-10 px-2 py-1 gap-2",
-        Medium: "h-12 px-3 py-2 gap-3",
-        Large: "h-14 px-4 py-3 gap-4",
+        Small: "h-8 px-2 py-1 gap-2",
+        Medium: "h-10 px-3 py-2 gap-3",
+        Large: "h-12 px-4 py-3 gap-4",
       },
     },
     defaultVariants: {
@@ -21,9 +21,9 @@ export const expandableHeaderVariant = cva(
   {
     variants: {
       density: {
-        Small: "ml-1 pr-7 [&_*]:text-xs",
-        Medium: "pr-9 [&_*]:text-sm",
-        Large: "-ml-1 pr-11 [&_*]:text-base",
+        Small: "ml-1 pr-6 [&_*]:text-xs",
+        Medium: "pr-8 [&_*]:text-sm",
+        Large: "-ml-1 pr-10 [&_*]:text-base",
       },
     },
     defaultVariants: {
@@ -37,9 +37,9 @@ export const expandableChevronContainerVariant = cva(
   {
     variants: {
       density: {
-        Small: "w-7",
-        Medium: "w-9",
-        Large: "w-11",
+        Small: "w-6",
+        Medium: "w-8",
+        Large: "w-10",
       },
     },
     defaultVariants: {
@@ -67,9 +67,9 @@ export const expandableChevronVariant = cva(
 export const expandableContentVariant = cva("overflow-hidden transition-all", {
   variants: {
     density: {
-      Small: "pl-3 pr-2 py-2 space-y-2 [&_*]:text-xs",
-      Medium: "pl-3 pr-3 py-4 space-y-4 [&_*]:text-sm",
-      Large: "pl-3 pr-4 py-6 space-y-5 [&_*]:text-base",
+      Small: "pl-3 pr-2 py-1.5 space-y-1.5 [&_*]:text-xs",
+      Medium: "pl-3 pr-3 py-2 space-y-2 [&_*]:text-sm",
+      Large: "pl-3 pr-4 py-3 space-y-3 [&_*]:text-base",
     },
   },
   defaultVariants: {
