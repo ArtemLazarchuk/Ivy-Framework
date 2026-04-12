@@ -134,4 +134,26 @@ public class ProcessExtensionsTests
         Assert.False(result);
         Assert.True(process!.HasExited);
     }
+
+    [Fact]
+    public async Task WaitForExitOrKillAsync_PostKillTimeout_CompletesWithinReasonableTime()
+    {
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/sh",
+            Arguments = OperatingSystem.IsWindows() ? "/c ping -n 120 127.0.0.1 >nul" : "-c \"sleep 120\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        var sw = Stopwatch.StartNew();
+        using var cts = new CancellationTokenSource(100);
+        var result = await process.WaitForExitOrKillAsync(cts.Token);
+        sw.Stop();
+
+        Assert.False(result);
+        Assert.True(process!.HasExited);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(10),
+            $"Post-kill should complete within 10s (5s kill timeout + margin), took {sw.Elapsed}");
+    }
 }
