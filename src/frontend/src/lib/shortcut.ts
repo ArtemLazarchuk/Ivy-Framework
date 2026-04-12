@@ -85,12 +85,30 @@ export const formatShortcutForDisplay = (shortcutStr?: string): React.ReactNode[
   const parts = shortcutStr.split("+").map((p) => p.trim());
   const result: React.ReactNode[] = [];
 
+  const keySymbols: Record<string, string> = {
+    backspace: "⌫",
+    delete: "⌦",
+    enter: "↵",
+    return: "↵",
+    escape: "Esc",
+    tab: "⇥",
+    space: "␣",
+    arrowup: "↑",
+    arrowdown: "↓",
+    arrowleft: "←",
+    arrowright: "→",
+    ...(isMac ? { shift: "⇧", alt: "⌥", option: "⌥" } : {}),
+  };
+
   parts.forEach((part, index) => {
     if (index > 0) {
       result.push("+");
     }
 
-    if (
+    const symbol = keySymbols[part.toLowerCase()];
+    if (symbol) {
+      result.push(symbol);
+    } else if (
       isMac &&
       (part.toLowerCase() === "ctrl" ||
         part.toLowerCase() === "cmd" ||
