@@ -9,11 +9,8 @@ public class CreatePlanDialog(
     string[]? defaultProjects = null) : ViewBase
 {
     private readonly string[] _defaultProjects = defaultProjects ?? ["Auto"];
-    private readonly Action _onClose = onClose;
-    private readonly Action<string, string[], int> _onCreatePlan = onCreatePlan;
-    private readonly List<string> _projectNames = projectNames;
 
-    internal static readonly List<string> PriorityOptions = ["Normal (0)", "High (1)", "Urgent (2)"];
+    internal static readonly List<string> PriorityOptions = ["Normal", "High", "Urgent"];
 
     internal static int ParsePriority(string option) =>
         int.TryParse(option.AsSpan(option.LastIndexOf('(') + 1, 1), out var v) ? v : 0;
@@ -39,10 +36,10 @@ public class CreatePlanDialog(
         );
 
         var options = new List<string> { "Auto" };
-        options.AddRange(_projectNames);
+        options.AddRange(projectNames);
 
         return new Dialog(
-            _ => _onClose(),
+            _ => onClose(),
             new DialogHeader("Create New Plan"),
             new DialogBody(
                 Layout.Vertical()
@@ -52,14 +49,14 @@ public class CreatePlanDialog(
                     .Label("Describe the task for the new plan")
             ),
             new DialogFooter(
-                new Button("Cancel").Outline().OnClick(() => _onClose()),
+                new Button("Cancel").Outline().OnClick(onClose),
                 new Button("Create").Primary().ShortcutKey("Ctrl+Enter").OnClick(() =>
                 {
                     if (!string.IsNullOrWhiteSpace(createPlanText.Value))
                     {
                         var projects = selectedProjects.Value.Any() ? selectedProjects.Value : ["Auto"];
-                        _onCreatePlan(createPlanText.Value, projects, ParsePriority(selectedPriority.Value));
-                        _onClose();
+                        onCreatePlan(createPlanText.Value, projects, ParsePriority(selectedPriority.Value));
+                        onClose();
                     }
                 })
             )
