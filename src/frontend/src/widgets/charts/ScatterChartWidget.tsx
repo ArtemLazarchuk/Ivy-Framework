@@ -10,6 +10,7 @@ import {
   generateTextStyle,
   getColors,
   generateEChartToolbox,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { getChartThemeColors, type ChartThemeColors } from "./styles";
 import {
@@ -378,12 +379,19 @@ const ScatterChartWidget: React.FC<ScatterChartWidgetProps> = ({
         mutedForeground: themeColors.mutedForeground,
         fontSans: themeColors.fontSans,
       }),
-      tooltip: generateTooltip(tooltip, "item", {
-        foreground: themeColors.foreground,
-        fontSans: themeColors.fontSans,
-        background: themeColors.background,
-        mutedForeground: themeColors.mutedForeground,
-      }),
+      tooltip: {
+        ...generateTooltip(tooltip, "item", {
+          foreground: themeColors.foreground,
+          fontSans: themeColors.fontSans,
+          background: themeColors.background,
+          mutedForeground: themeColors.mutedForeground,
+        }),
+        formatter: (params: any) => {
+          const xValue = formatTooltipValue(params.value[0], tooltip);
+          const yValue = formatTooltipValue(params.value[1], tooltip);
+          return `${params.marker} ${params.seriesName}<br/>X: ${xValue}<br/>Y: <strong>${yValue}</strong>`;
+        },
+      },
       toolbox: generateEChartToolbox(toolbox),
       legend: generateEChartLegend(legend, {
         foreground: themeColors.foreground,

@@ -14,6 +14,7 @@ import {
   getColors,
   getTransformValueFn,
   generateEChartToolbox,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { getChartThemeColors } from "./styles";
 import { LineChartWidgetProps, ChartType } from "./chartTypes";
@@ -100,12 +101,26 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
         },
         cartesianGrid,
       ),
-      tooltip: generateTooltip(tooltip, "shadow", {
-        foreground: themeColors.foreground,
-        fontSans: themeColors.fontSans,
-        background: themeColors.background,
-        mutedForeground: themeColors.mutedForeground,
-      }),
+      tooltip: {
+        ...generateTooltip(tooltip, "shadow", {
+          foreground: themeColors.foreground,
+          fontSans: themeColors.fontSans,
+          background: themeColors.background,
+          mutedForeground: themeColors.mutedForeground,
+        }),
+        formatter: (params: any) => {
+          if (Array.isArray(params)) {
+            return params
+              .map((p) => {
+                const value = formatTooltipValue(p.value[isVertical ? 0 : 1], tooltip);
+                return `${p.marker} ${p.seriesName}: <strong>${value}</strong>`;
+              })
+              .join("<br/>");
+          }
+          const value = formatTooltipValue(params.value[isVertical ? 0 : 1], tooltip);
+          return `${params.marker} ${params.seriesName}: <strong>${value}</strong>`;
+        },
+      },
       toolbox: generateEChartToolbox(toolbox),
       legend: generateEChartLegend(legend, {
         foreground: themeColors.foreground,
