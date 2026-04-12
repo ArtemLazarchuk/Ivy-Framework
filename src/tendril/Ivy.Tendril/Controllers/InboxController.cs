@@ -5,21 +5,12 @@ namespace Ivy.Tendril.Controllers;
 
 [ApiController]
 [Route("api/inbox")]
-public class InboxController : ControllerBase
+public class InboxController(IJobService jobService, IConfigService configService) : ControllerBase
 {
-    private readonly IConfigService _configService;
-    private readonly IJobService _jobService;
-
-    public InboxController(IJobService jobService, IConfigService configService)
-    {
-        _jobService = jobService;
-        _configService = configService;
-    }
-
     [HttpPost]
     public IActionResult PostPlan([FromBody] CreatePlanRequest request)
     {
-        var apiKey = _configService.Settings.Api?.ApiKey;
+        var apiKey = configService.Settings.Api?.ApiKey;
         if (!string.IsNullOrEmpty(apiKey))
         {
             var providedKey = Request.Headers["X-Api-Key"].FirstOrDefault();
@@ -37,7 +28,7 @@ public class InboxController : ControllerBase
             if (!string.IsNullOrEmpty(request.SourcePath))
                 args.AddRange(["-SourcePath", request.SourcePath]);
 
-            var jobId = _jobService.StartJob("MakePlan", args.ToArray(), null);
+            var jobId = jobService.StartJob("MakePlan", args.ToArray(), null);
             return Ok(new { jobId, status = "Started", message = "Plan creation job started successfully" });
         }
         catch (Exception ex)
