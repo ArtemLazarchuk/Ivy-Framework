@@ -11,8 +11,19 @@ public class WallpaperApp : ViewBase
         var jobService = UseService<IJobService>();
         var configService = UseService<IConfigService>();
         var countsService = UseService<IPlanCountsService>();
+        var versionService = UseService<IVersionCheckService>();
         var dialogOpen = UseState(false);
         var lastSelectedProjects = UseState<string[]>(["[Auto]"]);
+        var versionInfo = UseState<VersionInfo?>(null);
+
+        UseEffect(() =>
+        {
+            _ = Task.Run(async () =>
+            {
+                var info = await versionService.CheckForUpdatesAsync();
+                versionInfo.Set(info);
+            });
+        }, []);
 
         var counts = countsService.Current;
         var projectNames = configService.Projects.Select(p => p.Name).ToList();
@@ -35,6 +46,16 @@ public class WallpaperApp : ViewBase
                        .Icon(Icons.Plus, Align.Right)
                 )
         };
+
+        if (versionInfo.Value?.HasUpdate == true)
+            elements.Insert(0, new Card(
+                Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                    | Icons.Info
+                    | (Layout.Vertical().Gap(1)
+                        | Text.Block($"Tendril v{versionInfo.Value.LatestVersion} is available!")
+                        | Text.Muted($"You're running v{versionInfo.Value.CurrentVersion}")
+                        | Text.Muted("Run: tendril --version && dotnet tool update -g Ivy.Tendril"))
+            ));
 
         if (dialogOpen.Value)
             elements.Add(new CreatePlanDialog(
