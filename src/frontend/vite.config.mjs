@@ -184,9 +184,6 @@ function manualChunks(id) {
   if (pkg === "lodash" || pkg === "lodash-es") {
     return "vendor-lodash";
   }
-  if (pkg === "apache-arrow") {
-    return "vendor-apache-arrow";
-  }
   if (pkg === "@microsoft/signalr") {
     return "vendor-signalr";
   }

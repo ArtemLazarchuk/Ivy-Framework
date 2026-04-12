@@ -87,7 +87,6 @@ import {
   VideoPlayerWidget,
   RichTextBlockWidget,
 } from "@/widgets/primitives";
-import { DataTable } from "@/widgets/dataTables";
 import { TableWidget, TableRowWidget, TableCellWidget } from "@/widgets/tables";
 import { SmartSearch } from "@/docs-internal/SmartSearch";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -227,7 +226,7 @@ export const widgetMap = {
   "Ivy.TableCell": TableCellWidget,
 
   // DataTables
-  "Ivy.DataTable": DataTable,
+  "Ivy.DataTable": lazyWithRetry(() => import("@/widgets/dataTables/DataTableWidget")),
 
   // Lists
   "Ivy.List": ListWidget,
