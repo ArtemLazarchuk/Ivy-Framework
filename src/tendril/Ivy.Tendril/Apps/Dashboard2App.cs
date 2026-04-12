@@ -106,7 +106,13 @@ public class Dashboard2App : ViewBase
                 )
                 .Selected(selectedProject.Value != null
                     ? projectData.FindIndex(p => p.Project == selectedProject.Value)
-                    : null);
+                    : null)
+                .OnSelect(e =>
+                {
+                    var clickedProject = projectData[e.Value].Project;
+                    selectedProject.Set(selectedProject.Value == clickedProject ? null : clickedProject);
+                    return ValueTask.CompletedTask;
+                });
 
         // Hourly cost & tokens combined bar chart
         var hourlyBurn = planService.GetHourlyTokenBurn(projectFilter: selectedProject.Value);
