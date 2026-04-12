@@ -603,9 +603,16 @@ public class ConfigService : IConfigService
                 var loadedSettings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
                 if (loadedSettings != null) Settings = loadedSettings;
             }
-            catch
+            catch (Exception ex)
             {
-                // Malformed config.yaml — keep existing settings rather than crashing.
+                Console.Error.WriteLine($"Failed to load Tendril config from new path '{ConfigPath}': {ex}");
+                ParseError = new ConfigParseError(ex.Message, ConfigPath, ex);
+                BackupBrokenConfig();
+
+                if (TryAutoHeal())
+                {
+                    ParseError = null;
+                }
             }
         }
 
