@@ -1,31 +1,25 @@
 import { LoadingScreen } from "@/components/LoadingScreen";
-import {
-  ArticleWidget,
-  BadgeWidget,
-  CardWidget,
-  ChatLoadingWidget,
-  ChatMessageWidget,
-  ChatStatusWidget,
-  DropDownMenuWidget,
-  ExpandableWidget,
-  ProgressWidget,
-  SheetWidget,
-  SlotWidget,
-  TooltipWidget,
-  PaginationWidget,
-} from "@/widgets";
+import { ArticleWidget } from "@/widgets/article";
+import { CardWidget } from "@/widgets/card";
+import { BadgeWidget } from "@/widgets/badge";
+import { DropDownMenuWidget } from "@/widgets/dropDownMenu";
+import { ExpandableWidget } from "@/widgets/expandable";
+import { ProgressWidget } from "@/widgets/progress";
+import { SheetWidget } from "@/widgets/sheet";
+import { SlotWidget } from "@/widgets/slot";
+import { TooltipWidget } from "@/widgets/tooltip";
+import { PaginationWidget } from "@/widgets/pagination";
+import { ChatLoadingWidget, ChatMessageWidget, ChatStatusWidget } from "@/widgets/chat";
 import { ToolbarWidget } from "@/widgets/toolbar";
 import { BreadcrumbsWidget } from "@/widgets/breadcrumbs";
 import { StackedProgressWidget } from "@/widgets/stackedProgress";
 import { FileDialogWidget, SaveDialogWidget, FolderDialogWidget } from "@/widgets/filePicker";
 import { BladeContainerWidget, BladeWidget } from "@/widgets/blades";
 import { DetailsWidget, DetailWidget } from "@/widgets/details";
-import {
-  DialogWidget,
-  DialogHeaderWidget,
-  DialogBodyWidget,
-  DialogFooterWidget,
-} from "@/widgets/dialogs";
+import { DialogWidget } from "@/widgets/dialogs/DialogWidget";
+import { DialogHeaderWidget } from "@/widgets/dialogs/DialogHeaderWidget";
+import { DialogBodyWidget } from "@/widgets/dialogs/DialogBodyWidget";
+import { DialogFooterWidget } from "@/widgets/dialogs/DialogFooterWidget";
 import { FormWidget } from "@/widgets/forms";
 import { FieldWidget } from "@/widgets/inputs/FieldWidget";
 import { TextInputWidget } from "@/widgets/inputs/TextInputWidget";
@@ -35,43 +29,38 @@ import { NumberRangeInputWidget } from "@/widgets/inputs/NumberRangeInputWidget"
 import { ReadOnlyInputWidget } from "@/widgets/inputs/ReadOnlyInputWidget";
 import { IconInputWidget } from "@/widgets/inputs/IconInputWidget";
 import { FileInputWidget } from "@/widgets/inputs/FileInputWidget";
+import { StackLayoutWidget } from "@/widgets/layouts/StackLayoutWidget";
+import { GridLayoutWidget } from "@/widgets/layouts/GridLayoutWidget";
+import { HeaderLayoutWidget } from "@/widgets/layouts/HeaderLayoutWidget";
+import { FooterLayoutWidget } from "@/widgets/layouts/FooterLayoutWidget";
+import { SidebarLayoutWidget, SidebarMenuWidget } from "@/widgets/layouts/sidebar";
 import {
-  StackLayoutWidget,
-  GridLayoutWidget,
-  HeaderLayoutWidget,
-  FooterLayoutWidget,
-  SidebarLayoutWidget,
-  SidebarMenuWidget,
   ResizablePanelGroupWidget,
   ResizablePanelWidget,
-  FloatingPanelWidget,
-} from "@/widgets/layouts";
+} from "@/widgets/layouts/ResizablePanelGroupWidget";
+import { FloatingPanelWidget } from "@/widgets/layouts/FloatingPanelWidget";
 import { ListItemWidget } from "@/widgets/lists";
 import { TreeWidget } from "@/widgets/tree";
-import {
-  TextBlockWidget,
-  HtmlWidget,
-  ErrorWidget,
-  SvgWidget,
-  ImageWidget,
-  IframeWidget,
-  FragmentWidget,
-  SeparatorWidget,
-  SkeletonWidget,
-  IconWidget,
-  BoxWidget,
-  CalloutWidget,
-  KbdWidget,
-  EmptyWidget,
-  AvatarWidget,
-  IvyLogoWidget,
-  SpacerWidget,
-  LoadingWidget,
-  AppHostWidget,
-  AutoScrollWidget,
-  AudioPlayerWidget,
-  VideoPlayerWidget,
-} from "@/widgets/primitives";
+import { TextBlockWidget } from "@/widgets/primitives/TextBlockWidget";
+import { HtmlWidget } from "@/widgets/primitives/HtmlWidget";
+import { ErrorWidget } from "@/widgets/primitives/ErrorWidget";
+import { SvgWidget } from "@/widgets/primitives/SvgWidget";
+import { ImageWidget } from "@/widgets/primitives/ImageWidget";
+import { IframeWidget } from "@/widgets/primitives/IframeWidget";
+import { FragmentWidget } from "@/widgets/primitives/FragmentWidget";
+import { SeparatorWidget } from "@/widgets/primitives/SeparatorWidget";
+import { SkeletonWidget } from "@/widgets/primitives/SkeletonWidget";
+import { IconWidget } from "@/widgets/primitives/IconWidget";
+import { BoxWidget } from "@/widgets/primitives/BoxWidget";
+import { CalloutWidget } from "@/widgets/primitives/CalloutWidget";
+import { KbdWidget } from "@/widgets/primitives/KbdWidget";
+import { EmptyWidget } from "@/widgets/primitives/EmptyWidget";
+import { AvatarWidget } from "@/widgets/primitives/AvatarWidget";
+import { IvyLogoWidget } from "@/widgets/primitives/IvyLogoWidget";
+import { SpacerWidget } from "@/widgets/primitives/SpacerWidget";
+import { LoadingWidget } from "@/widgets/primitives/LoadingWidget";
+import { AppHostWidget } from "@/widgets/primitives/AppHostWidget";
+import { AutoScrollWidget } from "@/widgets/primitives/AutoScrollWidget";
 import { TableWidget, TableRowWidget, TableCellWidget } from "@/widgets/tables";
 import { SmartSearch } from "@/docs-internal/SmartSearch";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -111,8 +100,16 @@ export const widgetMap = {
   "Ivy.Loading": LoadingWidget,
   "Ivy.AppHost": AppHostWidget,
   "Ivy.AutoScroll": AutoScrollWidget,
-  "Ivy.AudioPlayer": AudioPlayerWidget,
-  "Ivy.VideoPlayer": VideoPlayerWidget,
+  "Ivy.AudioPlayer": lazyWithRetry(() =>
+    import("@/widgets/primitives/AudioPlayerWidget").then((m) => ({
+      default: m.AudioPlayerWidget,
+    })),
+  ),
+  "Ivy.VideoPlayer": lazyWithRetry(() =>
+    import("@/widgets/primitives/VideoPlayerWidget").then((m) => ({
+      default: m.VideoPlayerWidget,
+    })),
+  ),
   "Ivy.Stepper": lazyWithRetry(() => import("@/widgets/primitives/StepperWidget")),
   "Ivy.Terminal": lazyWithRetry(() => import("@/widgets/primitives/TerminalWidget")),
 
