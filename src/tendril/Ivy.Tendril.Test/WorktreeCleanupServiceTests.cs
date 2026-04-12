@@ -290,6 +290,25 @@ public class WorktreeCleanupServiceTests : IDisposable
     }
 
     [Fact]
+    public void CleanupPlanWorktrees_FallbackRemoves_DirectoryMissedByRemoveWorktrees()
+    {
+        var dir = CreatePlan("10003-TestFallback", "Completed", DateTime.UtcNow.AddHours(-2));
+        var worktreeDir = Path.Combine(dir, "worktrees", "TestRepo");
+        Directory.CreateDirectory(worktreeDir);
+        File.WriteAllText(Path.Combine(worktreeDir, ".git"),
+            "gitdir: /nonexistent/repo/.git/worktrees/TestRepo");
+        File.WriteAllText(Path.Combine(worktreeDir, "file.txt"), "test");
+
+        var logEntries = new List<string>();
+        var logger = new CapturingLogger(logEntries);
+
+        WorktreeCleanupService.CleanupPlanWorktrees(dir, logger);
+
+        Assert.False(Directory.Exists(worktreeDir), "Fallback should delete directory missed by RemoveWorktrees");
+        Assert.Contains(logEntries, e => e.Contains("still exists after RemoveWorktrees"));
+    }
+
+    [Fact]
     public void CleanupPlanWorktrees_ForceDeletes_DeepNodeModulesPath()
     {
         // Simulates the real-world failure: cleanup must succeed over a deeply nested

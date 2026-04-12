@@ -1,5 +1,5 @@
-using Ivy.Tendril.Apps.Plans.Dialogs;
 using Ivy.Tendril.Services;
+using Ivy.Tendril.Views;
 
 namespace Ivy.Tendril.Apps;
 
@@ -8,12 +8,8 @@ public class WallpaperApp : ViewBase
 {
     public override object Build()
     {
-        var jobService = UseService<IJobService>();
-        var configService = UseService<IConfigService>();
         var countsService = UseService<IPlanCountsService>();
         var versionService = UseService<IVersionCheckService>();
-        var dialogOpen = UseState(false);
-        var lastSelectedProjects = UseState<string[]>(["Auto"]);
         var versionInfo = UseState<VersionInfo?>(null);
 
         UseEffect(() =>
@@ -26,7 +22,6 @@ public class WallpaperApp : ViewBase
         }, []);
 
         var counts = countsService.Current;
-        var projectNames = configService.Projects.Select(p => p.Name).ToList();
 
         var hasActivity = counts.Drafts > 0 || counts.ActiveJobs > 0 || counts.Reviews > 0;
 
@@ -41,9 +36,10 @@ public class WallpaperApp : ViewBase
                    | new Image("/tendril/assets/Tendril.svg").Width(Size.Units(30)).Height(Size.Auto())
                    | Text.H2(heading)
                    | Text.Muted(subtitle)
-                   | new Button(buttonLabel, () => dialogOpen.Set(true))
-                       .Variant(ButtonVariant.Primary)
-                       .Icon(Icons.Plus, Align.Right)
+                   | new CreatePlanDialogLauncher(
+                       open => new Button(buttonLabel, open)
+                           .Variant(ButtonVariant.Primary)
+                           .Icon(Icons.Plus, Align.Right))
                 )
         };
 
@@ -55,19 +51,6 @@ public class WallpaperApp : ViewBase
                         | Text.Block($"Tendril v{versionInfo.Value.LatestVersion} is available!")
                         | Text.Muted($"You're running v{versionInfo.Value.CurrentVersion}")
                         | Text.Muted("Run: tendril --version && dotnet tool update -g Ivy.Tendril"))
-            ));
-
-        if (dialogOpen.Value)
-            elements.Add(new CreatePlanDialog(
-                projectNames,
-                (description, projects, priority) =>
-                {
-                    lastSelectedProjects.Set(projects);
-                    var project = string.Join(",", projects);
-                    jobService.StartJob("MakePlan", "-Description", $"{description} [FORCE]", "-Project", project, "-Priority", priority.ToString());
-                },
-                () => dialogOpen.Set(false),
-                lastSelectedProjects.Value
             ));
 
         return new Fragment(elements.ToArray());

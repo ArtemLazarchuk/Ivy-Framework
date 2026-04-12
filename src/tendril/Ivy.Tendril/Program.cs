@@ -53,6 +53,10 @@ public class Program
         if (doctorExitCode >= 0)
             return doctorExitCode;
 
+        var hashExitCode = HashPasswordCommand.Handle(filteredArgs);
+        if (hashExitCode >= 0)
+            return hashExitCode;
+
         var crashLogPath = GetCrashLogPath();
         WriteCrashLog(crashLogPath, $"[{DateTime.UtcNow:O}] Tendril starting (PID {Environment.ProcessId}) | {GetMemoryStats()}");
 

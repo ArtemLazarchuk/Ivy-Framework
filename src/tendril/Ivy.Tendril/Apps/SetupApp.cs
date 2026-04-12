@@ -11,6 +11,7 @@ public class SetupApp : ViewBase
 
         return Layout.Tabs(
             new Tab("General", new GeneralSetupView()),
+            new Tab("Security", new SecuritySetupView()),
             new Tab("Levels", new LevelsSetupView()),
             new Tab("Verifications", new VerificationsSetupView()),
             new Tab("Promptwares", new PromptwaresSetupView()),

@@ -9,6 +9,8 @@ namespace Ivy.Tendril.Services;
 
 public class GithubService(IConfigService config) : IGithubService
 {
+    // ConcurrentDictionary required: multiple UseQuery calls from different views/dialogs
+    // can fetch different repos simultaneously, causing concurrent writes to different keys.
     private readonly ConcurrentDictionary<string, List<string>> _assigneeCache = new();
     private readonly IConfigService _config = config;
     private readonly ConcurrentDictionary<string, List<string>> _labelCache = new();
