@@ -224,9 +224,21 @@ public class ContentView(
         {
             var planLayout = Layout.Vertical();
             if (_selectedPlan.Status == PlanStatus.Failed) planLayout |= BuildFailureCallout(_selectedPlan);
-            planLayout |= new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
+            var annotatedContent = MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent);
+            annotatedContent = MarkdownHelper.AnnotateBrokenPlanLinks(annotatedContent, _planService.PlansDirectory);
+            planLayout |= new Markdown(annotatedContent)
                 .DangerouslyAllowLocalFiles()
-                .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
+                .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
+                {
+                    var planFolder = Directory.GetDirectories(_planService.PlansDirectory, $"{planId:D5}-*")
+                        .FirstOrDefault();
+                    if (planFolder != null)
+                    {
+                        var plan = _planService.GetPlanByFolder(planFolder);
+                        if (plan != null)
+                            _selectedPlanState.Set(plan);
+                    }
+                }));
             planTabContent = planLayout;
         }
 

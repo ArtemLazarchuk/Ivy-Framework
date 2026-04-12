@@ -41,6 +41,50 @@ public class FileLinkHelperTests
     }
 
     [Fact]
+    public void CreateFileLinkClickHandler_InvokesPlanCallback_WhenPlanUrlProvided()
+    {
+        var fileState = new TestState<string?>(null);
+        var planIdCaptured = 0;
+        var handler = FileLinkHelper.CreateFileLinkClickHandler(
+            fileState,
+            planId => planIdCaptured = planId);
+
+        handler("plan://03156");
+
+        Assert.Equal(3156, planIdCaptured);
+        Assert.Null(fileState.Value);
+    }
+
+    [Fact]
+    public void CreateFileLinkClickHandler_HandlesPlanIdWithLeadingZeros()
+    {
+        var fileState = new TestState<string?>(null);
+        var planIdCaptured = 0;
+        var handler = FileLinkHelper.CreateFileLinkClickHandler(
+            fileState,
+            planId => planIdCaptured = planId);
+
+        handler("plan://00123");
+
+        Assert.Equal(123, planIdCaptured);
+    }
+
+    [Fact]
+    public void CreateFileLinkClickHandler_IgnoresInvalidPlanIds()
+    {
+        var fileState = new TestState<string?>(null);
+        var callbackInvoked = false;
+        var handler = FileLinkHelper.CreateFileLinkClickHandler(
+            fileState,
+            _ => callbackInvoked = true);
+
+        handler("plan://notanumber");
+
+        Assert.False(callbackInvoked);
+        Assert.Null(fileState.Value);
+    }
+
+    [Fact]
     public void BuildFileLinkSheet_ReturnsNull_WhenFilePathIsNull()
     {
         var result = FileLinkHelper.BuildFileLinkSheet(null, () => { }, [], TestConfig);
