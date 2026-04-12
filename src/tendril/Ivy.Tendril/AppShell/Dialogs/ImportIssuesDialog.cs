@@ -23,6 +23,8 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
         var isImporting = UseState(false);
         var assigneesError = UseState<string?>(null);
         var labelsError = UseState<string?>(null);
+        var reposState = UseState<List<RepoConfig>?>(null);
+        var reposError = UseState<string?>(null);
 
         var assigneesQuery = UseQuery<string[], string>(
             selectedRepo.Value ?? "",
@@ -82,9 +84,54 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
             labelsError.Set(null);
         }, selectedRepo);
 
+        UseEffect(() =>
+        {
+            if (!_dialogOpen.Value)
+            {
+                reposState.Set(null);
+                reposError.Set(null);
+                return;
+            }
+
+            try
+            {
+                reposState.Set(githubService.GetRepos());
+            }
+            catch (Exception ex)
+            {
+                reposError.Set($"Failed to load repositories: {ex.Message}");
+            }
+        }, _dialogOpen);
+
         if (!_dialogOpen.Value) return null;
 
-        var repos = githubService.GetRepos();
+        if (reposState.Value is null && reposError.Value is null)
+        {
+            return new Dialog(
+                _ => _dialogOpen.Set(false),
+                new DialogHeader("Import Issues from GitHub"),
+                new DialogBody(
+                    Layout.Vertical().Gap(3)
+                    | Text.Muted("Loading repositories...")
+                    | new Loading()
+                )
+            ).Width(Size.Rem(36));
+        }
+
+        if (reposError.Value is { } repoErr)
+        {
+            return new Dialog(
+                _ =>
+                {
+                    reposError.Set(null);
+                    _dialogOpen.Set(false);
+                },
+                new DialogHeader("Import Issues from GitHub"),
+                new DialogBody(Text.Danger(repoErr))
+            ).Width(Size.Rem(36));
+        }
+
+        var repos = reposState.Value!;
         var repositoryOptions = repos.Select(r => r.DisplayName).ToArray();
 
         async Task FetchIssues()
