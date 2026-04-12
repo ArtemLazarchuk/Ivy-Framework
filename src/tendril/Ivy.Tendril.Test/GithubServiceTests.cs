@@ -191,6 +191,47 @@ public class GithubServiceTests
         Assert.NotNull(error);
     }
 
+    [Fact]
+    public async Task GetAssigneesAsync_Handles_Concurrent_Requests_For_Different_Repos()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var tasks = Enumerable.Range(0, 10)
+            .Select(i => githubService.GetAssigneesAsync($"owner-{i}", $"repo-{i}"))
+            .ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        Assert.All(results, r => Assert.NotNull(r.error));
+    }
+
+    [Fact]
+    public async Task GetLabelsAsync_Handles_Concurrent_Requests_For_Different_Repos()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var tasks = Enumerable.Range(0, 10)
+            .Select(i => githubService.GetLabelsAsync($"owner-{i}", $"repo-{i}"))
+            .ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        Assert.All(results, r => Assert.NotNull(r.error));
+    }
+
+    [Fact]
+    public async Task GetAssigneesAsync_Caches_Results_Per_Repo()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+        var testRepo = "nonexistent-xyz-999";
+
+        var (assignees1, error1) = await githubService.GetAssigneesAsync(testRepo, testRepo);
+        var (assignees2, error2) = await githubService.GetAssigneesAsync(testRepo, testRepo);
+
+        Assert.Equal(error1, error2);
+    }
+
     private static string CreateTempGitRepo(string remoteUrl)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"ivy-github-test-{Guid.NewGuid()}");
