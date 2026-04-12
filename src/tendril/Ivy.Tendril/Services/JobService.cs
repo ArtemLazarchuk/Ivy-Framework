@@ -570,6 +570,10 @@ public class JobService : IJobService
             }
         }
 
+        // Ensure any pending plan state writes are flushed to disk before scripts read plan.yaml
+        if (type is "ExecutePlan" or "ExpandPlan" or "UpdatePlan" or "SplitPlan")
+            _planReaderService?.FlushPendingWritesAsync().GetAwaiter().GetResult();
+
         // Try to acquire a job slot
         if (!_jobSlotSemaphore.Wait(0))
         {

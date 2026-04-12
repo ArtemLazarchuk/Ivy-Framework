@@ -233,13 +233,11 @@ public class JobsApp : ViewBase
                             {
                                 var folderName = Path.GetFileName(job.Args[0]);
                                 planService.TransitionState(folderName, PlanStatus.Building);
-                                planService.FlushPendingWritesAsync().GetAwaiter().GetResult();
                             }
                             else if (job.Type == "UpdatePlan" && job.Args.Length > 0)
                             {
                                 var folderName = Path.GetFileName(job.Args[0]);
                                 planService.TransitionState(folderName, PlanStatus.Updating);
-                                planService.FlushPendingWritesAsync().GetAwaiter().GetResult();
                             }
 
                             jobService.DeleteJob(job.Id);
