@@ -40,17 +40,31 @@ public class ContentView(
         var customPrOpen = UseState(false);
 
         var githubService = UseService<IGithubService>();
+        var assigneesError = UseState<string?>(null);
         var assigneesQuery = UseQuery<string[], string>(
             _selectedPlan?.Project ?? "",
             async (_, _) =>
             {
-                if (_selectedPlan is null) return Array.Empty<string>();
+                if (_selectedPlan is null)
+                {
+                    assigneesError.Set(null);
+                    return Array.Empty<string>();
+                }
                 var repos = _selectedPlan.GetEffectiveRepoPaths(_config);
                 var repoPath = repos.FirstOrDefault();
-                if (repoPath is null) return Array.Empty<string>();
+                if (repoPath is null)
+                {
+                    assigneesError.Set(null);
+                    return Array.Empty<string>();
+                }
                 var repoConfig = GithubService.GetRepoConfigFromPath(repoPath);
-                if (repoConfig is null) return Array.Empty<string>();
-                var (assignees, _) = await githubService.GetAssigneesAsync(repoConfig.Owner, repoConfig.Name);
+                if (repoConfig is null)
+                {
+                    assigneesError.Set(null);
+                    return Array.Empty<string>();
+                }
+                var (assignees, error) = await githubService.GetAssigneesAsync(repoConfig.Owner, repoConfig.Name);
+                assigneesError.Set(error);
                 return assignees.ToArray();
             },
             initialValue: Array.Empty<string>()
@@ -458,7 +472,7 @@ public class ContentView(
         content |= new SuggestChangesDialog(suggestChangesOpen, suggestChangesText, _selectedPlan, _jobService,
             _planService, _refreshPlans);
         content |= new CustomPrDialog(customPrOpen, _selectedPlan, _jobService, _planService, _refreshPlans,
-            assigneesQuery);
+            assigneesQuery, assigneesError);
 
         // Discard confirmation dialog
         content |= new DiscardPlanDialog(discardDialogOpen, _selectedPlan, _planService, _refreshPlans);
