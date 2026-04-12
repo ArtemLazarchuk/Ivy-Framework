@@ -177,26 +177,7 @@ function manualChunks(id) {
     return "vendor-react";
   }
 
-  // 3) CodeMirror + Lezer
-  if (
-    pkg.startsWith("@codemirror/") ||
-    pkg.startsWith("@lezer/") ||
-    pkg === "@uiw/react-codemirror"
-  ) {
-    return "vendor-codemirror";
-  }
-
-  // 4) Charts
-  if (pkg === "echarts" || pkg === "echarts-for-react" || pkg === "zrender") {
-    return "vendor-echarts";
-  }
-
-  // 5) Mermaid (large, dynamically imported; keep package + internals together)
-  if (pkg === "mermaid" || pkg.startsWith("@mermaid-js/")) {
-    return "vendor-mermaid";
-  }
-
-  // 6) Other stable vendor boundaries (loosely coupled to the rest of the app)
+  // 3) Other stable vendor boundaries (loosely coupled to the rest of the app)
   if (pkg === "framer-motion") {
     return "vendor-framer-motion";
   }
@@ -212,7 +193,6 @@ function manualChunks(id) {
 
   return undefined;
 }
-
 
 export default defineConfig({
   base: "./",
