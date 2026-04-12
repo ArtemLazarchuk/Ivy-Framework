@@ -31,15 +31,11 @@ import {
   FieldWidget,
   TextInputWidget,
   BoolInputWidget,
-  DateTimeInputWidget,
   NumberInputWidget,
   NumberRangeInputWidget,
-  SelectInputWidget,
   ReadOnlyInputWidget,
   ColorInputWidget,
   IconInputWidget,
-  AsyncSelectInputWidget,
-  DateRangeInputWidget,
   FileInputWidget,
   SignatureInputWidget,
   ContentInputWidget,
@@ -49,15 +45,13 @@ import {
   GridLayoutWidget,
   HeaderLayoutWidget,
   FooterLayoutWidget,
-  TabsLayoutWidget,
-  TabWidget,
   SidebarLayoutWidget,
   SidebarMenuWidget,
   ResizablePanelGroupWidget,
   ResizablePanelWidget,
   FloatingPanelWidget,
 } from "@/widgets/layouts";
-import { ListWidget, ListItemWidget } from "@/widgets/lists";
+import { ListItemWidget } from "@/widgets/lists";
 import { TreeWidget } from "@/widgets/tree";
 import {
   TextBlockWidget,
@@ -82,7 +76,6 @@ import {
   AutoScrollWidget,
   AudioPlayerWidget,
   VideoPlayerWidget,
-  RichTextBlockWidget,
 } from "@/widgets/primitives";
 import { TableWidget, TableRowWidget, TableCellWidget } from "@/widgets/tables";
 import { SmartSearch } from "@/docs-internal/SmartSearch";
@@ -93,7 +86,11 @@ export const widgetMap = {
 
   // Primitives
   "Ivy.TextBlock": TextBlockWidget,
-  "Ivy.RichTextBlock": RichTextBlockWidget,
+  "Ivy.RichTextBlock": lazyWithRetry(() =>
+    import("@/widgets/primitives/RichTextBlockWidget").then((m) => ({
+      default: m.RichTextBlockWidget,
+    })),
+  ),
   "Ivy.Markdown": lazyWithRetry(() => import("@/widgets/primitives/MarkdownWidget")),
   "Ivy.Json": lazyWithRetry(() => import("@/widgets/primitives/JsonWidget")),
   "Ivy.Html": HtmlWidget,
@@ -177,8 +174,16 @@ export const widgetMap = {
   "Ivy.GridLayout": GridLayoutWidget,
   "Ivy.HeaderLayout": HeaderLayoutWidget,
   "Ivy.FooterLayout": FooterLayoutWidget,
-  "Ivy.TabsLayout": TabsLayoutWidget,
-  "Ivy.Tab": TabWidget,
+  "Ivy.TabsLayout": lazyWithRetry(() =>
+    import("@/widgets/layouts/tabs/TabsLayoutWidget").then((m) => ({
+      default: m.TabsLayoutWidget,
+    })),
+  ),
+  "Ivy.Tab": lazyWithRetry(() =>
+    import("@/widgets/layouts/tabs/TabWidget").then((m) => ({
+      default: m.TabWidget,
+    })),
+  ),
   "Ivy.SidebarLayout": SidebarLayoutWidget,
   "Ivy.SidebarMenu": SidebarMenuWidget,
   "Ivy.ResizablePanelGroup": ResizablePanelGroupWidget,
@@ -189,10 +194,18 @@ export const widgetMap = {
   "Ivy.Field": FieldWidget,
   "Ivy.TextInput": TextInputWidget,
   "Ivy.BoolInput": BoolInputWidget,
-  "Ivy.DateTimeInput": DateTimeInputWidget,
+  "Ivy.DateTimeInput": lazyWithRetry(() =>
+    import("@/widgets/inputs/DateTimeInputWidget").then((m) => ({
+      default: m.DateTimeInputWidget,
+    })),
+  ),
   "Ivy.NumberInput": NumberInputWidget,
   "Ivy.NumberRangeInput": NumberRangeInputWidget,
-  "Ivy.SelectInput": SelectInputWidget,
+  "Ivy.SelectInput": lazyWithRetry(() =>
+    import("@/widgets/inputs/SelectInputWidget").then((m) => ({
+      default: m.SelectInputWidget,
+    })),
+  ),
   "Ivy.ReadOnlyInput": ReadOnlyInputWidget,
   "Ivy.ColorInput": ColorInputWidget,
   "Ivy.IconInput": IconInputWidget,
@@ -201,8 +214,16 @@ export const widgetMap = {
       default: m.FeedbackInputWidget,
     })),
   ),
-  "Ivy.AsyncSelectInput": AsyncSelectInputWidget,
-  "Ivy.DateRangeInput": DateRangeInputWidget,
+  "Ivy.AsyncSelectInput": lazyWithRetry(() =>
+    import("@/widgets/inputs/AsyncSelectInputWidget").then((m) => ({
+      default: m.AsyncSelectInputWidget,
+    })),
+  ),
+  "Ivy.DateRangeInput": lazyWithRetry(() =>
+    import("@/widgets/inputs/DateRangeInputWidget").then((m) => ({
+      default: m.DateRangeInputWidget,
+    })),
+  ),
   "Ivy.FileInput": FileInputWidget,
   "Ivy.ContentInput": ContentInputWidget,
   "Ivy.SignatureInput": SignatureInputWidget,
@@ -238,7 +259,11 @@ export const widgetMap = {
   "Ivy.DataTable": lazyWithRetry(() => import("@/widgets/dataTables/DataTableWidget")),
 
   // Lists
-  "Ivy.List": ListWidget,
+  "Ivy.List": lazyWithRetry(() =>
+    import("@/widgets/lists/ListWidget").then((m) => ({
+      default: m.ListWidget,
+    })),
+  ),
   "Ivy.ListItem": ListItemWidget,
 
   // Tree
