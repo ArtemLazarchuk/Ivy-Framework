@@ -223,8 +223,13 @@ For each repo listed in `plan.yaml` `repos` (or the project's repos from `config
 3. If the worktree or branch already exists from a prior execution, remove it first. A prior run may have left a **stale directory** (the filesystem tree still exists but git no longer tracks it as a worktree — there's no `.git` file at the worktree root). In that case `git worktree remove` will fail with "is not a working tree"; you must also `rm -rf` the directory. **Do all three unconditionally** so the next `git worktree add` starts from a clean slate:
 
 ```bash
+PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
+PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
+SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
+BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
+
 git worktree remove "<PlanFolder>/worktrees/<repo-folder-name>" --force 2>/dev/null
-git branch -D "plan-<planId>-<repo-folder-name>" 2>/dev/null
+git branch -D "$BRANCH_NAME" 2>/dev/null
 rm -rf "<PlanFolder>/worktrees/<repo-folder-name>"
 ```
 
@@ -235,7 +240,11 @@ rm -rf "<PlanFolder>/worktrees/<repo-folder-name>"
 ```bash
 cd <original-repo-path>
 git fetch origin
-git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "plan-<planId>-<repo-folder-name>" "origin/<default-branch>"
+PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
+PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
+SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
+BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
+git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "$BRANCH_NAME" "origin/<default-branch>"
 ```
 
 Example:
@@ -243,7 +252,7 @@ Example:
 ```bash
 cd <RepoPath>
 git fetch origin
-git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "plan-<PlanId>-<RepoName>" origin/master
+git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "tendril/<PlanId>-<SafeTitle>" origin/master
 ```
 
 **Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.

@@ -23,7 +23,7 @@ public class WorktreeLifecycleLoggerTests : IDisposable
     [Fact]
     public void LogCreation_WritesFormattedEntry()
     {
-        _logger.LogCreation("03058", @"D:\Repos\MyRepo", @"D:\Plans\03058\worktrees\MyRepo", "plan-03058-MyRepo");
+        _logger.LogCreation("03058", @"D:\Repos\MyRepo", @"D:\Plans\03058\worktrees\MyRepo", "tendril/03058-TestPlan");
 
         var logFile = Path.Combine(_tempDir, "Logs", "worktrees.log");
         Assert.True(File.Exists(logFile));
@@ -32,7 +32,7 @@ public class WorktreeLifecycleLoggerTests : IDisposable
         Assert.Contains("[03058]", content);
         Assert.Contains("[Creation]", content);
         Assert.Contains("repo=\"D:\\Repos\\MyRepo\"", content);
-        Assert.Contains("branch=\"plan-03058-MyRepo\"", content);
+        Assert.Contains("branch=\"tendril/03058-TestPlan\"", content);
     }
 
     [Fact]

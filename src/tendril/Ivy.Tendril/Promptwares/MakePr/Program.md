@@ -47,7 +47,7 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 Check `<PlanFolder>/worktrees/` for each repo worktree.
 
-> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `plan-<planId>-<repo-folder-name>`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create or force-update the local branch: `git branch -f <branch-name> <sha>` (use `-f` because the branch may already exist from a WIP auto-commit) and push from the original repo path.
+> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `tendril/<planId>-<SafeTitle>`, where SafeTitle is extracted from the plan folder name: e.g. `03158-ChangeBranchNaming` → `ChangeBranchNaming`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create or force-update the local branch: `git branch -f <branch-name> <sha>` (use `-f` because the branch may already exist from a WIP auto-commit) and push from the original repo path.
 >
 > **Commit lost (object GC'd):** If `git cat-file -t <sha>` fails, the commit was garbage-collected after worktree removal. In this case: (1) check if the change is already on main, (2) if not, recreate the change from the plan revision — create a new branch from main, apply the changes as described in the revision, commit with the standard `[<planId>] <title>` message, and push. Update `plan.yaml` commits list with the new commit hash.
 
@@ -193,8 +193,12 @@ For each repo where the PR was merged:
 
 ```bash
 cd <original-repo-path>
+PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
+PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
+SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
+BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
 git worktree remove "<PlanFolder>/worktrees/<repo-folder-name>" --force
-git branch -D "plan-<planId>-<repo-folder-name>" 2>/dev/null
+git branch -D "$BRANCH_NAME" 2>/dev/null
 ```
 
 If **all** worktrees were cleaned up, remove the now-empty `worktrees/` directory:

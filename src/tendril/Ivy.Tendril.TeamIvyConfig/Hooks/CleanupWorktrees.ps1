@@ -68,7 +68,8 @@ foreach ($planFolder in $planFolders) {
         if ($originalRepo) {
             try {
                 Push-Location $originalRepo
-                $branchName = "plan-$planId-$repoName"
+                $safeTitle = if ($planFolder.Name -match '^\d+-(.+)') { $Matches[1] } else { "Unknown" }
+                $branchName = "tendril/$planId-$safeTitle"
                 git worktree remove $wtDir.FullName --force 2>&1 | Out-Null
                 git branch -D $branchName 2>&1 | Out-Null
                 Pop-Location
