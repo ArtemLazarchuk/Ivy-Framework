@@ -5,6 +5,7 @@ using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.Nodes;
 using Ivy.Core.Helpers;
 using Ivy.Core.Hooks;
+using NativeJsonDiff = Ivy.NativeJsonDiff.NativeJsonDiff;
 
 namespace Ivy.Core;
 
