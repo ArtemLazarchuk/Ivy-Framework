@@ -622,6 +622,21 @@ Number columns had `type: undefined` because `ColType.Number` (enum 0) was strip
 ✅ **`UseState(() => ImmutableArray<FileUpload<byte[]>>.Empty)`** — explicitly initialize with `.Empty`
 📝 **Why**: `default(ImmutableArray<T>)` has a null backing array (unlike `List<T>` which is just empty). The `UseState<T>()` overload without initializer uses `default(T)`, which for `ImmutableArray` produces an unusable instance. Always use the `Func<T>` overload with `.Empty`.
 
+## Ivy Server Always Uses HTTPS
+
+### Health check and Playwright must use HTTPS
+❌ **`http.get(\`http://localhost:\${port}\`)`** — connection refused or no response; Ivy binds to HTTPS only
+✅ **`https.get(\`https://localhost:\${port}\`, { rejectUnauthorized: false })`** — use `https` module with self-signed cert bypass
+✅ **`ignoreHTTPSErrors: true`** in Playwright config `use` block — required for all page navigation
+📝 **Why**: Ivy's `Server` class configures Kestrel with HTTPS by default (dev certificate). There is no HTTP endpoint. All `waitForServer` health checks, `page.goto()`, and WebSocket connections must use `https://` / `wss://`.
+
+## TableBuilder.Header() Requires Label Parameter
+
+### `.Header(expr)` is not valid — second arg is mandatory
+❌ **`products.ToTable().Header(p => p.Name)`** — CS7036: no argument for required parameter `label`
+✅ **`products.ToTable().Header(p => p.Name, "Name")`** — always provide the display label
+📝 **Why**: `TableBuilder<T>.Header(Expression<Func<T, object>>, string)` has `label` as a required parameter, not optional. Unlike DataTable which auto-derives column names, the simple Table widget requires explicit labels.
+
 ## Future Gotchas
 
 As we encounter more issues, add them with:
