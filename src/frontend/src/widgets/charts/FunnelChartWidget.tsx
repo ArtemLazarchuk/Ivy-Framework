@@ -7,6 +7,7 @@ import {
   generateTextStyle,
   generateEChartToolbox,
   generateTooltip,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { ChartType, FunnelChartWidgetProps } from "./chartTypes";
 import { generateDataProps } from "./sharedUtils";
@@ -177,7 +178,7 @@ const FunnelChartWidget: React.FC<FunnelChartWidgetProps> = ({
         }),
         trigger: "item" as const,
         formatter: (params: { name: string; value: number; percent: number; marker: string }) => {
-          return `${params.marker} ${params.name}<br/><strong>${params.value.toLocaleString()}</strong> (${params.percent}%)`;
+          return `${params.marker} ${params.name}<br/><strong>${formatTooltipValue(params.value, tooltip)}</strong> (${params.percent}%)`;
         },
       },
       series: series,

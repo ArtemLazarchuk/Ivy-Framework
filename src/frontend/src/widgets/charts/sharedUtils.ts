@@ -161,6 +161,11 @@ export const formatTickLabel = (
   return tryNumberFormat() ?? tryDateFormat() ?? String(value);
 };
 
+export const formatTooltipValue = (value: number | string, tooltip?: ToolTipProps): string => {
+  if (!tooltip?.valueFormat) return value.toLocaleString();
+  return formatTickLabel(value, tooltip.valueFormat, null, tooltip.valueFormatType);
+};
+
 export const generateDataProps = (data: Record<string, unknown>[]) => {
   if (data.length === 0) {
     return { categoryKey: "", categories: [], valueKeys: [] };

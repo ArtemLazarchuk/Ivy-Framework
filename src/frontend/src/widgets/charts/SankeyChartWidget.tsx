@@ -8,6 +8,7 @@ import {
   generateEChartToolbox,
   generateTooltip,
   generateEChartLegend,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { SankeyChartWidgetProps } from "./chartTypes";
 import { getChartThemeColors } from "./styles";
@@ -63,16 +64,16 @@ const SankeyChartWidget: React.FC<SankeyChartWidgetProps> = ({
           mutedForeground: themeColors.mutedForeground,
         }),
         trigger: "item",
-        formatter: (params: {
-          dataType: string;
-          data: { source: string; target: string; value: number };
-          name: string;
-        }) => {
+        formatter: (params: any) => {
           if (params.dataType === "edge") {
             const sourceName = params.data.source;
             const targetName = params.data.target;
-            const value = params.data.value;
+            const value = formatTooltipValue(params.data.value, tooltip);
             return `${sourceName} → ${targetName}<br/>${value}`;
+          }
+          if (params.value != null) {
+            const formattedValue = formatTooltipValue(params.value, tooltip);
+            return `${params.name}<br/><strong>${formattedValue}</strong>`;
           }
           return params.name;
         },
