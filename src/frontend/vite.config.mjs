@@ -191,12 +191,7 @@ function manualChunks(id) {
     return "vendor-echarts";
   }
 
-  // 5) Mermaid (large, dynamically imported; keep package + internals together)
-  if (pkg === "mermaid" || pkg.startsWith("@mermaid-js/")) {
-    return "vendor-mermaid";
-  }
-
-  // 6) Other stable vendor boundaries (loosely coupled to the rest of the app)
+  // 5) Other stable vendor boundaries (loosely coupled to the rest of the app)
   if (pkg === "framer-motion") {
     return "vendor-framer-motion";
   }
@@ -212,7 +207,6 @@ function manualChunks(id) {
 
   return undefined;
 }
-
 
 export default defineConfig({
   base: "./",
