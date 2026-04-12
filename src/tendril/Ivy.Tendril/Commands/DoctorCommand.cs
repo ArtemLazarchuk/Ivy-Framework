@@ -529,7 +529,6 @@ public static class DoctorCommand
             var yamlPath = Path.Combine(dir, "plan.yaml");
             var (yamlHealthy, yamlError, state) = CheckYamlHealth(yamlPath);
             var worktreeCount = CountWorktrees(dir);
-            var hasNestedWorktree = DetectNestedWorktrees(dir);
 
             var recsError = CheckRecommendationsHealth(dir);
 
@@ -538,8 +537,6 @@ public static class DoctorCommand
                 healthIssues.Add($"YAML:{yamlError}");
             if (recsError != null)
                 healthIssues.Add($"Recs:{recsError}");
-            if (hasNestedWorktree)
-                healthIssues.Add("NestedWorktree");
 
             var health = healthIssues.Count == 0 ? "OK" : string.Join(",", healthIssues);
 
@@ -641,22 +638,6 @@ public static class DoctorCommand
         }
     }
 
-    internal static bool DetectNestedWorktrees(string planPath)
-    {
-        var worktreesPath = Path.Combine(planPath, "worktrees");
-        if (!Directory.Exists(worktreesPath))
-            return false;
-
-        foreach (var subDir in Directory.GetDirectories(worktreesPath))
-        {
-            var gitPath = Path.Combine(subDir, ".git");
-            if (File.Exists(gitPath) || Directory.Exists(gitPath))
-                return true;
-        }
-
-        return false;
-    }
-
     internal static void PrintPlansTable(IEnumerable<PlanHealthResult> results)
     {
         const int idWidth = 5;
@@ -700,6 +681,5 @@ public static class DoctorCommand
         Console.WriteLine($"  Healthy: {allResults.Count(r => r.IsHealthy)}");
         Console.WriteLine($"  Unhealthy: {allResults.Count(r => !r.IsHealthy)}");
         Console.WriteLine($"  With worktrees: {allResults.Count(r => r.Worktrees > 0)}");
-        Console.WriteLine($"  Nested worktrees: {allResults.Count(r => r.Health.Contains("NestedWorktree"))}");
     }
 }

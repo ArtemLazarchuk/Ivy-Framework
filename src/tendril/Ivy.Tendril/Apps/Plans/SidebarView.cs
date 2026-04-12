@@ -11,24 +11,17 @@ public class SidebarView(
     IState<string?> textFilter,
     IConfigService config) : ViewBase
 {
-    private readonly IConfigService _config = config;
-    private readonly IState<string?> _levelFilter = levelFilter;
-    private readonly List<PlanFile> _plans = plans;
-    private readonly IState<string?> _projectFilter = projectFilter;
-    private readonly IState<PlanFile?> _selectedPlanState = selectedPlanState;
-    private readonly IState<string?> _textFilter = textFilter;
-
     public override object Build()
     {
         var filtersOpen = UseState(false);
 
         var filteredPlans =
-            PlanFilters.ApplyFilters(_plans, _projectFilter.Value, _levelFilter.Value, _textFilter.Value);
+            PlanFilters.ApplyFilters(plans, projectFilter.Value, levelFilter.Value, textFilter.Value);
 
-        var levelOptions = _config.LevelNames;
+        var levelOptions = config.LevelNames;
 
-        var levelFilteredPlans = _plans.AsEnumerable();
-        if (_levelFilter.Value is { } level)
+        var levelFilteredPlans = plans.AsEnumerable();
+        if (levelFilter.Value is { } level)
             levelFilteredPlans = levelFilteredPlans.Where(p => p.Level == level);
 
         var projectCounts = levelFilteredPlans
@@ -37,7 +30,7 @@ public class SidebarView(
             .Select(g => new Option<string>($"{g.Key} ({g.Count()})", g.Key))
             .ToArray<IAnyOption>();
 
-        var searchInput = _textFilter.ToSearchInput()
+        var searchInput = textFilter.ToSearchInput()
             .Placeholder("Search plans...")
             .Suffix(
                 new Button()
@@ -52,9 +45,9 @@ public class SidebarView(
         if (filtersOpen.Value)
         {
             header |= Layout.Vertical()
-                      | _projectFilter.ToSelectInput(projectCounts).Placeholder("All Projects").Nullable()
+                      | projectFilter.ToSelectInput(projectCounts).Placeholder("All Projects").Nullable()
                           .WithField().Label("Project")
-                      | _levelFilter.ToSelectInput(levelOptions.ToOptions()).Placeholder("All Levels").Nullable()
+                      | levelFilter.ToSelectInput(levelOptions.ToOptions()).Placeholder("All Levels").Nullable()
                           .WithField().Label("Level");
         }
 
@@ -72,13 +65,13 @@ public class SidebarView(
             foreach (var proj in projects)
             {
                 badges |= new Badge(proj).Variant(BadgeVariant.Outline).Small()
-                    .WithProjectColor(_config, proj);
+                    .WithProjectColor(config, proj);
             }
-            badges |= new Badge(plan.Level).Variant(_config.GetBadgeVariant(plan.Level)).Small();
+            badges |= new Badge(plan.Level).Variant(config.GetBadgeVariant(plan.Level)).Small();
 
             return new ListItem($"#{plan.Id} {plan.Title}")
                 .Content(badges)
-                .OnClick(() => _selectedPlanState.Set(clickablePlan));
+                .OnClick(() => selectedPlanState.Set(clickablePlan));
         }));
 
         return new HeaderLayout(header, content);
