@@ -152,20 +152,14 @@ public class WorktreeCleanupService : IStartable, IDisposable
 
         PlanReaderService.RemoveWorktrees(planFolderPath, logger, lifecycleLogger);
 
+        // Safety net: RemoveWorktrees should have removed all directories
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
         {
-            var gitFile = Path.Combine(wtDir, ".git");
-            var gitFileExists = File.Exists(gitFile);
+            logger?.LogWarning(
+                "Worktree directory still exists after RemoveWorktrees (this should not happen): {Path}",
+                Path.GetFileName(wtDir));
 
-            if (!gitFileExists)
-            {
-                var dirAge = DateTime.UtcNow - new DirectoryInfo(wtDir).CreationTimeUtc;
-                logger?.LogWarning(
-                    "Force-deleting orphaned worktree directory (no .git file, created {Age} ago): {Path}",
-                    dirAge, Path.GetFileName(wtDir));
-            }
-
-            lifecycleLogger?.LogCleanupAttempt(planId, wtDir, $"TerminalState({planYaml.State})", gitFileExists);
+            lifecycleLogger?.LogCleanupAttempt(planId, wtDir, "CleanupPlanWorktrees(fallback)", gitFileExists: false);
 
             try
             {
