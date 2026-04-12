@@ -178,9 +178,6 @@ function manualChunks(id) {
   }
 
   // 3) Other stable vendor boundaries (loosely coupled to the rest of the app)
-  if (pkg === "lodash" || pkg === "lodash-es") {
-    return "vendor-lodash";
-  }
   if (pkg === "@microsoft/signalr") {
     return "vendor-signalr";
   }
