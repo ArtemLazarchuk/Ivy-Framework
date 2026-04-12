@@ -19,9 +19,9 @@ export const tableHeadSizeVariant = cva("w-full caption-bottom", {
 export const tableCellSizeVariant = cva("align-middle", {
   variants: {
     density: {
-      Small: "p-1 text-xs",
-      Medium: "p-2 text-sm",
-      Large: "p-3 text-base",
+      Small: `p-1 ${densityText.Small}`,
+      Medium: `p-2 ${densityText.Medium}`,
+      Large: `p-3 ${densityText.Large}`,
     },
   },
   defaultVariants: {
@@ -32,9 +32,9 @@ export const tableCellSizeVariant = cva("align-middle", {
 export const tableSizeVariant = cva("", {
   variants: {
     density: {
-      Small: "text-xs",
-      Medium: "text-sm",
-      Large: "text-base",
+      Small: densityText.Small,
+      Medium: densityText.Medium,
+      Large: densityText.Large,
     },
   },
   defaultVariants: {
