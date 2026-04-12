@@ -11,6 +11,7 @@ import {
   generateXAxis,
   generateYAxis,
   getColors,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { useThemeWithMonitoring } from "@/components/theme-provider";
 import { getHeight, getWidth } from "@/lib/styles";
@@ -240,12 +241,26 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({
         foreground: themeColors.foreground,
         fontSans: themeColors.fontSans,
       }),
-      tooltip: generateTooltip(tooltip, "shadow", {
-        foreground: themeColors.foreground,
-        fontSans: themeColors.fontSans,
-        background: themeColors.background,
-        mutedForeground: themeColors.mutedForeground,
-      }),
+      tooltip: {
+        ...generateTooltip(tooltip, "shadow", {
+          foreground: themeColors.foreground,
+          fontSans: themeColors.fontSans,
+          background: themeColors.background,
+          mutedForeground: themeColors.mutedForeground,
+        }),
+        formatter: (params: any) => {
+          if (Array.isArray(params)) {
+            return params
+              .map((p) => {
+                const value = formatTooltipValue(p.value[isVertical ? 0 : 1], tooltip);
+                return `${p.marker} ${p.seriesName}: <strong>${value}</strong>`;
+              })
+              .join("<br/>");
+          }
+          const value = formatTooltipValue(params.value[isVertical ? 0 : 1], tooltip);
+          return `${params.marker} ${params.seriesName}: <strong>${value}</strong>`;
+        },
+      },
       toolbox: generateEChartToolbox(toolbox),
     }),
     [
