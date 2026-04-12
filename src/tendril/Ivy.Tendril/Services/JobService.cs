@@ -714,6 +714,7 @@ public class JobService : IJobService
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         job.Process = process;
+        job.ProcessId = process.Id;
 
         // Monitor for completion in background with timeout and stale output detection
         var cts = new CancellationTokenSource(_jobTimeout);

@@ -42,6 +42,7 @@ public record JobItem
 
     // Process handle for non-interactive execution
     public Process? Process { get; set; }
+    public int? ProcessId { get; set; }
     public string? StatusMessage { get; set; }
     public ConcurrentQueue<string> OutputLines { get; set; } = new();
     public DateTime? LastOutputAt { get; set; }
