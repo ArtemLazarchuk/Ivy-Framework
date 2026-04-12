@@ -181,10 +181,10 @@ public class InboxWatcherService : IInboxWatcherService
                         sourcePath = trimmed.Substring("sourcePath:".Length).Trim();
                 }
 
-                return (project ?? "[Auto]", description, sourcePath);
+                return (project ?? "Auto", description, sourcePath);
             }
         }
 
-        return ("[Auto]", content, null);
+        return ("Auto", content, null);
     }
 }

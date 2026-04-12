@@ -307,7 +307,7 @@ public class ImportIssuesDialog(IState<bool> dialogOpen, IConfigService config) 
                     .Equals(repoPath, StringComparison.OrdinalIgnoreCase) ?? false))
             .ToList();
 
-        return matchingProjects.Count == 1 ? matchingProjects[0].Name : "[Auto]";
+        return matchingProjects.Count == 1 ? matchingProjects[0].Name : "Auto";
     }
 
     internal static string SanitizeFileName(string title)

@@ -225,7 +225,7 @@ Absolute path to the plan.yaml file to read
 .OUTPUTS
 Returns a hashtable with three keys:
 - Content: Raw YAML file content as string
-- Project: Project name from YAML, or "[Auto]" if not specified
+- Project: Project name from YAML, or "Auto" if not specified
 - Yaml: Parsed YAML as hashtable/ordered dictionary
 
 .EXAMPLE
@@ -238,7 +238,7 @@ function ReadPlanYaml {
 
     $content = Get-Content $PlanYamlPath -Raw
     $yaml = $content | ConvertFrom-Yaml
-    $project = if ($yaml.project) { $yaml.project } else { "[Auto]" }
+    $project = if ($yaml.project) { $yaml.project } else { "Auto" }
     return @{ Content = $content; Project = $project; Yaml = $yaml }
 }
 

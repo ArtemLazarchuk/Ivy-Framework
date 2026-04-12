@@ -135,7 +135,7 @@ if ($userPath -notmatch [regex]::Escape($dotnetToolsPath)) {
 
 Write-Host "`n=== Installation Complete! ===" -ForegroundColor Green
 Write-Host "You can now run Ivy-Tendril by typing: tendril" -ForegroundColor Blue
-Write-Host "To launch the GUI, use: tendril --photino" -ForegroundColor Blue
+Write-Host "To launch the GUI, use: tendril --desktop" -ForegroundColor Blue
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     Write-Host "Note: You may need to restart your terminal for 'gh' or 'tendril' to be available." -ForegroundColor Red

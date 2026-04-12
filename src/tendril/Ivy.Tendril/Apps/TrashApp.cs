@@ -84,7 +84,7 @@ public class TrashApp : ViewBase
                             {
                                 if (!string.IsNullOrEmpty(selected.OriginalRequest))
                                 {
-                                    var project = string.IsNullOrEmpty(selected.Project) ? "[Auto]" : selected.Project;
+                                    var project = string.IsNullOrEmpty(selected.Project) ? "Auto" : selected.Project;
                                     jobService.StartJob("MakePlan", "-Description",
                                         $"{selected.OriginalRequest} [FORCE]", "-Project", project);
                                     client.Toast("MakePlan job started", "Force Plan");

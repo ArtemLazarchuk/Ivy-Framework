@@ -11,7 +11,7 @@ public class InboxWatcherServiceTests
 
         var (project, description, sourcePath) = InboxWatcherService.ParseContent(content);
 
-        Assert.Equal("[Auto]", project);
+        Assert.Equal("Auto", project);
         Assert.Equal(content, description);
         Assert.Null(sourcePath);
     }
@@ -35,7 +35,7 @@ public class InboxWatcherServiceTests
 
         var (project, description, sourcePath) = InboxWatcherService.ParseContent(content);
 
-        Assert.Equal("[Auto]", project);
+        Assert.Equal("Auto", project);
         Assert.Equal("Fix the login bug", description);
         Assert.Null(sourcePath);
     }
@@ -59,7 +59,7 @@ public class InboxWatcherServiceTests
 
         var (project, description, sourcePath) = InboxWatcherService.ParseContent(content);
 
-        Assert.Equal("[Auto]", project);
+        Assert.Equal("Auto", project);
         Assert.Equal(content, description);
         Assert.Null(sourcePath);
     }
@@ -93,7 +93,7 @@ public class InboxWatcherServiceTests
     {
         var (project, description, sourcePath) = InboxWatcherService.ParseContent("");
 
-        Assert.Equal("[Auto]", project);
+        Assert.Equal("Auto", project);
         Assert.Equal("", description);
         Assert.Null(sourcePath);
     }
@@ -103,7 +103,7 @@ public class InboxWatcherServiceTests
     {
         var (project, description, sourcePath) = InboxWatcherService.ParseContent("   \n  ");
 
-        Assert.Equal("[Auto]", project);
+        Assert.Equal("Auto", project);
         Assert.Equal("   \n  ", description);
         Assert.Null(sourcePath);
     }

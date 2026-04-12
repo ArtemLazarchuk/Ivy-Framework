@@ -6,12 +6,12 @@ public class CreatePlanDialog(
     Action onClose,
     string[]? defaultProjects = null) : ViewBase
 {
-    private readonly string[] _defaultProjects = defaultProjects ?? ["[Auto]"];
+    private readonly string[] _defaultProjects = defaultProjects ?? ["Auto"];
     private readonly Action _onClose = onClose;
     private readonly Action<string, string[], int> _onCreatePlan = onCreatePlan;
     private readonly List<string> _projectNames = projectNames;
 
-    internal static readonly List<string> PriorityOptions = ["Normal (0)", "High (1)", "Urgent (2)"];
+    internal static readonly List<string> PriorityOptions = ["Normal", "High", "Urgent"];
 
     internal static int ParsePriority(string option) =>
         int.TryParse(option.AsSpan(option.LastIndexOf('(') + 1, 1), out var v) ? v : 0;
@@ -20,9 +20,9 @@ public class CreatePlanDialog(
     {
         var createPlanText = UseState("");
         var selectedProjects = UseState(_defaultProjects);
-        var selectedPriority = UseState("Normal (0)");
+        var selectedPriority = UseState("Normal");
 
-        var options = new List<string> { "[Auto]" };
+        var options = new List<string> { "Auto" };
         options.AddRange(_projectNames);
 
         return new Dialog(
@@ -42,9 +42,9 @@ public class CreatePlanDialog(
                     if (!string.IsNullOrWhiteSpace(createPlanText.Value))
                     {
                         var projects = selectedProjects.Value
-                            .Where(p => p != "[Auto]")
+                            .Where(p => p != "Auto")
                             .ToArray();
-                        if (projects.Length == 0) projects = ["[Auto]"];
+                        if (projects.Length == 0) projects = ["Auto"];
                         _onCreatePlan(createPlanText.Value, projects, ParsePriority(selectedPriority.Value));
                         _onClose();
                     }

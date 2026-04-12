@@ -26,19 +26,14 @@ public class Program
     {
         VelopackApp.Build().Run();
 
-        // Detect if we should use Photino (GUI) or Web (localhost)
-        // 1. Force Photino if --photino flag is present
-        // 2. Default to Photino if running as 'tendril' tool
-        // 3. Otherwise default to Web server
         var fileName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "");
         bool isTool = fileName.Equals("tendril", StringComparison.OrdinalIgnoreCase);
-        bool forcePhotino = args.Contains("--photino");
+        bool forceDesktop = args.Contains("--desktop");
         bool forceWeb = args.Contains("--web");
 
-        bool usePhotino = (isTool || forcePhotino) && !forceWeb;
+        bool useDesktop = (isTool || forceDesktop) && !forceWeb;
 
-        // Strip our flags before passing to the rest of the app
-        var filteredArgs = args.Where(a => a != "--photino" && a != "--web").ToArray();
+        var filteredArgs = args.Where(a => a != "--desktop" && a != "--web").ToArray();
 
         // Handle database CLI commands before starting the server/GUI
         var dbExitCode = DatabaseCommands.Handle(filteredArgs);
@@ -52,6 +47,10 @@ public class Program
         var doctorExitCode = DoctorCommand.Handle(filteredArgs);
         if (doctorExitCode >= 0)
             return doctorExitCode;
+
+        var hashExitCode = HashPasswordCommand.Handle(filteredArgs);
+        if (hashExitCode >= 0)
+            return hashExitCode;
 
         var crashLogPath = GetCrashLogPath();
         WriteCrashLog(crashLogPath, $"[{DateTime.UtcNow:O}] Tendril starting (PID {Environment.ProcessId}) | {GetMemoryStats()}");
@@ -118,7 +117,7 @@ public class Program
 
         var server = TendrilServer.Create(filteredArgs);
 
-        if (usePhotino)
+        if (useDesktop)
         {
             var window = new DesktopWindow(server)
                 .Title("Ivy Tendril")

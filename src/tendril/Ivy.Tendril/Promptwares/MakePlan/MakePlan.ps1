@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Description,
-    [string]$Project = "[Auto]",
+    [string]$Project = "Auto",
     [string]$SourcePath = "",
     [int]$Priority = 0
 )
@@ -33,7 +33,7 @@ if ($Priority -ne 0) { $firmwareValues["Priority"] = $Priority }
 
 # Parse multi-project selection and aggregate repos for overlap detection
 $repos = @()
-if ($Project -ne "[Auto]") {
+if ($Project -ne "Auto") {
     $projectNames = $Project -split ',' | ForEach-Object { $_.Trim() }
 
     if (Test-Path $script:ConfigPath) {

@@ -77,7 +77,14 @@ public class PrStatusSyncService : IStartable, IDisposable
 
                 try
                 {
-                    var statuses = await _githubService.GetPrStatusesAsync(parts[0], parts[1]);
+                    var (statuses, error) = await _githubService.GetPrStatusesAsync(parts[0], parts[1]);
+
+                    if (error is not null)
+                    {
+                        _logger.LogWarning("Failed to fetch PR statuses for {Repo}: {Error}", ownerRepo, error);
+                        continue;
+                    }
+
                     foreach (var url in urls)
                     {
                         var resolvedStatus = statuses.GetValueOrDefault(url, "Open");

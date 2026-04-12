@@ -481,7 +481,7 @@ public class JobService : IJobService
 
         // Extract plan folder and project from args
         var planFile = "";
-        var project = "[Auto]";
+        var project = "Auto";
 
         // For MakePlan: args are named params like -Description "..." -Project "..."
         // For others: args[0] is the plan folder path
@@ -491,7 +491,7 @@ public class JobService : IJobService
             planFile = GetNamedArg(args, "-Description") is { Length: > 0 } desc
                 ? desc.Length > 50 ? desc[..50] + "..." : desc
                 : "New Plan";
-            project = GetNamedArg(args, "-Project") ?? "[Auto]";
+            project = GetNamedArg(args, "-Project") ?? "Auto";
             if (int.TryParse(GetNamedArg(args, "-Priority"), out var parsedPriority))
                 priority = parsedPriority;
         }
@@ -535,7 +535,7 @@ public class JobService : IJobService
                 {
                     Directory.CreateDirectory(_inboxPath);
                     var description = GetNamedArg(args, "-Description") ?? "New Plan";
-                    var inboxProject = GetNamedArg(args, "-Project") ?? "[Auto]";
+                    var inboxProject = GetNamedArg(args, "-Project") ?? "Auto";
                     var pendingFile = Path.Combine(_inboxPath, $"pending-{id}.md.processing");
                     var content = $"---\nproject: {inboxProject}\n---\n{description}";
                     FileHelper.WriteAllText(pendingFile, content);

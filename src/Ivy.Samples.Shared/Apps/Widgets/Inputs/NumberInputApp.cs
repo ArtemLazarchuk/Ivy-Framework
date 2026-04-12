@@ -220,7 +220,22 @@ public class NumberInputPrefixSuffixTab : ViewBase
                  .Suffix("%")
                  .Precision(2)
                  .TestId("number-input-suffix-percent")
-               | Text.Monospaced(percentValue.Value.ToString("F2"));
+               | Text.Monospaced(percentValue.Value.ToString("F2"))
+
+               | Text.Block("Badge Prefix (currency)")
+               | priceValue
+                 .ToNumberInput()
+                 .Prefix(new Badge("USD", BadgeVariant.Info))
+                 .Precision(2)
+                 .TestId("number-input-prefix-badge")
+               | Text.Monospaced(priceValue.Value.ToString("F2"))
+
+               | Text.Block("Button Suffix (info)")
+               | temperatureValue
+                 .ToNumberInput()
+                 .Suffix(new Button("Info", () => { }, icon: Icons.Info).Ghost().Small())
+                 .TestId("number-input-suffix-button")
+               | Text.Monospaced(temperatureValue.Value.ToString());
     }
 }
 

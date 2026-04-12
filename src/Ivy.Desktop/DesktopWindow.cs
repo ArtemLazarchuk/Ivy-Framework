@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Reflection;
-using Photino.NET;
+using Rustino.NET;
 
 namespace Ivy.Desktop;
 
@@ -108,7 +108,7 @@ public class DesktopWindow(Server server)
         return 0;
     }
 
-    private PhotinoWindow CreateWindow()
+    private RustinoWindow CreateWindow()
     {
         var windowWidth = _width;
         var windowHeight = _height;
@@ -120,7 +120,7 @@ public class DesktopWindow(Server server)
             windowHeight = (int)(_height * scalingFactor);
         }
 
-        var window = new PhotinoWindow() { LogVerbosity = 0 };
+        var window = new RustinoWindow() { LogVerbosity = 0 };
         window
             .SetUseOsDefaultSize(false)
             .SetSize(windowWidth, windowHeight)
@@ -213,7 +213,7 @@ public class DesktopWindow(Server server)
             var tempHtmlPath = Path.Combine(Path.GetTempPath(), $"ivy_error_{Guid.NewGuid():N}.html");
             File.WriteAllText(tempHtmlPath, errorHtml);
 
-            var errorWindow = new PhotinoWindow() { LogVerbosity = 0 };
+            var errorWindow = new RustinoWindow() { LogVerbosity = 0 };
             errorWindow
                 .SetUseOsDefaultSize(false)
                 .SetSize(700, 500)

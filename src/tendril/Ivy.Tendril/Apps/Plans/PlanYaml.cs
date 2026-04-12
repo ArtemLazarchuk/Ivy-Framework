@@ -9,7 +9,7 @@ public class PlanVerificationEntry
 public class PlanYaml
 {
     public string State { get; set; } = "Draft";
-    public string Project { get; set; } = "[Auto]";
+    public string Project { get; set; } = "Auto";
     public string Level { get; set; } = "NiceToHave";
     public string Title { get; set; } = "";
     public List<string> Repos { get; set; } = new();

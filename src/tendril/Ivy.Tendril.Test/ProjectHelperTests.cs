@@ -35,8 +35,8 @@ public class ProjectHelperTests
     [InlineData("Framework", "Framework")]
     [InlineData("Framework, Tendril", "Framework, Tendril")]
     [InlineData("  Framework  ,  Tendril  ", "Framework, Tendril")]
-    [InlineData("", "[Auto]")]
-    [InlineData(null, "[Auto]")]
+    [InlineData("", "Auto")]
+    [InlineData(null, "Auto")]
     public void FormatProjectsForDisplay_FormatsCorrectly(string? input, string expected)
     {
         var result = ProjectHelper.FormatProjectsForDisplay(input);

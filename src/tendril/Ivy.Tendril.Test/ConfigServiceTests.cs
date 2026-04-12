@@ -843,13 +843,15 @@ editor:
         {
             service.SetTendrilHome(tempDir);
 
-            // SetTendrilHome silently catches errors, so test via constructor-like reload
-            // Write malformed config and retry
-            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "invalid: yaml: [unclosed");
-            service.RetryLoadConfig();
+            // SetTendrilHome detects the error and auto-heals, clearing ParseError
+            // Verify error was detected by checking backup exists
+            var backupFiles = Directory.GetFiles(tempDir, "config.yaml.broken.*.bak");
+            Assert.NotEmpty(backupFiles);
 
-            Assert.NotNull(service.ParseError);
-            Assert.Contains(tempDir, service.ParseError.FilePath);
+            // Verify auto-healed config is valid
+            var yaml = File.ReadAllText(Path.Combine(tempDir, "config.yaml"));
+            var settings = YamlHelper.Deserializer.Deserialize<TendrilSettings>(yaml);
+            Assert.NotNull(settings);
         }
         finally
         {
@@ -867,7 +869,6 @@ editor:
         try
         {
             service.SetTendrilHome(tempDir);
-            service.RetryLoadConfig();
 
             var backupFiles = Directory.GetFiles(tempDir, "config.yaml.broken.*.bak");
             Assert.NotEmpty(backupFiles);
@@ -878,6 +879,35 @@ editor:
         finally
         {
             Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void SetTendrilHome_Should_Handle_Malformed_Config_Gracefully()
+    {
+        var validYaml = "codingAgent: testAgent\njobTimeout: 99";
+        var validDir = CreateTempConfigFile(validYaml);
+        var malformedDir = CreateTempConfigFile("invalid: yaml: [unclosed");
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(validDir);
+            Assert.Equal("testAgent", service.Settings.CodingAgent);
+
+            service.SetTendrilHome(malformedDir);
+
+            // Error should have been detected and auto-healed
+            var backupFiles = Directory.GetFiles(malformedDir, "config.yaml.broken.*.bak");
+            Assert.NotEmpty(backupFiles);
+
+            // Settings should be valid (auto-healed minimal config)
+            Assert.NotNull(service.Settings);
+        }
+        finally
+        {
+            Directory.Delete(validDir, true);
+            Directory.Delete(malformedDir, true);
         }
     }
 
@@ -986,6 +1016,9 @@ jobTimeout: 30
         try
         {
             service.SetTendrilHome(tempDir);
+
+            // Write malformed config again (autohealing replaced the original)
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "broken: [yaml");
             service.RetryLoadConfig();
             Assert.NotNull(service.ParseError);
 
@@ -1011,6 +1044,9 @@ jobTimeout: 30
         try
         {
             service.SetTendrilHome(tempDir);
+
+            // Write malformed config again (autohealing replaced the original)
+            File.WriteAllText(Path.Combine(tempDir, "config.yaml"), "broken: [yaml");
             service.RetryLoadConfig();
             Assert.NotNull(service.ParseError);
 

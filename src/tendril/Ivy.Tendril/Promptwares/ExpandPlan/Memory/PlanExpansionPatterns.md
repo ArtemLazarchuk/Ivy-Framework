@@ -116,6 +116,23 @@ Sometimes a plan has no investigative language but still needs expansion because
 **When to expand these:**
 Even if no "Investigate..." language exists, create an expanded revision if the solution would fail or confuse the implementer.
 
+## Streamlining vs Expanding
+
+Not all expansions add more detail — sometimes they **consolidate** to make plans more direct:
+
+### When to streamline multiple options into one:
+
+If a plan presents "Option 1 (Recommended)", "Option 2", "Option 3", but the recommendation is clear and well-justified:
+
+❌ **Don't preserve all options** — This makes the reader work harder to understand the plan  
+✅ **Keep only the recommended option** — Move non-recommended options to a brief note if they provide important context
+
+**Example from plan 03132:**
+- Initial revision: 3 options with "Option 1 recommended"
+- Expanded revision: Single solution section with the recommended approach, brief mention of why alternatives weren't chosen
+
+**Rationale:** The implementation agent needs clear instructions, not a menu of options. If options are truly equally valid, use the Decision Point Template. If one is clearly best, make it the solution.
+
 ## Quality Checklist
 
 Before saving expanded plan, verify:

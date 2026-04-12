@@ -26,6 +26,6 @@ public static class ProjectHelper
     public static string FormatProjectsForDisplay(string? projectValue)
     {
         var projects = ParseProjects(projectValue);
-        return projects.Length > 0 ? string.Join(", ", projects) : "[Auto]";
+        return projects.Length > 0 ? string.Join(", ", projects) : "Auto";
     }
 }

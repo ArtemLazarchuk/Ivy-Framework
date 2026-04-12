@@ -11,7 +11,7 @@ Create an implementation plan for a task described in args.
 The firmware header contains these key values:
 - **PlanId** — pre-allocated 5-digit plan ID (e.g. `01127`). Use this — do NOT read `.counter`.
 - **PlansDirectory** — where plan folders are created
-- **Project** — selected project name, or `[Auto]` if not specified
+- **Project** — selected project name, or `Auto` if not specified
 - **SourcePath** (optional) — absolute path to the source that generated this plan (e.g. test working directory)
 
 Read the plan folder structure in `../.shared/Plans.md`.
@@ -36,13 +36,13 @@ Flags can be combined (e.g., `task description [YOLO] [FORCE]` or `task descript
 
 Read `config.yaml` (at the path from `TENDRIL_CONFIG` environment variable) to understand all available projects, their repos, and context.
 
-**If `Project` is set to a specific project name** (not `[Auto]`):
+**If `Project` is set to a specific project name** (not `Auto`):
 - Find that project in `config.yaml` and use its repos and context to scope your research
 
-**If `Project: [Auto]`**:
+**If `Project: Auto`**:
 - Analyze the task description to infer the correct project from `config.yaml`
 - Match based on keywords, repo paths, or component names in the description
-- If no project matches, set `project: [Auto]` in plan.yaml and leave `repos: []` empty
+- If no project matches, set `project: Auto` in plan.yaml and leave `repos: []` empty
 - Use the matched project's context to scope your research
 
 ### 2. Plan ID
@@ -231,7 +231,7 @@ Example (verification names come from config.yaml):
 - [x] CheckResult
 ```
 
-If the project has no verifications (e.g. `[Auto]`), leave the section empty or omit it.
+If the project has no verifications (e.g. `Auto`), leave the section empty or omit it.
 
 The user can edit the checklist before execution — unchecking a required verification or checking an optional one. ExecutePlan will run only the checked items.
 

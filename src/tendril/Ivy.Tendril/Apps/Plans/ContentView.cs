@@ -167,10 +167,12 @@ public class ContentView(
         if (_selectedPlan is null)
         {
             if (_allPlans.Count == 0)
-                return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(2)
-                       | new Icon(Icons.Inbox).Large().Color(Colors.Gray)
-                       | Text.Muted("No draft plans yet")
-                       | new NewPlanButton();
+                return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full()).Gap(4).Padding(8)
+                       | new Icon(Icons.Feather).Large().Color(Colors.Gray)
+                       | Text.H3("No draft plans yet")
+                       | Text.Muted("Create your first plan to start tracking implementation work")
+                       | new NewPlanButton()
+                       | Text.Muted("or press Ctrl+Alt+N").Small();
 
             return Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
                    | Text.Muted("Select a plan from the sidebar");

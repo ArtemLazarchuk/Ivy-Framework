@@ -20,9 +20,16 @@ public static class TendrilServer
 #endif
         server.SetMetaTitle("Ivy Tendril");
 
+        server.Services.AddHttpClient();
+
         var configService = new ConfigService();
         server.Services.AddSingleton<IConfigService>(configService);
         server.Services.AddSingleton<ConfigService>(configService);
+
+        if (configService.Settings.Auth != null)
+        {
+            server.UseAuth<Auth.TendrilAuthProvider>();
+        }
 
         server.Services.AddSingleton<ModelPricingService>(sp =>
             new ModelPricingService(sp.GetRequiredService<ILogger<ModelPricingService>>()));
@@ -40,6 +47,9 @@ public static class TendrilServer
                     new OpenAIClientOptions { Endpoint = new Uri(endpoint) });
                 return client.GetChatClient(llm.Model).AsIChatClient();
             });
+
+        server.Services.AddSingleton<VersionCheckService>();
+        server.Services.AddSingleton<IVersionCheckService>(sp => sp.GetRequiredService<VersionCheckService>());
 
         server.Services.AddSingleton<OnboardingSetupService>();
         server.Services.AddSingleton<IOnboardingSetupService>(sp => sp.GetRequiredService<OnboardingSetupService>());

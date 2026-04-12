@@ -287,7 +287,17 @@ public class NumberRangeInputPrefixSuffixTab : ViewBase
                    .Prefix(Icons.Thermometer)
                    .Suffix("°C")
                    .TestId("numberrange-input-icon-prefix")
-               | Text.Monospaced($"{intRange.Value.Item1}°C - {intRange.Value.Item2}°C");
+               | Text.Monospaced($"{intRange.Value.Item1}°C - {intRange.Value.Item2}°C")
+
+               | Text.Block("Button Prefix + Badge Suffix")
+               | intRange
+                   .ToNumberRangeInput()
+                   .Min(0)
+                   .Max(100)
+                   .Prefix(new Button("Reset", () => { intRange.Value = (25, 75); }).Ghost().Small())
+                   .Suffix(new Badge($"{intRange.Value.Item2 - intRange.Value.Item1} range", BadgeVariant.Secondary))
+                   .TestId("numberrange-input-widget-affixes")
+               | Text.Monospaced($"Spread: {intRange.Value.Item2 - intRange.Value.Item1}");
     }
 }
 
