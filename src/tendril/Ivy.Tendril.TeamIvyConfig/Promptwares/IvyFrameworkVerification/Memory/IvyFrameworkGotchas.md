@@ -563,32 +563,6 @@ When passing structured children to widgets:
 2. Use `widgetNodeChildren` for metadata, `slots.default[index]` for rendered content
 3. Register both parent and child in `widgetMap.ts`
 4. Check `widgetNode.children && widgetNode.children.length > 0` before using slot content (empty fragments are truthy)
-## Historical Issues (Fixed)
-
-These bugs have been fixed. Kept for reference in case of regressions.
-
-### RadarChart CamelCase Lookup (FIXED)
-`RadarChartWidget.tsx` line 122 used case-sensitive `item[ind.name]` for explicit `.Radar()` config. Fixed to use `getPropertyValue(item, ind.name)` (case-insensitive).
-
-### DayOfWeek Enum Serialization (FIXED)
-C# `DayOfWeek` serialized as string but `react-day-picker` `weekStartsOn` expects a number. Fixed with `resolveDayOfWeek()` in `DateTimeInputWidget.tsx` and `DateRangeInputWidget.tsx`.
-
-### Video PlaybackRate Browser Reset (FIXED)
-Setting only `videoElement.playbackRate` in useEffect was reset during media load. Fixed by setting both `defaultPlaybackRate` and `playbackRate`, plus re-applying in `onLoadedData` handler.
-
-### SignatureInput OnChange Not Wired (FIXED)
-`OnChange => null` (expression-body) meant OnChange was never set. Fixed to `OnChange { get; }` with constructor wiring. Also: frontend must strip `data:` prefix from `canvas.toDataURL()` before sending to C# byte[] deserialization.
-
-### DataTable Custom Header Icons — Three Bugs (FIXED)
-1. `mapColumnIcon()` discarded custom icon names (returned `GridColumnIcon.HeaderString`)
-2. `showColumnTypeIcons` gate blocked explicit icons
-3. CamelCase mismatch between dictionary keys and Icon values
-
-### FileDialog Upload Mode Prop Stripped (FIXED)
-`FileDialogMode.Upload` (enum value 0) was stripped by WidgetSerializer. Fixed with `mode = 'Upload'` default in `FileDialogWidget.tsx`.
-
-### WidgetSerializer Default Enum Value Stripping (FIXED)
-Number columns had `type: undefined` because `ColType.Number` (enum 0) was stripped. Fixed with null guards in `calculateAutoWidth.ts` and `cellContent.ts`. See "Ongoing Pattern" in Serialization section for remaining guard needs.
 
 ## Responsive Design System — Widget-Level Props Not Consumed
 
