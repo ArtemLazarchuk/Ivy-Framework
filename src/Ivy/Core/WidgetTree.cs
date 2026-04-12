@@ -5,7 +5,7 @@ using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.Nodes;
 using Ivy.Core.Helpers;
 using Ivy.Core.Hooks;
-using NativeJsonDiff = Ivy.NativeJsonDiff.NativeJsonDiff;
+using NativeJsonDiffLib = Ivy.NativeJsonDiff.NativeJsonDiff;
 
 namespace Ivy.Core;
 
@@ -228,7 +228,7 @@ public class WidgetTree : IWidgetTree, IObservable<WidgetTreeChanged[]>
                 // [Native Patch Integration] Execute mathematically independent zero-allocation diffing via C/Rust!
                 var oldBytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(previous);
                 var newBytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(update);
-                patch = NativeJsonDiff.ComputePatch(oldBytes, newBytes);
+                patch = NativeJsonDiffLib.ComputePatch(oldBytes, newBytes);
             }
             else
             {

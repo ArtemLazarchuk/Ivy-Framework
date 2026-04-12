@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.JsonDiffPatch.Diffs.Formatters;
 using Ivy.Core;
-using NativeJsonDiff = Ivy.NativeJsonDiff.NativeJsonDiff;
+using NativeJsonDiffLib = Ivy.NativeJsonDiff.NativeJsonDiff;
 
 namespace Ivy.Benchmarks;
 
@@ -24,7 +24,7 @@ public static class PayloadSizeAnalyzer
         var csPatch = oldNode.Diff(newNode, new JsonPatchDeltaFormatter(), WidgetTree.JsonDiffOptions);
         var csPayload = csPatch!.ToJsonString();
         
-        var rustPatch = NativeJsonDiff.ComputePatch(oldBytes, newBytes);
+        var rustPatch = NativeJsonDiffLib.ComputePatch(oldBytes, newBytes);
         var rustPayload = rustPatch?.ToJsonString() ?? "NULL";
 
         Console.WriteLine($"\n[C# Original String]: {csPayload.Length} chars");
