@@ -76,8 +76,7 @@ public class PlanReaderService(
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(
-                    $"Failed to recover plan {Path.GetFileName(dir)}: {ex.Message}");
+                _logger.LogWarning(ex, "Failed to recover plan in {Folder}", Path.GetFileName(dir));
             }
     }
 
