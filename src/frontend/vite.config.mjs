@@ -208,7 +208,6 @@ function manualChunks(id) {
   return undefined;
 }
 
-
 export default defineConfig({
   base: "./",
   staged: {
