@@ -10,7 +10,7 @@ public class CreatePlanDialogLauncher(Func<Action, object> renderTrigger) : View
         var jobService = UseService<IJobService>();
         var configService = UseService<IConfigService>();
         var dialogOpen = UseState(false);
-        var lastSelectedProjects = UseState<string[]>(["[Auto]"]);
+        var lastSelectedProjects = UseState<string[]>(["Auto"]);
 
         var projectNames = configService.Projects.Select(p => p.Name).ToList();
 

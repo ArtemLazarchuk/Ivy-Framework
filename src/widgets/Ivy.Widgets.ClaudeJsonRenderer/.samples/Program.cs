@@ -11,22 +11,20 @@ class ClaudeJsonRendererDemo : ViewBase
 {
     public override object Build()
     {
-        var prompt = Context.UseState("Explain what Ivy framework is in 2 sentences");
+        var prompt = Context.UseState("Explain what the Ivy framework is in 2 sentences");
         var stream = Context.UseStream<string>();
         var running = Context.UseState(false);
 
-        return Layout.Vertical().Gap(4)
-            | Layout.Horizontal().Gap(2).AlignY(Align.Center)
-                | new TextBox().Value(prompt).OnChange(prompt.Set).Width(Size.Full())
-                | new Button(running.Value ? "Running..." : "Run Claude")
-                    .OnClick(async () =>
-                    {
-                        if (running.Value) return;
-                        running.Set(true);
-                        await Task.Run(() => RunClaude(prompt.Value, stream));
-                        running.Set(false);
-                    })
-                    .Enabled(!running.Value)
+        return Layout.Vertical()
+            | (Layout.Horizontal().Gap(2)
+                | prompt.ToTextInput().Placeholder("Enter a prompt for Claude...")
+                | new Button(running.Value ? "Running..." : "Run Claude").OnClick(async () =>
+                {
+                    if (running.Value) return;
+                    running.Set(true);
+                    await Task.Run(() => RunClaude(prompt.Value, stream));
+                    running.Set(false);
+                }).Disabled(running.Value))
             | new ClaudeJsonRenderer()
                 .Stream(stream)
                 .ShowThinking(true)
@@ -34,12 +32,13 @@ class ClaudeJsonRendererDemo : ViewBase
                 .Height(Size.Px(600));
     }
 
-    static void RunClaude(string prompt, Ivy.Hooks.IWriteStream<string> stream)
+    static void RunClaude(string prompt, IWriteStream<string> stream)
     {
+        var escaped = prompt.Replace("\"", "\\\"");
         var psi = new ProcessStartInfo
         {
             FileName = "claude",
-            Arguments = $"-p \"{prompt.Replace("\"", "\\\"")}\" --output-format stream-json --verbose --max-turns 3",
+            Arguments = $"-p \"{escaped}\" --output-format stream-json --verbose --max-turns 3",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -53,9 +52,7 @@ class ClaudeJsonRendererDemo : ViewBase
         {
             var line = process.StandardOutput.ReadLine();
             if (!string.IsNullOrWhiteSpace(line))
-            {
                 stream.Write(line);
-            }
         }
 
         process.WaitForExit();

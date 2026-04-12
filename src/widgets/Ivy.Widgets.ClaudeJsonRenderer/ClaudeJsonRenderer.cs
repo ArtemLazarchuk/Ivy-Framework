@@ -1,5 +1,3 @@
-using Ivy.Hooks;
-
 namespace Ivy.Widgets.ClaudeJsonRenderer;
 
 [ExternalWidget("frontend/dist/Ivy_Widgets_ClaudeJsonRenderer.js",

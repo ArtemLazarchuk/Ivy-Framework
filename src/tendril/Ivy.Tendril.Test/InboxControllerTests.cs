@@ -118,7 +118,7 @@ public class InboxControllerTests
 
         Assert.IsType<OkObjectResult>(result);
         var job = Assert.Single(jobService.StartedJobs);
-        Assert.Contains("[Auto]", job.Args);
+        Assert.Contains("Auto", job.Args);
     }
 
     private static InboxController CreateController(

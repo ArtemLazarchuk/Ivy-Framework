@@ -32,7 +32,7 @@ public class InboxController : ControllerBase
 
         try
         {
-            var project = request.Project ?? "[Auto]";
+            var project = request.Project ?? "Auto";
             var args = new List<string> { "-Description", request.Description, "-Project", project };
             if (!string.IsNullOrEmpty(request.SourcePath))
                 args.AddRange(["-SourcePath", request.SourcePath]);
