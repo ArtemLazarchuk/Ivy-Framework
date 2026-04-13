@@ -1468,6 +1468,7 @@ public class PlanDatabaseService : IPlanDatabaseService
 
         foreach (var value in values)
         {
+            if (value == null) continue;
             insertCmd.Parameters["@planId"].Value = planId;
             insertCmd.Parameters["@value"].Value = value;
             insertCmd.ExecuteNonQuery();

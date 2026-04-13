@@ -1,4 +1,5 @@
 using System.Globalization;
+using Ivy.Tendril.Apps;
 using Microsoft.Extensions.Logging;
 
 namespace Ivy.Tendril.Services;
@@ -111,8 +112,7 @@ public class PrStatusSyncService : IStartable, IDisposable
         return plans
             .Where(p => p.Prs.Count > 0)
             .SelectMany(p => p.Prs)
-            .Where(url => Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
-                          (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            .Where(PullRequestApp.IsValidUrl)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

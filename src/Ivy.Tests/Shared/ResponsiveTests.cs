@@ -82,4 +82,100 @@ public class ResponsiveTests
         Assert.True(visible.Mobile);
         Assert.Null(visible.Desktop);
     }
+
+    [Theory]
+    [InlineData(Breakpoint.Mobile)]
+    [InlineData(Breakpoint.Tablet)]
+    [InlineData(Breakpoint.Desktop)]
+    [InlineData(Breakpoint.Wide)]
+    public void Int_At_SetsCorrectBreakpoint(Breakpoint bp)
+    {
+        var responsive = 42.At(bp);
+        AssertBreakpoint(responsive, bp, 42);
+    }
+
+    [Theory]
+    [InlineData(Breakpoint.Mobile)]
+    [InlineData(Breakpoint.Tablet)]
+    [InlineData(Breakpoint.Desktop)]
+    [InlineData(Breakpoint.Wide)]
+    public void Int_And_SetsCorrectBreakpoint(Breakpoint bp)
+    {
+        var responsive = 1.At(Breakpoint.Mobile).And(bp, 99);
+        Assert.Equal(99, GetBreakpointValue(responsive, bp));
+    }
+
+    [Theory]
+    [InlineData(Breakpoint.Mobile)]
+    [InlineData(Breakpoint.Tablet)]
+    [InlineData(Breakpoint.Desktop)]
+    [InlineData(Breakpoint.Wide)]
+    public void Orientation_At_SetsCorrectBreakpoint(Breakpoint bp)
+    {
+        var responsive = Orientation.Horizontal.At(bp);
+        AssertBreakpoint(responsive, bp, Orientation.Horizontal);
+    }
+
+    [Theory]
+    [InlineData(Breakpoint.Mobile)]
+    [InlineData(Breakpoint.Tablet)]
+    [InlineData(Breakpoint.Desktop)]
+    [InlineData(Breakpoint.Wide)]
+    public void Density_At_SetsCorrectBreakpoint(Breakpoint bp)
+    {
+        var responsive = Density.Small.At(bp);
+        AssertBreakpoint(responsive, bp, Density.Small);
+    }
+
+    [Theory]
+    [InlineData(Breakpoint.Mobile)]
+    [InlineData(Breakpoint.Tablet)]
+    [InlineData(Breakpoint.Desktop)]
+    [InlineData(Breakpoint.Wide)]
+    public void Bool_At_SetsCorrectBreakpoint(Breakpoint bp)
+    {
+        var responsive = true.At(bp);
+        AssertBreakpoint(responsive, bp, true);
+    }
+
+    [Fact]
+    public void AllValueTypes_At_And_Chain()
+    {
+        var intR = 1.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 2);
+        Assert.Equal(1, intR.Mobile);
+        Assert.Equal(2, intR.Desktop);
+
+        var orientR = Orientation.Horizontal.At(Breakpoint.Tablet).And(Breakpoint.Wide, Orientation.Vertical);
+        Assert.Equal(Orientation.Horizontal, orientR.Tablet);
+        Assert.Equal(Orientation.Vertical, orientR.Wide);
+
+        var densityR = Density.Small.At(Breakpoint.Mobile).And(Breakpoint.Desktop, Density.Large);
+        Assert.Equal(Density.Small, densityR.Mobile);
+        Assert.Equal(Density.Large, densityR.Desktop);
+
+        var boolR = true.At(Breakpoint.Mobile).And(Breakpoint.Desktop, false);
+        Assert.True(boolR.Mobile);
+        Assert.False(boolR.Desktop);
+    }
+
+    private static void AssertBreakpoint<T>(Responsive<T> responsive, Breakpoint bp, T expected)
+    {
+        Assert.Equal(expected, GetBreakpointValue(responsive, bp));
+
+        // All other breakpoints should be default
+        foreach (var other in new[] { Breakpoint.Mobile, Breakpoint.Tablet, Breakpoint.Desktop, Breakpoint.Wide })
+        {
+            if (other != bp)
+                Assert.Equal(default, GetBreakpointValue(responsive, other));
+        }
+    }
+
+    private static T? GetBreakpointValue<T>(Responsive<T> responsive, Breakpoint bp) => bp switch
+    {
+        Breakpoint.Mobile => responsive.Mobile,
+        Breakpoint.Tablet => responsive.Tablet,
+        Breakpoint.Desktop => responsive.Desktop,
+        Breakpoint.Wide => responsive.Wide,
+        _ => throw new ArgumentOutOfRangeException(nameof(bp))
+    };
 }

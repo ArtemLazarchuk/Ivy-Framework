@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.PullRequest;
 using Ivy.Tendril.Services;
@@ -29,7 +30,7 @@ public class PullRequestApp : ViewBase
             var cost = costValue > 0 ? $"${costValue:F2}" : "";
             var tokenValue = planService.GetPlanTotalTokens(plan.FolderPath);
             var tokens = tokenValue > 0 ? FormatHelper.FormatTokens(tokenValue) : "";
-            return plan.Prs.Where(IsValidUrl).Select((pr, i) => new PrRow
+            return plan.Prs.Where(IsValidUrl).Reverse().Select((pr, i) => new PrRow
             {
                 Id = $"{plan.Id}-{i}",
                 PlanId = $"{plan.Id:D5}",
@@ -162,9 +163,11 @@ public class PullRequestApp : ViewBase
     ///     Extracts "owner/repo" from a GitHub PR URL.
     ///     E.g. "https://github.com/owner/repo/pull/123" -> "owner/repo"
     /// </summary>
+    private static readonly Regex GitHubPrPattern = new(
+        @"^https?://github\.com/[^/]+/[^/]+/pull/\d+", RegexOptions.Compiled);
+
     internal static bool IsValidUrl(string value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        GitHubPrPattern.IsMatch(value);
 
     internal static string ExtractRepo(string prUrl)
     {
