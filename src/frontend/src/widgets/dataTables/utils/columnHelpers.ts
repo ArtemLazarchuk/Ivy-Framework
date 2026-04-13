@@ -43,7 +43,7 @@ export function mapColumnIcon(col: DataColumn): GridColumnIcon | string | undefi
   }
 
   // If no explicit icon, use column type
-  const normalizedType = col.type.toLowerCase();
+  const normalizedType = col.type?.toLowerCase() ?? "text";
 
   if (normalizedType === "number") {
     return GridColumnIcon.HeaderNumber;

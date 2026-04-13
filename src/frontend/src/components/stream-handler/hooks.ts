@@ -13,19 +13,21 @@ export const useStreamSubscriber = (): StreamSubscriber => {
 /**
  * Hook to subscribe to a stream and receive data.
  * Automatically handles subscription lifecycle.
+ * Gracefully no-ops if StreamHandlerProvider is not in the tree.
  */
 export const useStream = <T = unknown>(
   streamId: string | undefined,
   onData: (data: T) => void,
 ): void => {
-  const subscribeToStream = useStreamSubscriber();
+  const context = useContext(StreamHandlerContext);
+  const subscribeToStream = context?.subscribeToStream;
   const callbackRef = useRef(onData);
   useEffect(() => {
     callbackRef.current = onData;
   });
 
   useEffect(() => {
-    if (!streamId) return;
+    if (!streamId || !subscribeToStream) return;
 
     const unsubscribe = subscribeToStream(streamId, (data) => {
       callbackRef.current(data as T);

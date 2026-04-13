@@ -34,22 +34,12 @@ RUN --mount=type=cache,id=apt-tendril-docs-build,target=/var/cache/apt \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal
 ENV PATH="/root/.cargo/bin:/root/.vite-plus/bin:${PATH}"
 
-# Copy and build RustServer first (cached layer)
-COPY src/RustServer/ src/RustServer/
-RUN --mount=type=cache,id=cargo-registry-tendril-docs,target=/root/.cargo/registry \
-    --mount=type=cache,id=cargo-git-tendril-docs,target=/root/.cargo/git \
-    --mount=type=cache,id=cargo-target-tendril-docs,target=/src/src/RustServer/target \
-    cd src/RustServer && cargo build --release && \
-    mkdir -p /tmp/rust-artifacts && \
-    find target/release -maxdepth 1 -type f ! -name "*.d" -exec cp {} /tmp/rust-artifacts/ \;
-
 COPY . .
 COPY --from=frontend /src/src/frontend/dist /src/src/frontend/dist
 COPY --from=frontend /root/.vite-plus /root/.vite-plus
 COPY --from=frontend /src/src/frontend/node_modules /src/src/frontend/node_modules
-RUN mkdir -p src/RustServer/target/release && \
-    cp /tmp/rust-artifacts/* src/RustServer/target/release/ && \
-    touch src/frontend/dist/.build-stamp
+# Touch .build-stamp so MSBuild skips BuildFrontend (dist already built above)
+RUN touch src/frontend/dist/.build-stamp
 
 RUN --mount=type=cache,id=nuget-tendril-docs,target=/root/.nuget/packages \
     dotnet publish "src/tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj" \

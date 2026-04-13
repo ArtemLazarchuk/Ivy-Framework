@@ -5,13 +5,11 @@ EXPOSE 5010
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS toolchain
 WORKDIR /src
-RUN apt-get update && apt-get install -y curl gnupg build-essential && \
+RUN apt-get update && apt-get install -y curl gnupg && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
     npm install -g pnpm@10.33.0 vite-plus@0.1.14 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-ENV PATH="/root/.cargo/bin:${PATH}"
 
 FROM toolchain AS build
 ARG BUILD_CONFIGURATION=Release

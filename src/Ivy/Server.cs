@@ -178,11 +178,43 @@ public class Server
         assembly ??= Assembly.GetEntryAssembly();
 
         var connections = assembly!.GetLoadableTypes()
-            .Where(t => t.IsClass && typeof(IConnection).IsAssignableFrom(t));
+            .Where(t => t.IsClass && typeof(IConnection).IsAssignableFrom(t))
+            .Select(t => (IConnection)Activator.CreateInstance(t)!)
+            .ToList();
 
-        foreach (var type in connections)
+        var presets = new Dictionary<string, string?>();
+        foreach (var connection in connections)
         {
-            var connection = (IConnection)Activator.CreateInstance(type)!;
+            if (connection is IHaveSecrets secretProvider)
+            {
+                foreach (var secret in secretProvider.GetSecrets())
+                {
+                    if (secret.Preset != null && !presets.ContainsKey(secret.Key))
+                    {
+                        presets[secret.Key] = secret.Preset;
+                    }
+                }
+            }
+        }
+
+        if (presets.Count > 0)
+        {
+            var builder = new ConfigurationBuilder()
+                .AddInMemoryCollection(presets)
+                .AddEnvironmentVariables()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            if (Assembly.GetEntryAssembly() is { } entryAssembly)
+            {
+                builder.AddUserSecrets(entryAssembly);
+            }
+
+            Configuration = builder.Build();
+        }
+
+        foreach (var connection in connections)
+        {
             connection.RegisterServices(this);
         }
     }

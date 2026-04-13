@@ -40,4 +40,5 @@ export interface TableProviderProps {
   config: DataTableConfig;
   editable?: boolean;
   density?: Densities;
+  updateStream?: { id: string };
 }
