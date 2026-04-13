@@ -14,6 +14,7 @@ interface ListItemWidgetProps {
   disabled?: boolean;
   children?: React.ReactNode;
   density?: Densities;
+  events?: string[];
 }
 
 const paddingMap: Record<Densities, string> = {
@@ -55,12 +56,13 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = ({
   disabled,
   children,
   density = Densities.Medium,
+  events = [],
 }) => {
   const eventHandler = useEventHandler();
 
   return (
     <button
-      onClick={() => eventHandler("OnClick", id, [])}
+      onClick={() => { if (events.includes("OnClick")) eventHandler("OnClick", id, []); }}
       disabled={disabled}
       className={cn(
         paddingMap[density],
