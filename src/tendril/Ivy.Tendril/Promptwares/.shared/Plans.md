@@ -159,5 +159,6 @@ Each revision can include `## Verification` with checkboxes from `config.yaml`:
 ## Notes
 
 - **Local file links in plans:** `[Button.cs](file:///path/to/...)` so VS Code opens the path; keep the path as link text.
+- **Plan references:** `[Plan 03156](plan://03156)` to link to other plans. The link handler will navigate to that plan in the Plans app. The plan ID can be 5 digits (e.g., `plan://03156`) or without leading zeros (e.g., `plan://3156`).
 - Images: normal markdown `![alt](url)`.
 - **Diagrams:** Graphviz/DOT (```dot / ```graphviz) or Mermaid (```mermaid). **Prefer DOT** for layout. Use only when a diagram really helps.
