@@ -306,21 +306,22 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
   return (
     <div className="flex items-center gap-2 w-full" style={styles}>
       {hasAffixes ? (
-        <div className={cn(
-          "relative flex flex-1 items-stretch rounded-field border border-input bg-transparent shadow-sm transition-colors dark:bg-white/5 dark:border-white/10",
-          isOpen && "ring-1 ring-ring",
-          invalid && "border-destructive",
-          disabled && "cursor-not-allowed opacity-50",
-          ghost && "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
-        )}>
+        <div
+          className={cn(
+            "relative flex flex-1 items-stretch rounded-field border border-input bg-transparent shadow-sm transition-colors dark:bg-white/5 dark:border-white/10",
+            isOpen && "ring-1 ring-ring",
+            invalid && "border-destructive",
+            disabled && "cursor-not-allowed opacity-50",
+            ghost &&
+              "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
+          )}
+        >
           {hasPrefix && (
             <div className="flex items-center px-3 bg-muted text-muted-foreground border-r border-input rounded-tl-[var(--radius-fields)] rounded-bl-[var(--radius-fields)]">
               {prefixContent}
             </div>
           )}
-          <div className="flex-1 relative w-full">
-            {selectContent}
-          </div>
+          <div className="flex-1 relative w-full">{selectContent}</div>
           {hasSuffix && (
             <div className="flex items-center px-3 bg-muted text-muted-foreground border-l border-input rounded-tr-[var(--radius-fields)] rounded-br-[var(--radius-fields)]">
               {suffixContent}
@@ -328,9 +329,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex-1 relative w-full">
-          {selectContent}
-        </div>
+        <div className="flex-1 relative w-full">{selectContent}</div>
       )}
     </div>
   );
