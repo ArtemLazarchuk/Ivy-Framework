@@ -1,3 +1,4 @@
+using Ivy.Tendril.Apps;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
 using Microsoft.Data.Sqlite;
@@ -65,6 +66,40 @@ public class PrStatusSyncServiceTests : IDisposable
         Assert.Contains("https://github.com/owner/repo/pull/1", nonMerged);
         Assert.Contains("https://github.com/owner/repo/pull/3", nonMerged);
         Assert.DoesNotContain("https://github.com/owner/repo/pull/2", nonMerged);
+    }
+
+    [Fact]
+    public void GroupByOwnerRepo_OnlyReceivesValidPrUrls_WhenFilteredByIsValidUrl()
+    {
+        var rawUrls = new List<string>
+        {
+            "https://github.com/owner/repo/pull/1",
+            "https://github.com/Ivy-Interactive/Ivy.Releases (new repo — no PR needed)",
+            "https://github.com/owner/repo",  // repo URL, not a PR
+        };
+
+        // Simulate the CollectPrUrlsFromPlans filter
+        var filtered = rawUrls.Where(PullRequestApp.IsValidUrl).ToList();
+        var grouped = PrStatusSyncService.GroupByOwnerRepo(filtered);
+        Assert.Single(grouped);
+        Assert.Single(grouped["owner/repo"]);
+    }
+
+    [Fact]
+    public void IsValidUrl_AcceptsValidPrUrls()
+    {
+        Assert.True(PullRequestApp.IsValidUrl("https://github.com/owner/repo/pull/1"));
+        Assert.True(PullRequestApp.IsValidUrl("https://github.com/owner/repo/pull/123"));
+        Assert.True(PullRequestApp.IsValidUrl("http://github.com/owner/repo/pull/1"));
+    }
+
+    [Fact]
+    public void IsValidUrl_RejectsInvalidUrls()
+    {
+        Assert.False(PullRequestApp.IsValidUrl("https://github.com/owner/repo"));
+        Assert.False(PullRequestApp.IsValidUrl("https://github.com/Ivy-Interactive/Ivy.Releases (new repo — no PR needed)"));
+        Assert.False(PullRequestApp.IsValidUrl("not a url"));
+        Assert.False(PullRequestApp.IsValidUrl("https://example.com/page"));
     }
 
     [Fact]
