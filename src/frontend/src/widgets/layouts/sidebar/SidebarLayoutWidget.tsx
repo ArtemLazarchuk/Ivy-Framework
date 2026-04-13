@@ -381,7 +381,8 @@ const CollapsibleMenuItem: React.FC<{
   const onCtrlRightMouseClick = (e: React.MouseEvent, item: MenuItem) => {
     if (e.ctrlKey && e.button === 2 && !!item.tag) {
       e.preventDefault();
-      if (events.includes("OnCtrlRightClickSelect")) eventHandler("OnCtrlRightClickSelect", widgetId, [item.tag]);
+      if (events.includes("OnCtrlRightClickSelect"))
+        eventHandler("OnCtrlRightClickSelect", widgetId, [item.tag]);
     }
   };
 
@@ -469,7 +470,8 @@ const renderMenuItems = (
   const onCtrlRightMouseClick = (e: React.MouseEvent, item: MenuItem) => {
     if (e.ctrlKey && e.button === 2 && !!item.tag) {
       e.preventDefault();
-      if (events.includes("OnCtrlRightClickSelect")) eventHandler("OnCtrlRightClickSelect", widgetId, [item.tag]);
+      if (events.includes("OnCtrlRightClickSelect"))
+        eventHandler("OnCtrlRightClickSelect", widgetId, [item.tag]);
     }
   };
 
@@ -735,7 +737,8 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
     const onCtrlRightMouseClick = (e: React.MouseEvent, item: MenuItem) => {
       if (e.ctrlKey && e.button === 2 && !!item.tag) {
         e.preventDefault();
-        if (events.includes("OnCtrlRightClickSelect")) eventHandler("OnCtrlRightClickSelect", id, [item.tag]);
+        if (events.includes("OnCtrlRightClickSelect"))
+          eventHandler("OnCtrlRightClickSelect", id, [item.tag]);
       }
     };
 
@@ -856,7 +859,16 @@ export const SidebarMenuWidget: React.FC<SidebarMenuWidgetProps> = ({
           </div>
         )
       ) : (
-        renderMenuItems(items, events, eventHandler, id, 0, activeTag, expandedSections, handleExpandChange)
+        renderMenuItems(
+          items,
+          events,
+          eventHandler,
+          id,
+          0,
+          activeTag,
+          expandedSections,
+          handleExpandChange,
+        )
       )}
     </div>
   );

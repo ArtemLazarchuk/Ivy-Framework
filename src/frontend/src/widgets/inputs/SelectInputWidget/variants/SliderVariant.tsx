@@ -51,7 +51,8 @@ export const SliderVariant: React.FC<SelectInputWidgetProps & { eventHandler: Ev
     (values: number[]) => {
       const newIndex = values[0];
       if (typeof newIndex === "number" && validOptions[newIndex]) {
-        if (events.includes("OnChange")) eventHandler("OnChange", id, [validOptions[newIndex].value]);
+        if (events.includes("OnChange"))
+          eventHandler("OnChange", id, [validOptions[newIndex].value]);
       }
     },
     [eventHandler, id, validOptions, events],

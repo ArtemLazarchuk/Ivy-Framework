@@ -62,7 +62,9 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = ({
 
   return (
     <button
-      onClick={() => { if (events.includes("OnClick")) eventHandler("OnClick", id, []); }}
+      onClick={() => {
+        if (events.includes("OnClick")) eventHandler("OnClick", id, []);
+      }}
       disabled={disabled}
       className={cn(
         paddingMap[density],

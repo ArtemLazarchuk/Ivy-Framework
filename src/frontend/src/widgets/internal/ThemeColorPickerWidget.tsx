@@ -403,7 +403,8 @@ export const ThemeColorPickerWidget: React.FC<ThemeColorPickerWidgetProps> = ({
   const handleAlphaCommit = () => {
     if (localDragAlpha !== null) {
       const baseHex = getDisplayColor();
-      if (events.includes("OnChange")) eventHandler("OnChange", id, [combineWithAlpha(baseHex, localDragAlpha)]);
+      if (events.includes("OnChange"))
+        eventHandler("OnChange", id, [combineWithAlpha(baseHex, localDragAlpha)]);
     }
   };
 

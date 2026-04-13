@@ -116,7 +116,9 @@ export const SheetWidget: React.FC<SheetWidgetProps> = ({
 
   const handleClose = () => {
     setIsOpen(false);
-    setTimeout(() => { if (events.includes("OnClose")) eventHandler("OnClose", id, []); }, 300);
+    setTimeout(() => {
+      if (events.includes("OnClose")) eventHandler("OnClose", id, []);
+    }, 300);
   };
 
   const handleResizePointerDown = useCallback(

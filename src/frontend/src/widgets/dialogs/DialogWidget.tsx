@@ -22,7 +22,12 @@ export const DialogWidget: React.FC<DialogWidgetProps> = ({ id, children, width,
   };
 
   return (
-    <Dialog open={true} onOpenChange={() => { if (events.includes("OnClose")) eventHandler("OnClose", id, []); }}>
+    <Dialog
+      open={true}
+      onOpenChange={() => {
+        if (events.includes("OnClose")) eventHandler("OnClose", id, []);
+      }}
+    >
       <DialogContent
         style={styles}
         className={cn(isVisible && "alert-animate-enter")}

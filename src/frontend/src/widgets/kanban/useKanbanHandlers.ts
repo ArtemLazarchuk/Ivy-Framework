@@ -9,7 +9,8 @@ export function useKanbanHandlers(widgetId: string, events: string[]) {
     toColumn: string,
     targetIndex?: number,
   ) => {
-    if (events.includes("OnCardMove")) eventHandler("OnCardMove", widgetId, [cardId, toColumn, targetIndex]);
+    if (events.includes("OnCardMove"))
+      eventHandler("OnCardMove", widgetId, [cardId, toColumn, targetIndex]);
   };
 
   return {

@@ -69,15 +69,16 @@ export const useCellInteractions = ({
         const cellValue = getCellValue(cellContent);
         const rowId = getHiddenKeyValue(arrowTableRef.current, cell[1]);
 
-        if (events.includes("OnCellClick")) eventHandler("OnCellClick", widgetId, [
-          {
-            rowIndex: cell[1],
-            columnIndex: cell[0],
-            columnName: column?.name || "",
-            cellValue: cellValue,
-            rowId: rowId,
-          },
-        ]);
+        if (events.includes("OnCellClick"))
+          eventHandler("OnCellClick", widgetId, [
+            {
+              rowIndex: cell[1],
+              columnIndex: cell[0],
+              columnName: column?.name || "",
+              cellValue: cellValue,
+              rowId: rowId,
+            },
+          ]);
       }
 
       // Handle click on custom link cells (requires cmd/ctrl+click)
@@ -152,15 +153,16 @@ export const useCellInteractions = ({
         const rowId = getHiddenKeyValue(arrowTableRef.current, cell[1]);
 
         // Send activation event to backend as a single object matching CellClickEventArgs structure
-        if (events.includes("OnCellActivated")) eventHandler("OnCellActivated", widgetId, [
-          {
-            rowIndex: cell[1],
-            columnIndex: cell[0],
-            columnName: column?.name || "",
-            cellValue: cellValue,
-            rowId: rowId,
-          },
-        ]);
+        if (events.includes("OnCellActivated"))
+          eventHandler("OnCellActivated", widgetId, [
+            {
+              rowIndex: cell[1],
+              columnIndex: cell[0],
+              columnName: column?.name || "",
+              cellValue: cellValue,
+              rowId: rowId,
+            },
+          ]);
       }
     },
     [

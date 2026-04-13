@@ -79,12 +79,13 @@ export const useRowHover = ({
       const rowId = getHiddenKeyValue(arrowTableRef.current, hoverRow);
 
       // Send event to backend's OnRowAction event with row ID and menu item tag
-      if (events.includes("OnRowAction")) eventHandler("OnRowAction", widgetId, [
-        {
-          id: rowId !== null ? rowId : hoverRow,
-          tag: action.tag ?? null,
-        },
-      ]);
+      if (events.includes("OnRowAction"))
+        eventHandler("OnRowAction", widgetId, [
+          {
+            id: rowId !== null ? rowId : hoverRow,
+            tag: action.tag ?? null,
+          },
+        ]);
     },
     [hoverRow, events, eventHandler, widgetId, arrowTableRef],
   );

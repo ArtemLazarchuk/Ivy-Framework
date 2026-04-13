@@ -41,7 +41,9 @@ const MarkdownWidget: React.FC<MarkdownWidgetProps> = ({
   }, [id]);
 
   const handleLinkClick = useCallback(
-    (href: string) => { if (events.includes("OnLinkClick")) eventHandler("OnLinkClick", id, [href]); },
+    (href: string) => {
+      if (events.includes("OnLinkClick")) eventHandler("OnLinkClick", id, [href]);
+    },
     [eventHandler, id, events],
   );
 

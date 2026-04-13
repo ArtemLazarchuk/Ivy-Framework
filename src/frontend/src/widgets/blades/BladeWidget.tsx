@@ -17,7 +17,15 @@ interface BladeWidgetProps {
   };
 }
 
-export function BladeWidget({ index, title, children, id, width, events = [], slots }: BladeWidgetProps) {
+export function BladeWidget({
+  index,
+  title,
+  children,
+  id,
+  width,
+  events = [],
+  slots,
+}: BladeWidgetProps) {
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.button === 1) {
       e.preventDefault();
@@ -51,7 +59,9 @@ export function BladeWidget({ index, title, children, id, width, events = [], sl
         <div className="flex items-center h-[70px]">
           <button
             aria-label="Refresh"
-            onClick={() => { if (events.includes("OnRefresh")) eventHandler("OnRefresh", id, []); }}
+            onClick={() => {
+              if (events.includes("OnRefresh")) eventHandler("OnRefresh", id, []);
+            }}
             className={buttonVariant({ variant: "ghost", size: "icon" })}
           >
             <RotateCw className="h-4 w-4" />
@@ -59,7 +69,9 @@ export function BladeWidget({ index, title, children, id, width, events = [], sl
           {index > 0 && (
             <button
               aria-label="Close"
-              onClick={() => { if (events.includes("OnClose")) eventHandler("OnClose", id, []); }}
+              onClick={() => {
+                if (events.includes("OnClose")) eventHandler("OnClose", id, []);
+              }}
               className={buttonVariant({ variant: "ghost", size: "icon" })}
             >
               <X className="h-4 w-4" />

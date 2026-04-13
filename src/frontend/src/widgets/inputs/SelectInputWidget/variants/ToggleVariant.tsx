@@ -159,7 +159,17 @@ export const ToggleVariant: React.FC<SelectInputWidgetProps> = ({
       selectMany,
     );
     eventHandler("OnChange", id, [converted]);
-  }, [selectedValues, minSelections, nullable, value, validOptions, selectMany, eventHandler, id, events]);
+  }, [
+    selectedValues,
+    minSelections,
+    nullable,
+    value,
+    validOptions,
+    selectMany,
+    eventHandler,
+    id,
+    events,
+  ]);
 
   const styles: React.CSSProperties = {
     ...getWidth(width),

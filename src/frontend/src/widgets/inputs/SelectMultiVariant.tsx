@@ -105,7 +105,16 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
       );
       if (events.includes("OnChange")) eventHandler("OnChange", id, [convertedValue]);
     },
-    [minSelections, selectedValues.length, value, validOptions, selectMany, eventHandler, id, events],
+    [
+      minSelections,
+      selectedValues.length,
+      value,
+      validOptions,
+      selectMany,
+      eventHandler,
+      id,
+      events,
+    ],
   );
 
   const handleBlur = () => {
@@ -138,7 +147,13 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
           showActions={showActions && selectMany}
           maxSelections={maxSelections}
           minSelections={minSelections}
-          onNullableClear={nullable ? () => { if (events.includes("OnChange")) eventHandler("OnChange", id, [null]); } : undefined}
+          onNullableClear={
+            nullable
+              ? () => {
+                  if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
+                }
+              : undefined
+          }
           autoFocus={autoFocus}
         />
         {(selectedMultiSelectOptions.length > 0 && !disabled) || invalid || loading ? (
