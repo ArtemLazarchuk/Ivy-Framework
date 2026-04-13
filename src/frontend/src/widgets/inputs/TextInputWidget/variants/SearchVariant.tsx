@@ -144,7 +144,12 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
               "pl-8 cursor-pointer border-0 shadow-none dark:bg-transparent",
               props.invalid && inputStyles.invalidInput,
               (props.invalid || showClear) && "pr-8",
-              props.shortcutKey && !isFocused && !hasValue && !showClear && !props.invalid && "pr-16",
+              props.shortcutKey &&
+                !isFocused &&
+                !hasValue &&
+                !showClear &&
+                !props.invalid &&
+                "pr-16",
               showClear && props.invalid && "pr-16",
               !hasValue && props.nullable && "placeholder:text-muted-foreground",
               "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden",
