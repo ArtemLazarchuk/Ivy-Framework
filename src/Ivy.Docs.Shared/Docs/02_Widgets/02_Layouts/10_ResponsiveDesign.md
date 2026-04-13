@@ -120,6 +120,21 @@ Layout.Vertical()
         | new Card("Three"))
 ```
 
+## API Reference
+
+Summary of all responsive-capable properties:
+
+| Property | Widget/Layout | Type | Fluent Method |
+|---|---|---|---|
+| Width | All widgets | `Responsive<Size>` | `.Width()` |
+| Height | All widgets | `Responsive<Size>` | `.Height()` |
+| Visible | All widgets | `Responsive<bool?>` | `.HideOn()` / `.ShowOn()` |
+| Density | All widgets | `Responsive<Density?>` | `.Density()` |
+| Columns | GridLayout | `Responsive<int?>` | `.Columns()` |
+| Orientation | StackLayout | `Responsive<Orientation?>` | `.Orientation()` |
+| Gap | StackLayout, GridLayout | `Responsive<int?>` | `.Gap()` |
+| Padding | StackLayout | `Responsive<Thickness?>` | `.Padding()` |
+
 ## Examples
 
 <Details>
@@ -206,18 +221,3 @@ public class MobileFirstFormExample : ViewBase
 
 </Body>
 </Details>
-
-## API Reference
-
-Summary of all responsive-capable properties:
-
-| Property | Widget/Layout | Type | Fluent Method |
-|---|---|---|---|
-| Width | All widgets | `Responsive<Size>` | `.Width()` |
-| Height | All widgets | `Responsive<Size>` | `.Height()` |
-| Visible | All widgets | `Responsive<bool?>` | `.HideOn()` / `.ShowOn()` |
-| Density | All widgets | `Responsive<Density?>` | `.Density()` |
-| Columns | GridLayout | `Responsive<int?>` | `.Columns()` |
-| Orientation | StackLayout | `Responsive<Orientation?>` | `.Orientation()` |
-| Gap | StackLayout, GridLayout | `Responsive<int?>` | `.Gap()` |
-| Padding | StackLayout | `Responsive<Thickness?>` | `.Padding()` |
