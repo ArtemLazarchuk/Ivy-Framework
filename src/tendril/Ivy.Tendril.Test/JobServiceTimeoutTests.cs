@@ -228,6 +228,24 @@ codingAgent: claude
     }
 
     [Fact]
+    public void CompleteJob_AfterCtsDisposed_StillCompletes()
+    {
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10));
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+
+        job.TimeoutCts?.Dispose();
+
+        service.CompleteJob(id, 0);
+
+        job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+
+    [Fact]
     public async Task RealProcess_KilledAfterTimeout()
     {
         using var process = Process.Start(new ProcessStartInfo

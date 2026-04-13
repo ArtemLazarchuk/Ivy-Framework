@@ -736,11 +736,14 @@ public class JobService : IJobService
                     CompleteJob(id, null, timedOut: true);
                 }
             }
+            catch (ObjectDisposedException)
+            {
+                // CTS was disposed — job is already being completed elsewhere (CompleteJob/StopJob).
+            }
             catch (Exception ex)
             {
-                // CompleteJob failures are non-recoverable — the job will appear stuck
-                // but the process survives.
                 Program.WriteCrashLog($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
+                CompleteJob(id, null, timedOut: false);
             }
         });
 
