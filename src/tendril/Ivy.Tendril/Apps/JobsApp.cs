@@ -1,4 +1,5 @@
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
@@ -46,10 +47,23 @@ public class JobsApp : ViewBase
             return Disposable.Create(() => jobService.JobsChanged -= OnJobsChanged);
         });
 
-        UseInterval(() =>
-        {
-            if (jobService.GetJobs().Any(j => j.Status == JobStatus.Running)) refreshToken.Refresh();
-        }, TimeSpan.FromSeconds(5));
+        var updateStream = UseDataTableUpdates(
+            Observable.Interval(TimeSpan.FromSeconds(1))
+                .SelectMany(_ =>
+                {
+                    var currentJobs = jobService.GetJobs();
+                    return currentJobs
+                        .Where(j => j.Status == JobStatus.Running)
+                        .SelectMany(j => new[]
+                        {
+                            new DataTableCellUpdate(j.Id, "Timer", FormatTimer(j)),
+                            new DataTableCellUpdate(j.Id, "Cost", j.Cost.HasValue ? $"${j.Cost.Value:F2}" : ""),
+                            new DataTableCellUpdate(j.Id, "Tokens", j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : ""),
+                            new DataTableCellUpdate(j.Id, "LastOutput", FormatLastOutput(j)),
+                            new DataTableCellUpdate(j.Id, "Status", j.Status),
+                            new DataTableCellUpdate(j.Id, "StatusMessage", GetStatusMessage(j))
+                        });
+                }));
 
         var projectColors = config.Projects
             .Select(p => new { p.Name, Color = config.GetProjectColor(p.Name) })
@@ -100,6 +114,7 @@ public class JobsApp : ViewBase
         var dataTable = rows.AsQueryable()
             .ToDataTable(t => t.Id)
             .RefreshToken(refreshToken)
+            .UpdateStream(updateStream)
             .Width(Size.Full())
             .Height(Size.Full())
             .Header(t => t.Status, "Status")
