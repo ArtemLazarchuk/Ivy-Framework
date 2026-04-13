@@ -40,7 +40,7 @@ Layout.Grid()
 
 In this example, `Tablet` inherits the `Mobile` value of 1 column, and `Wide` inherits the `Desktop` value of 3 columns.
 
-## The `Responsive<T>` Type
+## The Responsive Type
 
 At the core of the responsive system is `Responsive<T>` — a generic record that holds per-breakpoint values:
 
@@ -130,7 +130,7 @@ Layout.Vertical()
 
 Hide the sidebar on mobile and show it on larger screens. The main content grows to fill available space.
 
-```csharp demo
+```csharp demo-tabs
 Layout.Horizontal()
     | new Box(Text.P("Sidebar"))
         .Width(Size.Units(60))
@@ -145,7 +145,7 @@ Layout.Horizontal()
 
 A progressive grid that goes from 1 column on mobile up to 4 columns on wide screens:
 
-```csharp demo
+```csharp demo-tabs
 Layout.Grid()
     .Columns(1.At(Breakpoint.Mobile)
         .And(Breakpoint.Tablet, 2)
@@ -161,7 +161,7 @@ Layout.Grid()
 
 Combine responsive grid, visibility, and orientation to build a dashboard that adapts across device sizes:
 
-```csharp demo
+```csharp demo-tabs
 Layout.Vertical()
     | new Badge("Dashboard").HideOn(Breakpoint.Mobile)
     | (Layout.Grid()
@@ -181,7 +181,7 @@ Layout.Vertical()
 
 Constrain form width on larger screens and adjust spacing:
 
-```csharp demo
+```csharp demo-tabs
 Layout.Vertical()
     .Width(Size.Full().At(Breakpoint.Mobile)
         .And(Breakpoint.Desktop, Size.Fraction(0.5f)))
