@@ -56,6 +56,7 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
   height = "Full",
   density,
   rowActions,
+  updateStream,
   slots,
   "data-testid": dataTestId,
 }) => {
@@ -103,6 +104,7 @@ export const DataTable: React.FC<DataTableWidgetProps> = ({
         config={finalConfig}
         editable={editable}
         density={density}
+        updateStream={updateStream}
       >
         <TableLayout emptyView={slots?.EmptyView}>
           <DataTableHeader>
