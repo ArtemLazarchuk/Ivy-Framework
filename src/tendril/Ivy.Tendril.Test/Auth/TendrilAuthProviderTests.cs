@@ -7,7 +7,7 @@ namespace Ivy.Tendril.Test.Auth;
 
 public class TendrilAuthProviderTests
 {
-    private static AuthConfig CreateAuthConfig(string password = "test-password")
+    private static AuthConfig CreateAuthConfig(string password = "test-password", LoginRateLimitConfig? rateLimit = null)
     {
         var secret = GenerateSecret();
         var secretBytes = Convert.FromBase64String(secret);
@@ -27,7 +27,7 @@ public class TendrilAuthProviderTests
             HashLength = 32
         });
 
-        return new AuthConfig { Password = hash, HashSecret = secret };
+        return new AuthConfig { Password = hash, HashSecret = secret, RateLimit = rateLimit };
     }
 
     private static string GenerateSecret()
@@ -115,5 +115,84 @@ public class TendrilAuthProviderTests
 
         Assert.Single(options);
         Assert.Equal(Ivy.AuthFlow.EmailPassword, options[0].Flow);
+    }
+
+    [Fact]
+    public async Task LoginAsync_RateLimited_ReturnsNull()
+    {
+        var rateLimit = new LoginRateLimitConfig { Threshold = 1, BaseDelaySeconds = 100.0 };
+        var auth = CreateAuthConfig("test-pass", rateLimit);
+        var provider = CreateProvider(auth);
+
+        // Two failed attempts to exceed threshold
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+
+        // Even correct password should be blocked
+        var token = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.Null(token);
+    }
+
+    [Fact]
+    public async Task LoginAsync_FailedAttempts_TriggersRateLimit()
+    {
+        var rateLimit = new LoginRateLimitConfig { Threshold = 2, BaseDelaySeconds = 100.0 };
+        var auth = CreateAuthConfig("test-pass", rateLimit);
+        var provider = CreateProvider(auth);
+
+        // First 2 attempts are under threshold
+        var t1 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        Assert.Null(t1);
+        var t2 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        Assert.Null(t2);
+
+        // 3rd attempt exceeds threshold — rate limited
+        var t3 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        Assert.Null(t3);
+
+        // Correct password is also blocked
+        var t4 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.Null(t4);
+    }
+
+    [Fact]
+    public async Task LoginAsync_SuccessfulLogin_ClearsRateLimit()
+    {
+        var rateLimit = new LoginRateLimitConfig { Threshold = 2, BaseDelaySeconds = 0.0 };
+        var auth = CreateAuthConfig("test-pass", rateLimit);
+        var provider = CreateProvider(auth);
+
+        // Fail a few times
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+
+        // Successful login resets counter
+        var token = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.NotNull(token);
+
+        // Subsequent login should work (counter was reset)
+        var token2 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.NotNull(token2);
+    }
+
+    [Fact]
+    public async Task LoginAsync_CustomRateLimitConfig_Respected()
+    {
+        var rateLimit = new LoginRateLimitConfig { Threshold = 1, BaseDelaySeconds = 100.0, MaxDelaySeconds = 200.0 };
+        var auth = CreateAuthConfig("test-pass", rateLimit);
+        var provider = CreateProvider(auth);
+
+        // 1 failure is under threshold
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        var t1 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.NotNull(t1);
+
+        // After success, counter is reset. Fail again to trigger rate limit.
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+
+        // Now blocked
+        var t2 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.Null(t2);
     }
 }

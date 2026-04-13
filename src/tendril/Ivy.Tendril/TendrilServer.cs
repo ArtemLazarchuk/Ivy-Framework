@@ -28,6 +28,7 @@ public static class TendrilServer
 
         if (configService.Settings.Auth != null)
         {
+            server.Services.AddHttpContextAccessor();
             server.UseAuth<Auth.TendrilAuthProvider>();
         }
 

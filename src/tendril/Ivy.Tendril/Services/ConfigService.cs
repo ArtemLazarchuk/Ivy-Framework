@@ -115,6 +115,7 @@ public record AuthConfig
 {
     public string Password { get; set; } = "";
     public string HashSecret { get; set; } = "";
+    public Auth.LoginRateLimitConfig? RateLimit { get; set; }
 }
 
 public record ApiSettings
