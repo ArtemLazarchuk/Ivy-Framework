@@ -89,165 +89,39 @@ The `.At()` extension method is available for the following types:
 | `Density` | `Density.Large.At(Breakpoint.Mobile)` | Touch target size |
 | `bool` | `true.At(Breakpoint.Mobile)` | Visibility |
 
-## Responsive Width
+## Responsive properties
 
-Use `.At()` and `.And()` to create responsive width values. This works on any widget via the `WidgetBase` extension methods.
+Most layout and widget APIs accept `Responsive<T>` values built with `.At()` and `.And()`. Use `.HideOn()` and `.ShowOn()` for visibility, and construct `Responsive<Thickness?>` with object initializers when setting padding (there is no `.At()` for `Thickness`). The demo below shows width, height, grid columns, stack orientation, gap, padding, density, and badges in a single view.
 
-```csharp
-new Box(Text.P("Responsive box"))
-    .Width(Size.Full().At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Size.Half()))
-```
-
-```csharp demo
-Layout.Vertical()
-    | new Box(Text.P("Full on mobile, half on desktop"))
-        .Width(Size.Full().At(Breakpoint.Mobile)
-            .And(Breakpoint.Desktop, Size.Half()))
-        .Background(Colors.Primary)
-```
-
-## Responsive Height
-
-Height also supports responsive values on all widgets:
-
-```csharp
-new Box(Text.P("Tall on mobile, shorter on desktop"))
-    .Height(Size.Units(80).At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Size.Units(40)))
-```
-
-```csharp demo
-Layout.Vertical()
-    | new Box(Text.P("Tall on mobile, shorter on desktop"))
-        .Height(Size.Units(80).At(Breakpoint.Mobile)
-            .And(Breakpoint.Desktop, Size.Units(40)))
-        .Background(Colors.Primary)
-```
-
-## Conditional Visibility
-
-Hide or show widgets at specific breakpoints using `.HideOn()` and `.ShowOn()`:
-
-```csharp
-// Hidden on mobile and tablet
-new Badge("Desktop only").HideOn(Breakpoint.Mobile, Breakpoint.Tablet)
-
-// Only visible on mobile
-new Badge("Mobile only").ShowOn(Breakpoint.Mobile)
-```
-
-Under the hood, these methods build a `Responsive<bool?>` value. `.HideOn()` starts with `Default = true` (visible) and sets specified breakpoints to `false`. `.ShowOn()` starts with `Default = false` (hidden) and sets specified breakpoints to `true`.
-
-```csharp demo
-Layout.Vertical()
-    | new Badge("Desktop only").HideOn(Breakpoint.Mobile, Breakpoint.Tablet)
-    | new Badge("Mobile only").ShowOn(Breakpoint.Mobile)
-    | new Badge("Always visible")
-```
-
-## Responsive Grid Columns
-
-Adjust grid column count by viewport:
-
-```csharp
-Layout.Grid()
-    .Columns(1.At(Breakpoint.Mobile)
-        .And(Breakpoint.Tablet, 2)
-        .And(Breakpoint.Desktop, 3))
-    .Gap(4)
-```
-
-```csharp demo
-Layout.Grid()
-    .Columns(1.At(Breakpoint.Mobile)
-        .And(Breakpoint.Tablet, 2)
-        .And(Breakpoint.Desktop, 3))
-    .Gap(4)
-    | new Card("Card 1")
-    | new Card("Card 2")
-    | new Card("Card 3")
-    | new Card("Card 4")
-    | new Card("Card 5")
-    | new Card("Card 6")
-```
-
-## Responsive Orientation
-
-Switch between horizontal and vertical layouts based on screen size:
-
-```csharp
-Layout.Horizontal()
-    .Orientation(Orientation.Vertical.At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Orientation.Horizontal))
-```
-
-```csharp demo
-Layout.Horizontal()
-    .Orientation(Orientation.Vertical.At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Orientation.Horizontal))
-    | new Button("Action 1")
-    | new Button("Action 2")
-    | new Button("Action 3")
-```
-
-## Responsive Gap
-
-Vary spacing between items by viewport size:
-
-```csharp
+```csharp demo-below
 Layout.Vertical()
     .Gap(2.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 6))
-```
-
-```csharp demo
-Layout.Vertical()
-    .Gap(2.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 6))
-    | Text.P("Item 1")
-    | Text.P("Item 2")
-    | Text.P("Item 3")
-```
-
-## Responsive Padding
-
-Adjust layout padding by breakpoint. Since there is no `.At()` extension for `Thickness`, construct the `Responsive<Thickness?>` directly using object initialization:
-
-```csharp
-Layout.Vertical()
     .Padding(new Responsive<Thickness?>
     {
         Mobile = new Thickness(8),
         Desktop = new Thickness(24)
     })
-```
-
-```csharp demo
-Layout.Vertical()
-    .Padding(new Responsive<Thickness?>
-    {
-        Mobile = new Thickness(8),
-        Desktop = new Thickness(24)
-    })
-    | new Box(Text.P("Compact padding on mobile, spacious on desktop"))
-        .Background(Colors.Primary)
-    | new Box(Text.P("Notice the padding change"))
-        .Background(Colors.Secondary)
-```
-
-## Responsive Density
-
-Adjust touch target size by device — useful for making buttons and inputs larger on touch devices:
-
-```csharp
-new Button("Adaptive Button")
-    .Density(Density.Large.At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Density.Medium))
-```
-
-```csharp demo
-new Button("Adaptive Button")
-    .Density(Density.Large.At(Breakpoint.Mobile)
-        .And(Breakpoint.Desktop, Density.Medium))
+    | new Badge("Large screens").HideOn(Breakpoint.Mobile, Breakpoint.Tablet)
+    | new Badge("Phones").ShowOn(Breakpoint.Mobile)
+    | (Layout.Horizontal()
+        .Orientation(Orientation.Vertical.At(Breakpoint.Mobile)
+            .And(Breakpoint.Desktop, Orientation.Horizontal))
+        | new Button("Density")
+            .Density(Density.Large.At(Breakpoint.Mobile)
+                .And(Breakpoint.Desktop, Density.Medium))
+        | new Box(Text.P("Sized box"))
+            .Width(Size.Full().At(Breakpoint.Mobile)
+                .And(Breakpoint.Desktop, Size.Half()))
+            .Height(Size.Units(56).At(Breakpoint.Mobile)
+                .And(Breakpoint.Desktop, Size.Units(40)))
+            .Background(Colors.Primary))
+    | (Layout.Grid()
+        .Columns(1.At(Breakpoint.Mobile)
+            .And(Breakpoint.Tablet, 2)
+            .And(Breakpoint.Desktop, 3))
+        | new Card("One")
+        | new Card("Two")
+        | new Card("Three"))
 ```
 
 ## Common Patterns
@@ -277,7 +151,6 @@ Layout.Grid()
         .And(Breakpoint.Tablet, 2)
         .And(Breakpoint.Desktop, 3)
         .And(Breakpoint.Wide, 4))
-    .Gap(4)
     | new Card("Card 1")
     | new Card("Card 2")
     | new Card("Card 3")
@@ -289,19 +162,17 @@ Layout.Grid()
 Combine responsive grid, visibility, and orientation to build a dashboard that adapts across device sizes:
 
 ```csharp demo
-Layout.Vertical().Gap(4)
+Layout.Vertical()
     | new Badge("Dashboard").HideOn(Breakpoint.Mobile)
     | (Layout.Grid()
         .Columns(1.At(Breakpoint.Mobile)
             .And(Breakpoint.Desktop, 3))
-        .Gap(4)
         | new Card("Revenue")
         | new Card("Users")
         | new Card("Orders"))
     | (Layout.Horizontal()
         .Orientation(Orientation.Vertical.At(Breakpoint.Mobile)
             .And(Breakpoint.Desktop, Orientation.Horizontal))
-        .Gap(4)
         | new Box(Text.P("Chart Area")).Width(Size.Grow()).Background(Colors.Muted)
         | new Box(Text.P("Activity Feed")).Width(Size.Units(60).At(Breakpoint.Desktop)).HideOn(Breakpoint.Mobile).Background(Colors.Muted))
 ```
