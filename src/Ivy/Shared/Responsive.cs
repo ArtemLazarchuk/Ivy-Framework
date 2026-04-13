@@ -38,17 +38,17 @@ public static class ResponsiveExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(bp))
     };
 
-    // int overloads (for gap, columns, etc.)
-    public static Responsive<int?> At(this int value, Breakpoint bp) => bp switch
+    // Private generic helpers for value types — the switch logic lives here once.
+    private static Responsive<T?> AtCore<T>(T value, Breakpoint bp) where T : struct => bp switch
     {
-        Breakpoint.Mobile => new Responsive<int?> { Mobile = value },
-        Breakpoint.Tablet => new Responsive<int?> { Tablet = value },
-        Breakpoint.Desktop => new Responsive<int?> { Desktop = value },
-        Breakpoint.Wide => new Responsive<int?> { Wide = value },
+        Breakpoint.Mobile => new Responsive<T?> { Mobile = value },
+        Breakpoint.Tablet => new Responsive<T?> { Tablet = value },
+        Breakpoint.Desktop => new Responsive<T?> { Desktop = value },
+        Breakpoint.Wide => new Responsive<T?> { Wide = value },
         _ => throw new ArgumentOutOfRangeException(nameof(bp))
     };
 
-    public static Responsive<int?> And(this Responsive<int?> r, Breakpoint bp, int value) => bp switch
+    private static Responsive<T?> AndCore<T>(Responsive<T?> r, Breakpoint bp, T value) where T : struct => bp switch
     {
         Breakpoint.Mobile => r with { Mobile = value },
         Breakpoint.Tablet => r with { Tablet = value },
@@ -56,63 +56,24 @@ public static class ResponsiveExtensions
         Breakpoint.Wide => r with { Wide = value },
         _ => throw new ArgumentOutOfRangeException(nameof(bp))
     };
+
+    // To add a new value type, add an At and And overload that delegates to AtCore/AndCore.
+
+    // int overloads (for gap, columns, etc.)
+    public static Responsive<int?> At(this int value, Breakpoint bp) => AtCore(value, bp);
+    public static Responsive<int?> And(this Responsive<int?> r, Breakpoint bp, int value) => AndCore(r, bp, value);
 
     // Orientation overloads
-    public static Responsive<Orientation?> At(this Orientation value, Breakpoint bp) => bp switch
-    {
-        Breakpoint.Mobile => new Responsive<Orientation?> { Mobile = value },
-        Breakpoint.Tablet => new Responsive<Orientation?> { Tablet = value },
-        Breakpoint.Desktop => new Responsive<Orientation?> { Desktop = value },
-        Breakpoint.Wide => new Responsive<Orientation?> { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
-
-    public static Responsive<Orientation?> And(this Responsive<Orientation?> r, Breakpoint bp, Orientation value) => bp switch
-    {
-        Breakpoint.Mobile => r with { Mobile = value },
-        Breakpoint.Tablet => r with { Tablet = value },
-        Breakpoint.Desktop => r with { Desktop = value },
-        Breakpoint.Wide => r with { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
+    public static Responsive<Orientation?> At(this Orientation value, Breakpoint bp) => AtCore(value, bp);
+    public static Responsive<Orientation?> And(this Responsive<Orientation?> r, Breakpoint bp, Orientation value) => AndCore(r, bp, value);
 
     // Density overloads
-    public static Responsive<Density?> At(this Density value, Breakpoint bp) => bp switch
-    {
-        Breakpoint.Mobile => new Responsive<Density?> { Mobile = value },
-        Breakpoint.Tablet => new Responsive<Density?> { Tablet = value },
-        Breakpoint.Desktop => new Responsive<Density?> { Desktop = value },
-        Breakpoint.Wide => new Responsive<Density?> { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
-
-    public static Responsive<Density?> And(this Responsive<Density?> r, Breakpoint bp, Density value) => bp switch
-    {
-        Breakpoint.Mobile => r with { Mobile = value },
-        Breakpoint.Tablet => r with { Tablet = value },
-        Breakpoint.Desktop => r with { Desktop = value },
-        Breakpoint.Wide => r with { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
+    public static Responsive<Density?> At(this Density value, Breakpoint bp) => AtCore(value, bp);
+    public static Responsive<Density?> And(this Responsive<Density?> r, Breakpoint bp, Density value) => AndCore(r, bp, value);
 
     // bool overloads (for visibility)
-    public static Responsive<bool?> At(this bool value, Breakpoint bp) => bp switch
-    {
-        Breakpoint.Mobile => new Responsive<bool?> { Mobile = value },
-        Breakpoint.Tablet => new Responsive<bool?> { Tablet = value },
-        Breakpoint.Desktop => new Responsive<bool?> { Desktop = value },
-        Breakpoint.Wide => new Responsive<bool?> { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
-
-    public static Responsive<bool?> And(this Responsive<bool?> r, Breakpoint bp, bool value) => bp switch
-    {
-        Breakpoint.Mobile => r with { Mobile = value },
-        Breakpoint.Tablet => r with { Tablet = value },
-        Breakpoint.Desktop => r with { Desktop = value },
-        Breakpoint.Wide => r with { Wide = value },
-        _ => throw new ArgumentOutOfRangeException(nameof(bp))
-    };
+    public static Responsive<bool?> At(this bool value, Breakpoint bp) => AtCore(value, bp);
+    public static Responsive<bool?> And(this Responsive<bool?> r, Breakpoint bp, bool value) => AndCore(r, bp, value);
 }
 
 public class ResponsiveJsonConverterFactory : JsonConverterFactory
