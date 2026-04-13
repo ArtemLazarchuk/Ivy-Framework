@@ -431,3 +431,6 @@ worktrees/
 # Nested Plans artifacts (belt-and-suspenders)
 **/worktrees/**/Plans/
 
+# Stale Rust build artifacts (RustServer removed in plan 00130)
+RustServer/
+
