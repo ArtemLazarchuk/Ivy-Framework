@@ -60,6 +60,7 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
     eventHandler,
     false,
     nullable,
+    events,
   );
 
   const stringValue =
@@ -171,14 +172,14 @@ export const SelectSingleVariant: React.FC<SelectInputWidgetProps> = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                eventHandler("OnChange", id, [null]);
+                if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
               }}
               onPointerDown={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   e.stopPropagation();
-                  eventHandler("OnChange", id, [null]);
+                  if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
                 }
               }}
               className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6 pointer-events-auto"

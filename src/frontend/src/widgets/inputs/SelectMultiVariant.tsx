@@ -103,9 +103,9 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
         validOptions,
         selectMany,
       );
-      eventHandler("OnChange", id, [convertedValue]);
+      if (events.includes("OnChange")) eventHandler("OnChange", id, [convertedValue]);
     },
-    [minSelections, selectedValues.length, value, validOptions, selectMany, eventHandler, id],
+    [minSelections, selectedValues.length, value, validOptions, selectMany, eventHandler, id, events],
   );
 
   const handleBlur = () => {
@@ -138,7 +138,7 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
           showActions={showActions && selectMany}
           maxSelections={maxSelections}
           minSelections={minSelections}
-          onNullableClear={nullable ? () => eventHandler("OnChange", id, [null]) : undefined}
+          onNullableClear={nullable ? () => { if (events.includes("OnChange")) eventHandler("OnChange", id, [null]); } : undefined}
           autoFocus={autoFocus}
         />
         {(selectedMultiSelectOptions.length > 0 && !disabled) || invalid || loading ? (
@@ -157,13 +157,13 @@ export const SelectMultiVariant: React.FC<SelectInputWidgetProps> = ({
                   e.preventDefault();
                   e.stopPropagation();
                   logger.debug("Select input clear button clicked (MultiSelect)", { id });
-                  eventHandler("OnChange", id, [null]);
+                  if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     e.stopPropagation();
-                    eventHandler("OnChange", id, [null]);
+                    if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
                   }
                 }}
                 className="pointer-events-auto p-1 rounded hover:bg-accent focus:outline-none cursor-pointer flex items-center h-6"

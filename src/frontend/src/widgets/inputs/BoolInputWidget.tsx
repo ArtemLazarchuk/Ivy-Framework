@@ -305,9 +305,9 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
     (newValue: boolean | null) => {
       if (disabled || loading) return;
       setLocalValue(newValue);
-      eventHandler("OnChange", id, [newValue]);
+      if (events.includes("OnChange")) eventHandler("OnChange", id, [newValue]);
     },
-    [disabled, loading, eventHandler, id, setLocalValue],
+    [disabled, loading, eventHandler, id, setLocalValue, events],
   );
 
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);
