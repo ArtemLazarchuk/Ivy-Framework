@@ -831,36 +831,40 @@ public class JobService : IJobService
             }
     }
 
-    private async Task RunStaleOutputWatchdog(string id, CancellationTokenSource timeoutCts)
+    internal async Task RunStaleOutputWatchdog(string id, CancellationTokenSource timeoutCts)
     {
         var checkInterval = TimeSpan.FromSeconds(60);
 
-        while (!timeoutCts.Token.IsCancellationRequested)
+        try
         {
-            try
+            while (!timeoutCts.Token.IsCancellationRequested)
             {
-                await Task.Delay(checkInterval, timeoutCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-
-            if (!_jobs.TryGetValue(id, out var job) || job.Status != JobStatus.Running)
-                break;
-
-            if (job.LastOutputAt.HasValue)
-            {
-                var sinceLastOutput = DateTime.UtcNow - job.LastOutputAt.Value;
-                if (sinceLastOutput >= _staleOutputTimeout)
+                try
                 {
-                    // Stale output detected — signal via flag and cancel the timeout CTS
-                    // The main monitor (LaunchJob background task) will handle process kill and CompleteJob
-                    job.StaleOutputDetected = true;
-                    try { timeoutCts.Cancel(); } catch (ObjectDisposedException) { }
+                    await Task.Delay(checkInterval, timeoutCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
                     break;
                 }
+
+                if (!_jobs.TryGetValue(id, out var job) || job.Status != JobStatus.Running)
+                    break;
+
+                if (job.LastOutputAt.HasValue)
+                {
+                    var sinceLastOutput = DateTime.UtcNow - job.LastOutputAt.Value;
+                    if (sinceLastOutput >= _staleOutputTimeout)
+                    {
+                        job.StaleOutputDetected = true;
+                        try { timeoutCts.Cancel(); } catch (ObjectDisposedException) { }
+                        break;
+                    }
+                }
             }
+        }
+        catch (ObjectDisposedException)
+        {
         }
     }
 

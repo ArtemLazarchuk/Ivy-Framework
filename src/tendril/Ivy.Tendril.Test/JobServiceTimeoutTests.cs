@@ -270,6 +270,26 @@ codingAgent: claude
     }
 
     [Fact]
+    public async Task RunStaleOutputWatchdog_HandlesDisposedCts_ExitsGracefully()
+    {
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromSeconds(5));
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+
+        var cts = job.TimeoutCts!;
+        var watchdogTask = service.RunStaleOutputWatchdog(id, cts);
+
+        await Task.Delay(100);
+        cts.Dispose();
+
+        var completed = await Task.WhenAny(watchdogTask, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Equal(watchdogTask, completed);
+        Assert.True(watchdogTask.IsCompletedSuccessfully, "Watchdog should exit gracefully, not fault");
+    }
+
+    [Fact]
     public void ProcessId_CapturedOnJobItem()
     {
         var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10));
