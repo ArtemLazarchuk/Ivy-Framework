@@ -113,6 +113,25 @@ public static class ResponsiveExtensions
         Breakpoint.Wide => r with { Wide = value },
         _ => throw new ArgumentOutOfRangeException(nameof(bp))
     };
+
+    // Thickness overloads (for padding)
+    public static Responsive<Thickness?> At(this Thickness value, Breakpoint bp) => bp switch
+    {
+        Breakpoint.Mobile => new Responsive<Thickness?> { Mobile = value },
+        Breakpoint.Tablet => new Responsive<Thickness?> { Tablet = value },
+        Breakpoint.Desktop => new Responsive<Thickness?> { Desktop = value },
+        Breakpoint.Wide => new Responsive<Thickness?> { Wide = value },
+        _ => throw new ArgumentOutOfRangeException(nameof(bp))
+    };
+
+    public static Responsive<Thickness?> And(this Responsive<Thickness?> r, Breakpoint bp, Thickness value) => bp switch
+    {
+        Breakpoint.Mobile => r with { Mobile = value },
+        Breakpoint.Tablet => r with { Tablet = value },
+        Breakpoint.Desktop => r with { Desktop = value },
+        Breakpoint.Wide => r with { Wide = value },
+        _ => throw new ArgumentOutOfRangeException(nameof(bp))
+    };
 }
 
 public class ResponsiveJsonConverterFactory : JsonConverterFactory
