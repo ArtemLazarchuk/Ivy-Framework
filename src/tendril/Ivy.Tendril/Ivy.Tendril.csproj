@@ -63,9 +63,6 @@
       <OutputItemType>Analyzer</OutputItemType>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Apps" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Update="example.config.yaml">

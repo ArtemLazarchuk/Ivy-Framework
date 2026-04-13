@@ -247,9 +247,21 @@ public class ContentView(
         var planData = planContentQuery.Value;
 
         // Plan tab content (not dependent on query — uses in-memory data)
-        var planTabContent = new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
+        var reviewAnnotated = MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent);
+        reviewAnnotated = MarkdownHelper.AnnotateBrokenPlanLinks(reviewAnnotated, _planService.PlansDirectory);
+        var planTabContent = new Markdown(reviewAnnotated)
             .DangerouslyAllowLocalFiles()
-            .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
+            .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
+            {
+                var planFolder = Directory.GetDirectories(_planService.PlansDirectory, $"{planId:D5}-*")
+                    .FirstOrDefault();
+                if (planFolder != null)
+                {
+                    var plan = _planService.GetPlanByFolder(planFolder);
+                    if (plan != null)
+                        _selectedPlanState.Set(plan);
+                }
+            }));
 
         if (planContentQuery.Loading)
         {

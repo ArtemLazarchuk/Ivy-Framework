@@ -88,12 +88,6 @@
     <ProjectReference Include="../Ivy.Agent.Filter/Ivy.Agent.Filter.csproj" />
   </ItemGroup>
   
-  <ItemGroup>
-    <Folder Include="Core/Apps/" />
-    <Folder Include="Core/Auth/" />
-    <Folder Include="Properties/" />
-  </ItemGroup>
-
   <!-- Frontend source files for incremental build detection -->
   <ItemGroup>
     <FrontendSourceFiles Include="../frontend/src/**/*" />

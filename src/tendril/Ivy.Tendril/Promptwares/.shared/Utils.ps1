@@ -25,6 +25,9 @@ if (-not $env:TENDRIL_CONFIG) {
 $script:ConfigPath = $env:TENDRIL_CONFIG
 $script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 
+$script:CachedConfigContent = $null
+$script:CachedConfigYaml = $null
+
 # Bootstrap required PowerShell modules
 . (Join-Path $PSScriptRoot "Bootstrap-Modules.ps1")
 
@@ -353,18 +356,37 @@ $workDir = GetProjectWorkDir "NonExistent"
 function GetProjectWorkDir {
     param([string]$Project)
 
-    if (Test-Path $script:ConfigPath) {
-        try {
-            $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
-            $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
-            if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
-                return ExtractRepoPathsFromYaml $projectEntry.repos -ReturnFirst
-            }
+    $config = Get-ConfigYaml
+    if ($config) {
+        $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
+        if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
+            return ExtractRepoPathsFromYaml $projectEntry.repos -ReturnFirst
         }
-        catch { }
     }
 
     return (Get-Location).Path
+}
+
+function Get-ConfigYaml {
+    if (-not (Test-Path $script:ConfigPath)) {
+        return $null
+    }
+
+    $currentContent = Get-Content $script:ConfigPath -Raw
+
+    if ($script:CachedConfigContent -eq $currentContent -and $script:CachedConfigYaml) {
+        return $script:CachedConfigYaml
+    }
+
+    try {
+        $script:CachedConfigYaml = $currentContent | ConvertFrom-Yaml
+        $script:CachedConfigContent = $currentContent
+        return $script:CachedConfigYaml
+    }
+    catch {
+        Write-Warning "Failed to parse config.yaml: $_"
+        return $null
+    }
 }
 
 <#
@@ -591,7 +613,7 @@ function GetAgentCommand {
 
     if (Test-Path $configPath) {
         try {
-            $config = Get-Content $configPath -Raw | ConvertFrom-Yaml
+            $config = Get-ConfigYaml
 
             # Read codingAgent setting (claude|codex|gemini)
             if ($config.codingAgent) {

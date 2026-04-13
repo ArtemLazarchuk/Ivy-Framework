@@ -36,23 +36,17 @@ $repos = @()
 if ($Project -ne "Auto") {
     $projectNames = $Project -split ',' | ForEach-Object { $_.Trim() }
 
-    if (Test-Path $script:ConfigPath) {
-        try {
-            $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
-
-            foreach ($projName in $projectNames) {
-                $projectEntry = $config.projects | Where-Object { $_.name -eq $projName } | Select-Object -First 1
-                if ($projectEntry -and $projectEntry.repos) {
-                    $projectRepos = ExtractRepoPathsFromYaml $projectEntry.repos
-                    $repos += $projectRepos
-                }
+    $config = Get-ConfigYaml
+    if ($config) {
+        foreach ($projName in $projectNames) {
+            $projectEntry = $config.projects | Where-Object { $_.name -eq $projName } | Select-Object -First 1
+            if ($projectEntry -and $projectEntry.repos) {
+                $projectRepos = ExtractRepoPathsFromYaml $projectEntry.repos
+                $repos += $projectRepos
             }
+        }
 
-            $repos = $repos | Select-Object -Unique
-        }
-        catch {
-            Write-Warning "Failed to parse config.yaml for multi-project repos: $_"
-        }
+        $repos = $repos | Select-Object -Unique
     }
 }
 

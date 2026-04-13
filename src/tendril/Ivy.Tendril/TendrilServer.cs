@@ -28,6 +28,7 @@ public static class TendrilServer
 
         if (configService.Settings.Auth != null)
         {
+            server.Services.AddHttpContextAccessor();
             server.UseAuth<Auth.TendrilAuthProvider>();
         }
 
@@ -108,6 +109,7 @@ public static class TendrilServer
             var cfg = sp.GetRequiredService<IConfigService>();
             return new JobService(
                 cfg,
+                sp.GetRequiredService<ILogger<JobService>>(),
                 sp.GetRequiredService<ModelPricingService>(),
                 sp.GetRequiredService<IPlanReaderService>(),
                 sp.GetRequiredService<ITelemetryService>(),

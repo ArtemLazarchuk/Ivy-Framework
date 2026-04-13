@@ -12,7 +12,6 @@ using Ivy.Core.Server.Middleware;
 using Ivy.Core.Server.Formatters;
 using MessagePack;
 using MessagePack.Resolvers;
-using MessagePack.Formatters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http; //do not remove - used in RELEASE
@@ -1178,7 +1177,7 @@ public static class WebApplicationExtensions
         // {
         //     context.Response.Headers["ivy-version"] = version;
         // }
-        
+
         // Determine HTTP status code based on app routing
         var server = app.Services.GetRequiredService<Server>();
         var httpStatusCode = GetHttpStatusCodeForRequest(server, context);

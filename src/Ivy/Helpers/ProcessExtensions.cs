@@ -67,7 +67,7 @@ public static class ProcessExtensions
         {
             process.Kill(true);
             if (!process.WaitForExit(5000))
-                Debug.WriteLine($"Process {process.Id} did not exit within 5 seconds after Kill()");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
         }
         catch (InvalidOperationException)
         {
@@ -75,7 +75,7 @@ public static class ProcessExtensions
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -89,7 +89,7 @@ public static class ProcessExtensions
         }
         catch (OperationCanceledException)
         {
-            Debug.WriteLine($"Process {process.Id} did not exit within 5 seconds after Kill()");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
         }
         catch (InvalidOperationException)
         {
@@ -97,7 +97,7 @@ public static class ProcessExtensions
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }

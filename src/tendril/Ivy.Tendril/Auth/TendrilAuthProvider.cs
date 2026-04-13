@@ -11,8 +11,10 @@ public class TendrilAuthProvider : BasicAuthTokenHandler, IAuthProvider
 {
     private readonly string _passwordHash;
     private readonly byte[] _hashSecret;
+    private readonly LoginRateLimiter _rateLimiter;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public TendrilAuthProvider(IConfigService configService)
+    public TendrilAuthProvider(IConfigService configService, IHttpContextAccessor? httpContextAccessor = null)
         : base(BuildConfiguration(configService))
     {
         var auth = configService.Settings.Auth
@@ -28,16 +30,32 @@ public class TendrilAuthProvider : BasicAuthTokenHandler, IAuthProvider
         {
             throw new InvalidOperationException("Auth:HashSecret is not a valid base64 string");
         }
+
+        _httpContextAccessor = httpContextAccessor;
+        _rateLimiter = new LoginRateLimiter(auth.RateLimit ?? new LoginRateLimitConfig());
     }
 
-    public Task<AuthToken?> LoginAsync(IAuthSession authSession, string user, string password, CancellationToken cancellationToken)
+    public Task<LoginResult> LoginAsync(IAuthSession authSession, string user, string password, CancellationToken cancellationToken)
     {
+        var ipAddress = _httpContextAccessor?.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "global";
+
+        if (!_rateLimiter.IsLoginAllowed(ipAddress))
+        {
+            var retryAfter = _rateLimiter.GetRequiredDelay(ipAddress);
+            return Task.FromResult(LoginResult.RateLimited(retryAfter));
+        }
+
         if (!PasswordMatches(password))
-            return Task.FromResult<AuthToken?>(null);
+        {
+            _rateLimiter.RecordFailedAttempt(ipAddress);
+            return Task.FromResult(LoginResult.InvalidCredentials());
+        }
+
+        _rateLimiter.RecordSuccessfulLogin(ipAddress);
 
         var now = DateTimeOffset.UtcNow;
         var authToken = CreateToken("tendril", now, now.ToUnixTimeSeconds());
-        return Task.FromResult<AuthToken?>(authToken);
+        return Task.FromResult(LoginResult.Success(authToken));
     }
 
     public Task LogoutAsync(IAuthSession authSession, CancellationToken cancellationToken)

@@ -91,8 +91,9 @@ public class TrashApp : ViewBase
                                 }
                             });
 
+            var annotatedContent = MarkdownHelper.AnnotateBrokenFileLinks(selected.Content);
             var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200)))
-                                    | new Markdown(selected.Content)
+                                    | new Markdown(annotatedContent)
                                         .DangerouslyAllowLocalFiles()
                                         .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 

@@ -137,11 +137,12 @@ public class BackgroundServiceActivatorTests : IAsyncLifetime
             var cfg = sp.GetRequiredService<IConfigService>();
             return new JobService(
                 cfg,
-                sp.GetRequiredService<ModelPricingService>(),
-                sp.GetRequiredService<IPlanReaderService>(),
-                sp.GetRequiredService<ITelemetryService>(),
-                sp.GetRequiredService<IPlanWatcherService>(),
-                string.IsNullOrEmpty(cfg.TendrilHome) ? null : sp.GetRequiredService<IPlanDatabaseService>());
+                logger: null,
+                modelPricingService: sp.GetRequiredService<ModelPricingService>(),
+                planReaderService: sp.GetRequiredService<IPlanReaderService>(),
+                telemetryService: sp.GetRequiredService<ITelemetryService>(),
+                planWatcherService: sp.GetRequiredService<IPlanWatcherService>(),
+                database: string.IsNullOrEmpty(cfg.TendrilHome) ? null : sp.GetRequiredService<IPlanDatabaseService>());
         });
 
         _serviceProvider = services.BuildServiceProvider();

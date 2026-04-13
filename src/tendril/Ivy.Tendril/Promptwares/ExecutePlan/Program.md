@@ -13,7 +13,7 @@ The firmware header contains:
 - **Note** (optional) — Additional instructions from the reviewer. If present, follow these instructions in addition to the plan.
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and context.
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration (project repos and context) with caching.
 
 The launcher script sets the working directory to the project's primary repo.
 

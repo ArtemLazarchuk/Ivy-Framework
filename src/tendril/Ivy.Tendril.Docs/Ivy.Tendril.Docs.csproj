@@ -45,10 +45,6 @@
         <Watch Remove="Docs/**/*" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Generated/" />
-    </ItemGroup>
-
     <!-- enable ivy analyzer -->
     <ItemGroup>
         <ProjectReference Include="../../Ivy.Analyser/Ivy.Analyser.csproj">

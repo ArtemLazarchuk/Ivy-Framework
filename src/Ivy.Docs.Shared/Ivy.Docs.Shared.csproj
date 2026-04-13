@@ -63,10 +63,6 @@
     <InternalsVisibleTo Include="Ivy.Docs.Test" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Generated/" />
-  </ItemGroup>
-
   <!-- enable ivy analyzer for docs -->
   <ItemGroup>
     <ProjectReference Include="../Ivy.Analyser/Ivy.Analyser.csproj">

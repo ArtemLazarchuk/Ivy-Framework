@@ -15,7 +15,7 @@ The firmware header contains these key values:
 - **SourcePath** (optional) — absolute path to the source that generated this plan (e.g. test working directory)
 
 Read the plan folder structure in `../.shared/Plans.md`.
-Read the project configuration from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml).
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration with caching.
 
 ## Execution Steps
 
@@ -34,7 +34,7 @@ Flags can be combined (e.g., `task description [YOLO] [FORCE]` or `task descript
 
 ### 1.5. Load Project Context
 
-Read `config.yaml` (at the path from `TENDRIL_CONFIG` environment variable) to understand all available projects, their repos, and context.
+Use `Get-ConfigYaml` to understand all available projects, their repos, and context.
 
 **If `Project` is set to a specific project name** (not `Auto`):
 - Find that project in `config.yaml` and use its repos and context to scope your research

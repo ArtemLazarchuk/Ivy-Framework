@@ -1,38 +1,7 @@
 codingAgent: claude
-codingAgents:
-- name: claude
-  profiles:
-  - name: deep
-    model: opus
-    effort: max
-  - name: balanced
-    model: sonnet
-    effort: high
-  - name: quick
-    model: haiku
-    effort: low
-- name: codex
-  profiles:
-  - name: deep
-    model: gpt-5.4
-    effort: high
-  - name: balanced
-    model: gpt-5.4-mini
-    effort: medium
-  - name: quick
-    model: gpt-5.3-codex
-    effort: low
-- name: gemini
-  profiles:
-  - name: deep
-    model: gemini-3-flash-preview
-  - name: balanced
-    model: gemini-2.5-flash
-  - name: quick
-    model: gemini-2.5-flash-lite
 jobTimeout: 30
 staleOutputTimeout: 10
-maxConcurrentJobs: 10
+maxConcurrentJobs: 30
 projects:
 - name: Framework
   color: Blue
@@ -340,6 +309,52 @@ promptwares:
     - Read
     - Write
     - Bash
+codingAgents:
+- name: claude
+  arguments: ''
+  profiles:
+  - name: deep
+    model: opus
+    effort: max
+    arguments: ''
+  - name: balanced
+    model: sonnet
+    effort: high
+    arguments: ''
+  - name: quick
+    model: haiku
+    effort: low
+    arguments: ''
+- name: codex
+  arguments: ''
+  profiles:
+  - name: deep
+    model: gpt-5.4
+    effort: high
+    arguments: ''
+  - name: balanced
+    model: gpt-5.4-mini
+    effort: medium
+    arguments: ''
+  - name: quick
+    model: gpt-5.3-codex
+    effort: low
+    arguments: ''
+- name: gemini
+  arguments: ''
+  profiles:
+  - name: deep
+    model: gemini-3-flash-preview
+    effort: ''
+    arguments: ''
+  - name: balanced
+    model: gemini-2.5-flash
+    effort: ''
+    arguments: ''
+  - name: quick
+    model: gemini-2.5-flash-lite
+    effort: ''
+    arguments: ''
 telemetry: true
 levels:
 - name: Bug

@@ -13,7 +13,7 @@ The firmware header contains:
 - **CurrentTime** — current UTC timestamp
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and their `prRule` setting.
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration (project repos and their `prRule` setting) with caching.
 
 ## PR Rules (from config.yaml per repo)
 
@@ -32,7 +32,7 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 - Read `plan.yaml` from the plan folder (project, commits, repos)
 - Read the latest revision for the plan title and description
-- Read config.yaml to find the `prRule` for each repo
+- Use `Get-ConfigYaml` to find the `prRule` for each repo
 - **Check for custom options:** If `<PlanFolder>/.custom-pr-options.yaml` exists, read it. The file contains:
   ```yaml
   merge: true/false

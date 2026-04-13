@@ -9,7 +9,7 @@ The firmware header contains:
 - **CurrentTime** — current UTC timestamp
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml).
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration with caching.
 
 ## Execution Steps
 
@@ -31,7 +31,7 @@ If no `>>` lines exist, report "No comments found" and stop.
 
 For each question in the `>>` lines:
 1. Read relevant source files to find the answer
-2. Read `config.yaml` (from `TENDRIL_CONFIG` environment variable) for project context if needed
+2. Use `Get-ConfigYaml` for project context if needed
 
 ### 3.5. Resolve Answered Questions
 

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using Ivy.Helpers;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -9,11 +11,13 @@ namespace Ivy.Tendril.Test;
 
 public class JobServiceTimeoutTests
 {
-    private static JobService CreateService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout)
+    private static JobService CreateService(
+        TimeSpan jobTimeout,
+        TimeSpan staleOutputTimeout,
+        ILogger<JobService>? logger = null)
     {
-        // Clear sync context so notifications fire synchronously during tests
         SynchronizationContext.SetSynchronizationContext(null);
-        return new JobService(jobTimeout, staleOutputTimeout);
+        return new JobService(jobTimeout, staleOutputTimeout, logger: logger);
     }
 
     [Fact]
@@ -228,6 +232,24 @@ codingAgent: claude
     }
 
     [Fact]
+    public void CompleteJob_AfterCtsDisposed_StillCompletes()
+    {
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10));
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+
+        job.TimeoutCts?.Dispose();
+
+        service.CompleteJob(id, 0);
+
+        job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+
+    [Fact]
     public async Task RealProcess_KilledAfterTimeout()
     {
         using var process = Process.Start(new ProcessStartInfo
@@ -249,6 +271,26 @@ codingAgent: claude
         Assert.True(process.HasExited);
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(15),
             $"Process should be killed within timeout + kill grace period, took {sw.Elapsed}");
+    }
+
+    [Fact]
+    public async Task RunStaleOutputWatchdog_HandlesDisposedCts_ExitsGracefully()
+    {
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromSeconds(5));
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+
+        var cts = job.TimeoutCts!;
+        var watchdogTask = service.RunStaleOutputWatchdog(id, cts);
+
+        await Task.Delay(100);
+        cts.Dispose();
+
+        var completed = await Task.WhenAny(watchdogTask, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Equal(watchdogTask, completed);
+        Assert.True(watchdogTask.IsCompletedSuccessfully, "Watchdog should exit gracefully, not fault");
     }
 
     [Fact]
@@ -276,5 +318,50 @@ codingAgent: claude
 
         process.WaitForExit();
         service.CompleteJob(id, 0);
+    }
+
+    [Fact]
+    public void Constructor_AcceptsLogger()
+    {
+        var logger = NullLogger<JobService>.Instance;
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10), logger);
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        service.CompleteJob(id, 0);
+
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+
+    [Fact]
+    public void Constructor_WithCapturingLogger_DoesNotThrow()
+    {
+        var logEntries = new List<(LogLevel Level, string Message)>();
+        var logger = new CapturingLogger<JobService>(logEntries);
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10), logger);
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        service.CompleteJob(id, 0);
+
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+}
+
+internal sealed class CapturingLogger<T>(List<(LogLevel Level, string Message)> entries) : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    public void Log<TState>(
+        LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    {
+        entries.Add((logLevel, formatter(state, exception)));
     }
 }
