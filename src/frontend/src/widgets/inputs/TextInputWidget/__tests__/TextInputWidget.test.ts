@@ -3,6 +3,52 @@ import React, { act } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { useEnterKeyBlur, usePasteHandler, useCursorPosition } from "../hooks/useTextInput";
 
+// Mocks for SearchVariant component rendering tests
+vi.mock("@/hooks/use-focus-management", () => ({
+  useFocusable: () => ({ ref: () => {} }),
+}));
+
+vi.mock("@/widgets/layouts/sidebar", () => ({
+  sidebarMenuRef: { current: null },
+}));
+
+vi.mock("lucide-react", () => {
+  const React = require("react");
+  return {
+    Search: (props: Record<string, unknown>) => React.createElement("svg", props),
+    X: (props: Record<string, unknown>) => React.createElement("svg", props),
+  };
+});
+
+vi.mock("@/components/InvalidIcon", () => {
+  const React = require("react");
+  return {
+    InvalidIcon: () => React.createElement("span", { "data-testid": "invalid-icon" }),
+  };
+});
+
+vi.mock("@/components/ui/input", () => {
+  const React = require("react");
+  return {
+    Input: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<HTMLInputElement>) =>
+      React.createElement("input", { ...props, ref }),
+    ),
+  };
+});
+
+vi.mock("@/components/ui/input/text-input-variant", () => ({
+  textInputSizeVariant: () => "",
+  searchIconVariant: () => "",
+  xIconVariant: () => "",
+}));
+
+vi.mock("@/lib/styles", () => ({
+  getWidth: () => ({}),
+  inputStyles: { invalidInput: "invalid-input" },
+}));
+
+import { SearchVariant } from "../variants/SearchVariant";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -437,5 +483,62 @@ describe("useCursorPosition", () => {
     });
 
     expect(input.selectionStart).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SearchVariant disabled/invalid container styles
+// ---------------------------------------------------------------------------
+
+describe("SearchVariant disabled/invalid container styles", () => {
+  const baseProps = {
+    id: "test-search",
+    disabled: false,
+    events: [],
+    value: "",
+    variant: "Search" as const,
+  };
+
+  function renderSearchVariant(overrides: Record<string, unknown> = {}) {
+    const props = { ...baseProps, ...overrides };
+    act(() => {
+      root.render(
+        React.createElement(SearchVariant, {
+          props: props as any,
+          onChange: () => {},
+          onBlur: () => {},
+          onFocus: () => {},
+          onClear: () => {},
+          isFocused: false,
+        }),
+      );
+    });
+  }
+
+  it("applies cursor-not-allowed and opacity-50 when disabled", () => {
+    renderSearchVariant({ disabled: true });
+
+    const borderedContainer = container.querySelector(".rounded-field") as HTMLElement;
+    expect(borderedContainer).not.toBeNull();
+    expect(borderedContainer.className).toContain("cursor-not-allowed");
+    expect(borderedContainer.className).toContain("opacity-50");
+  });
+
+  it("applies border-destructive when invalid", () => {
+    renderSearchVariant({ invalid: "Field is required" });
+
+    const borderedContainer = container.querySelector(".rounded-field") as HTMLElement;
+    expect(borderedContainer).not.toBeNull();
+    expect(borderedContainer.className).toContain("border-destructive");
+  });
+
+  it("does not apply disabled or invalid styles by default", () => {
+    renderSearchVariant();
+
+    const borderedContainer = container.querySelector(".rounded-field") as HTMLElement;
+    expect(borderedContainer).not.toBeNull();
+    expect(borderedContainer.className).not.toContain("cursor-not-allowed");
+    expect(borderedContainer.className).not.toContain("opacity-50");
+    expect(borderedContainer.className).not.toContain("border-destructive");
   });
 });

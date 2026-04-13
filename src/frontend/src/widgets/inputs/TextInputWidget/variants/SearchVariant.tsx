@@ -106,6 +106,8 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
       <div
         className={cn(
           "rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10",
+          props.invalid && "border-destructive",
+          props.disabled && "cursor-not-allowed opacity-50",
           props.ghost &&
             "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
         )}
