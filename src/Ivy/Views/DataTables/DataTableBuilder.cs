@@ -28,6 +28,7 @@ public class DataTableBuilder<TModel>(
     private FuncViewBuilder? _headerRightFactory;
     private Dictionary<string, object>? _footerValuesByColumn;
     private Density _density = Ivy.Density.Medium;
+    private IWriteStream<DataTableCellUpdate>? _updateStream;
 
     private readonly string? _idColumnName =
         idSelector != null ? TypeHelper.GetNameFromMemberExpression(idSelector.Body) : null;
@@ -444,6 +445,12 @@ public class DataTableBuilder<TModel>(
         return this;
     }
 
+    public DataTableBuilder<TModel> UpdateStream(IWriteStream<DataTableCellUpdate> stream)
+    {
+        _updateStream = stream;
+        return this;
+    }
+
     public DataTableBuilder<TModel> RefreshToken(RefreshToken token)
     {
         _refreshToken = token;
@@ -565,7 +572,8 @@ public class DataTableBuilder<TModel>(
             refreshToken: _refreshToken,
             emptyViewFactory: _emptyViewFactory,
             headerLeftFactory: _headerLeftFactory,
-            headerRightFactory: _headerRightFactory);
+            headerRightFactory: _headerRightFactory,
+            updateStream: _updateStream);
     }
 
     public object[] GetMemoValues()

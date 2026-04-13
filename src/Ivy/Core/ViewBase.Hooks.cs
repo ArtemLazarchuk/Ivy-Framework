@@ -231,6 +231,9 @@ public abstract partial class ViewBase
     protected IWriteStream<T> UseStream<T>() =>
         this.Context.UseStream<T>();
 
+    protected IWriteStream<DataTableCellUpdate> UseDataTableUpdates(params IObservable<DataTableCellUpdate>[] sources) =>
+        this.Context.UseDataTableUpdates(sources);
+
     protected void UseInterval(Action callback, TimeSpan? interval) =>
         this.Context.UseInterval(callback, interval);
 

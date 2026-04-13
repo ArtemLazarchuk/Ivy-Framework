@@ -18,7 +18,8 @@ public class DataTableView(
     RefreshToken? refreshToken = null,
     FuncViewBuilder? emptyViewFactory = null,
     FuncViewBuilder? headerLeftFactory = null,
-    FuncViewBuilder? headerRightFactory = null) : ViewBase, IMemoized
+    FuncViewBuilder? headerRightFactory = null,
+    IWriteStream<DataTableCellUpdate>? updateStream = null) : ViewBase, IMemoized
 {
     public override object? Build()
     {
@@ -34,7 +35,8 @@ public class DataTableView(
             OnCellClick = onCellClick.ToEventHandler(),
             OnCellActivated = onCellActivated.ToEventHandler(),
             RowActions = rowActions,
-            OnRowAction = onRowAction.ToEventHandler()
+            OnRowAction = onRowAction.ToEventHandler(),
+            UpdateStream = updateStream
         };
 
         var slots = new List<Slot>();
