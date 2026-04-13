@@ -109,6 +109,7 @@ public static class TendrilServer
             var cfg = sp.GetRequiredService<IConfigService>();
             return new JobService(
                 cfg,
+                sp.GetRequiredService<ILogger<JobService>>(),
                 sp.GetRequiredService<ModelPricingService>(),
                 sp.GetRequiredService<IPlanReaderService>(),
                 sp.GetRequiredService<ITelemetryService>(),

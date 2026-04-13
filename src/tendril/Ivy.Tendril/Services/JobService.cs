@@ -6,6 +6,8 @@ using Ivy.Helpers;
 using Ivy.Tendril.Apps;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -69,10 +71,12 @@ public class JobService : IJobService
     private readonly SynchronizationContext? _syncContext;
     private readonly ITelemetryService? _telemetryService;
     private readonly IWorktreeLifecycleLogger? _worktreeLifecycleLogger;
+    private readonly ILogger<JobService> _logger;
     private int _counter;
 
     public JobService(
         IConfigService configService,
+        ILogger<JobService>? logger = null,
         ModelPricingService? modelPricingService = null,
         IPlanReaderService? planReaderService = null,
         ITelemetryService? telemetryService = null,
@@ -82,6 +86,7 @@ public class JobService : IJobService
     {
         _syncContext = SynchronizationContext.Current;
         _configService = configService;
+        _logger = logger ?? NullLogger<JobService>.Instance;
         _modelPricingService = modelPricingService;
         _planReaderService = planReaderService;
         _telemetryService = telemetryService;
@@ -106,9 +111,11 @@ public class JobService : IJobService
         int maxConcurrentJobs = 5,
         IPlanReaderService? planReaderService = null,
         ITelemetryService? telemetryService = null,
-        IPlanDatabaseService? database = null)
+        IPlanDatabaseService? database = null,
+        ILogger<JobService>? logger = null)
     {
         _syncContext = SynchronizationContext.Current;
+        _logger = logger ?? NullLogger<JobService>.Instance;
         _jobTimeout = jobTimeout;
         _staleOutputTimeout = staleOutputTimeout;
         _maxConcurrentJobs = maxConcurrentJobs;
@@ -722,26 +729,38 @@ public class JobService : IJobService
 
         Task.Run(async () =>
         {
+            _logger.LogDebug("Job {JobId}: Monitor task started", id);
+
             try
             {
                 if (await process.WaitForExitOrKillAsync(cts.Token))
                 {
                     if (_jobs.TryGetValue(id, out var j) && j.StaleOutputDetected)
+                    {
+                        _logger.LogInformation("Job {JobId}: Process exited, stale output detected", id);
                         CompleteJob(id, null, timedOut: true, staleOutput: true);
+                    }
                     else
+                    {
+                        _logger.LogInformation("Job {JobId}: Process exited with code {ExitCode}", id, process.ExitCode);
                         CompleteJob(id, process.ExitCode);
+                    }
                 }
                 else
                 {
+                    _logger.LogWarning("Job {JobId}: Process killed after timeout", id);
                     CompleteJob(id, null, timedOut: true);
                 }
+
+                _logger.LogDebug("Job {JobId}: Monitor task completed normally", id);
             }
             catch (ObjectDisposedException)
             {
-                // CTS was disposed — job is already being completed elsewhere (CompleteJob/StopJob).
+                _logger.LogDebug("Job {JobId}: Monitor task exiting (CTS disposed, job completed elsewhere)", id);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Job {JobId}: Monitor task exception", id);
                 Program.WriteCrashLog($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
                 CompleteJob(id, null, timedOut: false);
             }

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using Ivy.Helpers;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -9,11 +11,13 @@ namespace Ivy.Tendril.Test;
 
 public class JobServiceTimeoutTests
 {
-    private static JobService CreateService(TimeSpan jobTimeout, TimeSpan staleOutputTimeout)
+    private static JobService CreateService(
+        TimeSpan jobTimeout,
+        TimeSpan staleOutputTimeout,
+        ILogger<JobService>? logger = null)
     {
-        // Clear sync context so notifications fire synchronously during tests
         SynchronizationContext.SetSynchronizationContext(null);
-        return new JobService(jobTimeout, staleOutputTimeout);
+        return new JobService(jobTimeout, staleOutputTimeout, logger: logger);
     }
 
     [Fact]
@@ -294,5 +298,50 @@ codingAgent: claude
 
         process.WaitForExit();
         service.CompleteJob(id, 0);
+    }
+
+    [Fact]
+    public void Constructor_AcceptsLogger()
+    {
+        var logger = NullLogger<JobService>.Instance;
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10), logger);
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        service.CompleteJob(id, 0);
+
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+
+    [Fact]
+    public void Constructor_WithCapturingLogger_DoesNotThrow()
+    {
+        var logEntries = new List<(LogLevel Level, string Message)>();
+        var logger = new CapturingLogger<JobService>(logEntries);
+        var service = CreateService(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10), logger);
+
+        var id = service.CreateTestJob("ExecutePlan", Path.GetTempPath());
+        service.CompleteJob(id, 0);
+
+        var job = service.GetJob(id);
+        Assert.NotNull(job);
+        Assert.Equal(JobStatus.Completed, job.Status);
+    }
+}
+
+internal sealed class CapturingLogger<T>(List<(LogLevel Level, string Message)> entries) : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    public void Log<TState>(
+        LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    {
+        entries.Add((logLevel, formatter(state, exception)));
     }
 }
