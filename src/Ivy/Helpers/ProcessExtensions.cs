@@ -67,7 +67,7 @@ public static class ProcessExtensions
         {
             process.Kill(true);
             if (!process.WaitForExit(5000))
-                WriteCrashLog($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
         }
         catch (InvalidOperationException)
         {
@@ -75,7 +75,7 @@ public static class ProcessExtensions
         }
         catch (Exception ex)
         {
-            WriteCrashLog($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -89,7 +89,7 @@ public static class ProcessExtensions
         }
         catch (OperationCanceledException)
         {
-            WriteCrashLog($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
         }
         catch (InvalidOperationException)
         {
@@ -97,22 +97,7 @@ public static class ProcessExtensions
         }
         catch (Exception ex)
         {
-            WriteCrashLog($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    private static void WriteCrashLog(string message)
-    {
-        try
-        {
-            var tendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-            var logDir = !string.IsNullOrEmpty(tendrilHome) ? tendrilHome : Path.GetTempPath();
-            var path = Path.Combine(logDir, "crash.log");
-            File.AppendAllText(path, message + Environment.NewLine);
-        }
-        catch
-        {
-            // Last-resort: don't let logging crash the process
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }
