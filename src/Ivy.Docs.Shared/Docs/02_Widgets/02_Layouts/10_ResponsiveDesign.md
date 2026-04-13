@@ -40,40 +40,17 @@ Layout.Grid()
 
 In this example, `Tablet` inherits the `Mobile` value of 1 column, and `Wide` inherits the `Desktop` value of 3 columns.
 
-## The Responsive Type
+## The Responsive type
 
-At the core of the responsive system is `Responsive<T>` — a generic record that holds per-breakpoint values:
-
-```csharp
-public record Responsive<T>
-{
-    public T? Default { get; init; }
-    public T? Mobile { get; init; }
-    public T? Tablet { get; init; }
-    public T? Desktop { get; init; }
-    public T? Wide { get; init; }
-}
-```
-
-**Implicit conversion** ensures full backward compatibility. Any plain value is automatically wrapped as a `Responsive<T>` with `Default` set:
+A plain `T` converts implicitly to `Responsive<T>` with only `Default` set, so existing call sites stay valid. For per-breakpoint values, chain `.At(breakpoint)` on a supported type, then `.And(breakpoint, value)` for further overrides:
 
 ```csharp
-// Non-responsive (backward compatible) — implicit conversion from T to Responsive<T>
+// Plain value → implicit Responsive<T> (Default only)
 Layout.Grid().Columns(3)
 
-// Responsive — explicit breakpoint values using .At() and .And()
+// Breakpoint overrides — cascade from Mobile unless a larger breakpoint sets its own
 Layout.Grid().Columns(1.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 3))
-```
 
-### The `.At()` and `.And()` Builder Pattern
-
-Use `.At(Breakpoint)` to start a responsive chain, and `.And(Breakpoint, value)` to add more breakpoints:
-
-```csharp
-// .At() starts the chain — sets the value for a specific breakpoint
-Size.Full().At(Breakpoint.Mobile)
-
-// .And() adds additional breakpoint values to the chain
 Size.Full().At(Breakpoint.Mobile)
     .And(Breakpoint.Tablet, Size.Units(80))
     .And(Breakpoint.Desktop, Size.Half())
