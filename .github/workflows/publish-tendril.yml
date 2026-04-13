@@ -73,7 +73,7 @@ jobs:
         uses: NuGet/login@v1
         id: login
         with:
-          user: rorychatt-ivy
+          user: Ivy-Interactive
 
       - name: Clean NuGet output before signing
         run: |
