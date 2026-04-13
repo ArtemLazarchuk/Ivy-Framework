@@ -19,6 +19,27 @@ Build adaptive layouts that respond to viewport size using the built-in breakpoi
 
 Ivy's responsive design system lets you vary widget properties by viewport size using `Responsive<T>` values with mobile-first cascading.
 
+## Basic Usage
+
+A typical first step is a [grid](03_GridLayout.md) whose column count depends on the viewport: chain `.At()` and `.And()` on the value you pass to `.Columns()`:
+
+```csharp
+Layout.Grid()
+    .Columns(1.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 3))
+    | new Card("A")
+    | new Card("B")
+    | new Card("C")
+```
+
+```csharp demo
+Layout.Grid()
+    .Columns(1.At(Breakpoint.Mobile).And(Breakpoint.Desktop, 3))
+    .Gap(4)
+    | new Card("A")
+    | new Card("B")
+    | new Card("C")
+```
+
 ## Breakpoints
 
 | Breakpoint | Max Width | Typical Device |
@@ -37,8 +58,6 @@ Layout.Grid()
     .Columns(1.At(Breakpoint.Mobile)        // 1 col on Mobile AND Tablet (cascades up)
         .And(Breakpoint.Desktop, 3))         // 3 cols on Desktop AND Wide
 ```
-
-In this example, `Tablet` inherits the `Mobile` value of 1 column, and `Wide` inherits the `Desktop` value of 3 columns.
 
 ## The Responsive type
 
