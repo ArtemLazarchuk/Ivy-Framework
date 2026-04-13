@@ -12,8 +12,13 @@ public class CreatePlanDialog(
 
     internal static readonly List<string> PriorityOptions = ["Normal", "High", "Urgent"];
 
-    internal static int ParsePriority(string option) =>
-        int.TryParse(option.AsSpan(option.LastIndexOf('(') + 1, 1), out var v) ? v : 0;
+    internal static int ParsePriority(string option) => option.ToLowerInvariant() switch
+    {
+        "normal" => 0,
+        "high" => 1,
+        "urgent" => 2,
+        _ => 0
+    };
 
     public override object Build()
     {
@@ -43,8 +48,8 @@ public class CreatePlanDialog(
             new DialogHeader("Create New Plan"),
             new DialogBody(
                 Layout.Vertical()
-                | exclusiveProjects.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithLabel("Select project(s)")
-                | selectedPriority.ToSelectInput(PriorityOptions).Variant(SelectInputVariant.Toggle).WithLabel("Priority")
+                | exclusiveProjects.ToSelectInput(options).Variant(SelectInputVariant.Toggle).WithField().Label("Select project(s)")
+                | selectedPriority.ToSelectInput(PriorityOptions).Variant(SelectInputVariant.Toggle).WithField().Label("Priority")
                 | createPlanText.ToTextareaInput("Enter task description...").Rows(6).AutoFocus().WithField()
                     .Label("Describe the task for the new plan")
             ),

@@ -40,6 +40,46 @@ ee364ec5-064f-4d9c-a63c-b04a4a4bbbdc
 ba29e58f-4fb0-48ac-851d-0d88b390a03a
 7cac06c3-b2d0-406f-9271-24073cb42ef1
 
+## ChatMessage — ambiguous reference between Microsoft.Extensions.AI and Ivy
+
+**Hallucinated API:**
+
+```csharp
+var messages = new List<ChatMessage>
+{
+    new ChatMessage(ChatRole.System, "You are a helpful assistant."),
+    new ChatMessage(ChatRole.User, content)
+};
+```
+
+**Error:** `CS0104: 'ChatMessage' is an ambiguous reference between 'Microsoft.Extensions.AI.ChatMessage' and 'Ivy.ChatMessage'`
+
+**Correct API:**
+
+```csharp
+// Fully qualify the namespace:
+var messages = new List<Microsoft.Extensions.AI.ChatMessage>
+{
+    new(Microsoft.Extensions.AI.ChatRole.System, "You are a helpful assistant."),
+    new(Microsoft.Extensions.AI.ChatRole.User, content)
+};
+
+// Or add a using alias at the top of the file:
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
+using ChatRole = Microsoft.Extensions.AI.ChatRole;
+```
+
+When using `IChatClient` from `Microsoft.Extensions.AI` in an Ivy project, `ChatMessage` conflicts with `Ivy.ChatMessage` (the Chat widget's message record) which is available via global using. Always fully qualify or alias the `Microsoft.Extensions.AI` types.
+
+**Found In:**
+142f4e78-ada2-4bd6-8c9f-a8562c82afb7
+ab7c7708-b26c-49fa-83a4-176df47c5866
+f190873c-df6c-42a1-88fe-849c6b3ddbc5
+a8e15b46-41e2-4281-b570-6d46721e0425
+b73d8115-b4d2-45d5-926e-0a915c1dca63
+b16d95b1-ff2f-4db3-9c67-910e21eb0713
+295da84a-9e14-45e4-ac1f-337e04de2ca6
+
 ## SelectOption\<T\> — non-existent type
 
 **Hallucinated API:**
@@ -79,69 +119,6 @@ bc53ef0b-235f-4fba-a6bf-c3a9a9946e26
 6ab76176-bc16-456e-91c9-719bd84b05a6
 7622b8e9-9662-4bcf-8c4c-e7ad0cfb4ba1
 
-## ChatMessage — ambiguous reference between Microsoft.Extensions.AI and Ivy
-
-**Hallucinated API:**
-
-```csharp
-var messages = new List<ChatMessage>
-{
-    new ChatMessage(ChatRole.System, "You are a helpful assistant."),
-    new ChatMessage(ChatRole.User, content)
-};
-```
-
-**Error:** `CS0104: 'ChatMessage' is an ambiguous reference between 'Microsoft.Extensions.AI.ChatMessage' and 'Ivy.ChatMessage'`
-
-**Correct API:**
-
-```csharp
-// Fully qualify the namespace:
-var messages = new List<Microsoft.Extensions.AI.ChatMessage>
-{
-    new(Microsoft.Extensions.AI.ChatRole.System, "You are a helpful assistant."),
-    new(Microsoft.Extensions.AI.ChatRole.User, content)
-};
-
-// Or add a using alias at the top of the file:
-using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using ChatRole = Microsoft.Extensions.AI.ChatRole;
-```
-
-When using `IChatClient` from `Microsoft.Extensions.AI` in an Ivy project, `ChatMessage` conflicts with `Ivy.ChatMessage` (the Chat widget's message record) which is available via global using. Always fully qualify or alias the `Microsoft.Extensions.AI` types.
-
-**Found In:**
-142f4e78-ada2-4bd6-8c9f-a8562c82afb7
-ab7c7708-b26c-49fa-83a4-176df47c5866
-f190873c-df6c-42a1-88fe-849c6b3ddbc5
-a8e15b46-41e2-4281-b570-6d46721e0425
-b73d8115-b4d2-45d5-926e-0a915c1dca63
-b16d95b1-ff2f-4db3-9c67-910e21eb0713
-
-## AppAttribute.path — renamed to group
-
-**Hallucinated API:**
-
-```csharp
-[App(path: ["Tests"])]
-```
-
-**Error:** `'AppAttribute' does not contain a definition for 'path'`
-
-**Correct API:**
-
-```csharp
-[App(group: ["Tests"])]
-```
-
-The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it defines the organizational group/folder in the sidebar, not a URL path. This applies to both the `[App]` attribute and the `AppDescriptor` class (`Path` property → `Group` property). (Note: This was part of a broader refactoring to rename "Chrome" to "AppShell").
-
-**Found In:**
-Ivy-Framework#2612
-55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
-fd5baba6-72aa-4d28-ac10-72e1be86e494
-(multiple sessions — agent uses old API names from training data)
-
 ## Button onClick — wrong callback signature (method group)
 
 **Hallucinated API:**
@@ -172,6 +149,67 @@ The `Button` onClick parameter is `Func<Event<Button>, ValueTask>?`. The callbac
 bedc0ee6-b915-45b0-ab3a-433e2ac5ff4a
 80f19121-bcf0-4899-abe2-9f1c439f4101
 6c7b9fb9-33c0-410e-b0a5-e66ff0b72c74
+
+## Callout constructor — wrong constructor + invented enum / wrong argument order
+
+**Hallucinated API:**
+
+```csharp
+// Variant 1: Invented enum (CalloutType does not exist)
+new Callout("No to-do items.", CalloutType.Info)
+
+// Variant 2: Correct enum but wrong argument position (CalloutVariant as 2nd arg instead of 3rd)
+new Callout("Warning!", CalloutVariant.Destructive)
+
+// Variant 3: Colors enum where CalloutVariant is expected
+new Callout("Error", "Something went wrong", Colors.Red)
+```
+
+**Error:** `The type or namespace 'CalloutType' could not be found` (variant 1) or `CS1503: Argument 2: cannot convert from 'Ivy.CalloutVariant' to 'string?'` (variant 2) or `CS1503: Argument 3: cannot convert from 'Ivy.Colors' to 'Ivy.CalloutVariant'` (variant 3)
+
+**Correct API:**
+
+```csharp
+// Preferred: static factory methods
+Callout.Info("No to-do items.")
+
+// Constructor: (description, title, variant, icon) — title is the 2nd parameter, not variant
+new Callout("Warning!", "Title", CalloutVariant.Warning, Icons.AlertTriangle)
+```
+
+`Callout` uses static factory methods: `Callout.Info()`, `Callout.Warning()`, `Callout.Error()`, `Callout.Success()`, `Callout.Destructive()`. The `CalloutType` enum does not exist. Valid `CalloutVariant` values are `Info`, `Warning`, `Error`, `Success`, `Destructive`. `Destructive` was added to match agent expectations (previously hallucinated due to confusion with `BadgeVariant.Destructive`). It is styled identically to `Error`. When using the constructor directly, the parameter order is `(description, title, variant, icon)` — agents frequently put `CalloutVariant` as the 2nd argument where `title` (string) should be.
+
+**Found In:**
+bd5f45ac-569d-4be8-8ef8-882451e608a1
+0c7c0b33-a500-45c2-911b-b33ca1f9662e
+cdf77a72-658e-45df-9bdb-9bf7c79100b2
+a31113e3-0282-46f8-a78f-4bd42b9cebc2
+4874e3a3-c6d8-4be5-b1b3-bc4209408343
+32f27f88-9f28-4a60-85ef-0e41e317a170
+
+## AppAttribute.path — renamed to group
+
+**Hallucinated API:**
+
+```csharp
+[App(path: ["Tests"])]
+```
+
+**Error:** `'AppAttribute' does not contain a definition for 'path'`
+
+**Correct API:**
+
+```csharp
+[App(group: ["Tests"])]
+```
+
+The `path` parameter was renamed to `group` in v1.2.18 to better reflect that it defines the organizational group/folder in the sidebar, not a URL path. This applies to both the `[App]` attribute and the `AppDescriptor` class (`Path` property → `Group` property). (Note: This was part of a broader refactoring to rename "Chrome" to "AppShell").
+
+**Found In:**
+Ivy-Framework#2612
+55eafb82-2cc2-48ba-9a66-cd2ed8d38d67
+fd5baba6-72aa-4d28-ac10-72e1be86e494
+(multiple sessions — agent uses old API names from training data)
 
 ## ToDataTable() on List\<T\> or T[] — wrong receiver type
 
@@ -236,39 +274,6 @@ e8232f03-12c3-4c9c-bf1b-42bed9f6d44c
 ee364ec5-064f-4d9c-a63c-b04a4a4bbbdc
 563ac3be-4fe9-4612-9331-4eff47725fa6
 ba29e58f-4fb0-48ac-851d-0d88b390a03a
-
-## Callout constructor — wrong constructor + invented enum / wrong argument order
-
-**Hallucinated API:**
-
-```csharp
-// Variant 1: Invented enum (CalloutType does not exist)
-new Callout("No to-do items.", CalloutType.Info)
-
-// Variant 2: Correct enum but wrong argument position (CalloutVariant as 2nd arg instead of 3rd)
-new Callout("Warning!", CalloutVariant.Destructive)
-```
-
-**Error:** `The type or namespace 'CalloutType' could not be found` (variant 1) or `CS1503: Argument 2: cannot convert from 'Ivy.CalloutVariant' to 'string?'` (variant 2)
-
-**Correct API:**
-
-```csharp
-// Preferred: static factory methods
-Callout.Info("No to-do items.")
-
-// Constructor: (description, title, variant, icon) — title is the 2nd parameter, not variant
-new Callout("Warning!", "Title", CalloutVariant.Warning, Icons.AlertTriangle)
-```
-
-`Callout` uses static factory methods: `Callout.Info()`, `Callout.Warning()`, `Callout.Error()`, `Callout.Success()`, `Callout.Destructive()`. The `CalloutType` enum does not exist. Valid `CalloutVariant` values are `Info`, `Warning`, `Error`, `Success`, `Destructive`. `Destructive` was added to match agent expectations (previously hallucinated due to confusion with `BadgeVariant.Destructive`). It is styled identically to `Error`. When using the constructor directly, the parameter order is `(description, title, variant, icon)` — agents frequently put `CalloutVariant` as the 2nd argument where `title` (string) should be.
-
-**Found In:**
-bd5f45ac-569d-4be8-8ef8-882451e608a1
-0c7c0b33-a500-45c2-911b-b33ca1f9662e
-cdf77a72-658e-45df-9bdb-9bf7c79100b2
-a31113e3-0282-46f8-a78f-4bd42b9cebc2
-4874e3a3-c6d8-4be5-b1b3-bc4209408343
 
 ## InputBase.Label() — AxisExtensions method used on input
 
@@ -517,6 +522,30 @@ ab7c7708-b26c-49fa-83a4-176df47c5866
 fd4594df-0402-4f11-ad46-22165d480649
 7622b8e9-9662-4bcf-8c4c-e7ad0cfb4ba1
 
+## Button.WithIcon() — non-existent fluent method
+
+**Hallucinated API:**
+
+```csharp
+new Button("Share Link").WithIcon(Icons.Share)
+```
+
+**Error:** `'Button' does not contain a definition for 'WithIcon'`
+
+**Correct API:**
+
+```csharp
+new Button("Share Link").Icon(Icons.Share)
+```
+
+The fluent method is `.Icon(Icons.X)`, not `.WithIcon(Icons.X)`. The agent likely confused this with naming patterns from other UI frameworks or assumed a more verbose method name.
+
+**Found In:**
+8b93fae2-c7ce-4890-b0c0-43310c65dd00
+310e1e6a-facb-4caf-87b9-4f1422b51abc
+7c0abfe8-e16f-40d1-9323-95505a4697e7
+0aad3f88-fffe-4024-8d7d-fae268527d16
+
 ## DateTimeVariant — wrong enum name
 
 **Hallucinated API:**
@@ -609,7 +638,7 @@ Toast("Employee saved!");
 var client = UseService<IClientProvider>();
 client.Toast("Clocked in successfully");
 client.Toast("Employee saved!", "Success");  // with title
-client.Error("Something went wrong.");       // error toast
+client.Error(new Exception("Something went wrong."));  // error toast (takes Exception, not string)
 ```
 
 `Toast` is an extension method on `IClientProvider`, not a standalone/global function. The agent must first resolve the client via `UseService<IClientProvider>()`.
@@ -641,29 +670,6 @@ Layout.Vertical().Width(Size.Lg)
 a9ee3993-1cfb-4cba-9322-80a60b56c8d2
 9f10ed3d-11bc-40ba-903a-f446ff496f21
 b321412b-3b6c-4b50-b027-bc323db8fe98
-
-## Button.WithIcon() — non-existent fluent method
-
-**Hallucinated API:**
-
-```csharp
-new Button("Share Link").WithIcon(Icons.Share)
-```
-
-**Error:** `'Button' does not contain a definition for 'WithIcon'`
-
-**Correct API:**
-
-```csharp
-new Button("Share Link").Icon(Icons.Share)
-```
-
-The fluent method is `.Icon(Icons.X)`, not `.WithIcon(Icons.X)`. The agent likely confused this with naming patterns from other UI frameworks or assumed a more verbose method name.
-
-**Found In:**
-8b93fae2-c7ce-4890-b0c0-43310c65dd00
-310e1e6a-facb-4caf-87b9-4f1422b51abc
-7c0abfe8-e16f-40d1-9323-95505a4697e7
 
 ## Skeleton.List() — non-existent static method
 
@@ -3299,6 +3305,29 @@ table.OnRowAction(e =>
 
 **Found In:**
 a31113e3-0282-46f8-a78f-4bd42b9cebc2
+
+## IClientProvider.Error(string) — wrong argument type
+
+**Hallucinated API:**
+
+```csharp
+var client = UseService<IClientProvider>();
+client.Error("Something went wrong.");
+```
+
+**Error:** `CS1503: Argument 2: cannot convert from 'string' to 'System.Exception'`
+
+**Correct API:**
+
+```csharp
+var client = UseService<IClientProvider>();
+client.Error(new Exception("Something went wrong."));
+```
+
+`IClientProvider.Error()` is an extension method defined on `ClientExtensions` that takes an `Exception`, not a `string`. It extracts the innermost exception's message and type name for the error display. Wrap the error message in `new Exception(...)` or pass an actual caught exception.
+
+**Found In:**
+32f27f88-9f28-4a60-85ef-0e41e317a170
 
 ## Align.End / Align.Start — CSS-inspired enum values
 
