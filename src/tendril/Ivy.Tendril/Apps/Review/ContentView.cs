@@ -308,8 +308,8 @@ public class ContentView(
                 );
             }
 
-            // Commits tab content
-            var commitsLayout = Layout.Vertical().Gap(2);
+            // Git tab content (combines commits and PRs)
+            var gitLayout = Layout.Vertical().Gap(2);
 
             var problematicCommits = planData.CommitRows
                 .Where(r => string.IsNullOrEmpty(r.Title) || r.FileCount == 0)
@@ -323,32 +323,37 @@ public class ContentView(
                         return $"`{r.ShortHash}` — commit not found or has no message";
                     return $"`{r.ShortHash}` — commit has no file changes";
                 });
-                commitsLayout |= Callout.Warning(
+                gitLayout |= Callout.Warning(
                     string.Join("\n", warnings),
                     "Potentially corrupted commits");
             }
 
-            var commitsTable = new Table(
-                new TableRow(
-                        new TableCell("Commit").IsHeader(),
-                        new TableCell("Message").IsHeader(),
-                        new TableCell("Files").IsHeader()
-                    )
-                { IsHeader = true }
-            );
-            foreach (var row in planData.CommitRows)
-                commitsTable |= new TableRow(
-                    new TableCell(new Button(row.ShortHash).Inline().OnClick(() => openCommit.Set(row.Hash))),
-                    new TableCell(row.Title),
-                    new TableCell(row.FileCount?.ToString() ?? "–")
+            if (_selectedPlan.Commits.Count > 0)
+            {
+                gitLayout |= Text.Block("Commits").Bold();
+                var commitsTable = new Table(
+                    new TableRow(
+                            new TableCell("Commit").IsHeader(),
+                            new TableCell("Message").IsHeader(),
+                            new TableCell("Files").IsHeader()
+                        )
+                    { IsHeader = true }
                 );
+                foreach (var row in planData.CommitRows)
+                    commitsTable |= new TableRow(
+                        new TableCell(new Button(row.ShortHash).Inline().OnClick(() => openCommit.Set(row.Hash))),
+                        new TableCell(row.Title),
+                        new TableCell(row.FileCount?.ToString() ?? "–")
+                    );
+                gitLayout |= commitsTable;
+            }
 
-            commitsLayout |= commitsTable;
-
-            // PRs tab content
-            object prsContent;
             if (_selectedPlan.Prs.Count > 0)
             {
+                if (_selectedPlan.Commits.Count > 0)
+                    gitLayout |= new Separator();
+
+                gitLayout |= Text.Block("Pull Requests").Bold();
                 var prsTable = new Table(
                     new TableRow(
                             new TableCell("Repository").IsHeader(),
@@ -364,12 +369,12 @@ public class ContentView(
                         new TableCell(new Button(pr).Link().OnClick(() => client.OpenUrl(prCapture)))
                     );
                 }
-
-                prsContent = prsTable;
+                gitLayout |= prsTable;
             }
-            else
+
+            if (_selectedPlan.Commits.Count == 0 && _selectedPlan.Prs.Count == 0)
             {
-                prsContent = new Empty();
+                gitLayout |= Text.Muted("No commits or pull requests yet.");
             }
 
             // Artifacts tab content
@@ -432,8 +437,7 @@ public class ContentView(
             var tabs = Layout.Tabs(
                 new Tab("Summary", Cap(summaryTabContent)),
                 new Tab("Verifications", Cap(verificationsTable)).Badge(_selectedPlan.Verifications.Count.ToString()),
-                new Tab("Commits", Cap(commitsLayout)).Badge(_selectedPlan.Commits.Count.ToString()),
-                new Tab("PRs", Cap(prsContent)).Badge(_selectedPlan.Prs.Count.ToString()),
+                new Tab("Git", Cap(gitLayout)).Badge((_selectedPlan.Commits.Count + _selectedPlan.Prs.Count).ToString()),
                 new Tab("Artifacts", Cap(artifactsLayout)).Badge(totalArtifacts.ToString()),
                 new Tab("Recommendations", Cap(recommendationsLayout)).Badge(planData.Recommendations.Count.ToString()),
                 new Tab("Plan", Cap(planTabContent))
