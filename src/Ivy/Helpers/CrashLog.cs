@@ -5,8 +5,8 @@ public static class CrashLog
     private static readonly Lazy<string> LazyPath = new(() =>
     {
         var tendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-        var logDir = !string.IsNullOrEmpty(tendrilHome) ? tendrilHome : Path.GetTempPath();
-        return Path.Combine(logDir, "crash.log");
+        var logDir = !string.IsNullOrEmpty(tendrilHome) ? tendrilHome : System.IO.Path.GetTempPath();
+        return System.IO.Path.Combine(logDir, "crash.log");
     });
 
     public static string Path => LazyPath.Value;
