@@ -1,10 +1,12 @@
 # Tendril
 
-A TUI-based agent orchestration platform for managing AI-driven development plans.
+![Tendril Logo](../assets/logo_green_w200.png)
+
+A web-based agent orchestration platform for managing AI-driven development plans.
 
 ## What is Tendril?
 
-Tendril is a terminal UI application built on [Ivy Framework](https://github.com/Ivy-Interactive/Ivy-Framework) that manages AI coding plans end-to-end. It orchestrates Claude-based agents through a structured lifecycle -- from plan creation and expansion to execution, verification, and PR generation. Tendril tracks jobs, costs, tokens, and verification results, giving you full visibility into your AI-assisted development workflow.
+Tendril is a web application built on [Ivy Framework](https://github.com/Ivy-Interactive/Ivy-Framework) that manages AI coding plans end-to-end. It orchestrates Claude-based agents through a structured lifecycle -- from plan creation and expansion to execution, verification, and PR generation. Tendril tracks jobs, costs, tokens, and verification results, giving you full visibility into your AI-assisted development workflow.
 
 ## Features
 
@@ -102,7 +104,7 @@ You can run Tendril from any directory using `npx` or by installing it globally 
 | Folder | Description |
 |---|---|
 | `Services/` | Core services -- config loading, plan reading, job management, Git/GitHub integration |
-| `Apps/` | TUI app screens -- plans list, jobs view, dashboard, review, PR creation |
+| `Apps/` | Web application screens -- plans list, jobs view, dashboard, review, PR creation |
 | `AppShell/` | Application shell and navigation |
 | `Promptwares/` | Agent promptwares for each lifecycle stage (MakePlan, ExecutePlan, etc.) |
 | `Views/` | Shared UI components and views |
