@@ -453,10 +453,8 @@ public class LayoutView : ViewBase, IStateless
             BorderRadius = _borderRadius,
             BorderStyle = _borderStyle,
             BorderThickness = _borderThickness,
-            ResponsiveWidth = _responsiveWidth,
-            ResponsiveHeight = _responsiveHeight,
-            Width = _width,
-            Height = _height
+            Width = _responsiveWidth ?? _width,
+            Height = _responsiveHeight ?? _height
         };
 
         if (_testId != null) layout.TestId = _testId;
