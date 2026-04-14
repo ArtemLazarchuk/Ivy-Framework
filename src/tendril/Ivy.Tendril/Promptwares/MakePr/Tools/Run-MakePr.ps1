@@ -198,9 +198,14 @@ if (Test-Path $worktreesDir) {
             # Tag issue as in-progress for non-yolo
             if ($issueNumber -and $issueRepo -and $prRule -ne "yolo") {
                 Write-Host "`n  [3.5] Tagging linked issue as in-progress..." -ForegroundColor Yellow
-                gh label create "tendril:in-progress" --repo $issueRepo --description "PR open, awaiting review" --color "FBCA04" --force 2>$null
-                gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:in-progress"
-                Write-Host "  Issue $issueRepo#$issueNumber tagged as in-progress" -ForegroundColor Gray
+                try {
+                    gh label create "tendril:in-progress" --repo $issueRepo --description "PR open, awaiting review" --color "FBCA04" --force 2>$null
+                    gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:in-progress"
+                    Write-Host "  Issue $issueRepo#$issueNumber tagged as in-progress" -ForegroundColor Gray
+                } catch {
+                    Write-Warning "Failed to tag issue as in-progress: $_"
+                    Write-Host "  Continuing with PR creation..." -ForegroundColor Gray
+                }
             }
 
             # Step 4: Apply PR rule
@@ -240,12 +245,17 @@ if (Test-Path $worktreesDir) {
                     # Close linked issue if exists
                     if ($issueNumber -and $issueRepo) {
                         Write-Host "`n  [4.5] Closing linked issue..." -ForegroundColor Yellow
-                        gh label create "tendril:automated" --repo $issueRepo --description "Closed automatically by Tendril" --color "0E8A16" --force 2>$null
-                        gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:automated"
-                        $comment = "Automatically closed by Tendril PR: $prUrl (Plan $planId)"
-                        gh issue comment $issueNumber --repo $issueRepo --body $comment
-                        gh issue close $issueNumber --repo $issueRepo --reason completed
-                        Write-Host "  Issue $issueRepo#$issueNumber closed" -ForegroundColor Green
+                        try {
+                            gh label create "tendril:automated" --repo $issueRepo --description "Closed automatically by Tendril" --color "0E8A16" --force 2>$null
+                            gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:automated"
+                            $comment = "Automatically closed by Tendril PR: $prUrl (Plan $planId)"
+                            gh issue comment $issueNumber --repo $issueRepo --body $comment
+                            gh issue close $issueNumber --repo $issueRepo --reason completed
+                            Write-Host "  Issue $issueRepo#$issueNumber closed" -ForegroundColor Green
+                        } catch {
+                            Write-Warning "Failed to close linked issue: $_"
+                            Write-Host "  Issue may need manual closure: $issueRepo#$issueNumber" -ForegroundColor Yellow
+                        }
                     }
 
                     # Pull default branch
