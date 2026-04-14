@@ -324,6 +324,28 @@ public class InputPrefixSuffixSlotTests
     }
 
     [Fact]
+    public void SliderInput_Prefix_AddsPrefixSlot()
+    {
+        var state = new MockState<int>(50);
+        var input = state.ToSliderInput().Prefix("$");
+
+        var slot = FindSlot(input, "Prefix");
+        Assert.NotNull(slot);
+        Assert.Equal("$", slot!.Children[0]);
+    }
+
+    [Fact]
+    public void SliderInput_Suffix_AddsSuffixSlot()
+    {
+        var state = new MockState<int>(50);
+        var input = state.ToSliderInput().Suffix("kg");
+
+        var slot = FindSlot(input, "Suffix");
+        Assert.NotNull(slot);
+        Assert.Equal("kg", slot!.Children[0]);
+    }
+
+    [Fact]
     public void NumberRangeInput_Prefix_AddsPrefixSlot()
     {
         NumberRangeInputBase input = new NumberRangeInput<int>();
