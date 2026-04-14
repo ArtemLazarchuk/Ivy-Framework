@@ -8,6 +8,14 @@
   box-sizing: border-box;
 }
 
+.ivy-devtools-overlay--selected {
+  border-style: solid;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
 .ivy-devtools-label {
   position: absolute;
   top: 0;
