@@ -13,10 +13,8 @@
 
 ## App Lifecycle in Tests
 
-- `beforeAll`: find free port via `net.createServer()`, spawn `dotnet run -- --port <port> --find-available-port`, wait for server ready
-- **Parse actual port and protocol from stdout** — Ivy prints `"Ivy is running on http(s)://localhost:<port>"`. Match with `/(https?):\/\/localhost:(\d+)/` to detect the actual port (which may differ if the requested port is busy) and protocol (HTTP on Linux, HTTPS on Windows with dev certs)
+- `beforeAll`: find free port via `net.createServer()`, spawn `dotnet run -- --port <port>`, wait for server ready
 - **Health check must accept any HTTP status** — with `UseAppShell()`, the root URL returns HTTP 500 (no default app). Accept any status `< 600` to confirm server is up, not just 200
-- **Use `shell: false` for dotnet spawn on Linux** — `shell: true` can mangle arguments. Use `shell: false` with array args
 - `afterAll`: kill the spawned process
 - `beforeEach`: navigate to `http://localhost:<port>`
 - Use `cwd: process.cwd().replace(/[/\\]\.ivy[/\\]tests$/, "")` to resolve project root from test dir

@@ -606,37 +606,6 @@ When passing structured children to widgets:
 ✅ **`products.ToTable().Header(p => p.Name, "Name")`** — always provide the display label
 📝 **Why**: `TableBuilder<T>.Header(Expression<Func<T, object>>, string)` has `label` as a required parameter, not optional. Unlike DataTable which auto-derives column names, the simple Table widget requires explicit labels.
 
-## No CssClass / ClassName API on Widgets
-
-### Widgets have no method to apply arbitrary CSS classes
-❌ **`new Box(...).CssClass("my-class")`** — CS1061, no `CssClass` method on `Box` or any widget
-❌ **`new Box(...).ClassName("my-class")`** — does not exist
-✅ **Use strongly-typed style properties**: `Background`, `BorderColor`, `Padding`, `Margin`, etc.
-✅ **For CSS class testing**: verify utility classes exist via `page.evaluate()` inspecting stylesheets, or apply via `Html` widget
-📝 **Why**: Ivy's widget system uses strongly-typed properties for styling, not arbitrary CSS classes. `AbstractWidget`, `WidgetBase`, and `Box` have no CSS class property. The CSS utility classes (e.g., `.shadow-box`, `.rounded-box`) are consumed by frontend React components, not applied from C# code.
-
-## UseTheme is on Server, Not ViewBase
-
-### Runtime theme changes require IThemeService + IClientProvider
-❌ **`UseTheme(new Theme { ... })`** from `ViewBase.Build()` — CS0103, `UseTheme` does not exist on ViewBase
-✅ **Server-level**: `server.UseTheme(theme => { ... })` in `Program.cs`
-✅ **Runtime from ViewBase**: Use `UseService<IThemeService>()` + `UseService<IClientProvider>()`:
-```csharp
-var themeService = UseService<IThemeService>();
-var client = UseService<IClientProvider>();
-themeService.SetTheme(new Theme { ShadowBoxes = false });
-client.ApplyTheme(themeService.GenerateThemeCss());
-```
-📝 **Why**: `UseTheme()` is a fluent method on the `Server` class for startup configuration. At runtime, `IThemeService.SetTheme()` updates the theme and `GenerateThemeCss()` produces the CSS string, which `IClientProvider.ApplyTheme()` pushes to the frontend.
-
-## Ivy Server May Use HTTP (Not Always HTTPS)
-
-### Server protocol depends on environment configuration
-❌ **Always assuming `https://localhost:<port>`** — in some environments (Linux, CI, worktrees), Ivy may bind to HTTP only
-✅ **Parse the actual URL from server stdout**: Match `(https?):\/\/localhost:(\d+)` from the "Ivy is running on..." message
-✅ **Use `ignoreHTTPSErrors: true`** in Playwright config regardless — handles both protocols
-📝 **Why**: Ivy's default HTTPS behavior depends on dev certificates being available. On Linux or in worktree builds, the server may fall back to HTTP. Always detect the protocol from server output rather than assuming HTTPS.
-
 ## Future Gotchas
 
 As we encounter more issues, add them with:
