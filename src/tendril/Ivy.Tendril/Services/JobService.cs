@@ -160,7 +160,7 @@ public class JobService : IJobService
         {
             var success = exitCode == 0;
             if (!success)
-                job.StatusMessage ??= ExtractFailureReason(job.OutputLines.ToList());
+                job.StatusMessage ??= ExtractFailureReason(job.OutputLines.ToList(), job.Type);
             else
                 job.StatusMessage = null;
             job.Status = success ? JobStatus.Completed : JobStatus.Failed;
@@ -1017,12 +1017,41 @@ public class JobService : IJobService
         return Convert.ToBase64String(bytes);
     }
 
-    internal static string ExtractFailureReason(List<string> outputLines)
+    internal static string ExtractFailureReason(List<string> outputLines, string jobType)
     {
         if (outputLines.Count == 0)
             return "Unknown error (exit code non-zero)";
 
-        // Search from end for stderr lines
+        // 1. Check for PowerShell terminating errors
+        var psError = FindPattern(outputLines, new[] {
+            @"At line:\d+",
+            @"CategoryInfo\s+:",
+            @"TerminatingError\(",
+            @"ScriptHalted",
+            @"^\s*\+\s+CategoryInfo",  // PowerShell error location marker
+        });
+        if (psError != null) return psError;
+
+        // 2. Check for Claude API errors (from JSON stream)
+        var apiError = FindPattern(outputLines, new[] {
+            @"""type"":\s*""error""",
+            @"""error"":\s*\{",
+            @"rate_limit_error",
+            @"overloaded_error",
+            @"authentication_error",
+        });
+        if (apiError != null) return ParseClaudeApiError(apiError);
+
+        // 3. Check for validation/assertion failures (from MakePlan/ExecutePlan)
+        var validationError = FindPattern(outputLines, new[] {
+            @"validation\s+failed",
+            @"assertion\s+failed",
+            @"Repository path does not exist",
+            @"\[stderr\].*ERROR:",
+        });
+        if (validationError != null) return validationError;
+
+        // 4. Search from end for stderr lines (existing logic)
         var stderrLines = new List<string>();
         for (var i = outputLines.Count - 1; i >= 0 && stderrLines.Count < 3; i--)
         {
@@ -1030,37 +1059,68 @@ public class JobService : IJobService
             if (line.StartsWith("[stderr] "))
             {
                 var content = line["[stderr] ".Length..].Trim();
-                if (content.Length > 0)
+                if (content.Length > 0 && !IsProgressMessage(content))
                     stderrLines.Insert(0, content);
             }
         }
 
-        string reason;
         if (stderrLines.Count > 0)
+            return SanitizeForDisplay(string.Join(" | ", stderrLines));
+
+        // 5. Fall back to last non-progress line
+        for (var i = outputLines.Count - 1; i >= 0; i--)
         {
-            reason = string.Join(" | ", stderrLines);
+            var trimmed = outputLines[i].Trim();
+            if (trimmed.Length > 0 && !IsProgressMessage(trimmed))
+                return SanitizeForDisplay(trimmed);
         }
-        else
+
+        return "Unknown error (exit code non-zero)";
+    }
+
+    private static bool IsProgressMessage(string line)
+    {
+        // Filter out common progress indicators that aren't errors
+        var progressPatterns = new[] {
+            "Creating Plan", "Executing Plan", "Building", "Researching",
+            "Reading", "Analyzing", "Writing", "Searching",
+            @"^\d+%", @"^\[.*\]\s+(Starting|Running|Completed)",
+        };
+
+        return progressPatterns.Any(p => Regex.IsMatch(line, p, RegexOptions.IgnoreCase));
+    }
+
+    private static string? FindPattern(List<string> lines, string[] patterns)
+    {
+        for (var i = lines.Count - 1; i >= Math.Max(0, lines.Count - 50); i--)
         {
-            // Fall back to last non-empty output line
-            reason = "";
-            for (var i = outputLines.Count - 1; i >= 0; i--)
+            foreach (var pattern in patterns)
             {
-                var trimmed = outputLines[i].Trim();
-                if (trimmed.Length > 0)
+                if (Regex.IsMatch(lines[i], pattern, RegexOptions.IgnoreCase))
                 {
-                    reason = trimmed;
-                    break;
+                    // Return context: 2 lines before + matching line + 1 line after
+                    var start = Math.Max(0, i - 2);
+                    var end = Math.Min(lines.Count - 1, i + 1);
+                    var context = string.Join(" | ", lines.Skip(start).Take(end - start + 1));
+                    return SanitizeForDisplay(context);
                 }
             }
-
-            if (reason.Length == 0)
-                return "Unknown error (exit code non-zero)";
         }
+        return null;
+    }
 
-        reason = SanitizeForDisplay(reason);
+    private static string ParseClaudeApiError(string jsonErrorLine)
+    {
+        try
+        {
+            // Extract error message from Claude API JSON response
+            var match = Regex.Match(jsonErrorLine, @"""message"":\s*""([^""]+)""");
+            if (match.Success)
+                return $"Claude API: {match.Groups[1].Value}";
+        }
+        catch { }
 
-        return reason.Length > 200 ? reason[..200] + "..." : reason;
+        return "Claude API error (see output for details)";
     }
 
     internal static string SanitizeForDisplay(string text)
@@ -1485,17 +1545,27 @@ public class JobService : IJobService
 
             _planReaderService.AddLog(job.PlanFile, job.Type, logContent);
 
-            // Persist raw output for failed/timeout jobs
+            // Persist raw output for failed/timeout jobs (INCLUDING MakePlan)
             if (job.Status is JobStatus.Failed or JobStatus.Timeout && job.OutputLines.Count > 0)
             {
                 var planFolder = job.Args.Length > 0 ? job.Args[0] : null;
-                if (planFolder != null && Directory.Exists(planFolder))
+
+                // For MakePlan jobs without a plan folder yet, use TENDRIL_HOME/Logs
+                if (string.IsNullOrEmpty(planFolder) || !Directory.Exists(planFolder))
                 {
-                    var logsDir = Path.Combine(planFolder, "logs");
-                    Directory.CreateDirectory(logsDir);
-                    var outputFile = Path.Combine(logsDir, $"{job.Type}-{job.Id}.output.log");
-                    File.WriteAllLines(outputFile, job.OutputLines);
+                    var logRoot = Path.Combine(
+                        Environment.GetEnvironmentVariable("TENDRIL_HOME") ?? ".",
+                        "Logs", "Jobs");
+                    Directory.CreateDirectory(logRoot);
+                    planFolder = logRoot;
                 }
+
+                var logsDir = Path.Combine(planFolder, "logs");
+                Directory.CreateDirectory(logsDir);
+                var outputFile = Path.Combine(logsDir, $"{job.Type}-{job.Id}.output.log");
+                File.WriteAllLines(outputFile, job.OutputLines);
+
+                job.EnqueueOutput($"[Tendril] Full output saved to: {outputFile}");
             }
         }
         catch

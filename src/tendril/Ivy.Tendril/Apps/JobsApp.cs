@@ -133,7 +133,10 @@ public class JobsApp : ViewBase
                 Tokens = j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : "",
                 LastOutput = FormatLastOutput(j),
                 LastOutputTimestamp = j.LastOutputAt,
-                StatusMessage = GetStatusMessage(j)
+                StatusMessage = GetStatusMessage(j),
+                ErrorContext = j.Status is JobStatus.Failed or JobStatus.Timeout
+                    ? GetErrorContext(j)
+                    : null
             };
         })
             .OrderBy(r => r.Id)
@@ -200,8 +203,14 @@ public class JobsApp : ViewBase
                 BadgeColorMapping = projectColors
             })
             .Renderer(t => t.PlanId, new LinkDisplayRenderer())
+            .Renderer(t => t.StatusMessage, new TextDisplayRenderer
+            {
+                TooltipColumn = nameof(JobItemRow.ErrorContext),
+                TruncateAt = 200
+            })
             .Hidden(t => t.Id)
             .Hidden(t => t.LastOutputTimestamp)
+            .Hidden(t => t.ErrorContext)
             .Filterable(t => t.Timer, false)
             .Filterable(t => t.LastOutput, false)
             .Config(c =>
@@ -235,6 +244,18 @@ public class JobsApp : ViewBase
                     var id = e.Value.RowId?.ToString();
                     if (!string.IsNullOrEmpty(id))
                         showOutput.Set(id);
+                }
+                else if (e.Value.ColumnName == "StatusMessage")
+                {
+                    var id = e.Value.RowId?.ToString();
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        var job = jobs.FirstOrDefault(j => j.Id == id);
+                        if (job?.Status is JobStatus.Failed or JobStatus.Timeout)
+                        {
+                            showOutput.Set(id);  // Open output sheet for failed jobs
+                        }
+                    }
                 }
 
                 return ValueTask.CompletedTask;
@@ -524,6 +545,21 @@ public class JobsApp : ViewBase
             JobStatus.Stopped => "Job was manually stopped",
             _ => ""
         };
+    }
+
+    private static string? GetErrorContext(JobItem job)
+    {
+        if (job.OutputLines.Count == 0) return null;
+
+        // Return last 10 non-empty lines for detailed error view
+        var context = job.OutputLines
+            .Reverse()
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Take(10)
+            .Reverse()
+            .Select(line => JobService.SanitizeForDisplay(line));
+
+        return string.Join("\n", context);
     }
 
     private static Colors GetStatusColor(JobStatus status)

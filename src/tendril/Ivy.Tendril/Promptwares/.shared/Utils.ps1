@@ -853,3 +853,38 @@ function LogPlanCost {
 
     Add-Content -Path $costsFile -Value $yamlEntry -Encoding UTF8
 }
+
+<#
+.SYNOPSIS
+Writes a structured error message that can be parsed by JobService for better failure reporting.
+
+.PARAMETER Message
+The main error message describing what went wrong.
+
+.PARAMETER Category
+Optional category for the error (e.g., "PlanCreationError", "ValidationError").
+
+.PARAMETER Details
+Optional additional details about the error.
+
+.EXAMPLE
+Write-TendrilError -Message "Failed to create plan" -Category "PlanCreationError" -Details $_.Exception.Message
+#>
+function Write-TendrilError {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
+        [string]$Category = "UnknownError",
+        [string]$Details = ""
+    )
+
+    # Write to stderr with structured format for easy parsing
+    [Console]::Error.WriteLine("[TENDRIL_ERROR] Category: $Category")
+    [Console]::Error.WriteLine("[TENDRIL_ERROR] Message: $Message")
+    if ($Details) {
+        [Console]::Error.WriteLine("[TENDRIL_ERROR] Details: $Details")
+    }
+
+    # Also write a user-friendly version to stdout
+    Write-Error $Message -ErrorAction Continue
+}
