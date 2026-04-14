@@ -135,7 +135,7 @@ public class JobServiceThreadSafetyTests
     }
 
     [Fact]
-    public void GetJobs_CalledConcurrentlyWithModifications_DoesNotThrowInvalidOperationException()
+    public async Task GetJobs_CalledConcurrentlyWithModifications_DoesNotThrowInvalidOperationException()
     {
         var service = new JobService(
             TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10),
@@ -178,7 +178,7 @@ public class JobServiceThreadSafetyTests
             }
         });
 
-        Task.WaitAll(enumerateTask, modifyTask);
+        await Task.WhenAll(enumerateTask, modifyTask);
 
         // Should complete without any InvalidOperationException
         Assert.Empty(exceptions);
