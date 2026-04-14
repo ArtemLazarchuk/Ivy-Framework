@@ -97,6 +97,7 @@ public class Server
     private Action<HtmlPipeline>? _pipelineConfigurator;
     private ManifestOptions? _manifestOptions;
     private ServerArgs _args;
+    private bool _presetsLoaded;
 
     public Server(ServerArgs? args = null)
     {
@@ -175,6 +176,7 @@ public class Server
 
     public void AddConnectionsFromAssembly(Assembly? assembly = null)
     {
+        _presetsLoaded = true;
         assembly ??= Assembly.GetEntryAssembly();
 
         var connections = assembly!.GetLoadableTypes()
@@ -206,6 +208,12 @@ public class Server
         {
             connection.RegisterServices(this);
         }
+    }
+
+    private void EnsurePresetsLoaded()
+    {
+        if (_presetsLoaded) return;
+        AddConnectionsFromAssembly();
     }
 
     public AppDescriptor GetApp(string id)
@@ -925,6 +933,11 @@ public class Server
             var description = ServerDescription.Gather(this, app.Services);
             Console.WriteLine(description.ToYaml());
             return;
+        }
+
+        if (_args.DescribeConnection != null || _args.TestConnection != null)
+        {
+            EnsurePresetsLoaded();
         }
 
         if (_args.DescribeConnection != null)
