@@ -172,7 +172,8 @@ public class DashboardApp : ViewBase
             .Measure(costMeasureName, e => e.Sum(f => (double)f.Cost))
             .Measure(tokensMeasureName, e => e.Sum(f => (double)f.Tokens))
             .Height(Size.Px(350))
-            .Width(Size.Full());
+            .Width(Size.Full())
+            .Tooltip();
 
         var content = Layout.Vertical().Gap(2)
                       | dataTable
