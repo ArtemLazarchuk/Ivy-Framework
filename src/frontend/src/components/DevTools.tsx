@@ -191,7 +191,6 @@ export function DevTools() {
       if (target.closest(".ivy-devtools")) return;
 
       e.stopPropagation();
-      e.stopPropagation();
 
       const currentIndex = widgetStack.findIndex((el) => el === highlightedWidget?.element);
       if (currentIndex === -1) return;

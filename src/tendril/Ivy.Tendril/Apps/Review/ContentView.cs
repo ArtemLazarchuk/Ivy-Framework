@@ -448,8 +448,27 @@ public class ContentView(
             else
                 foreach (var rec in planData.Recommendations)
                 {
+                    var titleRow = Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                                   | Text.Block(rec.Title).Bold();
+
+                    if (rec.Impact is { } impact)
+                        titleRow |= new Badge($"Impact: {impact}").Variant(impact switch
+                        {
+                            "High" => BadgeVariant.Success,
+                            "Medium" => BadgeVariant.Warning,
+                            _ => BadgeVariant.Outline
+                        });
+
+                    if (rec.Risk is { } risk)
+                        titleRow |= new Badge($"Risk: {risk}").Variant(risk switch
+                        {
+                            "High" => BadgeVariant.Destructive,
+                            "Medium" => BadgeVariant.Warning,
+                            _ => BadgeVariant.Success
+                        });
+
                     var card = Layout.Vertical().Gap(1)
-                               | Text.Block(rec.Title).Bold()
+                               | titleRow
                                | new Markdown(rec.Description).DangerouslyAllowLocalFiles();
                     recommendationsLayout |= card;
                     recommendationsLayout |= new Separator();

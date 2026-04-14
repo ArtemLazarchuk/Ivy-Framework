@@ -24,6 +24,7 @@ public class PlanYaml
     public List<string> DependsOn { get; set; } = new();
     [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
     public int Priority { get; set; }
+    public string? ExecutionProfile { get; set; }
     public string? InitialPrompt { get; set; }
     public string? SourceUrl { get; set; }
 }

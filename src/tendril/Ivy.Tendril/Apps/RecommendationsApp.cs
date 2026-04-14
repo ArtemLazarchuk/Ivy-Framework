@@ -13,6 +13,8 @@ public class RecommendationsApp : ViewBase
         var refreshToken = UseRefreshToken();
         var selectedState = UseState<Recommendation?>(null);
         var projectFilter = UseState<string?>(null);
+        var impactFilter = UseState<string?>(null);
+        var riskFilter = UseState<string?>(null);
         var textFilter = UseState<string?>("");
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromMinutes(1));
@@ -23,6 +25,8 @@ public class RecommendationsApp : ViewBase
 
         var filtered = allPending
             .Where(r => projectFilter.Value == null || r.Project == projectFilter.Value)
+            .Where(r => impactFilter.Value == null || r.Impact == impactFilter.Value)
+            .Where(r => riskFilter.Value == null || r.Risk == riskFilter.Value)
             .Where(r =>
             {
                 if (string.IsNullOrWhiteSpace(textFilter.Value)) return true;
@@ -47,12 +51,16 @@ public class RecommendationsApp : ViewBase
         }
 
         var totalPendingCount = allPending.Count;
-        var hasActiveFilters = projectFilter.Value != null || !string.IsNullOrWhiteSpace(textFilter.Value);
+        var hasActiveFilters = projectFilter.Value != null ||
+                               impactFilter.Value != null || riskFilter.Value != null ||
+                               !string.IsNullOrWhiteSpace(textFilter.Value);
 
         var sidebar = new SidebarView(
             allPending,
             selectedState,
             projectFilter,
+            impactFilter,
+            riskFilter,
             totalPendingCount,
             hasActiveFilters,
             textFilter

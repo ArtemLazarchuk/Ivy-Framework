@@ -317,6 +317,47 @@ public class DatabaseMigratorTests : IDisposable
         Assert.Equal(0.50m, result);
     }
 
+    [Fact]
+    public void Migration_010_RecommendationImpactRisk_AddsColumns()
+    {
+        new Migration_001_InitialSchema().Apply(_connection);
+        new Migration_002_Fts5Search().Apply(_connection);
+        new Migration_003_JobsTable().Apply(_connection);
+        new Migration_004_SourceUrl().Apply(_connection);
+        new Migration_005_CostsLogTimestampIndex().Apply(_connection);
+        new Migration_006_CostsCompositeIndex().Apply(_connection);
+        new Migration_007_FtsSourceUrl().Apply(_connection);
+        new Migration_008_PrStatusTable().Apply(_connection);
+        new Migration_009_JobsArgs().Apply(_connection);
+        new Migration_010_RecommendationImpactRisk().Apply(_connection);
+
+        Assert.Equal(10, GetUserVersion());
+
+        using var insertCmd = _connection.CreateCommand();
+        insertCmd.CommandText = """
+            INSERT INTO Plans (Id, Title, Project, Level, State, FolderPath, FolderName,
+                               YamlRaw, RevisionCount, LatestRevisionContent, Created, Updated)
+            VALUES (1, 'Test', 'Tendril', 'NiceToHave', 'Draft', '/test', 'test',
+                    'yaml', 1, 'content', '2026-01-01', '2026-01-01')
+            """;
+        insertCmd.ExecuteNonQuery();
+
+        using var recCmd = _connection.CreateCommand();
+        recCmd.CommandText = """
+            INSERT INTO Recommendations (PlanId, Title, Description, State, PlanTitle,
+                                         PlanFolderName, Project, Date, SourcePlanStatus, Impact, Risk)
+            VALUES (1, 'Test Rec', 'Desc', 'Pending', 'Test', 'test', 'Tendril', '2026-01-01', 'Draft', 'High', 'Small')
+            """;
+        recCmd.ExecuteNonQuery();
+
+        using var selectCmd = _connection.CreateCommand();
+        selectCmd.CommandText = "SELECT Impact, Risk FROM Recommendations WHERE PlanId = 1;";
+        using var reader = selectCmd.ExecuteReader();
+        Assert.True(reader.Read());
+        Assert.Equal("High", reader.GetString(0));
+        Assert.Equal("Small", reader.GetString(1));
+    }
+
     private class FakeMigration : IMigration
     {
         private readonly List<int>? _tracker;
