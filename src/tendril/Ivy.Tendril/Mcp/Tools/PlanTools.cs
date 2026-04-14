@@ -15,6 +15,10 @@ public sealed class PlanTools
         .IgnoreUnmatchedProperties()
         .Build();
 
+    private static readonly ISerializer YamlSerializer = new SerializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .Build();
+
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
 
     [McpServerTool(Name = "tendril_get_plan"), Description("Fetch plan metadata by ID or folder path")]
@@ -134,6 +138,56 @@ public sealed class PlanTools
         return $"Plan submitted to inbox: {fileName}\nThe InboxWatcher will pick it up and create a plan automatically.";
     }
 
+    [McpServerTool(Name = "tendril_transition_plan"), Description("Transition a plan to a different state")]
+    public static string TransitionPlan(
+        [Description("Plan ID (e.g., '03228') or full folder path")] string planId,
+        [Description("Target state: Draft, Building, Updating, Executing, Completed, Failed, ReadyForReview, Skipped, Icebox, Blocked")] string targetState)
+    {
+        var plansDir = GetPlansDirectory();
+        if (plansDir == null)
+            return "Error: TENDRIL_HOME is not set.";
+
+        var planFolder = ResolvePlanFolder(plansDir, planId);
+        if (planFolder == null)
+            return $"Error: Plan '{planId}' not found.";
+
+        // Validate target state
+        var validStates = new[] { "Draft", "Building", "Updating", "Executing", "Completed",
+                                  "Failed", "ReadyForReview", "Skipped", "Icebox", "Blocked" };
+        if (!validStates.Contains(targetState, StringComparer.OrdinalIgnoreCase))
+            return $"Error: Invalid state '{targetState}'. Valid states: {string.Join(", ", validStates)}";
+
+        // Read current plan.yaml
+        var planYamlPath = Path.Combine(planFolder, "plan.yaml");
+        if (!File.Exists(planYamlPath))
+            return $"Error: plan.yaml not found in {planFolder}";
+
+        try
+        {
+            var yaml = File.ReadAllText(planYamlPath);
+            var planYaml = YamlDeserializer.Deserialize<PlanYamlDto>(yaml);
+            if (planYaml == null)
+                return "Error: Failed to parse plan.yaml";
+
+            var oldState = planYaml.State;
+
+            // Update state and timestamp
+            planYaml.State = validStates.First(s => s.Equals(targetState, StringComparison.OrdinalIgnoreCase));
+            planYaml.Updated = DateTime.UtcNow;
+
+            // Serialize and write back
+            var updatedYaml = YamlSerializer.Serialize(planYaml);
+            File.WriteAllText(planYamlPath, updatedYaml);
+
+            var folderName = Path.GetFileName(planFolder);
+            return $"Successfully transitioned plan {folderName} from {oldState} to {planYaml.State}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: Failed to update plan state: {ex.Message}";
+        }
+    }
+
     private static string? GetTendrilHome()
     {
         var home = Environment.GetEnvironmentVariable("TENDRIL_HOME")?.Trim();
@@ -247,7 +301,17 @@ public sealed class PlanTools
         public DateTime Updated { get; set; }
         public string? InitialPrompt { get; set; }
         public string? SourceUrl { get; set; }
+        public string? SessionId { get; set; }
         public List<string>? DependsOn { get; set; }
         public List<string>? RelatedPlans { get; set; }
+        public List<VerificationEntry>? Verifications { get; set; }
+        public int Priority { get; set; }
+        public string? ExecutionProfile { get; set; }
+    }
+
+    internal class VerificationEntry
+    {
+        public string Name { get; set; } = "";
+        public string Status { get; set; } = "Pending";
     }
 }
