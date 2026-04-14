@@ -152,6 +152,7 @@ public class DashboardApp : ViewBase
                 style: BarChartStyles.Default,
                 polish: chart => chart with
                 {
+                    Tooltip = new ChartTooltip(),
                     Bars =
                     [
                         new Bar(costMeasureName).Radius(0).YAxisIndex(0),
@@ -172,8 +173,7 @@ public class DashboardApp : ViewBase
             .Measure(costMeasureName, e => e.Sum(f => (double)f.Cost))
             .Measure(tokensMeasureName, e => e.Sum(f => (double)f.Tokens))
             .Height(Size.Px(350))
-            .Width(Size.Full())
-            .Tooltip();
+            .Width(Size.Full());
 
         var content = Layout.Vertical().Gap(2)
                       | dataTable
