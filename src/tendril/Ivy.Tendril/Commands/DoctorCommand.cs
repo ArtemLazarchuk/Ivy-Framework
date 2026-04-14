@@ -483,7 +483,9 @@ public static class DoctorCommand
             return 1;
         }
 
-        var plansDir = Path.Combine(tendrilHome, "Plans");
+        var plansDir = Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim() is { Length: > 0 } plans
+            ? plans
+            : Path.Combine(tendrilHome, "Plans");
         if (!Directory.Exists(plansDir))
         {
             Console.Error.WriteLine($"Plans directory not found: {plansDir}");
@@ -810,6 +812,35 @@ public static class DoctorCommand
                         File.WriteAllText(recsPath, repaired);
                         repairs.Add("repaired recommendations.yaml");
                     }
+                }
+            }
+
+            if (healthResult.Health.Contains("StaleWorktree"))
+            {
+                var worktreesPath = Path.Combine(planPath, "worktrees");
+                if (Directory.Exists(worktreesPath))
+                {
+                    foreach (var wtDir in Directory.GetDirectories(worktreesPath))
+                    {
+                        if (!File.Exists(Path.Combine(wtDir, ".git")))
+                            Directory.Delete(wtDir, true);
+                    }
+                    repairs.Add("removed stale worktrees");
+                }
+            }
+
+            if (healthResult.Health.Contains("NestedWorktree"))
+            {
+                var worktreesPath = Path.Combine(planPath, "worktrees");
+                if (Directory.Exists(worktreesPath))
+                {
+                    foreach (var wtDir in Directory.GetDirectories(worktreesPath))
+                    {
+                        var plansSubDir = Path.Combine(wtDir, "Plans");
+                        if (Directory.Exists(plansSubDir))
+                            Directory.Delete(plansSubDir, true);
+                    }
+                    repairs.Add("cleaned nested worktrees");
                 }
             }
 

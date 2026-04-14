@@ -56,6 +56,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     config,
     columnOrder,
     density,
+    activeSort,
     getRowData,
     arrowTableRef,
     loadMoreData,
@@ -212,6 +213,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     columnWidths,
     showGroups: showGroups ?? false,
     showColumnTypeIcons: showColumnTypeIcons ?? true,
+    activeSort,
   });
 
   const orderedDataColumns = useMemo(

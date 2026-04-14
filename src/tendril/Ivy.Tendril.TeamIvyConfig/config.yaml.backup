@@ -1,6 +1,7 @@
 codingAgent: claude
 jobTimeout: 30
 staleOutputTimeout: 10
+gitTimeout: 10
 maxConcurrentJobs: 30
 projects:
 - name: Framework
@@ -11,6 +12,7 @@ projects:
   - &o5
     path: D:\Repos\_Ivy\Ivy-Framework
     prRule: yolo
+    baseBranch: development
   verifications:
   - &o0
     name: DotnetBuild
@@ -57,9 +59,11 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent
     prRule: yolo
+    baseBranch: development
   - &o4
     path: D:\Repos\_Ivy\Ivy
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -85,8 +89,10 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Studio
     prRule: yolo
+    baseBranch: development
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Manager
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -141,7 +147,13 @@ projects:
   - *o3
   context: >
     Plan management TUI. Key folders: - Services\ — ConfigService, PlanReaderService, JobService - Apps\ — PlansApp, JobsApp UI - Promptwares\ — MakePlan, UpdatePlan, SplitPlan, ExpandPlan This project uses the Ivy Framework - there's CLI helper methods you can use:  ivy docs AGENTS.md  ivy question "How do I make a button in Ivy?"
-  reviewActions: []
+  reviewActions:
+  - name: Tendril
+    condition: Test-Path "worktrees\Ivy-Framework\src\tendril\Ivy.Tendril"
+    action: dotnet run --project worktrees\Ivy-Framework\src\tendril\Ivy.Tendril
+  - name: Docs
+    condition: Test-Path "worktrees\Ivy-Framework\src\tendril\Ivy.Tendril.Docs"
+    action: dotnet run --project worktrees\Ivy-Framework\src\tendril\Ivy.Tendril.Docs --browse --find-available-port
   hooks:
   - name: SlackNotify
     when: after
@@ -158,6 +170,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Mcp
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -182,6 +195,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Services
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -211,6 +225,30 @@ projects:
     action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
   repoPaths:
   - D:\Repos\_Ivy\Ivy-Services
+- name: PerformanceAnalyzer
+  color: Violet
+  meta:
+    slackEmoji: ':chart_with_upwards_trend:'
+  repos:
+  - path: D:\Repos\_Ivy\PerformanceAnalyzer
+    prRule: yolo
+  verifications:
+  - *o0
+  - *o1
+  - *o2
+  - *o3
+  context: >
+    PerformanceAnalyzer — Ivy app for tracking Ivy employee performance on GitHub.
+  reviewActions: []
+  hooks:
+  - name: SlackNotify
+    when: after
+    promptwares:
+    - MakePr
+    condition: ''
+    action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
+  repoPaths:
+  - D:\Repos\_Ivy\PerformanceAnalyzer
 verifications:
 - name: DotnetBuild
   prompt: Run `dotnet build --warnaserror` in the plan's worktree directory (not the original repo) and verify it succeeds with zero errors and zero warnings.

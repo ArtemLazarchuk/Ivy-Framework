@@ -188,7 +188,7 @@ public class PlanReaderService(
             var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
             planYaml.State = newState.ToString();
             planYaml.Updated = DateTime.UtcNow;
-            FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+            FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
         });
     }
 
@@ -226,7 +226,7 @@ public class PlanReaderService(
                 var yaml = FileHelper.ReadAllText(planYamlPath);
                 var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                 planYaml.Updated = DateTime.UtcNow;
-                FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+                FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
             }
         });
     }
@@ -390,7 +390,7 @@ public class PlanReaderService(
                     var yaml = FileHelper.ReadAllText(planYamlPath);
                     var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                     planYaml.Updated = DateTime.UtcNow;
-                    FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+                    FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
                 }
             }
         });
@@ -705,7 +705,7 @@ public class PlanReaderService(
             "state", "project", "level", "title", "sessionId",
             "repos", "created", "updated", "initialPrompt", "sourceUrl",
             "prs", "commits", "verifications", "relatedPlans", "dependsOn",
-            "priority"
+            "priority", "executionProfile"
         };
         var listKeys = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -1043,6 +1043,13 @@ public class PlanReaderService(
 
         var planId = WorktreeLifecycleLogger.ExtractPlanId(planFolderPath);
 
+        // Extract safe title from plan folder name for branch deletion
+        var planFolderName = Path.GetFileName(planFolderPath);
+        var safeTitle = planFolderName.Length > 6 && planFolderName[5] == '-'
+            ? planFolderName.Substring(6)
+            : "Unknown";
+        var branchName = $"tendril/{planId}-{safeTitle}";
+
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
         {
             var gitFile = Path.Combine(wtDir, ".git");
@@ -1094,6 +1101,26 @@ public class PlanReaderService(
                 using var process = Process.Start(psi);
                 process.WaitForExitOrKill(10000);
                 lifecycleLogger?.LogCleanupSuccess(planId, wtDir);
+
+                // Delete the associated git branch
+                try
+                {
+                    var branchPsi = new ProcessStartInfo("git", $"branch -D \"{branchName}\"")
+                    {
+                        WorkingDirectory = repoRoot,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var branchProcess = Process.Start(branchPsi);
+                    branchProcess.WaitForExitOrKill(10000);
+                    logger?.LogInformation("Deleted branch {BranchName} for worktree {WorktreeDir}", branchName, Path.GetFileName(wtDir));
+                }
+                catch (Exception branchEx)
+                {
+                    logger?.LogWarning(branchEx, "Failed to delete branch {BranchName} for worktree {WorktreeDir}", branchName, Path.GetFileName(wtDir));
+                }
             }
             catch (Exception ex)
             {
@@ -1276,7 +1303,9 @@ public class PlanReaderService(
                         plan.Project ?? "",
                         plan.Updated,
                         status,
-                        item.DeclineReason
+                        item.DeclineReason,
+                        item.Impact,
+                        item.Risk
                     ));
             }
             catch (Exception ex)
@@ -1424,5 +1453,7 @@ public record Recommendation(
     string Project,
     DateTime Date,
     PlanStatus SourcePlanStatus,
-    string? DeclineReason = null
+    string? DeclineReason = null,
+    string? Impact = null,
+    string? Risk = null
 );

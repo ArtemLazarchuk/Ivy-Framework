@@ -219,7 +219,10 @@ fi
 For each repo listed in `plan.yaml` `repos` (or the project's repos from `config.yaml` if empty):
 
 1. Fetch latest from remote: `git fetch origin`
-2. Detect the default branch: `git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'` (usually `master` or `main`)
+2. Determine the base branch:
+   - Check the `RepoConfigs` firmware header for this repo's `baseBranch` value
+   - If configured, use that value as the base branch
+   - Otherwise, auto-detect via: `git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`
 3. If the worktree or branch already exists from a prior execution, remove it first. A prior run may have left a **stale directory** (the filesystem tree still exists but git no longer tracks it as a worktree — there's no `.git` file at the worktree root). In that case `git worktree remove` will fail with "is not a working tree"; you must also `rm -rf` the directory. **Do all three unconditionally** so the next `git worktree add` starts from a clean slate:
 
 ```bash
@@ -244,7 +247,7 @@ PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
 PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
 SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
 BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
-git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "$BRANCH_NAME" "origin/<default-branch>"
+git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "$BRANCH_NAME" "origin/<resolved-base-branch>"
 ```
 
 Example:
@@ -252,10 +255,19 @@ Example:
 ```bash
 cd <RepoPath>
 git fetch origin
-git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "tendril/<PlanId>-<SafeTitle>" origin/master
+git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "tendril/<PlanId>-<SafeTitle>" origin/<resolved-base-branch>
 ```
 
-**Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.
+**Important:** Always branch from `origin/<resolved-base-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work. The `<resolved-base-branch>` comes from either the `RepoConfigs` firmware header (if `baseBranch` is configured) or auto-detection.
+
+**Note on `RepoConfigs`:** The firmware header may include a `RepoConfigs` value injected by ExecutePlan.ps1. It contains per-repo configuration from `config.yaml`:
+```yaml
+RepoConfigs: |
+  Ivy-Framework:
+    baseBranch: develop
+    syncStrategy: rebase
+```
+If `baseBranch` is present for a repo, use it instead of auto-detecting. If absent, fall back to `git symbolic-ref refs/remotes/origin/HEAD`.
 
 4. After creating the worktree, **verify the `.git` file exists** and fail fast if it's missing:
 
@@ -280,6 +292,33 @@ pwsh -NoProfile -Command '& "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Log
 ```
 
 This creates a structured log entry in `$TENDRIL_HOME/Logs/worktrees.log` recording the worktree creation with repo path and branch metadata. Logging only happens after successful `.git` file verification (Step 2.4), ensuring only successfully created worktrees are recorded.
+
+6. **Apply sync strategy** — REQUIRED after worktree creation and `.git` file verification:
+
+   ```bash
+   SYNC_STRATEGY="<from RepoConfigs or 'fetch' if not specified>"
+   BASE_BRANCH="<resolved-base-branch>"
+   WORKTREE_PATH="<PlanFolder>/worktrees/<repo-folder-name>"
+
+   pwsh -NoProfile -File "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Apply-SyncStrategy.ps1" \
+     -WorktreePath "$WORKTREE_PATH" \
+     -SyncStrategy "$SYNC_STRATEGY" \
+     -BaseBranch "$BASE_BRANCH"
+   ```
+
+   This tool applies the configured sync strategy (fetch/rebase/merge) to keep the worktree branch synchronized with the base branch. It handles errors and logs each step.
+
+   **When to call:** After each worktree is created (Step 2.4) and before moving to the next repo.
+
+   **Note:** For `syncStrategy: "rebase"` or `syncStrategy: "merge"`, this operation should also be performed before making commits during plan execution to keep the branch up-to-date with upstream changes. Use the same tool with the same parameters.
+
+   **Error handling:**
+   - If `Apply-SyncStrategy.ps1` fails (non-zero exit code), the entire ExecutePlan run should fail
+   - Common failure scenarios:
+     - `git fetch` fails → network issue or invalid remote
+     - `git rebase` fails → conflicting changes between worktree base and origin
+     - `git merge` fails → conflicting changes or uncommitted files
+   - On failure, log the error and exit. Do NOT attempt to continue with an out-of-sync worktree.
 
 ### 2.5. Setup Frontend Dependencies (JavaScript/TypeScript Projects Only)
 
@@ -433,7 +472,11 @@ If you identified items in ANY category, write them to `<PlanFolder>/artifacts/r
   description: |
     Markdown description with context and location.
   state: Pending
+  impact: Medium   # Optional: Small, Medium, or High
+  risk: Small      # Optional: Small, Medium, or High
 ```
+
+Optionally include `impact` and `risk` to help prioritize the recommendation. Impact indicates the value of implementing it; Risk indicates the potential for complications or bugs.
 
 **YAML quoting rules:** Titles containing backticks, colons, brackets, braces, or other YAML special characters MUST be double-quoted. Alternatively, use block scalar style (`>` or `|`) for values with special characters.
 

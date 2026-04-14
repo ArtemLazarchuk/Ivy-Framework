@@ -101,6 +101,9 @@ public class DoctorCommandPlansTests : IDisposable
         var wtRepoDir = Path.Combine(planDir, "worktrees", "SomeRepo");
         Directory.CreateDirectory(wtRepoDir);
         File.WriteAllText(Path.Combine(wtRepoDir, ".git"), "gitdir: /some/path");
+        var nestedDir = Path.Combine(wtRepoDir, "subdir");
+        Directory.CreateDirectory(nestedDir);
+        File.WriteAllText(Path.Combine(nestedDir, ".git"), "gitdir: /nested/path");
 
         var results = DoctorCommand.ScanPlans(_plansDir);
 
@@ -130,6 +133,9 @@ public class DoctorCommandPlansTests : IDisposable
         var wtRepoDir = Path.Combine(planDir, "worktrees", "SomeRepo");
         Directory.CreateDirectory(wtRepoDir);
         File.WriteAllText(Path.Combine(wtRepoDir, ".git"), "gitdir: /some/path");
+        var nestedDir = Path.Combine(wtRepoDir, "subdir");
+        Directory.CreateDirectory(nestedDir);
+        File.WriteAllText(Path.Combine(nestedDir, ".git"), "gitdir: /nested/path");
 
         var result = DoctorCommand.HasNestedWorktrees(planDir);
 

@@ -75,16 +75,24 @@ public static class PlanContentHelpers
     }
 
     public static object RenderCommitDetailSheet(CommitDetailData? data, bool loading, string? commitHash,
-        Action closeSheet)
+        Action closeSheet, Exception? error = null)
     {
         if (commitHash is null) return new Empty();
 
         var shortHash = commitHash.Length > 7 ? commitHash[..7] : commitHash;
         object sheetContent;
 
-        if (loading || data is null)
+        if (loading)
         {
             sheetContent = Text.Muted("Loading...");
+        }
+        else if (error is not null)
+        {
+            sheetContent = Text.Muted($"Failed to load commit: {error.Message}");
+        }
+        else if (data is null)
+        {
+            sheetContent = Text.Muted("Commit not found.");
         }
         else
         {

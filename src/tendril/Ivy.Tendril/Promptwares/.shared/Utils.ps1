@@ -23,7 +23,7 @@ if (-not $env:TENDRIL_CONFIG) {
 }
 
 $script:ConfigPath = $env:TENDRIL_CONFIG
-$script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
+$script:PlansDir = if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { Join-Path $env:TENDRIL_HOME "Plans" }
 
 $script:CachedConfigContent = $null
 $script:CachedConfigYaml = $null
@@ -367,6 +367,51 @@ function GetProjectWorkDir {
     return (Get-Location).Path
 }
 
+function GetRepoConfig {
+    param(
+        [string]$RepoPath,
+        [string]$Project = ""
+    )
+
+    $config = Get-ConfigYaml
+    if (-not $config -or -not $config.projects) {
+        return @{ BaseBranch = $null; SyncStrategy = "fetch" }
+    }
+
+    $resolvedRepoPath = try { (Resolve-Path $RepoPath -ErrorAction Stop).Path } catch { $RepoPath }
+
+    $projectEntries = if ($Project) {
+        @($config.projects | Where-Object { $_.name -eq $Project })
+    } else {
+        @($config.projects)
+    }
+
+    foreach ($projectEntry in $projectEntries) {
+        if (-not $projectEntry.repos) { continue }
+        foreach ($repo in $projectEntry.repos) {
+            $repoPathValue = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
+                [Environment]::ExpandEnvironmentVariables($repo.path)
+            } else {
+                [Environment]::ExpandEnvironmentVariables("$repo")
+            }
+
+            if (-not $repoPathValue) { continue }
+            $resolvedConfigPath = try { (Resolve-Path $repoPathValue -ErrorAction Stop).Path } catch { $repoPathValue }
+
+            if ($resolvedConfigPath -eq $resolvedRepoPath) {
+                if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
+                    return @{
+                        BaseBranch   = $repo.baseBranch
+                        SyncStrategy = if ($repo.syncStrategy) { $repo.syncStrategy } else { "fetch" }
+                    }
+                }
+            }
+        }
+    }
+
+    return @{ BaseBranch = $null; SyncStrategy = "fetch" }
+}
+
 function Get-ConfigYaml {
     if (-not (Test-Path $script:ConfigPath)) {
         return $null
@@ -423,6 +468,9 @@ Optional array of additional arguments to pass to the claude CLI
 .PARAMETER Promptware
 Promptware name to look up model and allowedTools config overrides (e.g., "MakePlan", "ExecutePlan")
 
+.PARAMETER ProfileOverride
+Optional profile name to override config.yaml profile selection (e.g., "deep", "balanced", "quick")
+
 .EXAMPLE
 InvokePromptwareAgent `
     -ScriptRoot $PSScriptRoot `
@@ -433,7 +481,8 @@ InvokePromptwareAgent `
     -PlanPath $planFolder `
     -Action "MakePlan" `
     -FinalState "Draft" `
-    -Promptware "MakePlan"
+    -Promptware "MakePlan" `
+    -ProfileOverride "deep"
 #>
 function InvokePromptwareAgent {
     param(
@@ -446,7 +495,8 @@ function InvokePromptwareAgent {
         [string]$Action = $null,
         [string]$FinalState = $null,
         [string[]]$ExtraAgentArgs = @(),
-        [string]$Promptware = ""
+        [string]$Promptware = "",
+        [string]$ProfileOverride = ""
     )
 
     # Generate session-id for cost tracking
@@ -454,7 +504,7 @@ function InvokePromptwareAgent {
     $FirmwareValues["ClaudeSessionId"] = $sessionId
 
     $promptFile = PrepareFirmware $ScriptRoot $LogFile $ProgramFolder $FirmwareValues
-    $agent = GetAgentCommand -Promptware $Promptware
+    $agent = GetAgentCommand -Promptware $Promptware -ProfileOverride $ProfileOverride
 
     # Determine coding agent provider
     $codingAgent = $agent.CodingAgent
@@ -602,7 +652,10 @@ function Stop-Heartbeat {
 }
 
 function GetAgentCommand {
-    param([string]$Promptware = "")
+    param(
+        [string]$Promptware = "",
+        [string]$ProfileOverride = ""
+    )
 
     $configPath = $script:ConfigPath
     $allowedTools = @()
@@ -638,6 +691,12 @@ function GetAgentCommand {
                 if ($specificConfig) {
                     if ($specificConfig.profile) { $pwConfig.profile = $specificConfig.profile }
                     if ($specificConfig.allowedTools) { $pwConfig.allowedTools = $specificConfig.allowedTools }
+                }
+
+                # Layer 3: ProfileOverride takes precedence over config values
+                if ($ProfileOverride) {
+                    $pwConfig.profile = $ProfileOverride
+                    Write-Host "Profile override applied: $ProfileOverride" -ForegroundColor Cyan
                 }
             }
 

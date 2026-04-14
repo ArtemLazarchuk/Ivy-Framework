@@ -129,19 +129,6 @@ public class ContentView(
             initialValue: null
         );
 
-        var allChangesQuery = UseQuery<PlanContentHelpers.AllChangesData?, string>(
-            _selectedPlan?.FolderPath ?? "",
-            async (folderPath, ct) =>
-            {
-                return await Task.Run(() =>
-                {
-                    if (_selectedPlan is null) return null;
-                    return PlanContentHelpers.GetAllChangesData(_selectedPlan, _config, _gitService);
-                }, ct);
-            },
-            initialValue: null
-        );
-
         var planContentQuery = UseQuery<PlanContentData, string>(
             _selectedPlan?.FolderPath ?? "",
             async (folderPath, ct) =>
@@ -151,7 +138,7 @@ public class ContentView(
                     if (_selectedPlan is null)
                         return new PlanContentData(new List<RecommendationYaml>(), null,
                             new Dictionary<string, List<string>>(), new List<PlanContentHelpers.CommitRow>(),
-                            new Dictionary<string, bool>(), new List<(string Name, bool ConditionMet)>());
+                            new Dictionary<string, bool>(), new List<(string Name, bool ConditionMet)>(), null);
 
                     // Recommendations
                     var recsPath = Path.Combine(folderPath, "artifacts", "recommendations.yaml");
@@ -179,6 +166,9 @@ public class ContentView(
                     // Commit rows
                     var commitRows = PlanContentHelpers.BuildCommitRows(_selectedPlan!, _config, _gitService);
 
+                    // All changes data
+                    var allChanges = PlanContentHelpers.GetAllChangesData(_selectedPlan!, _config, _gitService);
+
                     // Verification report existence
                     var verReports = _selectedPlan.Verifications.ToDictionary(
                         v => v.Name,
@@ -199,13 +189,13 @@ public class ContentView(
                         actionStates[i] = (action.Name, PlatformHelper.EvaluatePowerShellCondition(action.Condition, folderPath));
                     });
 
-                    return new PlanContentData(recs, summaryMd, artifacts, commitRows, verReports, actionStates.ToList());
+                    return new PlanContentData(recs, summaryMd, artifacts, commitRows, verReports, actionStates.ToList(), allChanges);
                 }, ct);
             },
             options: QueryScope.View,
             initialValue: new PlanContentData(new List<RecommendationYaml>(), null,
                 new Dictionary<string, List<string>>(), new List<PlanContentHelpers.CommitRow>(), new Dictionary<string, bool>(),
-                new List<(string Name, bool ConditionMet)>())
+                new List<(string Name, bool ConditionMet)>(), null)
         );
 
         UseEffect(() => { selectedTab.Set(0); }, _selectedPlanState);
@@ -262,8 +252,7 @@ public class ContentView(
         var planData = planContentQuery.Value;
 
         // Plan tab content (not dependent on query — uses in-memory data)
-        var reviewAnnotated = MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent);
-        reviewAnnotated = MarkdownHelper.AnnotateBrokenPlanLinks(reviewAnnotated, _planService.PlansDirectory);
+        var reviewAnnotated = MarkdownHelper.AnnotateAllBrokenLinks(_selectedPlan.LatestRevisionContent, _planService.PlansDirectory);
         var planTabContent = new Markdown(reviewAnnotated)
             .DangerouslyAllowLocalFiles()
             .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
@@ -448,8 +437,27 @@ public class ContentView(
             else
                 foreach (var rec in planData.Recommendations)
                 {
+                    var titleRow = Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                                   | Text.Block(rec.Title).Bold();
+
+                    if (rec.Impact is { } impact)
+                        titleRow |= new Badge($"Impact: {impact}").Variant(impact switch
+                        {
+                            "High" => BadgeVariant.Success,
+                            "Medium" => BadgeVariant.Warning,
+                            _ => BadgeVariant.Outline
+                        });
+
+                    if (rec.Risk is { } risk)
+                        titleRow |= new Badge($"Risk: {risk}").Variant(risk switch
+                        {
+                            "High" => BadgeVariant.Destructive,
+                            "Medium" => BadgeVariant.Warning,
+                            _ => BadgeVariant.Success
+                        });
+
                     var card = Layout.Vertical().Gap(1)
-                               | Text.Block(rec.Title).Bold()
+                               | titleRow
                                | new Markdown(rec.Description).DangerouslyAllowLocalFiles();
                     recommendationsLayout |= card;
                     recommendationsLayout |= new Separator();
@@ -457,15 +465,18 @@ public class ContentView(
 
             // Changes tab content
             object changesTabContent;
-            var changesData = allChangesQuery.Value;
+            var changesData = planContentQuery.Value.AllChanges;
             var changesFileCount = 0;
-            if (allChangesQuery.Loading)
+            if (planContentQuery.Loading)
             {
                 changesTabContent = Text.Muted("Loading...");
             }
             else if (changesData is null)
             {
-                changesTabContent = Text.Muted("No commits yet.");
+                var errorMsg = planContentQuery.Error is { } err
+                    ? $"Failed to load changes: {err.Message}"
+                    : "No commits yet.";
+                changesTabContent = Text.Muted(errorMsg);
             }
             else
             {
@@ -523,7 +534,9 @@ public class ContentView(
                 () => openVerification.Set(null),
                 verificationReportQuery.Loading
                     ? Text.Muted("Loading...")
-                    : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
+                    : verificationReportQuery.Error is { } err
+                        ? Text.Muted($"Failed to load verification report: {err.Message}")
+                        : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
                 verName
             ).Width(Size.Half()).Resizable();
 
@@ -533,7 +546,8 @@ public class ContentView(
                 commitQuery.Value,
                 commitQuery.Loading || commitQuery.Value is null && !string.IsNullOrEmpty(openCommit.Value),
                 commitHash,
-                () => openCommit.Set(null));
+                () => openCommit.Set(null),
+                commitQuery.Error);
         }
 
         if (openArtifact.Value is { } artifactPath)
@@ -543,7 +557,9 @@ public class ContentView(
                 () => openArtifact.Set(null),
                 artifactContentQuery.Loading
                     ? Text.Muted("Loading...")
-                    : new Markdown($"```{language.ToString().ToLowerInvariant()}\n{artifactContentQuery.Value}\n```"),
+                    : artifactContentQuery.Error is { } err
+                        ? Text.Muted($"Failed to load artifact: {err.Message}")
+                        : new Markdown($"```{language.ToString().ToLowerInvariant()}\n{artifactContentQuery.Value}\n```"),
                 Path.GetFileName(artifactPath)
             ).Width(Size.Half()).Resizable();
         }
@@ -667,5 +683,6 @@ public class ContentView(
         Dictionary<string, List<string>> Artifacts,
         List<PlanContentHelpers.CommitRow> CommitRows,
         Dictionary<string, bool> VerificationReports,
-        List<(string Name, bool ConditionMet)> ReviewActionStates);
+        List<(string Name, bool ConditionMet)> ReviewActionStates,
+        PlanContentHelpers.AllChangesData? AllChanges);
 }

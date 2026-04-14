@@ -11,9 +11,14 @@
         <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     </PropertyGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(IvyPackageVersion)' == ''">
         <ProjectReference Include="../../Ivy/Ivy.csproj" />
         <ProjectReference Include="../../Ivy.Docs.Helpers/Ivy.Docs.Helpers.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IvyPackageVersion)' != ''">
+        <PackageReference Include="Ivy" Version="$(IvyPackageVersion)" />
+        <PackageReference Include="Ivy.Docs.Helpers" Version="$(IvyPackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>
@@ -31,7 +36,7 @@
             <DocsInputPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), 'Docs', '*.md'))</DocsInputPath>
             <DocsOutputPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), 'Generated'))</DocsOutputPath>
         </PropertyGroup>
-        <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)/../../../../.." />
+        <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)/../../../" />
         <Exec Command="dotnet ivy-docs-cli convert &quot;$(DocsInputPath)&quot; &quot;$(DocsOutputPath)&quot; --skip-if-not-changed" WorkingDirectory="$(MSBuildProjectDirectory)" />
         <ItemGroup>
             <Compile Include="Generated/**/*.g.cs" />
@@ -45,13 +50,20 @@
     </ItemGroup>
 
     <!-- enable ivy analyzer -->
-    <ItemGroup>
+    <ItemGroup Condition="'$(IvyPackageVersion)' == ''">
         <ProjectReference Include="../../Ivy.Analyser/Ivy.Analyser.csproj">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
             <OutputItemType>Analyzer</OutputItemType>
         </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IvyPackageVersion)' != ''">
+        <PackageReference Include="Ivy.Analyser" Version="$(IvyPackageVersion)">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>

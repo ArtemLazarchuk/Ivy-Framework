@@ -18,6 +18,8 @@ public class ReviewApp : ViewBase
         var gitService = UseService<IGitService>();
         var planWatcher = UseService<IPlanWatcherService>();
         var selectedPlanState = UseState<PlanFile?>(null);
+        var projectFilter = UseState<string?>(null);
+        var levelFilter = UseState<string?>(null);
         var textFilter = UseState<string?>("");
         var refreshToken = UseRefreshToken();
 
@@ -37,7 +39,7 @@ public class ReviewApp : ViewBase
         var plans = planService.GetPlans()
             .Where(p => p.Status is PlanStatus.ReadyForReview or PlanStatus.Failed)
             .ToList();
-        var filteredPlans = PlanFilters.ApplyFilters(plans, null, null, textFilter.Value).ToList();
+        var filteredPlans = PlanFilters.ApplyFilters(plans, projectFilter.Value, levelFilter.Value, textFilter.Value).ToList();
 
         if (selectedPlanState.Value == null && filteredPlans.Count > 0) selectedPlanState.Set(filteredPlans[0]);
 
@@ -57,7 +59,7 @@ public class ReviewApp : ViewBase
 
         previousPlans.Value = filteredPlans;
 
-        var sidebar = new SidebarView(plans, selectedPlanState, textFilter, configService);
+        var sidebar = new SidebarView(plans, selectedPlanState, projectFilter, levelFilter, textFilter, configService);
 
         return new SidebarLayout(
             new ContentView(selectedPlanState.Value, filteredPlans, selectedPlanState, planService, jobService,

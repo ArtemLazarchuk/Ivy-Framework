@@ -1,6 +1,7 @@
 codingAgent: claude
 jobTimeout: 30
 staleOutputTimeout: 10
+gitTimeout: 10
 maxConcurrentJobs: 30
 projects:
 - name: Framework
@@ -11,6 +12,7 @@ projects:
   - &o5
     path: D:\Repos\_Ivy\Ivy-Framework
     prRule: yolo
+    baseBranch: development
   verifications:
   - &o0
     name: DotnetBuild
@@ -57,9 +59,11 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent
     prRule: yolo
+    baseBranch: development
   - &o4
     path: D:\Repos\_Ivy\Ivy
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -67,7 +71,10 @@ projects:
   - *o3
   context: >
     Ivy Agent is the AI agent server. Key folders: - Ivy.Agent.Server\ — agent server - Ivy.Agent\Agents\Personas\Prompts\ — persona prompts - Ivy.Internals\Workflows\ — workflow definitions - Ivy.Agent\Tools\ — tool implementations
-  reviewActions: []
+  reviewActions:
+  - name: Agent Server
+    condition: Test-Path "worktrees\Ivy-Agent\Ivy.Agent.Server"
+    action: dotnet run --project worktrees\Ivy-Agent\Ivy.Agent.Server
   hooks:
   - name: SlackNotify
     when: after
@@ -85,8 +92,10 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Studio
     prRule: yolo
+    baseBranch: development
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Manager
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -94,7 +103,10 @@ projects:
   - *o3
   context: >
     Test Manager for Ivy Agent. Key folders: - Ivy.Agent.Test.Manager\ — CLI for managing test cases, runs, and scoring - Ivy.Agent.Test.Studio\ — TUI app for test management UI See AGENTS.md in Ivy.Agent.Test.Manager folder for CLI reference.
-  reviewActions: []
+  reviewActions:
+  - name: Test Studio
+    condition: Test-Path "worktrees\Ivy-Agent\Ivy.Agent.Test.Studio"
+    action: dotnet run --project worktrees\Ivy-Agent\Ivy.Agent.Test.Studio
   hooks:
   - name: SlackNotify
     when: after
@@ -118,7 +130,10 @@ projects:
   - *o3
   context: >
     - Ivy.Console\ — desktop CLI and TUI client - Ivy.Internals\ — shared internals - Ivy.Studio\ — vibe-coding agent
-  reviewActions: []
+  reviewActions:
+  - name: Console
+    condition: Test-Path "worktrees\Ivy\Ivy.Console"
+    action: dotnet run --project worktrees\Ivy\Ivy.Console
   hooks:
   - name: SlackNotify
     when: after
@@ -164,6 +179,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Mcp
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -188,6 +204,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Services
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -217,6 +234,30 @@ projects:
     action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
   repoPaths:
   - D:\Repos\_Ivy\Ivy-Services
+- name: PerformanceAnalyzer
+  color: Violet
+  meta:
+    slackEmoji: ':chart_with_upwards_trend:'
+  repos:
+  - path: D:\Repos\_Ivy\PerformanceAnalyzer
+    prRule: yolo
+  verifications:
+  - *o0
+  - *o1
+  - *o2
+  - *o3
+  context: >
+    PerformanceAnalyzer — Ivy app for tracking Ivy employee performance on GitHub.
+  reviewActions: []
+  hooks:
+  - name: SlackNotify
+    when: after
+    promptwares:
+    - MakePr
+    condition: ''
+    action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
+  repoPaths:
+  - D:\Repos\_Ivy\PerformanceAnalyzer
 verifications:
 - name: DotnetBuild
   prompt: Run `dotnet build --warnaserror` in the plan's worktree directory (not the original repo) and verify it succeeds with zero errors and zero warnings.

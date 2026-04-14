@@ -110,7 +110,8 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
     <div className="relative w-full select-none" style={styles}>
       <div
         className={cn(
-          "relative flex items-stretch rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10",
+          "relative flex items-stretch rounded-field border border-input bg-transparent shadow-sm transition-colors dark:bg-white/5 dark:border-white/10",
+          isFocused && "outline-none ring-1 ring-ring",
           props.invalid && "border-destructive",
           props.disabled && "cursor-not-allowed opacity-50",
           props.ghost &&

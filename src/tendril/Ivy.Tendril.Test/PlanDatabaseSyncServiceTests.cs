@@ -1,4 +1,3 @@
-using System.Reflection;
 using Ivy.Tendril.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -151,18 +150,6 @@ public class PlanDatabaseSyncServiceTests : IDisposable
         Assert.True(_syncService.IsInitialSyncComplete);
         var recs = _database.GetRecommendations();
         Assert.Empty(recs);
-    }
-
-    [Fact]
-    public void PlanWatcher_WatchedFolders_IncludesArtifacts()
-    {
-        // Verify that PlanWatcherService watches the artifacts folder so that
-        // changes to recommendations.yaml trigger a sync event
-        var field = typeof(PlanWatcherService)
-            .GetField("WatchedFolders", BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(field);
-        var watchedFolders = (HashSet<string>)field.GetValue(null)!;
-        Assert.Contains("artifacts", watchedFolders);
     }
 
     [Fact]

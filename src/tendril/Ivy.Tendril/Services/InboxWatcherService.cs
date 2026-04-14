@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Ivy.Helpers;
 
 namespace Ivy.Tendril.Services;
 
@@ -32,7 +33,7 @@ public class InboxWatcherService : IInboxWatcherService
 
         _watcher.Created += OnFileCreated;
         _watcher.Error += (_, e) =>
-            Program.WriteCrashLog($"[{DateTime.UtcNow:O}] InboxWatcher FSW error: {e.GetException()}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] InboxWatcher FSW error: {e.GetException()}");
 
         _pollTimer = new Timer(OnPollTimer, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
@@ -51,7 +52,7 @@ public class InboxWatcherService : IInboxWatcherService
         }
         catch (Exception ex)
         {
-            Program.WriteCrashLog($"[{DateTime.UtcNow:O}] InboxWatcher.OnFileCreated exception: {ex}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] InboxWatcher.OnFileCreated exception: {ex}");
         }
     }
 
@@ -63,7 +64,7 @@ public class InboxWatcherService : IInboxWatcherService
         }
         catch (Exception ex)
         {
-            Program.WriteCrashLog($"[{DateTime.UtcNow:O}] InboxWatcher.OnPollTimer exception: {ex}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] InboxWatcher.OnPollTimer exception: {ex}");
         }
     }
 

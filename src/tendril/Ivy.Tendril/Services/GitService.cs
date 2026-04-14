@@ -6,6 +6,13 @@ namespace Ivy.Tendril.Services;
 
 public class GitService : IGitService
 {
+    private readonly int _timeoutMs;
+
+    public GitService(IConfigService config)
+    {
+        _timeoutMs = config.Settings.GitTimeout * 1000;
+    }
+
     public string? GetCommitTitle(string repoPath, string commitHash)
     {
         try
@@ -20,7 +27,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var title = process?.StandardOutput.ReadLine();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             return process?.ExitCode == 0 ? title : null;
         }
         catch
@@ -43,7 +50,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             return process?.ExitCode == 0 ? output : null;
         }
         catch
@@ -66,7 +73,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             if (process?.ExitCode != 0 || output == null) return null;
 
             return output.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length;
@@ -91,7 +98,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             if (process?.ExitCode != 0 || output == null) return null;
 
             var files = new List<(string Status, string FilePath)>();
@@ -124,7 +131,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             return process?.ExitCode == 0 ? output : null;
         }
         catch
@@ -147,7 +154,7 @@ public class GitService : IGitService
             };
             using var process = Process.Start(psi);
             var output = process?.StandardOutput.ReadToEnd();
-            process.WaitForExitOrKill(10000);
+            process.WaitForExitOrKill(_timeoutMs);
             if (process?.ExitCode != 0 || output == null) return null;
 
             var files = new List<(string Status, string FilePath)>();

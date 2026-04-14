@@ -145,19 +145,21 @@ public class TendrilAuthProviderTests
         var auth = CreateAuthConfig("test-pass", rateLimit);
         var provider = CreateProvider(auth);
 
-        // First 2 attempts are under threshold
+        // First 3 attempts are at or under threshold (rate limiter checks before recording)
         var t1 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
         Assert.Equal(LoginStatus.InvalidCredentials, t1.Status);
         var t2 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
         Assert.Equal(LoginStatus.InvalidCredentials, t2.Status);
-
-        // 3rd attempt exceeds threshold — rate limited
         var t3 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
-        Assert.Equal(LoginStatus.RateLimited, t3.Status);
+        Assert.Equal(LoginStatus.InvalidCredentials, t3.Status);
+
+        // 4th attempt exceeds threshold — rate limited
+        var t4 = await provider.LoginAsync(null!, "anyone", "wrong", CancellationToken.None);
+        Assert.Equal(LoginStatus.RateLimited, t4.Status);
 
         // Correct password is also blocked
-        var t4 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
-        Assert.Equal(LoginStatus.RateLimited, t4.Status);
+        var t5 = await provider.LoginAsync(null!, "anyone", "test-pass", CancellationToken.None);
+        Assert.Equal(LoginStatus.RateLimited, t5.Status);
     }
 
     [Fact]

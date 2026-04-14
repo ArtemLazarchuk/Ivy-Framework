@@ -19,6 +19,8 @@ public class RerunDialog(
 
     public override object? Build()
     {
+        var isRerunningClean = UseState(false);
+        var isRerunningCurrent = UseState(false);
         var logger = UseService<ILogger<RerunDialog>>();
 
         if (!_dialogOpen.Value) return null;
@@ -31,27 +33,35 @@ public class RerunDialog(
             ),
             new DialogFooter(
                 new Button("Cancel").Outline().ShortcutKey("Escape").OnClick(() => _dialogOpen.Set(false)),
-                new Button("Rerun from Scratch").Warning().OnClick(() =>
+                new Button("Rerun from Scratch").Warning().Disabled(isRerunningClean.Value).OnClick(() =>
                 {
-                    _dialogOpen.Set(false);
-                    _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
-                    _refreshPlans();
-
-                    var folderPath = _selectedPlan.FolderPath;
-                    Task.Run(() =>
+                    if (!isRerunningClean.Value)
                     {
-                        CleanPlanState(folderPath, logger);
-                        _jobService.StartJob("ExecutePlan", folderPath, "-Note",
-                            "User requested a clean rerun. All artifacts, logs, and worktrees have been cleaned. Execute this plan from scratch.");
-                    });
+                        isRerunningClean.Set(true);
+                        _dialogOpen.Set(false);
+                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                        _refreshPlans();
+
+                        var folderPath = _selectedPlan.FolderPath;
+                        Task.Run(() =>
+                        {
+                            CleanPlanState(folderPath, logger);
+                            _jobService.StartJob("ExecutePlan", folderPath, "-Note",
+                                "User requested a clean rerun. All artifacts, logs, and worktrees have been cleaned. Execute this plan from scratch.");
+                        });
+                    }
                 }),
-                new Button("Rerun with Current").Primary().ShortcutKey("Enter").AutoFocus().OnClick(() =>
+                new Button("Rerun with Current").Primary().Disabled(isRerunningCurrent.Value).ShortcutKey("Enter").AutoFocus().OnClick(() =>
                 {
-                    _dialogOpen.Set(false);
-                    _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
-                    _jobService.StartJob("ExecutePlan", _selectedPlan.FolderPath, "-Note",
-                        "User requested you to execute this plan another time. Go through all code, verifications and artifacts one more time.");
-                    _refreshPlans();
+                    if (!isRerunningCurrent.Value)
+                    {
+                        isRerunningCurrent.Set(true);
+                        _dialogOpen.Set(false);
+                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                        _jobService.StartJob("ExecutePlan", _selectedPlan.FolderPath, "-Note",
+                            "User requested you to execute this plan another time. Go through all code, verifications and artifacts one more time.");
+                        _refreshPlans();
+                    }
                 })
             )
         ).Width(Size.Rem(40));
@@ -71,6 +81,13 @@ public class RerunDialog(
         {
             logger?.LogInformation("Cleaning logs directory: {Path}", logsDir);
             WorktreeCleanupService.ForceDeleteDirectory(logsDir, logger);
+        }
+
+        var verificationDir = Path.Combine(planFolderPath, "verification");
+        if (Directory.Exists(verificationDir))
+        {
+            logger?.LogInformation("Cleaning verification directory: {Path}", verificationDir);
+            WorktreeCleanupService.ForceDeleteDirectory(verificationDir, logger);
         }
 
         PlanReaderService.RemoveWorktrees(planFolderPath, logger);

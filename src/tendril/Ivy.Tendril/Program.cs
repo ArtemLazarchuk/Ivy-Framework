@@ -53,6 +53,10 @@ public class Program
         if (hashExitCode >= 0)
             return hashExitCode;
 
+        var mcpExitCode = McpCommand.Handle(filteredArgs);
+        if (mcpExitCode >= 0)
+            return mcpExitCode;
+
         CrashLog.Write($"[{DateTime.UtcNow:O}] Tendril starting (PID {Environment.ProcessId}) | {GetMemoryStats()}");
 
         // Install native console control handler FIRST — this catches CTRL_CLOSE_EVENT
@@ -138,8 +142,6 @@ public class Program
             return 0;
         }
     }
-
-    internal static void WriteCrashLog(string message) => CrashLog.Write(message);
 
     private static string GetMemoryStats()
     {

@@ -134,6 +134,56 @@ public class JobServiceThreadSafetyTests
         Assert.Null(ex);
     }
 
+    [Fact]
+    public async Task GetJobs_CalledConcurrentlyWithModifications_DoesNotThrowInvalidOperationException()
+    {
+        var service = new JobService(
+            TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(10),
+            null, 10);
+
+        // Pre-populate with some jobs
+        for (int i = 0; i < 5; i++)
+            service.CreateTestJob("ExecutePlan", $"plan-{i}");
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var exceptions = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+
+        // Thread 1: Continuously enumerate GetJobs()
+        var enumerateTask = Task.Run(() =>
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                try
+                {
+                    var jobs = service.GetJobs();
+                    // Force full enumeration by accessing count/elements
+                    _ = jobs.Count;
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }
+        });
+
+        // Thread 2: Continuously add/remove jobs
+        var modifyTask = Task.Run(() =>
+        {
+            int counter = 100;
+            while (!cts.Token.IsCancellationRequested)
+            {
+                var id = service.CreateTestJob("MakePlan", $"concurrent-{counter++}");
+                Thread.Sleep(1);
+                service.DeleteJob(id);
+            }
+        });
+
+        await Task.WhenAll(enumerateTask, modifyTask);
+
+        // Should complete without any InvalidOperationException
+        Assert.Empty(exceptions);
+    }
+
     private class TestSynchronizationContext : SynchronizationContext
     {
         private readonly Queue<(SendOrPostCallback Callback, object? State)> _pending = new();

@@ -51,6 +51,10 @@ public class ContentView(
                      | Text.Rich()
                          .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
                          .Muted("recommendations", word: true)
+                     | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
+                     {
+                         showDeclineDialog.Set(true);
+                     })
                      | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
                      {
                          _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
@@ -64,12 +68,30 @@ public class ContentView(
         // Content
         var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200))).Gap(4).Padding(2);
 
-        // Source plan info
+        // Source plan info and Impact/Risk badges
+        var metaRow = Layout.Horizontal().Gap(2).AlignContent(Align.Center)
+                      | Text.Muted($"Plan #{_selected.PlanId}: {_selected.PlanTitle}")
+                      | Text.Muted($"Date: {_selected.Date:yyyy-MM-dd HH:mm}");
+
+        if (_selected.Impact is { } impact)
+            metaRow |= new Badge($"Impact: {impact}").Variant(impact switch
+            {
+                "High" => BadgeVariant.Success,
+                "Medium" => BadgeVariant.Warning,
+                _ => BadgeVariant.Outline
+            });
+
+        if (_selected.Risk is { } risk)
+            metaRow |= new Badge($"Risk: {risk}").Variant(risk switch
+            {
+                "High" => BadgeVariant.Destructive,
+                "Medium" => BadgeVariant.Warning,
+                _ => BadgeVariant.Success
+            });
+
         scrollableContent |= Layout.Vertical().Gap(1)
                              | Text.Block("Source Plan").Bold()
-                             | Layout.Horizontal().Gap(2)
-                             | Text.Muted($"Plan #{_selected.PlanId}: {_selected.PlanTitle}")
-                             | Text.Muted($"Date: {_selected.Date:yyyy-MM-dd HH:mm}");
+                             | metaRow;
 
         // Description
         scrollableContent |= new Separator();
@@ -77,10 +99,6 @@ public class ContentView(
 
         // Action bar (secondary actions)
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
-                        | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
-                        {
-                            showDeclineDialog.Set(true);
-                        })
                         | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w")
                             .OnClick(() => showNotesDialog.Set(true))
                         | new Button("View Plan").Icon(Icons.ExternalLink).Outline().ShortcutKey("d").OnClick(() =>
@@ -148,9 +166,7 @@ public class ContentView(
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
-                        MarkdownHelper.AnnotateBrokenFileLinks(content),
-                        _planService.PlansDirectory))
+                : (object)new Markdown(MarkdownHelper.AnnotateAllBrokenLinks(content, _planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 

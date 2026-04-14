@@ -316,6 +316,50 @@ public class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
+    public void GetRecommendations_WithImpactAndRisk_DeserializesCorrectly()
+    {
+        var yaml =
+            "- title: Optimize query\n  description: Slow query in dashboard\n  state: Pending\n  impact: High\n  risk: Small\n";
+        CreatePlanWithRecommendations("01660-ImpactRisk", yaml);
+
+        var recommendations = _service.GetRecommendations();
+
+        Assert.Single(recommendations);
+        Assert.Equal("High", recommendations[0].Impact);
+        Assert.Equal("Small", recommendations[0].Risk);
+    }
+
+    [Fact]
+    public void GetRecommendations_WithoutImpactAndRisk_ReturnsNull()
+    {
+        var yaml = "- title: Legacy item\n  description: Old recommendation\n  state: Pending\n";
+        CreatePlanWithRecommendations("01661-NoImpactRisk", yaml);
+
+        var recommendations = _service.GetRecommendations();
+
+        Assert.Single(recommendations);
+        Assert.Null(recommendations[0].Impact);
+        Assert.Null(recommendations[0].Risk);
+    }
+
+    [Fact]
+    public async Task UpdateRecommendationState_PreservesImpactAndRisk()
+    {
+        var yaml =
+            "- title: Fix bug\n  description: Found a bug\n  state: Pending\n  impact: Medium\n  risk: High\n";
+        CreatePlanWithRecommendations("01662-PreserveImpactRisk", yaml);
+
+        _service.UpdateRecommendationState("01662-PreserveImpactRisk", "Fix bug", "Accepted");
+        await _service.FlushPendingWritesAsync();
+
+        var recommendations = _service.GetRecommendations();
+        Assert.Single(recommendations);
+        Assert.Equal("Accepted", recommendations[0].State);
+        Assert.Equal("Medium", recommendations[0].Impact);
+        Assert.Equal("High", recommendations[0].Risk);
+    }
+
+    [Fact]
     public void GetRecommendations_CachesResultForTwoMinutes()
     {
         var yaml = "- title: Cached Item\n  description: Desc\n  state: Pending\n";

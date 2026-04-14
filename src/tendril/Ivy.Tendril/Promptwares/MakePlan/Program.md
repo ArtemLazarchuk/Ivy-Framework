@@ -186,11 +186,41 @@ If the plan references other plans (from `[number]` syntax in args), add them to
 4. Validate count: grep results must match documented callers
 5. Incomplete caller lists cause follow-up fixes during execution (see Memory/caller-audit-pattern.md)
 
-### 4.5. Questions Section
+### 4.5. Recommend Execution Profile
+
+Analyze the task complexity and set `executionProfile` in plan.yaml. Consider:
+
+**Use `deep` (opus/max effort) when:**
+- Plan involves complex cross-cutting changes affecting 10+ files
+- Plan requires architectural decisions or complex refactoring
+- Plan involves new features with significant integration points
+- Plan description mentions "architecture", "refactor", "redesign", "complex"
+
+**Use `quick` (haiku/low effort) when:**
+- Plan is documentation-only (updating .md files)
+- Plan is simple typo/formatting fixes (< 5 lines changed)
+- Plan is adding/removing simple log statements
+- Plan is updating version numbers or package references
+- Plan description mentions "typo", "docs", "readme", "comment"
+
+**Use `balanced` (sonnet/high effort) for everything else:**
+- Most bug fixes (unless trivial)
+- Most new features (unless architectural)
+- Most refactoring (unless cross-cutting)
+- When in doubt, use balanced
+
+Add the field to plan.yaml:
+```yaml
+executionProfile: balanced  # or deep, or quick
+```
+
+If you cannot determine complexity (e.g., task is too vague), omit the field — ExecutePlan will use the config.yaml default.
+
+### 4.6. Questions Section
 
 Only include `## Questions` if you have genuine questions for the user that block the plan. Place it immediately after the title (before `## Problem`). If there are no questions, **omit the section entirely** — do not include an empty heading or placeholder text.
 
-### 4.6. Tests Section
+### 4.7. Tests Section
 
 The `## Tests` section MUST include two parts:
 

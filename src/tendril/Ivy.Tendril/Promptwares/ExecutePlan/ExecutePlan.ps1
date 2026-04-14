@@ -37,9 +37,29 @@ if ($Note) {
     $firmwareValues["Note"] = $Note
 }
 
+$repoConfigsYaml = ""
+foreach ($repoPath in $planInfo.Yaml.repos) {
+    $cfg = GetRepoConfig -RepoPath $repoPath -Project $planInfo.Project
+    $repoName = Split-Path $repoPath -Leaf
+    $repoConfigsYaml += "${repoName}:`n"
+    if ($cfg.BaseBranch) {
+        $repoConfigsYaml += "  baseBranch: $($cfg.BaseBranch)`n"
+    }
+    $repoConfigsYaml += "  syncStrategy: $($cfg.SyncStrategy)`n"
+}
+if ($repoConfigsYaml) {
+    $firmwareValues["RepoConfigs"] = $repoConfigsYaml
+}
+
 $promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder $firmwareValues
 
-$agent = GetAgentCommand -Promptware "ExecutePlan"
+$executionProfile = $null
+if ($planInfo.Yaml.executionProfile) {
+    $executionProfile = $planInfo.Yaml.executionProfile
+    Write-Host "Using recommended execution profile from plan: $executionProfile" -ForegroundColor Cyan
+}
+
+$agent = GetAgentCommand -Promptware "ExecutePlan" -ProfileOverride $executionProfile
 $sessionId = $env:TENDRIL_SESSION_ID
 if (-not $sessionId) {
     $sessionId = [guid]::NewGuid().ToString()

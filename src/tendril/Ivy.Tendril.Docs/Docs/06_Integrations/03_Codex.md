@@ -23,6 +23,8 @@ codingAgent: codex
 
 Or select it in **Settings > General > Coding Agent**.
 
+For more details on `config.yaml` structure and settings, see [Setup & Settings](../03_Configuration/01_Setup.md).
+
 ## Profiles
 
 Tendril maps effort levels to Codex models:

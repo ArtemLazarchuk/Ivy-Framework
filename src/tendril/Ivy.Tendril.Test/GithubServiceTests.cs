@@ -101,6 +101,38 @@ public class GithubServiceTests
     }
 
     [Fact]
+    public void GetRepos_Should_Warm_RepoPathCache()
+    {
+        var tempDir = CreateTempGitRepo("https://github.com/Test-Owner/Test-Repo.git");
+        try
+        {
+            var settings = new TendrilSettings
+            {
+                Projects = [new ProjectConfig { Name = "TestProject", Repos = [new RepoRef { Path = tempDir }] }]
+            };
+            var configService = new ConfigService(settings);
+            var githubService = new GithubService(configService);
+
+            // First call: GetRepos() should populate cache
+            var repos = githubService.GetRepos();
+            Assert.Single(repos);
+
+            // Second call: GetRepoConfigFromPathCached should hit the cache (no git spawn)
+            var cached = githubService.GetRepoConfigFromPathCached(tempDir);
+            Assert.NotNull(cached);
+            Assert.Equal("Test-Owner", cached.Owner);
+            Assert.Equal("Test-Repo", cached.Name);
+
+            // Verify it's the same instance (proving cache hit, not re-computation)
+            Assert.Same(repos[0], cached);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
     public async Task SearchIssuesAsync_Returns_Error_When_Command_Fails()
     {
         var configService = new ConfigService(new TendrilSettings());

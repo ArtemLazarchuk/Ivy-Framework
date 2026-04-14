@@ -20,6 +20,7 @@ public class SuggestChangesDialog(
 
     public override object? Build()
     {
+        var isCreating = UseState(false);
         if (!_dialogOpen.Value) return null;
 
         return new Dialog(
@@ -40,22 +41,23 @@ public class SuggestChangesDialog(
                     _suggestText.Set("");
                     _dialogOpen.Set(false);
                 }),
-                new Button("Submit Suggestions").Primary().ShortcutKey("Ctrl+Enter").OnClick(() =>
+                new Button("Submit Suggestions").Primary().Disabled(isCreating.Value).ShortcutKey("Ctrl+Enter").OnClick(() =>
                 {
-                    if (!string.IsNullOrWhiteSpace(_suggestText.Value))
+                    if (!string.IsNullOrWhiteSpace(_suggestText.Value) && !isCreating.Value)
                     {
+                        isCreating.Set(true);
                         var currentContent = _planService.ReadLatestRevision(_selectedPlan.FolderName);
                         var comments = string.Join("\n", _suggestText.Value
                             .Split('\n')
                             .Select(line => $">> {line}"));
                         _planService.SavePlan(_selectedPlan.FolderName, currentContent + "\n\n" + comments + "\n");
-                    }
 
-                    _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Updating);
-                    _jobService.StartJob("UpdatePlan", _selectedPlan.FolderPath);
-                    _refreshPlans();
-                    _suggestText.Set("");
-                    _dialogOpen.Set(false);
+                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Updating);
+                        _jobService.StartJob("UpdatePlan", _selectedPlan.FolderPath);
+                        _refreshPlans();
+                        _suggestText.Set("");
+                        _dialogOpen.Set(false);
+                    }
                 })
             )
         ).Width(Size.Rem(30));

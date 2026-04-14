@@ -24,6 +24,7 @@ public class CustomPrDialog(
 
     public override object? Build()
     {
+        var isCreating = UseState(false);
         var customPrMerge = UseState(false);
         var customPrDeleteBranch = UseState(false);
         var customPrIncludeArtifacts = UseState(false);
@@ -71,30 +72,34 @@ public class CustomPrDialog(
                     customPrComment.Set("");
                     _dialogOpen.Set(false);
                 }),
-                new Button("Create PR").Primary().ShortcutKey("Ctrl+Enter").OnClick(() =>
+                new Button("Create PR").Primary().Disabled(isCreating.Value).ShortcutKey("Ctrl+Enter").OnClick(() =>
                 {
-                    var options = new Dictionary<string, object>
+                    if (!isCreating.Value)
                     {
-                        ["merge"] = customPrMerge.Value,
-                        ["deleteBranch"] = customPrDeleteBranch.Value && customPrMerge.Value,
-                        ["includeArtifacts"] = customPrIncludeArtifacts.Value,
-                        ["assignee"] = customPrAssignee.Value ?? "",
-                        ["comment"] = customPrComment.Value
-                    };
-                    var serializer = new SerializerBuilder()
-                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                        .Build();
-                    var optionsPath = Path.Combine(_selectedPlan.FolderPath, ".custom-pr-options.yaml");
-                    FileHelper.WriteAllText(optionsPath, serializer.Serialize(options));
-                    _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
-                    _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
-                    _refreshPlans();
-                    customPrMerge.Set(true);
-                    customPrDeleteBranch.Set(true);
-                    customPrIncludeArtifacts.Set(true);
-                    customPrAssignee.Set(null);
-                    customPrComment.Set("");
-                    _dialogOpen.Set(false);
+                        isCreating.Set(true);
+                        var options = new Dictionary<string, object>
+                        {
+                            ["merge"] = customPrMerge.Value,
+                            ["deleteBranch"] = customPrDeleteBranch.Value && customPrMerge.Value,
+                            ["includeArtifacts"] = customPrIncludeArtifacts.Value,
+                            ["assignee"] = customPrAssignee.Value ?? "",
+                            ["comment"] = customPrComment.Value
+                        };
+                        var serializer = new SerializerBuilder()
+                            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                            .Build();
+                        var optionsPath = Path.Combine(_selectedPlan.FolderPath, ".custom-pr-options.yaml");
+                        FileHelper.WriteAllText(optionsPath, serializer.Serialize(options));
+                        _jobService.StartJob("MakePr", _selectedPlan.FolderPath);
+                        _planService.TransitionState(_selectedPlan.FolderName, PlanStatus.Building);
+                        _refreshPlans();
+                        customPrMerge.Set(true);
+                        customPrDeleteBranch.Set(true);
+                        customPrIncludeArtifacts.Set(true);
+                        customPrAssignee.Set(null);
+                        customPrComment.Set("");
+                        _dialogOpen.Set(false);
+                    }
                 }).WithConfetti(AnimationTrigger.Click)
             )
         ).Width(Size.Rem(30));

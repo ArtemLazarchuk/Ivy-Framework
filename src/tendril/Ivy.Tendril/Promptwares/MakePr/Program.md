@@ -85,7 +85,11 @@ EOF
 )"
 ```
 
-- **Base branch:** `gh repo view <owner/repo> --json defaultBranchRef -q .defaultBranchRef.name`
+- **Base branch:**
+  1. Read plan.yaml and get the project name
+  2. For each repo, call `GetRepoConfig` (from Utils.ps1) to check if `baseBranch` is configured
+  3. If configured, use that value
+  4. Otherwise, auto-detect via: `gh repo view <owner/repo> --json defaultBranchRef -q .defaultBranchRef.name`
 - **Title:** `[<planId>] <plan title>`
 - **Body:** If `<PlanFolder>/artifacts/summary.md` exists, use its content as the PR body (followed by list of commits). Otherwise, fall back to summary from Problem + Solution sections. If `$artifactMarkdown` from step 2.5 is non-empty, append it under an `## Artifacts` heading after the commits list.
 - **Assignee (custom options):** If custom options exist and `assignee` is non-empty, add `--assignee <assignee>` to the `gh pr create` command.

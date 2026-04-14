@@ -16,6 +16,17 @@ Write-Host "Plan: $PlanFolder" -ForegroundColor Cyan
 $planYamlPath = Join-Path $PlanFolder "plan.yaml"
 $planYaml = Get-Content $planYamlPath -Raw | ConvertFrom-Yaml
 
+# Extract issue number if sourceUrl is a GitHub issue
+$issueNumber = $null
+$issueRepo = $null
+if ($planYaml.sourceUrl -match 'github\.com/([^/]+)/([^/]+)/issues/(\d+)') {
+    $issueOwner = $Matches[1]
+    $issueRepoName = $Matches[2]
+    $issueNumber = $Matches[3]
+    $issueRepo = "$issueOwner/$issueRepoName"
+    Write-Host "Linked to issue: $issueRepo#$issueNumber" -ForegroundColor Cyan
+}
+
 # Step 0: Check if already completed
 if ($planYaml.state -eq "Completed") {
     Write-Host "`nPlan is already completed. PRs:" -ForegroundColor Green
@@ -162,13 +173,18 @@ if (Test-Path $worktreesDir) {
             $commits = $planYaml.commits -join ", "
             $prBody += "`n`n## Commits`n`n- $commits"
 
+            # Add issue reference to PR body
+            if ($issueNumber -and $issueRepo) {
+                $prBody += "`n`nCloses $issueRepo#$issueNumber"
+            }
+
             # Add artifacts if any
             if ($artifactMarkdown) {
                 $prBody += "`n`n## Artifacts`n`n$artifactMarkdown"
             }
 
             # Create PR
-            $prUrl = gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body $prBody
+            $prUrl = gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body $prBody --label "tendril"
             Write-Host "  PR created: $prUrl" -ForegroundColor Green
             $prUrls += $prUrl
 
@@ -177,6 +193,19 @@ if (Test-Path $worktreesDir) {
                 $prNumber = $Matches[1]
             } else {
                 Write-Error "Could not extract PR number from: $prUrl"
+            }
+
+            # Tag issue as in-progress for non-yolo
+            if ($issueNumber -and $issueRepo -and $prRule -ne "yolo") {
+                Write-Host "`n  [3.5] Tagging linked issue as in-progress..." -ForegroundColor Yellow
+                try {
+                    gh label create "tendril:in-progress" --repo $issueRepo --description "PR open, awaiting review" --color "FBCA04" --force 2>$null
+                    gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:in-progress"
+                    Write-Host "  Issue $issueRepo#$issueNumber tagged as in-progress" -ForegroundColor Gray
+                } catch {
+                    Write-Warning "Failed to tag issue as in-progress: $_"
+                    Write-Host "  Continuing with PR creation..." -ForegroundColor Gray
+                }
             }
 
             # Step 4: Apply PR rule
@@ -211,6 +240,22 @@ if (Test-Path $worktreesDir) {
                         Write-Host "  Merge failed, retrying with squash..."
                         gh pr merge $prNumber --repo $ownerRepo --squash --delete-branch --admin
                         Write-Host "  PR squashed and merged successfully" -ForegroundColor Green
+                    }
+
+                    # Close linked issue if exists
+                    if ($issueNumber -and $issueRepo) {
+                        Write-Host "`n  [4.5] Closing linked issue..." -ForegroundColor Yellow
+                        try {
+                            gh label create "tendril:automated" --repo $issueRepo --description "Closed automatically by Tendril" --color "0E8A16" --force 2>$null
+                            gh issue edit $issueNumber --repo $issueRepo --add-label "tendril:automated"
+                            $comment = "Automatically closed by Tendril PR: $prUrl (Plan $planId)"
+                            gh issue comment $issueNumber --repo $issueRepo --body $comment
+                            gh issue close $issueNumber --repo $issueRepo --reason completed
+                            Write-Host "  Issue $issueRepo#$issueNumber closed" -ForegroundColor Green
+                        } catch {
+                            Write-Warning "Failed to close linked issue: $_"
+                            Write-Host "  Issue may need manual closure: $issueRepo#$issueNumber" -ForegroundColor Yellow
+                        }
                     }
 
                     # Pull default branch

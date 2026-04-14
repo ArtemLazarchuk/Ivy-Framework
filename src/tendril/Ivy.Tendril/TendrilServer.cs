@@ -1,4 +1,5 @@
 using System.ClientModel;
+using Ivy.Helpers;
 using Ivy.Tendril.AppShell;
 using Ivy.Tendril.Services;
 using Microsoft.Extensions.AI;
@@ -56,8 +57,8 @@ public static class TendrilServer
         server.Services.AddSingleton<IOnboardingSetupService>(sp => sp.GetRequiredService<OnboardingSetupService>());
         server.Services.AddSingleton<GithubService>();
         server.Services.AddSingleton<IGithubService>(sp => sp.GetRequiredService<GithubService>());
-        server.Services.AddSingleton<GitService>();
-        server.Services.AddSingleton<IGitService>(sp => sp.GetRequiredService<GitService>());
+        server.Services.AddSingleton<IGitService>(sp =>
+            new GitService(sp.GetRequiredService<IConfigService>()));
         server.Services.AddSingleton<IWorktreeLifecycleLogger>(sp =>
         {
             var config = sp.GetRequiredService<IConfigService>();
@@ -182,7 +183,7 @@ public static class TendrilServer
                 }
                 catch (Exception ex)
                 {
-                    Program.WriteCrashLog($"[{DateTime.UtcNow:O}] Telemetry startup exception: {ex}");
+                    CrashLog.Write($"[{DateTime.UtcNow:O}] Telemetry startup exception: {ex}");
                 }
             });
             app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");

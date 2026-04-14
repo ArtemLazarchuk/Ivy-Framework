@@ -6,6 +6,9 @@
   pointer-events: none;
   z-index: 99999;
   box-sizing: border-box;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .ivy-devtools-overlay--selected {
@@ -20,8 +23,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  background-color: var(--popover);
-  color: var(--popover-foreground);
+  background-color: var(--input);
+  color: var(--foreground);
   padding: 4px 8px;
   font-size: 11px;
   font-family: var(--font-sans);

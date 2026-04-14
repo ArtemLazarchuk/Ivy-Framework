@@ -1,5 +1,5 @@
 # Merges main into the development branch and pushes. Then triggers Sliplane staging deploys via API.
-# Runs every 6 hours on a schedule (UTC) or manually. On failure, a short summary is added to the workflow run.
+# Runs every 2 hours on a schedule (UTC) or manually. On failure, a short summary is added to the workflow run.
 
 name: Merge main into development
 

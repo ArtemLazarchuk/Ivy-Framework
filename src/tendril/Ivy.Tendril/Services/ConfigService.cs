@@ -17,6 +17,8 @@ public record RepoRef
 {
     public string Path { get; set; } = "";
     public string PrRule { get; set; } = "default";
+    public string? BaseBranch { get; set; }
+    public string SyncStrategy { get; set; } = "fetch";
 }
 
 public record ProjectConfig
@@ -128,6 +130,7 @@ public class TendrilSettings
     public string CodingAgent { get; set; } = "claude";
     public int JobTimeout { get; set; } = 30;
     public int StaleOutputTimeout { get; set; } = 10;
+    public int GitTimeout { get; set; } = 10;
     public int MaxConcurrentJobs { get; set; } = 5;
     public List<ProjectConfig> Projects { get; set; } = new();
     public List<VerificationConfig> Verifications { get; set; } = new();
@@ -234,7 +237,7 @@ public class ConfigService : IConfigService
 
             Directory.CreateDirectory(TendrilHome);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Inbox"));
-            Directory.CreateDirectory(Path.Combine(TendrilHome, "Plans"));
+            Directory.CreateDirectory(PlanFolder);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Trash"));
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Promptwares"));
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Hooks"));
@@ -247,7 +250,10 @@ public class ConfigService : IConfigService
 
     public string ConfigPath { get; private set; }
 
-    public string PlanFolder => string.IsNullOrEmpty(TendrilHome) ? "" : Path.Combine(TendrilHome, "Plans");
+    public string PlanFolder =>
+        Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim() is { Length: > 0 } plans
+            ? plans
+            : string.IsNullOrEmpty(TendrilHome) ? "" : Path.Combine(TendrilHome, "Plans");
 
     public List<ProjectConfig> Projects => Settings.Projects;
 
@@ -380,7 +386,29 @@ public class ConfigService : IConfigService
 
     public void OpenInEditor(string path)
     {
-        PlatformHelper.OpenInEditor(Editor.Command, path);
+        var processedPath = PreprocessForEditing(path);
+        PlatformHelper.OpenInEditor(Editor.Command, processedPath);
+    }
+
+    public string PreprocessForEditing(string path)
+    {
+        if (!path.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var content = File.ReadAllText(path);
+        var repoPaths = Projects
+            .SelectMany(p => p.Repos.Select(r => r.Path))
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+        var polisher = new MarkdownLinkPolisher();
+        var polished = polisher.PolishLinks(content, repoPaths, PlanFolder);
+
+        if (content == polished)
+            return path;
+
+        var tempPath = Path.Combine(Path.GetTempPath(), $"tendril-edit-{Guid.NewGuid()}.md");
+        File.WriteAllText(tempPath, polished);
+        return tempPath;
     }
 
     public void CompleteOnboarding(string tendrilHome)

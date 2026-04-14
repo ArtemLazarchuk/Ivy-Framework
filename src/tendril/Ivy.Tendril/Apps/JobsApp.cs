@@ -22,6 +22,34 @@ public class JobsApp : ViewBase
         var showOutput = UseState<string?>(null);
         var showPrompt = UseState<string?>(null);
         var openFile = UseState<string?>(null);
+        var outputStream = UseStream<string>();
+        var lastProcessedIndex = UseState(0);
+        var streamingJobId = UseState<string?>(null);
+
+        UseInterval(() =>
+        {
+            if (showOutput.Value is not { } activeJobId) return;
+
+            var activeJob = jobService.GetJob(activeJobId);
+            if (activeJob is not { Status: JobStatus.Running }) return;
+
+            var startIdx = lastProcessedIndex.Value;
+
+            if (streamingJobId.Value != activeJobId)
+            {
+                streamingJobId.Set(activeJobId);
+                startIdx = 0;
+            }
+
+            var currentLines = activeJob.OutputLines.ToArray();
+
+            for (var i = startIdx; i < currentLines.Length; i++)
+            {
+                outputStream.Write(currentLines[i]);
+            }
+
+            lastProcessedIndex.Set(currentLines.Length);
+        }, TimeSpan.FromMilliseconds(300));
         var config = UseService<IConfigService>();
         UseEffect(() =>
         {
@@ -47,6 +75,18 @@ public class JobsApp : ViewBase
             jobService.JobsChanged += OnJobsChanged;
             return Disposable.Create(() => jobService.JobsChanged -= OnJobsChanged);
         });
+
+        UseInterval(() =>
+        {
+            var hasActiveOrRecentJobs = jobService.GetJobs().Any(j =>
+                j.Status == JobStatus.Running ||
+                (j.Status is JobStatus.Stopped or JobStatus.Failed or JobStatus.Timeout or JobStatus.Completed
+                 && j.CompletedAt.HasValue
+                 && DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(5)));
+
+            if (hasActiveOrRecentJobs)
+                refreshToken.Refresh();
+        }, TimeSpan.FromSeconds(5));
 
         var updateStream = UseDataTableUpdates(
             Observable.Interval(TimeSpan.FromSeconds(1))
@@ -311,9 +351,7 @@ public class JobsApp : ViewBase
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
-                        MarkdownHelper.AnnotateBrokenFileLinks(content),
-                        planService.PlansDirectory))
+                : (object)new Markdown(MarkdownHelper.AnnotateAllBrokenLinks(content, planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
@@ -337,14 +375,23 @@ public class JobsApp : ViewBase
             var job = jobService.GetJob(jobId);
             object outputContent;
 
-            if (job is not null && job.OutputLines.Count > 0)
+            if (job is { Status: JobStatus.Running })
+            {
+                outputContent = new ClaudeJsonRenderer()
+                    .Stream(outputStream)
+                    .ShowThinking(true)
+                    .ShowSystemEvents(true)
+                    .AutoScroll(true)
+                    .Height(Size.Full());
+            }
+            else if (job is not null && job.OutputLines.Count > 0)
             {
                 var jsonStream = string.Join("\n", job.OutputLines);
                 outputContent = new ClaudeJsonRenderer()
                     .JsonStream(jsonStream)
                     .ShowThinking(true)
                     .ShowSystemEvents(true)
-                    .AutoScroll(job.Status == JobStatus.Running)
+                    .AutoScroll(false)
                     .Height(Size.Full());
             }
             else

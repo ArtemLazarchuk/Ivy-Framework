@@ -13,9 +13,24 @@ $logFile = GetNextLogFile $programFolder
 $PlanPath | Set-Content $logFile
 Write-Host "Log file: $logFile"
 
-$promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder @{
+$repoConfigsYaml = ""
+foreach ($repoPath in $planInfo.Yaml.repos) {
+    $cfg = GetRepoConfig -RepoPath $repoPath -Project $planInfo.Project
+    $repoName = Split-Path $repoPath -Leaf
+    $repoConfigsYaml += "${repoName}:`n"
+    if ($cfg.BaseBranch) {
+        $repoConfigsYaml += "  baseBranch: $($cfg.BaseBranch)`n"
+    }
+    $repoConfigsYaml += "  syncStrategy: $($cfg.SyncStrategy)`n"
+}
+
+$fwValues = @{
     Args = $PlanPath; PlanFolder = $PlanPath; Project = $planInfo.Project
 }
+if ($repoConfigsYaml) {
+    $fwValues["RepoConfigs"] = $repoConfigsYaml
+}
+$promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder $fwValues
 
 $agent = GetAgentCommand -Promptware "MakePr"
 $sessionId = $env:TENDRIL_SESSION_ID

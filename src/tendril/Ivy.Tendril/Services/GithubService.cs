@@ -30,7 +30,7 @@ public class GithubService(IConfigService config) : IGithubService
         var repos = new List<RepoConfig>();
         foreach (var repoPath in uniquePaths)
         {
-            var repoConfig = GetRepoConfigFromPath(repoPath);
+            var repoConfig = GetRepoConfigFromPathCached(repoPath);
             if (repoConfig is not null)
                 repos.Add(repoConfig);
         }

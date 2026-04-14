@@ -281,10 +281,6 @@ public class JobService : IJobService
         // Persist completed job to SQLite
         PersistJob(job);
 
-        // Free output buffer — all consumers (failure reason, hooks, log writing) are done.
-        // Output for failed jobs was already written to logs/ above.
-        job.TrimOutput();
-
         // Evict stale finished jobs from memory to prevent unbounded dictionary growth.
         // Job metadata is already persisted to SQLite; the in-memory copy is only needed
         // for active display and is reloaded from DB on next startup.
@@ -338,7 +334,6 @@ public class JobService : IJobService
 
         CleanupInboxFile(job);
         ResetPlanState(job);
-        job.TrimOutput();
         RaiseJobsChanged();
 
         // Try to start queued jobs now that a slot is free
@@ -413,7 +408,7 @@ public class JobService : IJobService
 
     public List<JobItem> GetJobs()
     {
-        return _jobs.Values.OrderByDescending(j => j.StartedAt ?? DateTime.MinValue).ToList();
+        return _jobs.Values.ToArray().OrderByDescending(j => j.StartedAt ?? DateTime.MinValue).ToList();
     }
 
     public JobItem? GetJob(string id)
@@ -575,6 +570,20 @@ public class JobService : IJobService
                 RaiseJobsChanged();
                 return id;
             }
+
+            // Check for concurrent execution on same repos
+            var (concurrentOk, concurrentReason) = CheckRepositoryConcurrency(planFolder);
+            if (!concurrentOk)
+            {
+                job.Status = JobStatus.Blocked;
+                job.StatusMessage = concurrentReason;
+                job.CompletedAt = DateTime.UtcNow;
+                ResetPlanStateToBlocked(job);
+                var blockedNotification = new JobNotification("Job Blocked", $"{planFile}: {concurrentReason}", false);
+                RaiseNotification(blockedNotification);
+                RaiseJobsChanged();
+                return id;
+            }
         }
 
         // Ensure any pending plan state writes are flushed to disk before scripts read plan.yaml
@@ -698,7 +707,7 @@ public class JobService : IJobService
             }
             catch (Exception ex)
             {
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] OutputDataReceived exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] OutputDataReceived exception for job {id}: {ex}");
             }
         };
         process.ErrorDataReceived += (_, e) =>
@@ -713,7 +722,7 @@ public class JobService : IJobService
             }
             catch (Exception ex)
             {
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] ErrorDataReceived exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] ErrorDataReceived exception for job {id}: {ex}");
             }
         };
 
@@ -761,7 +770,7 @@ public class JobService : IJobService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Job {JobId}: Monitor task exception", id);
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
                 CompleteJob(id, null, timedOut: false);
             }
         });
@@ -852,19 +861,24 @@ public class JobService : IJobService
 
     internal async Task RunStaleOutputWatchdog(string id, CancellationTokenSource timeoutCts)
     {
-        var checkInterval = TimeSpan.FromSeconds(60);
+        const int checkIntervalSeconds = 60;
 
         try
         {
             while (!timeoutCts.Token.IsCancellationRequested)
             {
-                try
+                for (var i = 0; i < checkIntervalSeconds; i++)
                 {
-                    await Task.Delay(checkInterval, timeoutCts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1), timeoutCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+
+                    if (timeoutCts.Token.IsCancellationRequested) return;
                 }
 
                 if (!_jobs.TryGetValue(id, out var job) || job.Status != JobStatus.Running)
@@ -899,28 +913,33 @@ public class JobService : IJobService
             if (string.IsNullOrEmpty(planFolder)) continue;
 
             var (ok, _) = CheckDependencies(planFolder);
-            if (ok)
-            {
-                // Remove the blocked job entry — only one thread succeeds
-                if (!_jobs.TryRemove(blockedJob.Id, out _))
-                    continue; // Another thread already handled this job
+            if (!ok)
+                continue;
 
-                // Skip if there's already an active job for this plan
-                if (HasActiveJobForPlan(planFolder))
-                    continue;
+            // Also check concurrency before retrying
+            var (concurrentOk, _) = CheckRepositoryConcurrency(planFolder);
+            if (!concurrentOk)
+                continue;
 
-                // Transition plan to Building before re-launching (ExecutePlan.ps1 requires it)
-                SetPlanStateByFolder(planFolder, "Building");
+            // Remove the blocked job entry — only one thread succeeds
+            if (!_jobs.TryRemove(blockedJob.Id, out _))
+                continue; // Another thread already handled this job
 
-                // Re-start the job — skip dependency check since we just verified
-                StartJobSkipDepCheck(blockedJob.Type, blockedJob.Args);
+            // Skip if there's already an active job for this plan
+            if (HasActiveJobForPlan(planFolder))
+                continue;
 
-                var notification = new JobNotification(
-                    "Job Unblocked",
-                    $"{blockedJob.PlanFile}: dependencies now satisfied, auto-restarting",
-                    true);
-                RaiseNotification(notification);
-            }
+            // Transition plan to Building before re-launching (ExecutePlan.ps1 requires it)
+            SetPlanStateByFolder(planFolder, "Building");
+
+            // Re-start the job — skip dependency check since we just verified
+            StartJobSkipDepCheck(blockedJob.Type, blockedJob.Args);
+
+            var notification = new JobNotification(
+                "Job Unblocked",
+                $"{blockedJob.PlanFile}: dependencies now satisfied, auto-restarting",
+                true);
+            RaiseNotification(notification);
         }
     }
 
@@ -1258,6 +1277,77 @@ public class JobService : IJobService
         {
             return (false, $"Dependency check failed: {ex.Message}");
         }
+    }
+
+    private (bool Ok, string? BlockReason) CheckRepositoryConcurrency(string planFolder)
+    {
+        try
+        {
+            var planYaml = ReadPlanYaml(planFolder);
+            if (planYaml == null)
+                return (true, null);
+
+            var repos = planYaml.Repos;
+            if (repos.Count == 0 && _configService != null)
+            {
+                var projectConfig = _configService.GetProject(planYaml.Project);
+                if (projectConfig != null)
+                    repos = projectConfig.RepoPaths;
+            }
+
+            if (repos.Count == 0)
+                return (true, null);
+
+            var activeJobs = _jobs.Values
+                .Where(j => j.Type == "ExecutePlan" &&
+                           j.Status is JobStatus.Running or JobStatus.Queued or JobStatus.Pending)
+                .ToList();
+
+            foreach (var activeJob in activeJobs)
+            {
+                var activePlanFolder = activeJob.Args.Length > 0 ? activeJob.Args[0] : "";
+                if (string.IsNullOrEmpty(activePlanFolder) || activePlanFolder == planFolder)
+                    continue;
+
+                var activePlan = ReadPlanYaml(activePlanFolder);
+                if (activePlan == null) continue;
+
+                var activeRepos = activePlan.Repos;
+                if (activeRepos.Count == 0 && _configService != null)
+                {
+                    var activeProjectConfig = _configService.GetProject(activePlan.Project);
+                    if (activeProjectConfig != null)
+                        activeRepos = activeProjectConfig.RepoPaths;
+                }
+
+                foreach (var repo in repos)
+                {
+                    var normalizedRepo = NormalizeRepoPath(repo);
+                    foreach (var activeRepo in activeRepos)
+                    {
+                        var normalizedActiveRepo = NormalizeRepoPath(activeRepo);
+                        if (normalizedRepo == normalizedActiveRepo)
+                        {
+                            var activePlanId = Path.GetFileName(activePlanFolder);
+                            var repoName = Path.GetFileName(repo);
+                            return (false, $"Plan {activePlanId} is currently executing on repository '{repoName}'. Wait for it to complete to avoid conflicting changes.");
+                        }
+                    }
+                }
+            }
+
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Concurrency check failed for plan {PlanFolder}", planFolder);
+            return (false, $"Concurrency check failed: {ex.Message}");
+        }
+    }
+
+    private static string NormalizeRepoPath(string path)
+    {
+        return path.Replace('\\', '/').TrimEnd('/').ToLowerInvariant();
     }
 
     private void RetryBlockedDependents(string completedPlanFolder)

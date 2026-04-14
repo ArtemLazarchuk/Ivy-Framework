@@ -591,13 +591,16 @@ When passing structured children to widgets:
 ✅ **`UseState(() => ImmutableArray<FileUpload<byte[]>>.Empty)`** — explicitly initialize with `.Empty`
 📝 **Why**: `default(ImmutableArray<T>)` has a null backing array (unlike `List<T>` which is just empty). The `UseState<T>()` overload without initializer uses `default(T)`, which for `ImmutableArray` produces an unusable instance. Always use the `Func<T>` overload with `.Empty`.
 
-## Ivy Server Always Uses HTTPS
+## Ivy Server HTTP vs HTTPS
 
-### Health check and Playwright must use HTTPS
-❌ **`http.get(\`http://localhost:\${port}\`)`** — connection refused or no response; Ivy binds to HTTPS only
-✅ **`https.get(\`https://localhost:\${port}\`, { rejectUnauthorized: false })`** — use `https` module with self-signed cert bypass
-✅ **`ignoreHTTPSErrors: true`** in Playwright config `use` block — required for all page navigation
-📝 **Why**: Ivy's `Server` class configures Kestrel with HTTPS by default (dev certificate). There is no HTTP endpoint. All `waitForServer` health checks, `page.goto()`, and WebSocket connections must use `https://` / `wss://`.
+### Server protocol depends on platform/configuration
+⚠️ **Ivy may use HTTP or HTTPS depending on platform and configuration.** Check the server startup output to determine the protocol.
+- On Linux: Server often binds to HTTP (`http://localhost:<port>`)
+- On Windows: Server may bind to HTTPS with dev certificate (`https://localhost:<port>`)
+✅ **Parse the actual URL from server stdout** — look for `http://localhost:` or `https://localhost:` in the output
+✅ **If HTTPS**: Use `{ rejectUnauthorized: false }` for health checks and `ignoreHTTPSErrors: true` in Playwright config
+✅ **If HTTP**: Use standard `http` module for health checks
+📝 **Best practice**: Use `--find-available-port` and parse the port from stdout rather than specifying `--port` which may conflict with the default port (5010).
 
 ## TableBuilder.Header() Requires Label Parameter
 
@@ -605,6 +608,15 @@ When passing structured children to widgets:
 ❌ **`products.ToTable().Header(p => p.Name)`** — CS7036: no argument for required parameter `label`
 ✅ **`products.ToTable().Header(p => p.Name, "Name")`** — always provide the display label
 📝 **Why**: `TableBuilder<T>.Header(Expression<Func<T, object>>, string)` has `label` as a required parameter, not optional. Unlike DataTable which auto-derives column names, the simple Table widget requires explicit labels.
+
+## DevTools Requires Two-Step Enablement
+
+### Both server flag AND postMessage are needed
+❌ **`postMessage({ type: 'DEVTOOLS_SET_ENABLED', token: 'true' })` alone** — DevTools component won't mount if meta tag is missing
+❌ **`--enable-dev-tools` server flag alone** — DevTools component mounts but overlay listeners are not registered
+✅ **Step 1**: Start server with `--enable-dev-tools` flag — injects `<meta name="ivy-enable-dev-tools" content="true" />` which causes `<DevTools />` component to mount
+✅ **Step 2**: Send `window.postMessage({ type: 'DEVTOOLS_SET_ENABLED', token: 'true' }, '*')` — sets `enabled` state which registers mouseover/click listeners
+📝 **Why**: `isDevToolsEnabled()` in `utils.ts` checks for the meta tag to decide whether to render the DevTools component. Inside the component, a separate `enabled` state (controlled by postMessage) gates the event listener registration. This two-step design allows the Tendril IDE to mount the component conditionally and then control activation via IPC.
 
 ## Future Gotchas
 
