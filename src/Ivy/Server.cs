@@ -97,6 +97,7 @@ public class Server
     private Action<HtmlPipeline>? _pipelineConfigurator;
     private ManifestOptions? _manifestOptions;
     private ServerArgs _args;
+    private bool _presetsLoaded;
 
     public Server(ServerArgs? args = null)
     {
@@ -175,6 +176,7 @@ public class Server
 
     public void AddConnectionsFromAssembly(Assembly? assembly = null)
     {
+        _presetsLoaded = true;
         assembly ??= Assembly.GetEntryAssembly();
 
         var connections = assembly!.GetLoadableTypes()
@@ -199,24 +201,19 @@ public class Server
 
         if (presets.Count > 0)
         {
-            var builder = new ConfigurationBuilder()
-                .AddInMemoryCollection(presets)
-                .AddEnvironmentVariables()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-
-            if (Assembly.GetEntryAssembly() is { } entryAssembly)
-            {
-                builder.AddUserSecrets(entryAssembly);
-            }
-
-            Configuration = builder.Build();
+            Configuration = ServerUtils.GetConfiguration(presets);
         }
 
         foreach (var connection in connections)
         {
             connection.RegisterServices(this);
         }
+    }
+
+    private void EnsurePresetsLoaded()
+    {
+        if (_presetsLoaded) return;
+        AddConnectionsFromAssembly();
     }
 
     public AppDescriptor GetApp(string id)
@@ -258,7 +255,7 @@ public class Server
 
     public Server UseConfiguration(Action<IConfigurationBuilder> configure)
     {
-        Configuration = ServerUtils.GetConfiguration(configure);
+        Configuration = ServerUtils.GetConfiguration(configure: configure);
         return this;
     }
 
@@ -936,6 +933,11 @@ public class Server
             var description = ServerDescription.Gather(this, app.Services);
             Console.WriteLine(description.ToYaml());
             return;
+        }
+
+        if (_args.DescribeConnection != null || _args.TestConnection != null)
+        {
+            EnsurePresetsLoaded();
         }
 
         if (_args.DescribeConnection != null)

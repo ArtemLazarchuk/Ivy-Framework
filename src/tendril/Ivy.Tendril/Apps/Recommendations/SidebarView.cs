@@ -6,7 +6,6 @@ public class SidebarView(
     List<Recommendation> recommendations,
     IState<Recommendation?> selectedState,
     IState<string?> projectFilter,
-    IState<string?> planStatusFilter,
     IState<string?> impactFilter,
     IState<string?> riskFilter,
     int totalCount,
@@ -15,7 +14,6 @@ public class SidebarView(
 {
     private readonly bool _hasActiveFilters = hasActiveFilters;
     private readonly IState<string?> _impactFilter = impactFilter;
-    private readonly IState<string?> _planStatusFilter = planStatusFilter;
     private readonly IState<string?> _projectFilter = projectFilter;
     private readonly List<Recommendation> _recommendations = recommendations;
     private readonly IState<string?> _riskFilter = riskFilter;
@@ -29,13 +27,6 @@ public class SidebarView(
             .GroupBy(r => r.Project)
             .OrderByDescending(g => g.Count())
             .Select(g => new Option<string>($"{g.Key} ({g.Count()})", g.Key))
-            .ToArray<IAnyOption>();
-
-        var statusOptions = _recommendations
-            .Select(r => r.SourcePlanStatus)
-            .Distinct()
-            .OrderBy(s => s)
-            .Select(s => new Option<string>(s.ToString(), s.ToString()))
             .ToArray<IAnyOption>();
 
         var searchInput = _textFilter.ToSearchInput()
@@ -63,8 +54,6 @@ public class SidebarView(
             header |= Layout.Vertical()
                       | _projectFilter.ToSelectInput(projectOptions).Placeholder("All Projects").Nullable()
                           .WithField().Label("Project")
-                      | _planStatusFilter.ToSelectInput(statusOptions).Placeholder("All Statuses").Nullable()
-                          .WithField().Label("Plan Status")
                       | _impactFilter.ToSelectInput(impactLevelOptions).Placeholder("All Impacts").Nullable()
                           .WithField().Label("Impact")
                       | _riskFilter.ToSelectInput(riskLevelOptions).Placeholder("All Risk Levels").Nullable()
@@ -78,7 +67,6 @@ public class SidebarView(
     {
         var filtered = _recommendations
             .Where(r => _projectFilter.Value == null || r.Project == _projectFilter.Value)
-            .Where(r => _planStatusFilter.Value == null || r.SourcePlanStatus.ToString() == _planStatusFilter.Value)
             .Where(r => _impactFilter.Value == null || r.Impact == _impactFilter.Value)
             .Where(r => _riskFilter.Value == null || r.Risk == _riskFilter.Value)
             .Where(r =>

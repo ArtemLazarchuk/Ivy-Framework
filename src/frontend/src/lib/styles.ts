@@ -771,8 +771,8 @@ export const typography: Record<string, string> = {
   table: "w-full border-collapse border border-border",
   thead: "bg-muted",
   tr: "border border-border",
-  th: "border border-border px-4 py-2 text-left font-bold text-sm",
-  td: "border border-border px-4 py-2 text-sm",
+  th: "border border-border px-4 py-2 text-left font-bold text-[0.875em]",
+  td: "border border-border px-4 py-2 text-[0.875em]",
 
   // Media
   img: "max-w-full h-auto cursor-zoom-in border border-border rounded-md",
