@@ -143,8 +143,6 @@ public class Program
         }
     }
 
-    internal static void WriteCrashLog(string message) => CrashLog.Write(message);
-
     private static string GetMemoryStats()
     {
         try

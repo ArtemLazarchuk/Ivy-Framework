@@ -1,4 +1,5 @@
 using System.ClientModel;
+using Ivy.Helpers;
 using Ivy.Tendril.AppShell;
 using Ivy.Tendril.Services;
 using Microsoft.Extensions.AI;
@@ -182,7 +183,7 @@ public static class TendrilServer
                 }
                 catch (Exception ex)
                 {
-                    Program.WriteCrashLog($"[{DateTime.UtcNow:O}] Telemetry startup exception: {ex}");
+                    CrashLog.Write($"[{DateTime.UtcNow:O}] Telemetry startup exception: {ex}");
                 }
             });
             app.UseAssets(server.Args, app.Services.GetRequiredService<ILogger<Server>>(), "Assets", "tendril/assets");

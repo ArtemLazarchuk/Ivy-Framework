@@ -707,7 +707,7 @@ public class JobService : IJobService
             }
             catch (Exception ex)
             {
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] OutputDataReceived exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] OutputDataReceived exception for job {id}: {ex}");
             }
         };
         process.ErrorDataReceived += (_, e) =>
@@ -722,7 +722,7 @@ public class JobService : IJobService
             }
             catch (Exception ex)
             {
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] ErrorDataReceived exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] ErrorDataReceived exception for job {id}: {ex}");
             }
         };
 
@@ -770,7 +770,7 @@ public class JobService : IJobService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Job {JobId}: Monitor task exception", id);
-                Program.WriteCrashLog($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
+                CrashLog.Write($"[{DateTime.UtcNow:O}] JobService process monitor exception for job {id}: {ex}");
                 CompleteJob(id, null, timedOut: false);
             }
         });

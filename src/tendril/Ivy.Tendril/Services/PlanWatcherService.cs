@@ -1,3 +1,4 @@
+using Ivy.Helpers;
 using Timer = System.Timers.Timer;
 
 namespace Ivy.Tendril.Services;
@@ -48,7 +49,7 @@ public class PlanWatcherService : IPlanWatcherService
         _watcher.Renamed += (_, _) => ScheduleDebounce(null);
         _watcher.Error += (_, e) =>
         {
-            Program.WriteCrashLog($"[{DateTime.UtcNow:O}] PlanWatcher FSW error: {e.GetException()}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] PlanWatcher FSW error: {e.GetException()}");
             ScheduleDebounce(null);
         };
 
