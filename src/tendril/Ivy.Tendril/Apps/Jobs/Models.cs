@@ -87,4 +87,5 @@ public record JobItemRow
     public string Cost { get; init; } = "";
     public string Tokens { get; init; } = "";
     public string StatusMessage { get; init; } = "";
+    public string? ErrorContext { get; init; }  // Multi-line error context for tooltip/expansion
 }
