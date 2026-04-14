@@ -466,6 +466,50 @@ public class InputPrefixSuffixSlotTests
     }
 
     [Fact]
+    public void DateTimeInput_Prefix_AddsPrefixSlot()
+    {
+        DateTimeInputBase input = new DateTimeInput<DateTime>();
+        var withPrefix = input.Prefix("$");
+
+        var slot = FindSlot(withPrefix, "Prefix");
+        Assert.NotNull(slot);
+        Assert.Equal("$", slot!.Children[0]);
+    }
+
+    [Fact]
+    public void DateTimeInput_Suffix_AddsSuffixSlot()
+    {
+        DateTimeInputBase input = new DateTimeInput<DateTime>();
+        var withSuffix = input.Suffix("UTC");
+
+        var slot = FindSlot(withSuffix, "Suffix");
+        Assert.NotNull(slot);
+        Assert.Equal("UTC", slot!.Children[0]);
+    }
+
+    [Fact]
+    public void DateTimeInput_PrefixAndSuffix_Coexist()
+    {
+        DateTimeInputBase input = new DateTimeInput<DateTime>();
+        var both = input.Prefix("From:").Suffix("UTC");
+
+        Assert.NotNull(FindSlot(both, "Prefix"));
+        Assert.NotNull(FindSlot(both, "Suffix"));
+    }
+
+    [Fact]
+    public void DateTimeInput_Prefix_AcceptsWidgetContent()
+    {
+        DateTimeInputBase input = new DateTimeInput<DateTime>();
+        var button = new Button("Pick");
+        var withPrefix = input.Prefix(button);
+
+        var slot = FindSlot(withPrefix, "Prefix");
+        Assert.NotNull(slot);
+        Assert.Same(button, slot!.Children[0]);
+    }
+
+    [Fact]
     public void ColorInput_Prefix_AddsPrefixSlot()
     {
         var state = new MockState<string>("#ff0000");
