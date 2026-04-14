@@ -54,6 +54,10 @@ Ivy Framework strictly requires the following toolchains to develop applications
 - **.NET 10.0 SDK**: All Ivy projects and packages are built against this target framework.
 - **vp CLI (Vite+)**: Required for frontend orchestration. Install globally via `npm install -g vite-plus`.
 
+<Callout Type="info">
+Ivy uses Rust-compiled native libraries under the hood for high-performance JSON diffing and document processing. These ship as precompiled NuGet packages — no Rust installation required.
+</Callout>
+
 Ivy serves over HTTPS in local development. On macOS and Windows, run the following once to trust the development certificate:
 
 ```terminal
