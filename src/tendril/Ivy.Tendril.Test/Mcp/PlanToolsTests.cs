@@ -1,3 +1,4 @@
+using Ivy.Tendril.Mcp;
 using Ivy.Tendril.Mcp.Tools;
 using Xunit;
 
@@ -7,18 +8,24 @@ public class PlanToolsTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly string _originalTendrilHome;
+    private readonly string? _originalToken;
+    private readonly PlanTools _planTools;
 
     public PlanToolsTests()
     {
         _tempDir = Path.Combine(Path.GetTempPath(), $"tendril-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_tempDir);
         _originalTendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME") ?? "";
+        _originalToken = Environment.GetEnvironmentVariable("TENDRIL_MCP_TOKEN");
         Environment.SetEnvironmentVariable("TENDRIL_HOME", _tempDir);
+        Environment.SetEnvironmentVariable("TENDRIL_MCP_TOKEN", null); // No auth for tests
+        _planTools = new PlanTools(new McpAuthenticationService());
     }
 
     public void Dispose()
     {
         Environment.SetEnvironmentVariable("TENDRIL_HOME", _originalTendrilHome);
+        Environment.SetEnvironmentVariable("TENDRIL_MCP_TOKEN", _originalToken);
         if (Directory.Exists(_tempDir))
             Directory.Delete(_tempDir, true);
     }
@@ -53,7 +60,7 @@ public class PlanToolsTests : IDisposable
         File.WriteAllText(Path.Combine(planFolder, "plan.yaml"), planYaml);
 
         // Act
-        var result = PlanTools.TransitionPlan("00001", "Icebox");
+        var result = _planTools.TransitionPlan("00001", "Icebox");
 
         // Assert
         Assert.Contains("Successfully transitioned", result);
@@ -93,7 +100,7 @@ public class PlanToolsTests : IDisposable
         File.WriteAllText(Path.Combine(planFolder, "plan.yaml"), planYaml);
 
         // Act
-        var result = PlanTools.TransitionPlan("00001", "InvalidState");
+        var result = _planTools.TransitionPlan("00001", "InvalidState");
 
         // Assert
         Assert.Contains("Error: Invalid state", result);
@@ -108,7 +115,7 @@ public class PlanToolsTests : IDisposable
         Directory.CreateDirectory(plansDir);
 
         // Act
-        var result = PlanTools.TransitionPlan("99999", "Draft");
+        var result = _planTools.TransitionPlan("99999", "Draft");
 
         // Assert
         Assert.Contains("Error: Plan '99999' not found", result);
@@ -154,7 +161,7 @@ public class PlanToolsTests : IDisposable
         File.WriteAllText(Path.Combine(planFolder, "plan.yaml"), planYaml);
 
         // Act
-        var result = PlanTools.TransitionPlan("00001", "Executing");
+        var result = _planTools.TransitionPlan("00001", "Executing");
 
         // Assert
         Assert.Contains("Successfully transitioned", result);
@@ -210,7 +217,7 @@ public class PlanToolsTests : IDisposable
 
         // Act
         var beforeTransition = DateTime.UtcNow;
-        var result = PlanTools.TransitionPlan("00001", "Icebox");
+        var result = _planTools.TransitionPlan("00001", "Icebox");
         var afterTransition = DateTime.UtcNow;
 
         // Assert
@@ -237,7 +244,7 @@ public class PlanToolsTests : IDisposable
         Environment.SetEnvironmentVariable("TENDRIL_HOME", null);
 
         // Act
-        var result = PlanTools.TransitionPlan("00001", "Draft");
+        var result = _planTools.TransitionPlan("00001", "Draft");
 
         // Assert
         Assert.Contains("Error: TENDRIL_HOME is not set", result);
