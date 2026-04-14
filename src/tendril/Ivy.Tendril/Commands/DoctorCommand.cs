@@ -669,8 +669,13 @@ public static class DoctorCommand
 
         try
         {
-            var nestedGit = Directory.EnumerateFileSystemEntries(worktreesPath, ".git", SearchOption.AllDirectories);
-            return nestedGit.Any();
+            foreach (var wtDir in Directory.GetDirectories(worktreesPath))
+            {
+                var nestedGit = Directory.EnumerateFileSystemEntries(wtDir, ".git", SearchOption.AllDirectories).ToList();
+                if (nestedGit.Count > 1 || (nestedGit.Count == 1 && nestedGit[0] != Path.Combine(wtDir, ".git")))
+                    return true;
+            }
+            return false;
         }
         catch
         {
@@ -778,16 +783,34 @@ public static class DoctorCommand
 
         try
         {
-            if (healthResult.Health.Contains("StaleWorktree"))
+            if (healthResult.Health.Contains("YAML:"))
             {
-                PlanReaderService.RemoveWorktrees(planPath);
-                repairs.Add("removed stale worktrees");
+                var yamlPath = Path.Combine(planPath, "plan.yaml");
+                if (File.Exists(yamlPath))
+                {
+                    var content = File.ReadAllText(yamlPath);
+                    var repaired = PlanReaderService.RepairPlanYaml(content);
+                    if (repaired != content)
+                    {
+                        File.WriteAllText(yamlPath, repaired);
+                        repairs.Add("repaired plan.yaml");
+                    }
+                }
             }
 
-            if (healthResult.Health.Contains("NestedWorktree"))
+            if (healthResult.Health.Contains("Recs:"))
             {
-                CleanupNestedWorktrees(planPath);
-                repairs.Add("cleaned nested worktrees");
+                var recsPath = Path.Combine(planPath, "artifacts", "recommendations.yaml");
+                if (File.Exists(recsPath))
+                {
+                    var content = File.ReadAllText(recsPath);
+                    var repaired = PlanReaderService.RepairPlanYaml(content);
+                    if (repaired != content)
+                    {
+                        File.WriteAllText(recsPath, repaired);
+                        repairs.Add("repaired recommendations.yaml");
+                    }
+                }
             }
 
             if (repairs.Count == 0)
@@ -801,36 +824,4 @@ public static class DoctorCommand
         }
     }
 
-    internal static void CleanupNestedWorktrees(string planPath)
-    {
-        var worktreesPath = Path.Combine(planPath, "worktrees");
-        if (!Directory.Exists(worktreesPath))
-            return;
-
-        var nestedPlans = Directory.GetDirectories(worktreesPath, "Plans", SearchOption.AllDirectories);
-        foreach (var nestedPlanDir in nestedPlans)
-        {
-            WorktreeCleanupService.ForceDeleteDirectory(nestedPlanDir);
-        }
-
-        foreach (var wtDir in Directory.GetDirectories(worktreesPath))
-        {
-            try
-            {
-                var nestedGit = Directory.EnumerateFileSystemEntries(wtDir, ".git", SearchOption.AllDirectories).ToList();
-
-                if (nestedGit.Count == 1 && nestedGit[0] == Path.Combine(wtDir, ".git"))
-                    continue;
-
-                if (nestedGit.Count > 1 || (nestedGit.Count == 1 && nestedGit[0] != Path.Combine(wtDir, ".git")))
-                {
-                    WorktreeCleanupService.ForceDeleteDirectory(wtDir);
-                }
-            }
-            catch
-            {
-                // Ignore errors on individual worktrees
-            }
-        }
-    }
 }
