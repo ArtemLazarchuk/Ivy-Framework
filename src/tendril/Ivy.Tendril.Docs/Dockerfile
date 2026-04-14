@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG IVY_PACKAGE_VERSION
 
-WORKDIR /src
+WORKDIR /
 
 # Copy tool config and restore tools
 # Note: Use the Ivy-Framework root as build context
@@ -27,7 +27,7 @@ RUN dotnet restore "src/tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj"
 COPY . .
 
 # Build and publish
-WORKDIR "/src/src/tendril/Ivy.Tendril.Docs"
+WORKDIR "/src/tendril/Ivy.Tendril.Docs"
 RUN dotnet publish "Ivy.Tendril.Docs.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
