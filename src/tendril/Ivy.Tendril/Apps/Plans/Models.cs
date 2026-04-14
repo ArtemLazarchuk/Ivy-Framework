@@ -65,6 +65,8 @@ public class RecommendationYaml
     public string Description { get; set; } = "";
     public string State { get; set; } = "Pending";
     public string? DeclineReason { get; set; }
+    public string? Impact { get; set; }
+    public string? Risk { get; set; }
 }
 
 public static class PlanFilters

@@ -451,7 +451,11 @@ If you identified items in ANY category, write them to `<PlanFolder>/artifacts/r
   description: |
     Markdown description with context and location.
   state: Pending
+  impact: Medium   # Optional: Small, Medium, or High
+  risk: Small      # Optional: Small, Medium, or High
 ```
+
+Optionally include `impact` and `risk` to help prioritize the recommendation. Impact indicates the value of implementing it; Risk indicates the potential for complications or bugs.
 
 **YAML quoting rules:** Titles containing backticks, colons, brackets, braces, or other YAML special characters MUST be double-quoted. Alternatively, use block scalar style (`>` or `|`) for values with special characters.
 

@@ -7,14 +7,18 @@ public class SidebarView(
     IState<Recommendation?> selectedState,
     IState<string?> projectFilter,
     IState<string?> planStatusFilter,
+    IState<string?> impactFilter,
+    IState<string?> riskFilter,
     int totalCount,
     bool hasActiveFilters,
     IState<string?> textFilter) : ViewBase
 {
     private readonly bool _hasActiveFilters = hasActiveFilters;
+    private readonly IState<string?> _impactFilter = impactFilter;
     private readonly IState<string?> _planStatusFilter = planStatusFilter;
     private readonly IState<string?> _projectFilter = projectFilter;
     private readonly List<Recommendation> _recommendations = recommendations;
+    private readonly IState<string?> _riskFilter = riskFilter;
     private readonly IState<Recommendation?> _selectedState = selectedState;
     private readonly IState<string?> _textFilter = textFilter;
     private readonly int _totalCount = totalCount;
@@ -48,11 +52,23 @@ public class SidebarView(
 
         if (filtersOpen.Value)
         {
+            var impactLevelOptions = new[] { "Small", "Medium", "High" }
+                .Select(l => new Option<string>(l, l))
+                .ToArray<IAnyOption>();
+
+            var riskLevelOptions = new[] { "Small", "Medium", "High" }
+                .Select(l => new Option<string>(l, l))
+                .ToArray<IAnyOption>();
+
             header |= Layout.Vertical()
                       | _projectFilter.ToSelectInput(projectOptions).Placeholder("All Projects").Nullable()
                           .WithField().Label("Project")
                       | _planStatusFilter.ToSelectInput(statusOptions).Placeholder("All Statuses").Nullable()
-                          .WithField().Label("Plan Status");
+                          .WithField().Label("Plan Status")
+                      | _impactFilter.ToSelectInput(impactLevelOptions).Placeholder("All Impacts").Nullable()
+                          .WithField().Label("Impact")
+                      | _riskFilter.ToSelectInput(riskLevelOptions).Placeholder("All Risk Levels").Nullable()
+                          .WithField().Label("Risk");
         }
 
         return header;
@@ -63,6 +79,8 @@ public class SidebarView(
         var filtered = _recommendations
             .Where(r => _projectFilter.Value == null || r.Project == _projectFilter.Value)
             .Where(r => _planStatusFilter.Value == null || r.SourcePlanStatus.ToString() == _planStatusFilter.Value)
+            .Where(r => _impactFilter.Value == null || r.Impact == _impactFilter.Value)
+            .Where(r => _riskFilter.Value == null || r.Risk == _riskFilter.Value)
             .Where(r =>
             {
                 if (string.IsNullOrWhiteSpace(_textFilter.Value)) return true;

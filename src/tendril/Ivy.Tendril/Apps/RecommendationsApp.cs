@@ -14,6 +14,8 @@ public class RecommendationsApp : ViewBase
         var selectedState = UseState<Recommendation?>(null);
         var projectFilter = UseState<string?>(null);
         var planStatusFilter = UseState<string?>(null);
+        var impactFilter = UseState<string?>(null);
+        var riskFilter = UseState<string?>(null);
         var textFilter = UseState<string?>("");
 
         UseInterval(() => refreshToken.Refresh(), TimeSpan.FromMinutes(1));
@@ -25,6 +27,8 @@ public class RecommendationsApp : ViewBase
         var filtered = allPending
             .Where(r => projectFilter.Value == null || r.Project == projectFilter.Value)
             .Where(r => planStatusFilter.Value == null || r.SourcePlanStatus.ToString() == planStatusFilter.Value)
+            .Where(r => impactFilter.Value == null || r.Impact == impactFilter.Value)
+            .Where(r => riskFilter.Value == null || r.Risk == riskFilter.Value)
             .Where(r =>
             {
                 if (string.IsNullOrWhiteSpace(textFilter.Value)) return true;
@@ -50,6 +54,7 @@ public class RecommendationsApp : ViewBase
 
         var totalPendingCount = allPending.Count;
         var hasActiveFilters = projectFilter.Value != null || planStatusFilter.Value != null ||
+                               impactFilter.Value != null || riskFilter.Value != null ||
                                !string.IsNullOrWhiteSpace(textFilter.Value);
 
         var sidebar = new SidebarView(
@@ -57,6 +62,8 @@ public class RecommendationsApp : ViewBase
             selectedState,
             projectFilter,
             planStatusFilter,
+            impactFilter,
+            riskFilter,
             totalPendingCount,
             hasActiveFilters,
             textFilter
