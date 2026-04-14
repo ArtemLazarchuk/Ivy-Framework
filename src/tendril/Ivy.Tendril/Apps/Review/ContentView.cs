@@ -277,7 +277,7 @@ public class ContentView(
                 }
             }));
 
-        if (planContentQuery.Loading || planData is null)
+        if (planContentQuery.Loading)
         {
             content |= Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
                        | Text.Muted("Loading...");
