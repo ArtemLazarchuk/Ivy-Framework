@@ -48,7 +48,12 @@ public class JobsApp : ViewBase
 
         UseInterval(() =>
         {
-            if (jobService.GetJobs().Any(j => j.Status == JobStatus.Running)) refreshToken.Refresh();
+            if (jobService.GetJobs().Any(j =>
+                    j.Status == JobStatus.Running ||
+                    ((j.Status is JobStatus.Stopped or JobStatus.Failed or JobStatus.Timeout or JobStatus.Completed)
+                     && j.CompletedAt.HasValue
+                     && DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(5))))
+                refreshToken.Refresh();
         }, TimeSpan.FromSeconds(5));
 
         var projectColors = config.Projects
