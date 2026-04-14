@@ -234,6 +234,8 @@ public class PlanCountsServiceTests : IDisposable
 
 #pragma warning disable CS0067
         public event Action? JobsChanged;
+        public event Action? JobsStructureChanged;
+        public event Action? JobPropertyChanged;
         public event Action<JobNotification>? NotificationReady;
 #pragma warning restore CS0067
 

@@ -14,6 +14,8 @@ public class UseStartJobTests
         public List<(string Type, string[] Args)> StartedJobs { get; } = new();
 #pragma warning disable CS0067
         public event Action? JobsChanged;
+        public event Action? JobsStructureChanged;
+        public event Action? JobPropertyChanged;
         public event Action<JobNotification>? NotificationReady;
 #pragma warning restore CS0067
 
