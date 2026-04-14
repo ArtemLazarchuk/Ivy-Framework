@@ -34,6 +34,7 @@ interface BoolInputWidgetProps {
   density?: Densities;
   autoFocus?: boolean;
   events?: string[];
+  slots?: { Prefix?: React.ReactNode[]; Suffix?: React.ReactNode[] };
   "data-testid"?: string;
 }
 
@@ -292,6 +293,7 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
   density = Densities.Medium,
   autoFocus,
   events = EMPTY_ARRAY,
+  slots,
   "data-testid": dataTestId,
 }) => {
   const eventHandler = useEventHandler();
@@ -312,6 +314,31 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
 
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);
 
+  const prefixContent = slots?.Prefix;
+  const suffixContent = slots?.Suffix;
+  const hasPrefix = (prefixContent?.length ?? 0) > 0;
+  const hasSuffix = (suffixContent?.length ?? 0) > 0;
+  const hasAffixes = hasPrefix || hasSuffix;
+
+  const variantContent = (
+    <VariantComponent
+      id={id}
+      label={label}
+      description={description}
+      value={localValue}
+      disabled={disabled}
+      loading={loading}
+      nullable={nullable}
+      icon={icon}
+      invalid={invalid}
+      density={density}
+      autoFocus={autoFocus}
+      onCheckedChange={handleChange}
+      onPressedChange={handleChange}
+      data-testid={dataTestId}
+    />
+  );
+
   return (
     <div
       onBlur={(e) => {
@@ -325,22 +352,29 @@ export const BoolInputWidget: React.FC<BoolInputWidgetProps> = ({
         }
       }}
     >
-      <VariantComponent
-        id={id}
-        label={label}
-        description={description}
-        value={localValue}
-        disabled={disabled}
-        loading={loading}
-        nullable={nullable}
-        icon={icon}
-        invalid={invalid}
-        density={density}
-        autoFocus={autoFocus}
-        onCheckedChange={handleChange}
-        onPressedChange={handleChange}
-        data-testid={dataTestId}
-      />
+      {hasAffixes ? (
+        <div
+          className={cn(
+            "relative flex items-stretch rounded-field border border-input bg-transparent shadow-sm transition-colors dark:bg-white/5 dark:border-white/10",
+            invalid && "border-destructive",
+            disabled && "cursor-not-allowed opacity-50",
+          )}
+        >
+          {hasPrefix && (
+            <div className="flex items-center px-3 bg-muted text-muted-foreground border-r border-input rounded-tl-[var(--radius-fields)] rounded-bl-[var(--radius-fields)]">
+              {prefixContent}
+            </div>
+          )}
+          <div className="flex-1 px-3 py-2">{variantContent}</div>
+          {hasSuffix && (
+            <div className="flex items-center px-3 bg-muted text-muted-foreground border-l border-input rounded-tr-[var(--radius-fields)] rounded-br-[var(--radius-fields)]">
+              {suffixContent}
+            </div>
+          )}
+        </div>
+      ) : (
+        variantContent
+      )}
     </div>
   );
 };
