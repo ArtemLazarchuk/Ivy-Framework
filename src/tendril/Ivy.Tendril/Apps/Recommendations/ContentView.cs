@@ -70,8 +70,7 @@ public class ContentView(
 
         // Source plan info and Impact/Risk badges
         var metaRow = Layout.Horizontal().Gap(2).AlignContent(Align.Center)
-                      | Text.Muted($"Plan #{_selected.PlanId}: {_selected.PlanTitle}")
-                      | Text.Muted($"Date: {_selected.Date:yyyy-MM-dd HH:mm}");
+                      | Text.Muted($"Plan #{_selected.PlanId}: {_selected.PlanTitle}");
 
         if (_selected.Impact is { } impact)
             metaRow |= new Badge($"Impact: {impact}").Variant(impact switch
