@@ -326,13 +326,23 @@ export const DateRangeInputWidget: React.FC<DateRangeInputWidgetProps> = ({
           )}
         >
           {hasPrefix && (
-            <div className="flex items-center px-3 bg-muted text-muted-foreground border-r border-input rounded-tl-[var(--radius-fields)] rounded-bl-[var(--radius-fields)]">
+            <div
+              className={cn(
+                "flex items-center px-3 bg-muted text-muted-foreground rounded-tl-[var(--radius-fields)] rounded-bl-[var(--radius-fields)]",
+                !isOpen && "border-r border-input",
+              )}
+            >
               {prefixContent}
             </div>
           )}
           <div className="flex-1 relative w-full">{triggerContent}</div>
           {hasSuffix && (
-            <div className="flex items-center px-3 bg-muted text-muted-foreground border-l border-input rounded-tr-[var(--radius-fields)] rounded-br-[var(--radius-fields)]">
+            <div
+              className={cn(
+                "flex items-center px-3 bg-muted text-muted-foreground rounded-tr-[var(--radius-fields)] rounded-br-[var(--radius-fields)]",
+                !isOpen && "border-l border-input",
+              )}
+            >
               {suffixContent}
             </div>
           )}
