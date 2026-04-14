@@ -3,6 +3,7 @@ import "./devtools.css";
 import { CallSite } from "@/types/widgets";
 import { widgetCallSiteRegistry } from "@/widgets/widgetRenderer";
 import { LuSend, LuPlus, LuChevronUp } from "react-icons/lu";
+import { setThemeGlobal } from "@/components/theme-provider";
 
 interface WidgetInfo {
   id: string;
@@ -65,6 +66,12 @@ export function DevTools() {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "DEVTOOLS_SET_ENABLED") {
         setEnabled(e.data.token === "true");
+      }
+      if (e.data?.type === "SET_THEME_MODE") {
+        const mode = e.data.mode;
+        if (mode === "light" || mode === "dark") {
+          setThemeGlobal(mode);
+        }
       }
     };
     window.addEventListener("message", handler);
