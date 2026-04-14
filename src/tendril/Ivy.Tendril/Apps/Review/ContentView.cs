@@ -129,19 +129,6 @@ public class ContentView(
             initialValue: null
         );
 
-        var allChangesQuery = UseQuery<PlanContentHelpers.AllChangesData?, string>(
-            _selectedPlan?.FolderPath ?? "",
-            async (folderPath, ct) =>
-            {
-                return await Task.Run(() =>
-                {
-                    if (_selectedPlan is null) return null;
-                    return PlanContentHelpers.GetAllChangesData(_selectedPlan, _config, _gitService);
-                }, ct);
-            },
-            initialValue: null
-        );
-
         var planContentQuery = UseQuery<PlanContentData, string>(
             _selectedPlan?.FolderPath ?? "",
             async (folderPath, ct) =>
@@ -151,7 +138,7 @@ public class ContentView(
                     if (_selectedPlan is null)
                         return new PlanContentData(new List<RecommendationYaml>(), null,
                             new Dictionary<string, List<string>>(), new List<PlanContentHelpers.CommitRow>(),
-                            new Dictionary<string, bool>(), new List<(string Name, bool ConditionMet)>());
+                            new Dictionary<string, bool>(), new List<(string Name, bool ConditionMet)>(), null);
 
                     // Recommendations
                     var recsPath = Path.Combine(folderPath, "artifacts", "recommendations.yaml");
@@ -179,6 +166,9 @@ public class ContentView(
                     // Commit rows
                     var commitRows = PlanContentHelpers.BuildCommitRows(_selectedPlan!, _config, _gitService);
 
+                    // All changes data
+                    var allChanges = PlanContentHelpers.GetAllChangesData(_selectedPlan!, _config, _gitService);
+
                     // Verification report existence
                     var verReports = _selectedPlan.Verifications.ToDictionary(
                         v => v.Name,
@@ -199,13 +189,13 @@ public class ContentView(
                         actionStates[i] = (action.Name, PlatformHelper.EvaluatePowerShellCondition(action.Condition, folderPath));
                     });
 
-                    return new PlanContentData(recs, summaryMd, artifacts, commitRows, verReports, actionStates.ToList());
+                    return new PlanContentData(recs, summaryMd, artifacts, commitRows, verReports, actionStates.ToList(), allChanges);
                 }, ct);
             },
             options: QueryScope.View,
             initialValue: new PlanContentData(new List<RecommendationYaml>(), null,
                 new Dictionary<string, List<string>>(), new List<PlanContentHelpers.CommitRow>(), new Dictionary<string, bool>(),
-                new List<(string Name, bool ConditionMet)>())
+                new List<(string Name, bool ConditionMet)>(), null)
         );
 
         UseEffect(() => { selectedTab.Set(0); }, _selectedPlanState);
@@ -476,9 +466,9 @@ public class ContentView(
 
             // Changes tab content
             object changesTabContent;
-            var changesData = allChangesQuery.Value;
+            var changesData = planContentQuery.Value.AllChanges;
             var changesFileCount = 0;
-            if (allChangesQuery.Loading)
+            if (planContentQuery.Loading)
             {
                 changesTabContent = Text.Muted("Loading...");
             }
@@ -686,5 +676,6 @@ public class ContentView(
         Dictionary<string, List<string>> Artifacts,
         List<PlanContentHelpers.CommitRow> CommitRows,
         Dictionary<string, bool> VerificationReports,
-        List<(string Name, bool ConditionMet)> ReviewActionStates);
+        List<(string Name, bool ConditionMet)> ReviewActionStates,
+        PlanContentHelpers.AllChangesData? AllChanges);
 }
