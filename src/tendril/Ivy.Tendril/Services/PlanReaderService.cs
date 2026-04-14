@@ -188,7 +188,7 @@ public class PlanReaderService(
             var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
             planYaml.State = newState.ToString();
             planYaml.Updated = DateTime.UtcNow;
-            FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+            FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
         });
     }
 
@@ -226,7 +226,7 @@ public class PlanReaderService(
                 var yaml = FileHelper.ReadAllText(planYamlPath);
                 var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                 planYaml.Updated = DateTime.UtcNow;
-                FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+                FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
             }
         });
     }
@@ -390,7 +390,7 @@ public class PlanReaderService(
                     var yaml = FileHelper.ReadAllText(planYamlPath);
                     var planYaml = YamlHelper.Deserializer.Deserialize<PlanYaml>(yaml) ?? new PlanYaml();
                     planYaml.Updated = DateTime.UtcNow;
-                    FileHelper.WriteAllText(planYamlPath, YamlHelper.Serializer.Serialize(planYaml));
+                    FileHelper.WriteAllText(planYamlPath, YamlHelper.SerializerCompact.Serialize(planYaml));
                 }
             }
         });
