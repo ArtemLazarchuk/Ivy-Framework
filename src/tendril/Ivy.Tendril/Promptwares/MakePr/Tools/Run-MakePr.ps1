@@ -184,7 +184,7 @@ if (Test-Path $worktreesDir) {
             }
 
             # Create PR
-            $prUrl = gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body $prBody
+            $prUrl = gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body $prBody --label "tendril"
             Write-Host "  PR created: $prUrl" -ForegroundColor Green
             $prUrls += $prUrl
 
