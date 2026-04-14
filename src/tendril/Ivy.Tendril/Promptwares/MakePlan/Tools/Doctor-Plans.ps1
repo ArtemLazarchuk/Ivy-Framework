@@ -10,13 +10,13 @@
     - Nested worktree detection
     - Overall health status
 .PARAMETER PlansDirectory
-    Path to the plans directory (default: $env:TENDRIL_HOME/Plans)
+    Path to the plans directory (default: $env:TENDRIL_PLANS or $env:TENDRIL_HOME/Plans)
 .PARAMETER ShowOnlyUnhealthy
     Only show plans with health issues
 #>
 
 param(
-    [string]$PlansDirectory = "$env:TENDRIL_HOME\Plans",
+    [string]$PlansDirectory = $(if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { "$env:TENDRIL_HOME\Plans" }),
     [switch]$ShowOnlyUnhealthy
 )
 

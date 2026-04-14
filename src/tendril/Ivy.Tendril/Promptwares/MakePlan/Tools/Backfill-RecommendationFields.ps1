@@ -8,13 +8,13 @@
     are missing these fields. Uses an LLM to classify each recommendation.
 
 .PARAMETER PlansDirectory
-    Path to the plans directory. Defaults to $env:TENDRIL_HOME parent + Plans.
+    Path to the plans directory. Defaults to $env:TENDRIL_PLANS or $env:TENDRIL_HOME/Plans.
 
 .PARAMETER DryRun
     If set, prints what would be changed without modifying files.
 #>
 param(
-    [string]$PlansDirectory = (Join-Path (Split-Path $env:TENDRIL_HOME -Parent) "Plans"),
+    [string]$PlansDirectory = $(if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { Join-Path $env:TENDRIL_HOME "Plans" }),
     [switch]$DryRun
 )
 

@@ -483,7 +483,9 @@ public static class DoctorCommand
             return 1;
         }
 
-        var plansDir = Path.Combine(tendrilHome, "Plans");
+        var plansDir = Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim() is { Length: > 0 } plans
+            ? plans
+            : Path.Combine(tendrilHome, "Plans");
         if (!Directory.Exists(plansDir))
         {
             Console.Error.WriteLine($"Plans directory not found: {plansDir}");

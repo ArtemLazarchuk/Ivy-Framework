@@ -198,6 +198,9 @@ public sealed class PlanTools
 
     private static string? GetPlansDirectory()
     {
+        var plans = Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim();
+        if (!string.IsNullOrEmpty(plans))
+            return plans;
         var home = GetTendrilHome();
         return home == null ? null : Path.Combine(home, "Plans");
     }

@@ -7,8 +7,11 @@ public class OnboardingSetupService(IConfigService config, IServiceProvider serv
         // Create directory structure
         Directory.CreateDirectory(tendrilHome);
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Inbox"));
-        Directory.CreateDirectory(Path.Combine(tendrilHome, "Plans"));
-        await FileHelper.WriteAllTextAsync(Path.Combine(tendrilHome, "Plans", ".counter"), "1");
+        var planFolder = Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim() is { Length: > 0 } plans
+            ? plans
+            : Path.Combine(tendrilHome, "Plans");
+        Directory.CreateDirectory(planFolder);
+        await FileHelper.WriteAllTextAsync(Path.Combine(planFolder, ".counter"), "1");
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Trash"));
         Directory.CreateDirectory(Path.Combine(tendrilHome, "Promptwares"));
         if (PromptwareDeployer.IsEmbeddedAvailable())
