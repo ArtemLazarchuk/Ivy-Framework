@@ -18,7 +18,7 @@ public class PlanCountsService : IPlanCountsService
         _planWatcher = planWatcher;
         Current = ComputeCounts();
         _planWatcher.PlansChanged += OnPlansSourceChanged;
-        _jobService.JobsChanged += OnSourceChanged;
+        _jobService.JobsStructureChanged += OnSourceChanged;
     }
 
     public event Action? CountsChanged;
@@ -28,7 +28,7 @@ public class PlanCountsService : IPlanCountsService
     public void Dispose()
     {
         _planWatcher.PlansChanged -= OnPlansSourceChanged;
-        _jobService.JobsChanged -= OnSourceChanged;
+        _jobService.JobsStructureChanged -= OnSourceChanged;
     }
 
     private void OnPlansSourceChanged(string? _)

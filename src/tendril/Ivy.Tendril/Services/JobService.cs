@@ -129,6 +129,8 @@ public class JobService : IJobService
     }
 
     public event Action? JobsChanged;
+    public event Action? JobsStructureChanged;
+    public event Action? JobPropertyChanged;
     public event Action<JobNotification>? NotificationReady;
 
     public string StartJob(string type, string[] args, string? inboxFilePath)
@@ -261,7 +263,7 @@ public class JobService : IJobService
                             j.Cost = (decimal)costCalc.TotalCost;
                             j.Tokens = costCalc.TotalTokens;
                             PersistJob(j);
-                            RaiseJobsChanged();
+                            RaiseJobsPropertyChanged();
                         }
 
                         if (jobArgs.Length > 0)
@@ -286,7 +288,7 @@ public class JobService : IJobService
         // for active display and is reloaded from DB on next startup.
         EvictStaleJobs();
 
-        RaiseJobsChanged();
+        RaiseJobsStructureChanged();
 
         // After successful completion of jobs that may unblock dependencies
         if (isSuccess && job.Type is "ExecutePlan" or "MakePr") RetryBlockedJobs();
@@ -334,7 +336,7 @@ public class JobService : IJobService
 
         CleanupInboxFile(job);
         ResetPlanState(job);
-        RaiseJobsChanged();
+        RaiseJobsStructureChanged();
 
         // Try to start queued jobs now that a slot is free
         if (wasRunning)
@@ -348,7 +350,7 @@ public class JobService : IJobService
             removed.DisposeResources();
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
-        RaiseJobsChanged();
+        RaiseJobsStructureChanged();
     }
 
     /// <summary>
@@ -387,7 +389,7 @@ public class JobService : IJobService
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         if (completedIds.Count > 0)
-            RaiseJobsChanged();
+            RaiseJobsStructureChanged();
     }
 
     public void ClearFailedJobs()
@@ -403,7 +405,7 @@ public class JobService : IJobService
             try { _database?.DeleteJob(id); } catch { /* Best-effort */ }
         }
         if (failedIds.Count > 0)
-            RaiseJobsChanged();
+            RaiseJobsStructureChanged();
     }
 
     public List<JobItem> GetJobs()
@@ -461,6 +463,36 @@ public class JobService : IJobService
             _syncContext.Post(_ => JobsChanged?.Invoke(), null);
         else
             JobsChanged?.Invoke();
+    }
+
+    private void RaiseJobsStructureChanged()
+    {
+        if (_syncContext != null)
+            _syncContext.Post(_ =>
+            {
+                JobsStructureChanged?.Invoke();
+                JobsChanged?.Invoke();  // For backward compatibility
+            }, null);
+        else
+        {
+            JobsStructureChanged?.Invoke();
+            JobsChanged?.Invoke();
+        }
+    }
+
+    private void RaiseJobsPropertyChanged()
+    {
+        if (_syncContext != null)
+            _syncContext.Post(_ =>
+            {
+                JobPropertyChanged?.Invoke();
+                JobsChanged?.Invoke();  // For backward compatibility
+            }, null);
+        else
+        {
+            JobPropertyChanged?.Invoke();
+            JobsChanged?.Invoke();
+        }
     }
 
     private void RaiseNotification(JobNotification notification)
@@ -567,7 +599,7 @@ public class JobService : IJobService
 
                 var blockedNotification = new JobNotification("Job Blocked", $"{planFile}: {blockReason}", false);
                 RaiseNotification(blockedNotification);
-                RaiseJobsChanged();
+                RaiseJobsStructureChanged();
                 return id;
             }
 
@@ -581,7 +613,7 @@ public class JobService : IJobService
                 ResetPlanStateToBlocked(job);
                 var blockedNotification = new JobNotification("Job Blocked", $"{planFile}: {concurrentReason}", false);
                 RaiseNotification(blockedNotification);
-                RaiseJobsChanged();
+                RaiseJobsStructureChanged();
                 return id;
             }
         }
@@ -596,7 +628,7 @@ public class JobService : IJobService
             job.Status = JobStatus.Queued;
             job.StatusMessage = $"Waiting (max {_maxConcurrentJobs} concurrent jobs)";
             lock (_queueLock) { _jobQueue.Enqueue(id, -job.Priority); }
-            RaiseJobsChanged();
+            RaiseJobsStructureChanged();
             return id;
         }
 
@@ -778,7 +810,7 @@ public class JobService : IJobService
         // Start stale output watchdog
         if (_staleOutputTimeout > TimeSpan.Zero) _ = RunStaleOutputWatchdog(id, cts);
 
-        RaiseJobsChanged();
+        RaiseJobsStructureChanged();
     }
 
     internal void RunHooks(string when, string jobType, string planFolder, string project, JobItem job)

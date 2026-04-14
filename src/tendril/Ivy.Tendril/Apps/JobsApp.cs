@@ -67,13 +67,13 @@ public class JobsApp : ViewBase
 
         UseEffect(() =>
         {
-            void OnJobsChanged()
+            void OnJobsStructureChanged()
             {
                 refreshToken.Refresh();
             }
 
-            jobService.JobsChanged += OnJobsChanged;
-            return Disposable.Create(() => jobService.JobsChanged -= OnJobsChanged);
+            jobService.JobsStructureChanged += OnJobsStructureChanged;
+            return Disposable.Create(() => jobService.JobsStructureChanged -= OnJobsStructureChanged);
         });
 
         UseInterval(() =>
