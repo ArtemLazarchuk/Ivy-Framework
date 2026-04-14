@@ -6,6 +6,7 @@
   pointer-events: none;
   z-index: 99999;
   box-sizing: border-box;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ivy-devtools-overlay--selected {
