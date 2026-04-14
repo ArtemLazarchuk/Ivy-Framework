@@ -1,9 +1,9 @@
 name: E2E Docs Tests
 on:
   push:
-    branches: [main, master, development]
+    branches: [main, development]
   pull_request:
-    branches: [main, master, development]
+    branches: [main, development]
 permissions:
   contents: read
 jobs:
