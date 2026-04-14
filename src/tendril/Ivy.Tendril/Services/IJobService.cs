@@ -5,6 +5,8 @@ namespace Ivy.Tendril.Services;
 public interface IJobService : IDisposable
 {
     event Action? JobsChanged;
+    event Action? JobsStructureChanged;  // Jobs added/removed or status changed
+    event Action? JobPropertyChanged;    // Only properties changed (cost, tokens)
     event Action<JobNotification>? NotificationReady;
 
     string StartJob(string type, string[] args, string? inboxFilePath);
