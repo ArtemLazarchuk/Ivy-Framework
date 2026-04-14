@@ -199,18 +199,7 @@ public class Server
 
         if (presets.Count > 0)
         {
-            var builder = new ConfigurationBuilder()
-                .AddInMemoryCollection(presets)
-                .AddEnvironmentVariables()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-
-            if (Assembly.GetEntryAssembly() is { } entryAssembly)
-            {
-                builder.AddUserSecrets(entryAssembly);
-            }
-
-            Configuration = builder.Build();
+            Configuration = ServerUtils.GetConfiguration(presets);
         }
 
         foreach (var connection in connections)
@@ -258,7 +247,7 @@ public class Server
 
     public Server UseConfiguration(Action<IConfigurationBuilder> configure)
     {
-        Configuration = ServerUtils.GetConfiguration(configure);
+        Configuration = ServerUtils.GetConfiguration(configure: configure);
         return this;
     }
 
