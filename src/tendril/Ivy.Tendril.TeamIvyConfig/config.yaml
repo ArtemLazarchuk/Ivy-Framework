@@ -234,30 +234,6 @@ projects:
     action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
   repoPaths:
   - D:\Repos\_Ivy\Ivy-Services
-- name: PerformanceAnalyzer
-  color: Violet
-  meta:
-    slackEmoji: ':chart_with_upwards_trend:'
-  repos:
-  - path: D:\Repos\_Ivy\PerformanceAnalyzer
-    prRule: yolo
-  verifications:
-  - *o0
-  - *o1
-  - *o2
-  - *o3
-  context: >
-    PerformanceAnalyzer — Ivy app for tracking Ivy employee performance on GitHub.
-  reviewActions: []
-  hooks:
-  - name: SlackNotify
-    when: after
-    promptwares:
-    - MakePr
-    condition: ''
-    action: pwsh -NoProfile -File D:\Tendril\Hooks\NotifySlack.ps1
-  repoPaths:
-  - D:\Repos\_Ivy\PerformanceAnalyzer
 verifications:
 - name: DotnetBuild
   prompt: Run `dotnet build --warnaserror` in the plan's worktree directory (not the original repo) and verify it succeeds with zero errors and zero warnings.
