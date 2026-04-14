@@ -13,10 +13,37 @@ public class ResponsiveWidgetTests
 
         var result = WidgetSerializer.Serialize(badge);
         var props = result["props"]!.AsObject();
-        var rw = props["responsiveWidth"]!.AsObject();
+        var rw = props["width"]!.AsObject();
 
         Assert.Equal("Full", rw["mobile"]!.GetValue<string>());
         Assert.Equal("Fraction:0.5", rw["desktop"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void WidgetBase_SimpleWidth_SerializedAsPlainValue()
+    {
+        var badge = new Badge("test")
+            .Width(Size.Px(100));
+        badge.Id = Guid.NewGuid().ToString();
+
+        var result = WidgetSerializer.Serialize(badge);
+        var props = result["props"]!.AsObject();
+
+        Assert.Equal("Px:100", props["width"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void WidgetBase_ResponsiveHeight_SerializedCorrectly()
+    {
+        var badge = new Badge("test")
+            .Height(Size.Full().At(Breakpoint.Mobile));
+        badge.Id = Guid.NewGuid().ToString();
+
+        var result = WidgetSerializer.Serialize(badge);
+        var props = result["props"]!.AsObject();
+        var rh = props["height"]!.AsObject();
+
+        Assert.Equal("Full", rh["mobile"]!.GetValue<string>());
     }
 
     [Fact]

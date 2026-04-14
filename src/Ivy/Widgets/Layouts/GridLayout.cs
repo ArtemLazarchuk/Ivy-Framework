@@ -70,8 +70,8 @@ internal record GridLayout : WidgetBase<GridLayout>
         Padding = def.Padding;
         AutoFlow = def.AutoFlow;
         AlignContent = def.AlignContent;
-        Width = def.Width;
-        Height = def.Height;
+        Width = def.Width.ToResponsive();
+        Height = def.Height.ToResponsive();
         ColumnWidths = def.ColumnWidths;
         RowHeights = def.RowHeights;
         ResponsiveColumns = def.ResponsiveColumns;

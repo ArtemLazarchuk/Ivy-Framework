@@ -22,8 +22,8 @@ public class LayoutView : ViewBase, IStateless
     private int _columnGap = 4;
     private Thickness? _padding = null;
     private Thickness? _margin = null;
-    private Size? _width = null;
-    private Size? _height = null;
+    private Responsive<Size>? _width = null;
+    private Responsive<Size>? _height = null;
     private Colors? _background = null;
     private Align? _alignment = null;
     private Scroll _scroll = Ivy.Scroll.None;
@@ -34,8 +34,6 @@ public class LayoutView : ViewBase, IStateless
     private Thickness _borderThickness = new(0);
     private string? _testId = null;
     private GridView? _activeGrid = null;
-    private Responsive<Size>? _responsiveWidth = null;
-    private Responsive<Size>? _responsiveHeight = null;
     private Responsive<OrientationEnum?>? _responsiveOrientation = null;
     private Responsive<int?>? _responsiveRowGap = null;
     private Responsive<int?>? _responsiveColumnGap = null;
@@ -64,13 +62,13 @@ public class LayoutView : ViewBase, IStateless
 
     public LayoutView Width(Responsive<Size> width)
     {
-        _responsiveWidth = width;
+        _width = width;
         return this;
     }
 
     public LayoutView Height(Responsive<Size> height)
     {
-        _responsiveHeight = height;
+        _height = height;
         return this;
     }
 
@@ -461,11 +459,9 @@ public class LayoutView : ViewBase, IStateless
             ResponsiveRowGap = _responsiveRowGap,
             ResponsiveColumnGap = _responsiveColumnGap,
             ResponsivePadding = _responsivePadding,
-            ResponsiveWidth = _responsiveWidth,
-            ResponsiveHeight = _responsiveHeight
-        }
-            .Width(_width)
-            .Height(_height);
+            Width = _width,
+            Height = _height
+        };
 
         if (_testId != null) layout.TestId = _testId;
 

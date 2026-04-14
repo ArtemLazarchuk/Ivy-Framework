@@ -19,6 +19,12 @@ public record Responsive<T>
 
 public static class ResponsiveExtensions
 {
+    public static Responsive<T>? ToResponsive<T>(this T? value) where T : class
+        => value is not null ? new Responsive<T> { Default = value } : null;
+
+    public static Responsive<Density?>? ToResponsiveDensity(this Density? value)
+        => value.HasValue ? new Responsive<Density?> { Default = value } : null;
+
     // Reference type overloads (Size, etc.)
     public static Responsive<T> At<T>(this T value, Breakpoint bp) where T : class => bp switch
     {
