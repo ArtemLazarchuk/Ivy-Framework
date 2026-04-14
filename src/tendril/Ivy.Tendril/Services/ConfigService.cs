@@ -380,7 +380,29 @@ public class ConfigService : IConfigService
 
     public void OpenInEditor(string path)
     {
-        PlatformHelper.OpenInEditor(Editor.Command, path);
+        var processedPath = PreprocessForEditing(path);
+        PlatformHelper.OpenInEditor(Editor.Command, processedPath);
+    }
+
+    public string PreprocessForEditing(string path)
+    {
+        if (!path.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var content = File.ReadAllText(path);
+        var repoPaths = Projects
+            .SelectMany(p => p.Repos.Select(r => r.Path))
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+        var polisher = new MarkdownLinkPolisher();
+        var polished = polisher.PolishLinks(content, repoPaths, PlanFolder);
+
+        if (content == polished)
+            return path;
+
+        var tempPath = Path.Combine(Path.GetTempPath(), $"tendril-edit-{Guid.NewGuid()}.md");
+        File.WriteAllText(tempPath, polished);
+        return tempPath;
     }
 
     public void CompleteOnboarding(string tendrilHome)
