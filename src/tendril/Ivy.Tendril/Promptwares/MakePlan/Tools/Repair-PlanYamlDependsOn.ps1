@@ -36,56 +36,53 @@ foreach ($folder in $planFolders) {
     $content = Get-Content $yamlPath -Raw
     if (-not $content) { continue }
 
-    # Check if priority appears indented under dependsOn
-    # Pattern 1: dependsOn:\n  priority: N
-    # Pattern 2: dependsOn:\n  'priority: N'
-    # Pattern 3: dependsOn:\n  - items...\n  priority: N
-    $hasBug = $content -match '(?m)^dependsOn:\s*\r?\n(?:  - .+\r?\n)*  ''?priority[:=]'
-
-    if (-not $hasBug) {
-        $skipped++
-        continue
-    }
-
     try {
-        $original = $content
+        # Parse YAML structure
+        $yaml = $content | ConvertFrom-Yaml -Ordered
 
-        # Extract the priority value from inside dependsOn block
+        # Check if dependsOn has a bug
+        $hasBug = $false
         $priorityValue = 0
-        if ($content -match "(?m)^  '?priority:\s*(\d+)'?\s*$") {
-            $priorityValue = [int]$Matches[1]
-        }
 
-        # Remove indented priority line from dependsOn block (all patterns)
-        $content = $content -replace "(?m)^  'priority:\s*\d+'\s*\r?\n", ""
-        $content = $content -replace "(?m)^  priority:\s*\d+\s*\r?\n", ""
+        if ($yaml.dependsOn -is [System.Collections.IDictionary]) {
+            # dependsOn is a mapping instead of a sequence
+            if ($yaml.dependsOn.ContainsKey('priority')) {
+                $hasBug = $true
+                $priorityValue = [int]$yaml.dependsOn['priority']
+                $yaml.dependsOn.Remove('priority')
 
-        # Check if dependsOn now has remaining list items
-        $dependsOnMatch = [regex]::Match($content, '(?m)^dependsOn:\s*\r?\n((?:  - .+\r?\n)*)')
-        if ($dependsOnMatch.Success -and [string]::IsNullOrWhiteSpace($dependsOnMatch.Groups[1].Value)) {
-            # dependsOn is empty after removing priority — normalize to empty
-            $content = $content -replace '(?m)^dependsOn:\s*$', 'dependsOn: '
-        }
-
-        # Ensure priority exists at root level
-        if ($content -match '(?m)^priority:\s') {
-            # Replace existing root-level priority
-            $content = $content -replace '(?m)^priority:\s.*$', "priority: $priorityValue"
-        }
-        else {
-            # Add priority after dependsOn block (find end of dependsOn section)
-            $content = $content -replace '(?m)^(dependsOn:(?:\s*\r?\n(?:  - .+\r?\n)*)?)(?=\S)', "`$1priority: $priorityValue`n"
-            # If that didn't work (dependsOn at end or followed by blank line), try simpler approach
-            if ($content -notmatch '(?m)^priority:') {
-                $content = $content -replace '(?m)^(dependsOn:[^\r\n]*)\r?\n', "`$1`npriority: $priorityValue`n"
+                # If dependsOn now only had priority, convert to empty array
+                if ($yaml.dependsOn.Count -eq 0) {
+                    $yaml['dependsOn'] = @()
+                } else {
+                    # Convert remaining keys to array (shouldn't happen in practice, but handle it)
+                    $items = @($yaml.dependsOn.Keys | ForEach-Object { $yaml.dependsOn[$_] })
+                    $yaml['dependsOn'] = $items
+                }
+            }
+        } elseif ($yaml.dependsOn -is [System.Collections.IList]) {
+            # dependsOn is a list, but might have 'priority: N' string item
+            $priorityItem = $yaml.dependsOn | Where-Object { $_ -match '^priority:\s*(\d+)$' } | Select-Object -First 1
+            if ($priorityItem) {
+                $hasBug = $true
+                if ($priorityItem -match 'priority:\s*(\d+)') {
+                    $priorityValue = [int]$Matches[1]
+                }
+                # Remove the priority item from the list
+                $yaml['dependsOn'] = @($yaml.dependsOn | Where-Object { $_ -notmatch '^priority:' })
             }
         }
 
-        if ($content -eq $original) {
-            Write-Host "  UNCHANGED: $($folder.Name) (pattern detected but no change needed)" -ForegroundColor Yellow
+        if (-not $hasBug) {
             $skipped++
             continue
         }
+
+        # Ensure priority exists at root level
+        $yaml['priority'] = $priorityValue
+
+        # Serialize back to YAML
+        $content = ConvertTo-Yaml $yaml
 
         if ($DryRun) {
             Write-Host "  WOULD FIX: $($folder.Name) (priority: $priorityValue)" -ForegroundColor Cyan
