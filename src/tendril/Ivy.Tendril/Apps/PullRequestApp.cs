@@ -166,8 +166,8 @@ public class PullRequestApp : ViewBase
     private static readonly Regex GitHubPrPattern = new(
         @"^https?://github\.com/[^/]+/[^/]+/pull/\d+", RegexOptions.Compiled);
 
-    internal static bool IsValidUrl(string value) =>
-        GitHubPrPattern.IsMatch(value);
+    internal static bool IsValidUrl(string? value) =>
+        value is not null && GitHubPrPattern.IsMatch(value);
 
     internal static string ExtractRepo(string prUrl)
     {
