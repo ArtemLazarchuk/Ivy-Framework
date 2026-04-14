@@ -55,8 +55,9 @@ public class JobsApp : ViewBase
                     var currentJobs = jobService.GetJobs();
                     return currentJobs
                         .Where(j => j.Status == JobStatus.Running ||
-                                    (j.CompletedAt.HasValue &&
-                                     DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(3)))
+                                    ((j.Status is JobStatus.Stopped or JobStatus.Failed or JobStatus.Timeout or JobStatus.Completed)
+                                     && j.CompletedAt.HasValue
+                                     && DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(5)))
                         .SelectMany(j => new[]
                         {
                             new DataTableCellUpdate(j.Id, "Timer", FormatTimer(j)),
