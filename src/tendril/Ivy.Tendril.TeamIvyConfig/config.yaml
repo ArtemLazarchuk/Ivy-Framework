@@ -70,7 +70,10 @@ projects:
   - *o3
   context: >
     Ivy Agent is the AI agent server. Key folders: - Ivy.Agent.Server\ — agent server - Ivy.Agent\Agents\Personas\Prompts\ — persona prompts - Ivy.Internals\Workflows\ — workflow definitions - Ivy.Agent\Tools\ — tool implementations
-  reviewActions: []
+  reviewActions:
+  - name: Agent Server
+    condition: Test-Path "worktrees\Ivy-Agent\Ivy.Agent.Server"
+    action: dotnet run --project worktrees\Ivy-Agent\Ivy.Agent.Server
   hooks:
   - name: SlackNotify
     when: after
@@ -99,7 +102,10 @@ projects:
   - *o3
   context: >
     Test Manager for Ivy Agent. Key folders: - Ivy.Agent.Test.Manager\ — CLI for managing test cases, runs, and scoring - Ivy.Agent.Test.Studio\ — TUI app for test management UI See AGENTS.md in Ivy.Agent.Test.Manager folder for CLI reference.
-  reviewActions: []
+  reviewActions:
+  - name: Test Studio
+    condition: Test-Path "worktrees\Ivy-Agent\Ivy.Agent.Test.Studio"
+    action: dotnet run --project worktrees\Ivy-Agent\Ivy.Agent.Test.Studio
   hooks:
   - name: SlackNotify
     when: after
@@ -123,7 +129,10 @@ projects:
   - *o3
   context: >
     - Ivy.Console\ — desktop CLI and TUI client - Ivy.Internals\ — shared internals - Ivy.Studio\ — vibe-coding agent
-  reviewActions: []
+  reviewActions:
+  - name: Console
+    condition: Test-Path "worktrees\Ivy\Ivy.Console"
+    action: dotnet run --project worktrees\Ivy\Ivy.Console
   hooks:
   - name: SlackNotify
     when: after
