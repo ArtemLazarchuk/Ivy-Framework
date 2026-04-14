@@ -237,5 +237,16 @@ public static class ColorInputExtensions
         return widget.OnFocus(_ => { onFocus(); return ValueTask.CompletedTask; });
     }
 
+    private static object[] WithSlot(ColorInputBase widget, string slotName, object? value)
+    {
+        var others = widget.Children.Where(c => c is not Slot s || s.Name != slotName);
+        var result = value != null ? others.Append(new Slot(slotName, value)) : others;
+        return result.ToArray();
+    }
 
+    public static ColorInputBase Prefix(this ColorInputBase widget, object prefix)
+        => widget with { Children = WithSlot(widget, "Prefix", prefix) };
+
+    public static ColorInputBase Suffix(this ColorInputBase widget, object suffix)
+        => widget with { Children = WithSlot(widget, "Suffix", suffix) };
 }
