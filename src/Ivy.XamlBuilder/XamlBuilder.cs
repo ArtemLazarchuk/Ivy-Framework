@@ -281,6 +281,13 @@ public class XamlBuilder
                 .Select(s => int.Parse(s.Trim(), CultureInfo.InvariantCulture))
                 .ToArray();
 
+        // Handle Responsive<T> wrapper types
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Responsive<>))
+        {
+            var innerType = targetType.GetGenericArguments()[0];
+            return ConvertValue(value, innerType);
+        }
+
         throw new InvalidOperationException($"Cannot convert '{value}' to {targetType.Name}.");
     }
 
