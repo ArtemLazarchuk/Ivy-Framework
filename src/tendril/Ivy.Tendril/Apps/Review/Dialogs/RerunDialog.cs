@@ -73,6 +73,13 @@ public class RerunDialog(
             WorktreeCleanupService.ForceDeleteDirectory(logsDir, logger);
         }
 
+        var verificationDir = Path.Combine(planFolderPath, "verification");
+        if (Directory.Exists(verificationDir))
+        {
+            logger?.LogInformation("Cleaning verification directory: {Path}", verificationDir);
+            WorktreeCleanupService.ForceDeleteDirectory(verificationDir, logger);
+        }
+
         PlanReaderService.RemoveWorktrees(planFolderPath, logger);
     }
 }

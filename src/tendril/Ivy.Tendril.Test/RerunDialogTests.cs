@@ -69,7 +69,7 @@ public class RerunDialogTests
 
             Assert.False(Directory.Exists(artifactsDir));
             Assert.False(Directory.Exists(logsDir));
-            Assert.True(Directory.Exists(verificationDir));
+            Assert.False(Directory.Exists(verificationDir));
             Assert.True(Directory.Exists(revisionsDir));
         }
         finally
