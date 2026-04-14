@@ -468,6 +468,9 @@ Optional array of additional arguments to pass to the claude CLI
 .PARAMETER Promptware
 Promptware name to look up model and allowedTools config overrides (e.g., "MakePlan", "ExecutePlan")
 
+.PARAMETER ProfileOverride
+Optional profile name to override config.yaml profile selection (e.g., "deep", "balanced", "quick")
+
 .EXAMPLE
 InvokePromptwareAgent `
     -ScriptRoot $PSScriptRoot `
@@ -478,7 +481,8 @@ InvokePromptwareAgent `
     -PlanPath $planFolder `
     -Action "MakePlan" `
     -FinalState "Draft" `
-    -Promptware "MakePlan"
+    -Promptware "MakePlan" `
+    -ProfileOverride "deep"
 #>
 function InvokePromptwareAgent {
     param(
@@ -491,7 +495,8 @@ function InvokePromptwareAgent {
         [string]$Action = $null,
         [string]$FinalState = $null,
         [string[]]$ExtraAgentArgs = @(),
-        [string]$Promptware = ""
+        [string]$Promptware = "",
+        [string]$ProfileOverride = ""
     )
 
     # Generate session-id for cost tracking
@@ -499,7 +504,7 @@ function InvokePromptwareAgent {
     $FirmwareValues["ClaudeSessionId"] = $sessionId
 
     $promptFile = PrepareFirmware $ScriptRoot $LogFile $ProgramFolder $FirmwareValues
-    $agent = GetAgentCommand -Promptware $Promptware
+    $agent = GetAgentCommand -Promptware $Promptware -ProfileOverride $ProfileOverride
 
     # Determine coding agent provider
     $codingAgent = $agent.CodingAgent
