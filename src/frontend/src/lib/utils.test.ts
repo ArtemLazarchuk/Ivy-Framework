@@ -302,6 +302,45 @@ describe("validateLinkUrl", () => {
       );
     });
   });
+
+  describe("allowCustomProtocols option", () => {
+    it("should allow custom protocol URLs when enabled", () => {
+      expect(validateLinkUrl("plan://03156", { allowCustomProtocols: true })).toBe("plan://03156");
+      expect(validateLinkUrl("tel:+1234567890", { allowCustomProtocols: true })).toBe(
+        "tel:+1234567890",
+      );
+      expect(validateLinkUrl("custom://some-resource", { allowCustomProtocols: true })).toBe(
+        "custom://some-resource",
+      );
+    });
+
+    it("should still block dangerous protocols when custom protocols are allowed", () => {
+      expect(validateLinkUrl('javascript:alert("xss")', { allowCustomProtocols: true })).toBe("#");
+      expect(
+        validateLinkUrl('data:text/html,<script>alert("xss")</script>', {
+          allowCustomProtocols: true,
+        }),
+      ).toBe("#");
+      expect(
+        validateLinkUrl('vbscript:msgbox("xss")', { allowCustomProtocols: true }),
+      ).toBe("#");
+    });
+
+    it("should reject custom protocols by default", () => {
+      expect(validateLinkUrl("plan://03156")).toBe("#");
+      expect(validateLinkUrl("custom://resource")).toBe("#");
+    });
+
+    it("should still allow standard URLs when custom protocols are enabled", () => {
+      expect(validateLinkUrl("https://example.com", { allowCustomProtocols: true })).toBe(
+        "https://example.com/",
+      );
+      expect(validateLinkUrl("app://dashboard", { allowCustomProtocols: true })).toBe(
+        "app://dashboard",
+      );
+      expect(validateLinkUrl("/relative", { allowCustomProtocols: true })).toBe("/relative");
+    });
+  });
 });
 
 describe("getIvyHost", () => {
