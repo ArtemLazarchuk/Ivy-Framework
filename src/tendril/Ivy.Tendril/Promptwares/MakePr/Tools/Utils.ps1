@@ -79,4 +79,7 @@ function Get-RepoConfig {
     return $repo
 }
 
-Export-ModuleMember -Function Get-ConfigYaml, Get-RepoConfig
+# Export-ModuleMember is only valid when Utils.ps1 is imported as a module
+# When dot-sourcing (. ./Utils.ps1), functions are automatically available
+# Keeping this commented out to avoid errors during dot-sourcing
+# Export-ModuleMember -Function Get-ConfigYaml, Get-RepoConfig
