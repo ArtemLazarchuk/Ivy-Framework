@@ -11,6 +11,7 @@ projects:
   - &o5
     path: D:\Repos\_Ivy\Ivy-Framework
     prRule: yolo
+    baseBranch: development
   verifications:
   - &o0
     name: DotnetBuild
@@ -57,9 +58,11 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent
     prRule: yolo
+    baseBranch: development
   - &o4
     path: D:\Repos\_Ivy\Ivy
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -85,8 +88,10 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Studio
     prRule: yolo
+    baseBranch: development
   - path: D:\Repos\_Ivy\Ivy-Agent\Ivy.Agent.Test.Manager
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -164,6 +169,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Mcp
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
@@ -188,6 +194,7 @@ projects:
   repos:
   - path: D:\Repos\_Ivy\Ivy-Services
     prRule: yolo
+    baseBranch: development
   verifications:
   - *o0
   - *o1
