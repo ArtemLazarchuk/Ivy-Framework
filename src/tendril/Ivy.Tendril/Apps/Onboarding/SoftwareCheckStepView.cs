@@ -92,6 +92,7 @@ public class SoftwareCheckStepView(
                            .Primary()
                            .Large()
                            .Icon(Icons.ArrowRight, Align.Right)
+                           .Disabled(isChecking.Value)
                            .OnClick(() => stepperIndex.Set(stepperIndex.Value + 1))
                        : Text.Muted("Please Wait...")
                );
