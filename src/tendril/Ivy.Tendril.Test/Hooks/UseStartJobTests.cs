@@ -12,8 +12,10 @@ public class UseStartJobTests
     private class TestJobService : IJobService
     {
         public List<(string Type, string[] Args)> StartedJobs { get; } = new();
+#pragma warning disable CS0067
         public event Action? JobsChanged;
         public event Action<JobNotification>? NotificationReady;
+#pragma warning restore CS0067
 
         public string StartJob(string type, string[] args, string? inboxFilePath)
         {
