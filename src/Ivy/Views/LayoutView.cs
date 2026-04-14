@@ -34,8 +34,6 @@ public class LayoutView : ViewBase, IStateless
     private Thickness _borderThickness = new(0);
     private string? _testId = null;
     private GridView? _activeGrid = null;
-    private Responsive<Size>? _responsiveWidth = null;
-    private Responsive<Size>? _responsiveHeight = null;
 
     public LayoutView Gap(bool gap)
     {
@@ -453,8 +451,8 @@ public class LayoutView : ViewBase, IStateless
             BorderRadius = _borderRadius,
             BorderStyle = _borderStyle,
             BorderThickness = _borderThickness,
-            Width = _responsiveWidth ?? _width,
-            Height = _responsiveHeight ?? _height
+            Width = _width,
+            Height = _height
         };
 
         if (_testId != null) layout.TestId = _testId;
