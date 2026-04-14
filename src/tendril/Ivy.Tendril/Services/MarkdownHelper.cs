@@ -58,6 +58,19 @@ public static class MarkdownHelper
     }
 
     /// <summary>
+    ///     Annotates both broken file:/// and plan:// links in markdown content with warning indicators.
+    ///     Combines AnnotateBrokenFileLinks and AnnotateBrokenPlanLinks into a single call.
+    /// </summary>
+    public static string AnnotateAllBrokenLinks(string markdownContent, string plansDirectory)
+    {
+        if (string.IsNullOrEmpty(markdownContent))
+            return markdownContent;
+
+        var annotated = AnnotateBrokenFileLinks(markdownContent);
+        return AnnotateBrokenPlanLinks(annotated, plansDirectory);
+    }
+
+    /// <summary>
     ///     Searches for files with the given filename in the specified repo directories.
     /// </summary>
     public static List<string> FindFilesInRepos(IEnumerable<string> repoPaths, string fileName)

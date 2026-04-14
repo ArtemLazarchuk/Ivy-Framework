@@ -92,8 +92,7 @@ public class TrashApp : ViewBase
                                 }
                             });
 
-            var annotatedContent = MarkdownHelper.AnnotateBrokenFileLinks(selected.Content);
-            annotatedContent = MarkdownHelper.AnnotateBrokenPlanLinks(annotatedContent, planService.PlansDirectory);
+            var annotatedContent = MarkdownHelper.AnnotateAllBrokenLinks(selected.Content, planService.PlansDirectory);
             var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200)))
                                     | new Markdown(annotatedContent)
                                         .DangerouslyAllowLocalFiles()

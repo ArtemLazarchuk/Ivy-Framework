@@ -109,9 +109,7 @@ public class ContentView(
                 });
         else
             scrollableContent |=
-                new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
-                        MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent),
-                        _planService.PlansDirectory))
+                new Markdown(MarkdownHelper.AnnotateAllBrokenLinks(_selectedPlan.LatestRevisionContent, _planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
                     {

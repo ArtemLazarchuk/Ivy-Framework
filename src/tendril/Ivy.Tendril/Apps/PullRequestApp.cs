@@ -168,9 +168,7 @@ public class PullRequestApp : ViewBase
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
-                        MarkdownHelper.AnnotateBrokenFileLinks(content),
-                        planService.PlansDirectory))
+                : (object)new Markdown(MarkdownHelper.AnnotateAllBrokenLinks(content, planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 

@@ -223,8 +223,7 @@ public class ContentView(
         {
             var planLayout = Layout.Vertical();
             if (_selectedPlan.Status == PlanStatus.Failed) planLayout |= BuildFailureCallout(_selectedPlan);
-            var annotatedContent = MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent);
-            annotatedContent = MarkdownHelper.AnnotateBrokenPlanLinks(annotatedContent, _planService.PlansDirectory);
+            var annotatedContent = MarkdownHelper.AnnotateAllBrokenLinks(_selectedPlan.LatestRevisionContent, _planService.PlansDirectory);
             planLayout |= new Markdown(annotatedContent)
                 .DangerouslyAllowLocalFiles()
                 .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>

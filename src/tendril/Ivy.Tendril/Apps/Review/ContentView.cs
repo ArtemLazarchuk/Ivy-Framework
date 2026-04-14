@@ -262,8 +262,7 @@ public class ContentView(
         var planData = planContentQuery.Value;
 
         // Plan tab content (not dependent on query — uses in-memory data)
-        var reviewAnnotated = MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent);
-        reviewAnnotated = MarkdownHelper.AnnotateBrokenPlanLinks(reviewAnnotated, _planService.PlansDirectory);
+        var reviewAnnotated = MarkdownHelper.AnnotateAllBrokenLinks(_selectedPlan.LatestRevisionContent, _planService.PlansDirectory);
         var planTabContent = new Markdown(reviewAnnotated)
             .DangerouslyAllowLocalFiles()
             .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
