@@ -78,9 +78,9 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
       if (disabled) return;
       const isoString = selectedDate?.toISOString();
       setLocalValue(isoString);
-      eventHandler("OnChange", id, [isoString]);
+      if (events.includes("OnChange")) eventHandler("OnChange", id, [isoString]);
     },
-    [disabled, eventHandler, id, setLocalValue],
+    [disabled, eventHandler, id, setLocalValue, events],
   );
 
   const handleTimeChange = useCallback(
@@ -90,7 +90,7 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
       // For Time variant, send the time string directly
       if (variant === "Time") {
         setLocalValue(time);
-        eventHandler("OnChange", id, [time]);
+        if (events.includes("OnChange")) eventHandler("OnChange", id, [time]);
       } else {
         // DateTime variant: merge time into current date so we don't overwrite with today
         if (!time?.trim()) return;
@@ -106,10 +106,10 @@ export const DateTimeInputWidget: React.FC<DateTimeInputWidgetProps> = ({
         baseDate.setHours(hours, minutes, seconds);
         const isoString = baseDate.toISOString();
         setLocalValue(isoString);
-        eventHandler("OnChange", id, [isoString]);
+        if (events.includes("OnChange")) eventHandler("OnChange", id, [isoString]);
       }
     },
-    [disabled, eventHandler, id, variant, localValue, setLocalValue],
+    [disabled, eventHandler, id, variant, localValue, setLocalValue, events],
   );
 
   const VariantComponent = useMemo(() => VariantComponents[variant], [variant]);

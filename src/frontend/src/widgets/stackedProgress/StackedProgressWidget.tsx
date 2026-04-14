@@ -79,7 +79,7 @@ export const StackedProgressWidget: React.FC<StackedProgressWidgetProps> = ({
 
   const handleSelect = (index: number) => {
     if (hasSelectHandler) {
-      eventHandler("OnSelect", id, [index]);
+      if (events.includes("OnSelect")) eventHandler("OnSelect", id, [index]);
     }
   };
 
