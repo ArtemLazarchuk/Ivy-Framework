@@ -8,28 +8,24 @@ ARG BUILD_CONFIGURATION=Release
 ARG IVY_PACKAGE_VERSION
 
 WORKDIR /src
-
-# Copy tool config and restore tools
-# Note: Use the Ivy-Framework root as build context
-COPY [".config/dotnet-tools.json", ".config/"]
-RUN dotnet tool restore
+ARG IVY_PACKAGE_VERSION
 
 # Copy projects for restoration
-COPY ["src/tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj", "tendril/Ivy.Tendril.Docs/"]
-COPY ["src/Ivy/Ivy.csproj", "Ivy/"]
-COPY ["src/Ivy.Docs.Helpers/Ivy.Docs.Helpers.csproj", "Ivy.Docs.Helpers/"]
-COPY ["src/Ivy.Analyser/Ivy.Analyser.csproj", "Ivy.Analyser/"]
-COPY ["src/Ivy.Agent.Filter/Ivy.Agent.Filter.csproj", "Ivy.Agent.Filter/"]
+COPY ["src/tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj", "src/tendril/Ivy.Tendril.Docs/"]
+COPY ["src/Ivy/Ivy.csproj", "src/Ivy/"]
+COPY ["src/Ivy.Docs.Helpers/Ivy.Docs.Helpers.csproj", "src/Ivy.Docs.Helpers/"]
+COPY ["src/Ivy.Analyser/Ivy.Analyser.csproj", "src/Ivy.Analyser/"]
+COPY ["src/Ivy.Agent.Filter/Ivy.Agent.Filter.csproj", "src/Ivy.Agent.Filter/"]
 
 # Restore
-RUN dotnet restore "tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj"
+RUN dotnet restore "src/tendril/Ivy.Tendril.Docs/Ivy.Tendril.Docs.csproj" -p:IvyPackageVersion=$IVY_PACKAGE_VERSION
 
 # Copy the rest of the source code
 COPY . .
 
 # Build and publish
-WORKDIR "/src/tendril/Ivy.Tendril.Docs"
-RUN dotnet publish "Ivy.Tendril.Docs.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+WORKDIR "/src/src/tendril/Ivy.Tendril.Docs"
+RUN dotnet publish "Ivy.Tendril.Docs.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:IvyPackageVersion=$IVY_PACKAGE_VERSION
 
 FROM base AS final
 WORKDIR /app
