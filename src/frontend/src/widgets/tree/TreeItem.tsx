@@ -5,9 +5,11 @@ import Icon from "@/components/Icon";
 import { cn } from "@/lib/utils";
 import { MenuItem } from "@/types/widgets";
 import { ActionRenderer } from "@/widgets/rowAction";
+import { Densities } from "@/types/density";
 
 interface TreeItemWidgetProps {
   item: MenuItem;
+  density?: Densities;
   rowActions?: MenuItem[];
   hasSiblingWithChildren?: boolean;
   isNested?: boolean;
@@ -17,6 +19,7 @@ interface TreeItemWidgetProps {
 
 export const TreeItem: React.FC<TreeItemWidgetProps> = ({
   item,
+  density,
   rowActions,
   hasSiblingWithChildren,
   isNested,
@@ -25,6 +28,8 @@ export const TreeItem: React.FC<TreeItemWidgetProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(item.expanded ?? false);
   const hasChildren = item.children && item.children.length > 0;
+  const gapClass =
+    density === Densities.Small ? "gap-0.5" : density === Densities.Large ? "gap-1.5" : "gap-1";
 
   React.useEffect(() => {
     setIsOpen(item.expanded ?? false);
@@ -122,11 +127,12 @@ export const TreeItem: React.FC<TreeItemWidgetProps> = ({
           )}
         </div>
         <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-          <div className="ivy-tree-children pl-[1rem] ml-2 border-l border-border/50">
+          <div className={cn("ivy-tree-children flex flex-col pl-[1rem] ml-2 border-l border-border/50", gapClass)}>
             {item.children!.map((child) => (
               <TreeItem
                 key={child.tag || child.label}
                 item={child}
+                density={density}
                 onItemClick={onItemClick}
                 rowActions={rowActions}
                 hasSiblingWithChildren={item.children!.some(
