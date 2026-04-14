@@ -23,8 +23,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  background-color: var(--popover);
-  color: var(--popover-foreground);
+  background-color: var(--input);
+  color: var(--foreground);
   padding: 4px 8px;
   font-size: 11px;
   font-family: var(--font-sans);
