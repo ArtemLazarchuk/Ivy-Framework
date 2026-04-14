@@ -72,8 +72,7 @@ The Ivy.Console CLI provides a suite of tools to streamline your development wor
 - **DevTools REST API:** When DevTools are enabled, `GET /ivy/dev-tools/widget-schema` returns a JSON Schema of all registered widgets and their props/events. `GET /ivy/dev-tools/env-info` returns environment details.
 - **Roslyn Analyzer (`Ivy.Analyser`):** Compile-time diagnostics that enforce Rules of Hooks, widget child constraints, constructor requirements, and service injection best practices — with auto-fix code actions.
 - **Hot Reload:** Method-level changes are injected instantly without losing state; structural changes trigger automatic rebuild/restart. Enabled by default with `ivy run`.
-- **`ivy fix`:** AI-powered build error diagnosis and auto-fix. Reads build output, sends it to an AI model, and applies corrections. Supports `--use-claude-code` for Claude Code integration.
-- **`ivy ask` / `ivy question`:** Q&A over the framework knowledge base. Ask natural-language questions about Ivy APIs, patterns, and best practices.
+- **`ivy ask` :** Q&A over the framework knowledge base. Ask natural-language questions about Ivy APIs, patterns, and best practices.
 - **`ivy docs`:** Browse framework documentation directly in the terminal. Use `ivy docs list` to see all topics.
 
 ### 🔌 Integrations
