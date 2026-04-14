@@ -293,11 +293,32 @@ pwsh -NoProfile -Command '& "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Log
 
 This creates a structured log entry in `$TENDRIL_HOME/Logs/worktrees.log` recording the worktree creation with repo path and branch metadata. Logging only happens after successful `.git` file verification (Step 2.4), ensuring only successfully created worktrees are recorded.
 
-6. Apply sync strategy (if configured in `RepoConfigs`):
-   - If `syncStrategy` is `"fetch"` (or not specified), no additional action needed (already fetched in step 1)
-   - If `syncStrategy` is `"rebase"`, after worktree creation run: `cd <worktree-path> && git fetch origin && git rebase origin/<resolved-base-branch>`
-   - If `syncStrategy` is `"merge"`, after worktree creation run: `cd <worktree-path> && git fetch origin && git merge origin/<resolved-base-branch>`
-   - Note: These sync operations should also be run before each commit created during plan execution to keep the branch up-to-date
+6. **Apply sync strategy** — REQUIRED after worktree creation and `.git` file verification:
+
+   ```bash
+   SYNC_STRATEGY="<from RepoConfigs or 'fetch' if not specified>"
+   BASE_BRANCH="<resolved-base-branch>"
+   WORKTREE_PATH="<PlanFolder>/worktrees/<repo-folder-name>"
+
+   pwsh -NoProfile -File "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Apply-SyncStrategy.ps1" \
+     -WorktreePath "$WORKTREE_PATH" \
+     -SyncStrategy "$SYNC_STRATEGY" \
+     -BaseBranch "$BASE_BRANCH"
+   ```
+
+   This tool applies the configured sync strategy (fetch/rebase/merge) to keep the worktree branch synchronized with the base branch. It handles errors and logs each step.
+
+   **When to call:** After each worktree is created (Step 2.4) and before moving to the next repo.
+
+   **Note:** For `syncStrategy: "rebase"` or `syncStrategy: "merge"`, this operation should also be performed before making commits during plan execution to keep the branch up-to-date with upstream changes. Use the same tool with the same parameters.
+
+   **Error handling:**
+   - If `Apply-SyncStrategy.ps1` fails (non-zero exit code), the entire ExecutePlan run should fail
+   - Common failure scenarios:
+     - `git fetch` fails → network issue or invalid remote
+     - `git rebase` fails → conflicting changes between worktree base and origin
+     - `git merge` fails → conflicting changes or uncommitted files
+   - On failure, log the error and exit. Do NOT attempt to continue with an out-of-sync worktree.
 
 ### 2.5. Setup Frontend Dependencies (JavaScript/TypeScript Projects Only)
 
