@@ -14,7 +14,7 @@ public static class ProcessExtensions
         if (process is null) return true;
         if (!process.WaitForExit(timeoutMs))
         {
-            try { process.Kill(true); } catch { /* already exited */ }
+            KillProcess(process);
             return false;
         }
         return true;
@@ -36,7 +36,7 @@ public static class ProcessExtensions
         }
         catch (OperationCanceledException)
         {
-            try { process.Kill(true); } catch { /* already exited */ }
+            await KillProcessAsync(process);
             return false;
         }
     }
@@ -56,8 +56,48 @@ public static class ProcessExtensions
         }
         catch (OperationCanceledException)
         {
-            try { process.Kill(true); } catch { /* already exited */ }
+            await KillProcessAsync(process);
             return false;
+        }
+    }
+
+    private static void KillProcess(Process process)
+    {
+        try
+        {
+            process.Kill(true);
+            if (!process.WaitForExit(5000))
+                CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
+        }
+        catch (InvalidOperationException)
+        {
+            // Process already exited
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static async Task KillProcessAsync(Process process)
+    {
+        try
+        {
+            process.Kill(true);
+            using var killTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await process.WaitForExitAsync(killTimeout.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Process {process.Id} did not exit within 5 seconds after Kill()");
+        }
+        catch (InvalidOperationException)
+        {
+            // Process already exited
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write($"[{DateTime.UtcNow:O}] Exception killing process {process.Id}: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }

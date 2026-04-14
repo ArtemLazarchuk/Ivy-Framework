@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Ivy.Desktop;
+using Ivy.Helpers;
+using Ivy.Tendril.Commands;
 using Ivy.Tendril.Database;
 using Ivy.Tendril.Services;
 using Velopack;
@@ -25,19 +27,14 @@ public class Program
     {
         VelopackApp.Build().Run();
 
-        // Detect if we should use Photino (GUI) or Web (localhost)
-        // 1. Force Photino if --photino flag is present
-        // 2. Default to Photino if running as 'tendril' tool
-        // 3. Otherwise default to Web server
         var fileName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "");
         bool isTool = fileName.Equals("tendril", StringComparison.OrdinalIgnoreCase);
-        bool forcePhotino = args.Contains("--photino");
+        bool forceDesktop = args.Contains("--desktop") || args.Contains("--photino");
         bool forceWeb = args.Contains("--web");
 
-        bool usePhotino = (isTool || forcePhotino) && !forceWeb;
+        bool useDesktop = (isTool || forceDesktop) && !forceWeb;
 
-        // Strip our flags before passing to the rest of the app
-        var filteredArgs = args.Where(a => a != "--photino" && a != "--web").ToArray();
+        var filteredArgs = args.Where(a => a != "--desktop" && a != "--photino" && a != "--web").ToArray();
 
         // Handle database CLI commands before starting the server/GUI
         var dbExitCode = DatabaseCommands.Handle(filteredArgs);
@@ -48,8 +45,15 @@ public class Program
         if (pwExitCode >= 0)
             return pwExitCode;
 
-        var crashLogPath = GetCrashLogPath();
-        WriteCrashLog(crashLogPath, $"[{DateTime.UtcNow:O}] Tendril starting (PID {Environment.ProcessId}) | {GetMemoryStats()}");
+        var doctorExitCode = DoctorCommand.Handle(filteredArgs);
+        if (doctorExitCode >= 0)
+            return doctorExitCode;
+
+        var hashExitCode = HashPasswordCommand.Handle(filteredArgs);
+        if (hashExitCode >= 0)
+            return hashExitCode;
+
+        CrashLog.Write($"[{DateTime.UtcNow:O}] Tendril starting (PID {Environment.ProcessId}) | {GetMemoryStats()}");
 
         // Install native console control handler FIRST — this catches CTRL_CLOSE_EVENT
         // (console window closed), CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_LOGOFF_EVENT,
@@ -67,7 +71,7 @@ public class Program
                     6 => "CTRL_SHUTDOWN_EVENT",
                     _ => $"UNKNOWN({ctrlType})"
                 };
-                WriteCrashLog(crashLogPath,
+                CrashLog.Write(
                     $"[{DateTime.UtcNow:O}] ConsoleCtrlHandler: {name} (PID {Environment.ProcessId}) | {GetMemoryStats()}");
                 return false; // Let default handling proceed
             };
@@ -78,20 +82,20 @@ public class Program
         {
             var msg = $"[{DateTime.UtcNow:O}] FATAL UnhandledException (IsTerminating={e.IsTerminating}) | {GetMemoryStats()}\n  {e.ExceptionObject}";
             Console.WriteLine($"[FATAL] Unhandled exception: {e.ExceptionObject}");
-            WriteCrashLog(crashLogPath, msg);
+            CrashLog.Write(msg);
         };
 
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
             var msg = $"[{DateTime.UtcNow:O}] FATAL UnobservedTaskException | {GetMemoryStats()}\n  {e.Exception}";
             Console.WriteLine($"[FATAL] Unobserved task exception: {e.Exception}");
-            WriteCrashLog(crashLogPath, msg);
+            CrashLog.Write(msg);
             e.SetObserved();
         };
 
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
         {
-            WriteCrashLog(crashLogPath, $"[{DateTime.UtcNow:O}] ProcessExit event fired (PID {Environment.ProcessId}) | {GetMemoryStats()}");
+            CrashLog.Write($"[{DateTime.UtcNow:O}] ProcessExit event fired (PID {Environment.ProcessId}) | {GetMemoryStats()}");
         };
 
         // Periodic memory watchdog — logs a warning when working set exceeds 1 GB
@@ -105,15 +109,22 @@ public class Program
                 {
                     using var proc = Process.GetCurrentProcess();
                     if (proc.WorkingSet64 > warningThresholdBytes)
-                        WriteCrashLog(crashLogPath, $"[{DateTime.UtcNow:O}] MEMORY WARNING | {GetMemoryStats()}");
+                        CrashLog.Write($"[{DateTime.UtcNow:O}] MEMORY WARNING | {GetMemoryStats()}");
                 }
                 catch { /* best-effort */ }
             }
         });
 
+        if (useDesktop && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("IVY_TLS")))
+        {
+            // WKWebView on macOS does not support ignoring invalid developer certificates natively.
+            // When running bundled in the Desktop container, simply fall back to HTTP to bypass cert issues.
+            Environment.SetEnvironmentVariable("IVY_TLS", "0");
+        }
+
         var server = TendrilServer.Create(filteredArgs);
 
-        if (usePhotino)
+        if (useDesktop)
         {
             var window = new DesktopWindow(server)
                 .Title("Ivy Tendril")
@@ -128,28 +139,7 @@ public class Program
         }
     }
 
-    private static string GetCrashLogPath()
-    {
-        var tendrilHome = Environment.GetEnvironmentVariable("TENDRIL_HOME");
-        var logDir = !string.IsNullOrEmpty(tendrilHome) ? tendrilHome : Path.GetTempPath();
-        return Path.Combine(logDir, "crash.log");
-    }
-
-    internal static string CrashLogPath { get; } = GetCrashLogPath();
-
-    internal static void WriteCrashLog(string message) => WriteCrashLog(CrashLogPath, message);
-
-    private static void WriteCrashLog(string path, string message)
-    {
-        try
-        {
-            File.AppendAllText(path, message + Environment.NewLine);
-        }
-        catch
-        {
-            // Last-resort: don't let logging itself crash the process
-        }
-    }
+    internal static void WriteCrashLog(string message) => CrashLog.Write(message);
 
     private static string GetMemoryStats()
     {

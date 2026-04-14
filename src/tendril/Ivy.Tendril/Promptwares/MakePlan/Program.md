@@ -1,5 +1,7 @@
 # MakePlan
 
+**Note:** This promptware is stack-agnostic. Stack-specific operations (build, format, test) are defined in `config.yaml` under `verifications`. Examples in this document use multiple tech stacks for illustration.
+
 **🚫 FORBIDDEN: Do NOT modify, create, or delete any source code files (.cs, .ts, .ps1, etc.). Do NOT implement the plan. You are a PLANNER, not an executor. Your ONLY output is plan files (plan.yaml, revisions/*.md) inside PlansDirectory. If you catch yourself writing code to a repo, STOP IMMEDIATELY.**
 
 Create an implementation plan for a task described in args.
@@ -9,11 +11,11 @@ Create an implementation plan for a task described in args.
 The firmware header contains these key values:
 - **PlanId** — pre-allocated 5-digit plan ID (e.g. `01127`). Use this — do NOT read `.counter`.
 - **PlansDirectory** — where plan folders are created
-- **Project** — selected project name, or `[Auto]` if not specified
+- **Project** — selected project name, or `Auto` if not specified
 - **SourcePath** (optional) — absolute path to the source that generated this plan (e.g. test working directory)
 
 Read the plan folder structure in `../.shared/Plans.md`.
-Read the project configuration from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml).
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration with caching.
 
 ## Execution Steps
 
@@ -32,15 +34,15 @@ Flags can be combined (e.g., `task description [YOLO] [FORCE]` or `task descript
 
 ### 1.5. Load Project Context
 
-Read `config.yaml` (at the path from `TENDRIL_CONFIG` environment variable) to understand all available projects, their repos, and context.
+Use `Get-ConfigYaml` to understand all available projects, their repos, and context.
 
-**If `Project` is set to a specific project name** (not `[Auto]`):
+**If `Project` is set to a specific project name** (not `Auto`):
 - Find that project in `config.yaml` and use its repos and context to scope your research
 
-**If `Project: [Auto]`**:
+**If `Project: Auto`**:
 - Analyze the task description to infer the correct project from `config.yaml`
 - Match based on keywords, repo paths, or component names in the description
-- If no project matches, set `project: [Auto]` in plan.yaml and leave `repos: []` empty
+- If no project matches, set `project: Auto` in plan.yaml and leave `repos: []` empty
 - Use the matched project's context to scope your research
 
 ### 2. Plan ID
@@ -193,18 +195,18 @@ Only include `## Questions` if you have genuine questions for the user that bloc
 The `## Tests` section MUST include two parts:
 
 1. **New tests to write** — describe any new test cases needed for the feature/fix
-2. **Test scope** — specify a `dotnet test --filter` expression that limits DotnetTest to relevant tests only. 
+2. **Test scope** — specify which tests to run using your test framework's filter/selector syntax.
    
    To determine scope:
-   - Identify the namespaces/classes being modified
+   - Identify the modules/classes being modified
    - Search for existing test classes that cover those areas
-   - **Filters MUST target specific test classes, not broad namespaces.** 
-     - Good: `FullyQualifiedName~MyApp.Tests.CommandParserTests`
-     - Good: `FullyQualifiedName~MyApp.Tests.StringHelperTests|FullyQualifiedName~MyApp.Tests.ValidationHelperTests`
-     - Bad: `FullyQualifiedName~MyApp` (matches entire project including E2E)
-     - Bad: `FullyQualifiedName~MyApp.Tests` (matches hundreds of unrelated tests)
+   - **Filters MUST target specific test classes, not broad namespaces/directories.** 
+     Examples:
+     - .NET: `dotnet test --filter "FullyQualifiedName~MyApp.Tests.CommandParserTests"`
+     - JavaScript: `jest --testPathPattern=CommandParser.test.ts`
+     - Python: `pytest tests/test_command_parser.py`
+     - Go: `go test ./pkg/parser/...`
    - **Exclude E2E/integration test classes** unless the plan specifically changes E2E-level behavior. E2E tests are environment-dependent and should only run when explicitly needed.
-   - When multiple test classes are relevant, combine with `|` operator: `FullyQualifiedName~ClassA|FullyQualifiedName~ClassB`
    - If no existing tests cover the changed code, state: "No existing test coverage for this area."
    - If the change is so broad that all tests are genuinely needed, explicitly state: "Run all tests (broad cross-cutting change)." and justify why.
    
@@ -229,7 +231,7 @@ Example (verification names come from config.yaml):
 - [x] CheckResult
 ```
 
-If the project has no verifications (e.g. `[Auto]`), leave the section empty or omit it.
+If the project has no verifications (e.g. `Auto`), leave the section empty or omit it.
 
 The user can edit the checklist before execution — unchecking a required verification or checking an optional one. ExecutePlan will run only the checked items.
 

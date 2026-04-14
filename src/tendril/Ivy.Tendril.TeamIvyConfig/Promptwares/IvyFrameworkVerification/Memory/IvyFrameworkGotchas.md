@@ -213,7 +213,7 @@ if (maxDate) disabledMatcher.push({ after: maxDate });
 - ❌ Don't test actual page navigation (URL change, new page content) in `chrome=false` mode
 - ✅ Test state feedback before navigation (click counters, action logs)
 - ✅ Test beacon discovery and availability (UseNavigationBeacon returns non-null)
-- ✅ Test target apps by navigating directly via URL: `page.goto(\`http://localhost:\${port}/app-id?chrome=false\`)`
+- ✅ Test target apps by navigating directly via URL: `page.goto(\`https://localhost:\${port}/app-id?chrome=false\`)`
 - ✅ Test button enabled/disabled state based on beacon availability
 
 ### Beacon AppId Must Match Full Registered ID
@@ -564,37 +564,6 @@ When passing structured children to widgets:
 3. Register both parent and child in `widgetMap.ts`
 4. Check `widgetNode.children && widgetNode.children.length > 0` before using slot content (empty fragments are truthy)
 
-### Ivy.csproj Rust Binary Build — MSBuild Glob Issue
-❌ `dotnet build` fails with MSB3024 for `*rustserver*.dll` glob
-✅ Create CI/CD artifacts path: `mkdir -p src/RustServer/artifacts/native/win-x64 && cp src/RustServer/target/release/rustserver.dll src/RustServer/artifacts/native/win-x64/`
-
-## Historical Issues (Fixed)
-
-These bugs have been fixed. Kept for reference in case of regressions.
-
-### RadarChart CamelCase Lookup (FIXED)
-`RadarChartWidget.tsx` line 122 used case-sensitive `item[ind.name]` for explicit `.Radar()` config. Fixed to use `getPropertyValue(item, ind.name)` (case-insensitive).
-
-### DayOfWeek Enum Serialization (FIXED)
-C# `DayOfWeek` serialized as string but `react-day-picker` `weekStartsOn` expects a number. Fixed with `resolveDayOfWeek()` in `DateTimeInputWidget.tsx` and `DateRangeInputWidget.tsx`.
-
-### Video PlaybackRate Browser Reset (FIXED)
-Setting only `videoElement.playbackRate` in useEffect was reset during media load. Fixed by setting both `defaultPlaybackRate` and `playbackRate`, plus re-applying in `onLoadedData` handler.
-
-### SignatureInput OnChange Not Wired (FIXED)
-`OnChange => null` (expression-body) meant OnChange was never set. Fixed to `OnChange { get; }` with constructor wiring. Also: frontend must strip `data:` prefix from `canvas.toDataURL()` before sending to C# byte[] deserialization.
-
-### DataTable Custom Header Icons — Three Bugs (FIXED)
-1. `mapColumnIcon()` discarded custom icon names (returned `GridColumnIcon.HeaderString`)
-2. `showColumnTypeIcons` gate blocked explicit icons
-3. CamelCase mismatch between dictionary keys and Icon values
-
-### FileDialog Upload Mode Prop Stripped (FIXED)
-`FileDialogMode.Upload` (enum value 0) was stripped by WidgetSerializer. Fixed with `mode = 'Upload'` default in `FileDialogWidget.tsx`.
-
-### WidgetSerializer Default Enum Value Stripping (FIXED)
-Number columns had `type: undefined` because `ColType.Number` (enum 0) was stripped. Fixed with null guards in `calculateAutoWidth.ts` and `cellContent.ts`. See "Ongoing Pattern" in Serialization section for remaining guard needs.
-
 ## Responsive Design System — Widget-Level Props Not Consumed
 
 ### HideOn/ShowOn on Individual Widgets Has No Effect
@@ -614,6 +583,28 @@ Number columns had `type: undefined` because `ColType.Number` (enum 0) was strip
 
 ### Mobile-First Cascading May Surprise with HideOn
 📝 `HideOn(Breakpoint.Mobile)` creates `{ default: true, mobile: false }`. With mobile-first cascading, `false` cascades to tablet, desktop, and wide — effectively hiding at ALL viewports. The API name suggests "hide only on mobile" but the cascading behavior produces "hide everywhere."
+
+## ImmutableArray Default Value Crash
+
+### UseState<ImmutableArray<T>>() creates uninitialized array
+❌ **`UseState<ImmutableArray<FileUpload<byte[]>>>()`** — default `ImmutableArray<T>` is uninitialized (`IsDefault = true`); accessing `.Length`, iterating, or calling `.Select()` throws `InvalidOperationException: This operation cannot be performed on a default instance of ImmutableArray`
+✅ **`UseState(() => ImmutableArray<FileUpload<byte[]>>.Empty)`** — explicitly initialize with `.Empty`
+📝 **Why**: `default(ImmutableArray<T>)` has a null backing array (unlike `List<T>` which is just empty). The `UseState<T>()` overload without initializer uses `default(T)`, which for `ImmutableArray` produces an unusable instance. Always use the `Func<T>` overload with `.Empty`.
+
+## Ivy Server Always Uses HTTPS
+
+### Health check and Playwright must use HTTPS
+❌ **`http.get(\`http://localhost:\${port}\`)`** — connection refused or no response; Ivy binds to HTTPS only
+✅ **`https.get(\`https://localhost:\${port}\`, { rejectUnauthorized: false })`** — use `https` module with self-signed cert bypass
+✅ **`ignoreHTTPSErrors: true`** in Playwright config `use` block — required for all page navigation
+📝 **Why**: Ivy's `Server` class configures Kestrel with HTTPS by default (dev certificate). There is no HTTP endpoint. All `waitForServer` health checks, `page.goto()`, and WebSocket connections must use `https://` / `wss://`.
+
+## TableBuilder.Header() Requires Label Parameter
+
+### `.Header(expr)` is not valid — second arg is mandatory
+❌ **`products.ToTable().Header(p => p.Name)`** — CS7036: no argument for required parameter `label`
+✅ **`products.ToTable().Header(p => p.Name, "Name")`** — always provide the display label
+📝 **Why**: `TableBuilder<T>.Header(Expression<Func<T, object>>, string)` has `label` as a required parameter, not optional. Unlike DataTable which auto-derives column names, the simple Table widget requires explicit labels.
 
 ## Future Gotchas
 

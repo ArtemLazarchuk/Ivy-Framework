@@ -10,12 +10,14 @@ namespace Ivy.Tendril.Services;
 public class PlanReaderService(
     IConfigService config,
     ILogger<PlanReaderService> logger,
-    ITelemetryService? telemetryService = null) : IPlanReaderService
+    ITelemetryService? telemetryService = null,
+    IWorktreeLifecycleLogger? worktreeLifecycleLogger = null) : IPlanReaderService
 {
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
     private readonly IConfigService _config = config;
 
     private readonly ILogger<PlanReaderService> _logger = logger;
+    private readonly IWorktreeLifecycleLogger? _worktreeLifecycleLogger = worktreeLifecycleLogger;
 
     private readonly TimeCache<Dictionary<string, DashboardStats>> _dashboardCache =
         new(TimeSpan.FromSeconds(10));
@@ -74,8 +76,7 @@ public class PlanReaderService(
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(
-                    $"Failed to recover plan {Path.GetFileName(dir)}: {ex.Message}");
+                _logger.LogWarning(ex, "Failed to recover plan in {Folder}", Path.GetFileName(dir));
             }
     }
 
@@ -327,9 +328,8 @@ public class PlanReaderService(
         WriteFileInBackground(() =>
         {
             if (!Directory.Exists(folderPath)) return;
-            RemoveWorktrees(folderPath, _logger);
-            ClearReadOnlyAttributes(folderPath);
-            Directory.Delete(folderPath, true);
+            RemoveWorktrees(folderPath, _logger, _worktreeLifecycleLogger);
+            WorktreeCleanupService.ForceDeleteDirectory(folderPath, _logger);
         });
     }
 
@@ -596,6 +596,9 @@ public class PlanReaderService(
     {
         var repaired = yaml;
 
+        // 0. Convert multi-line or unterminated quoted scalars to block scalars
+        repaired = RepairMultiLineQuotedScalars(repaired);
+
         // 1. Remove YAML document markers (--- at start and end)
         repaired = Regex.Replace(repaired, @"^---\s*\r?\n", "");
         repaired = Regex.Replace(repaired, @"\r?\n---\s*$", "");
@@ -701,7 +704,8 @@ public class PlanReaderService(
         {
             "state", "project", "level", "title", "sessionId",
             "repos", "created", "updated", "initialPrompt", "sourceUrl",
-            "prs", "commits", "verifications", "relatedPlans", "dependsOn"
+            "prs", "commits", "verifications", "relatedPlans", "dependsOn",
+            "priority"
         };
         var listKeys = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -714,6 +718,8 @@ public class PlanReaderService(
         string? currentListKey = null;
         var inVerificationItem = false;
         var inBlockScalar = false;
+        var inUnknownKey = false;
+        var seenKeys = new HashSet<string>();
 
         static bool IsBlockScalarValue(string value)
         {
@@ -758,10 +764,14 @@ public class PlanReaderService(
 
             if (detectedKey != null)
             {
+                if (!seenKeys.Add(detectedKey))
+                    continue;
+
                 var key = detectedKey;
                 currentListKey = listKeys.Contains(key) ? key : null;
                 inVerificationItem = false;
                 inBlockScalar = false;
+                inUnknownKey = false;
 
                 if (currentListKey != null &&
                     Regex.IsMatch(normalizedTopLevelLine, @"^[A-Za-z][A-Za-z0-9]*:\s*\[\]\s*$"))
@@ -776,6 +786,13 @@ public class PlanReaderService(
                 continue;
             }
 
+            if (inUnknownKey)
+            {
+                if (line != trimmed)
+                    continue;
+                inUnknownKey = false;
+            }
+
             if (inBlockScalar)
             {
                 output.Add($"  {line}");
@@ -786,18 +803,48 @@ public class PlanReaderService(
             {
                 if (trimmed.StartsWith("-"))
                 {
+                    if (currentListKey == "verifications" && !Regex.IsMatch(trimmed, @"^-\s+name:"))
+                    {
+                        inVerificationItem = false;
+                        continue;
+                    }
+
                     output.Add($"  {trimmed}");
                     inVerificationItem = currentListKey == "verifications";
                 }
                 else if (currentListKey == "verifications" && inVerificationItem)
                 {
-                    output.Add($"    {trimmed}");
+                    if (Regex.IsMatch(trimmed, @"^(name|status):"))
+                        output.Add($"    {trimmed}");
                 }
                 else
                 {
-                    output.Add($"  {trimmed}");
+                    var strayKeyMatch = Regex.Match(trimmed, @"^([A-Za-z][A-Za-z0-9]+):");
+                    if (strayKeyMatch.Success && topLevelKeys.Contains(strayKeyMatch.Groups[1].Value))
+                    {
+                        var key = strayKeyMatch.Groups[1].Value;
+                        currentListKey = listKeys.Contains(key) ? key : null;
+                        inVerificationItem = false;
+                        output.Add(trimmed);
+                    }
+                    else if (strayKeyMatch.Success)
+                    {
+                        currentListKey = null;
+                        inUnknownKey = true;
+                    }
+                    else
+                    {
+                        output.Add($"  {trimmed}");
+                    }
                 }
 
+                continue;
+            }
+
+            var unknownKeyMatch = Regex.Match(trimmed, @"^([A-Za-z][A-Za-z0-9]+):");
+            if (unknownKeyMatch.Success)
+            {
+                inUnknownKey = true;
                 continue;
             }
 
@@ -805,6 +852,112 @@ public class PlanReaderService(
         }
 
         return string.Join(Environment.NewLine, output);
+    }
+
+    private static string RepairMultiLineQuotedScalars(string yaml)
+    {
+        var normalized = yaml.Replace("\r\n", "\n");
+        var lines = normalized.Split('\n');
+        var result = new List<string>();
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var m = Regex.Match(lines[i], @"^([a-zA-Z]\w*:)\s+([""'])(.*)$");
+            if (!m.Success)
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            var key = m.Groups[1].Value;
+            var quote = m.Groups[2].Value[0];
+            var rest = m.Groups[3].Value;
+
+            if (IsScalarQuoteClosed(rest, quote))
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            var contentLines = new List<string>();
+            if (rest.Length > 0)
+                contentLines.Add(rest);
+
+            var j = i + 1;
+            while (j < lines.Length)
+            {
+                var next = lines[j];
+                var nextTrimmed = next.TrimStart();
+
+                if (nextTrimmed.Length > 0 && Regex.IsMatch(nextTrimmed, @"^[a-zA-Z]\w*:(\s|$)"))
+                    break;
+
+                var nextStripped = next.TrimEnd();
+                if (nextStripped.Length > 0 && EndsWithClosingQuote(nextStripped, quote))
+                {
+                    contentLines.Add(nextStripped[..^1]);
+                    j++;
+                    break;
+                }
+
+                contentLines.Add(next);
+                j++;
+            }
+
+            while (contentLines.Count > 0 && string.IsNullOrWhiteSpace(contentLines[^1]))
+                contentLines.RemoveAt(contentLines.Count - 1);
+
+            result.Add($"{key} |");
+            foreach (var cl in contentLines)
+            {
+                var unescaped = quote == '"'
+                    ? cl.Replace("\\\\", "\x01").Replace("\\\"", "\"").Replace("\x01", "\\")
+                    : cl.Replace("''", "'");
+                result.Add($"  {unescaped}");
+            }
+
+            i = j - 1;
+        }
+
+        return string.Join("\n", result);
+    }
+
+    private static bool IsScalarQuoteClosed(string afterOpenQuote, char quote)
+    {
+        if (quote == '"')
+        {
+            for (var k = 0; k < afterOpenQuote.Length; k++)
+            {
+                if (afterOpenQuote[k] == '\\') { k++; continue; }
+                if (afterOpenQuote[k] == '"') return true;
+            }
+            return false;
+        }
+
+        for (var k = 0; k < afterOpenQuote.Length; k++)
+        {
+            if (afterOpenQuote[k] != '\'') continue;
+            if (k + 1 < afterOpenQuote.Length && afterOpenQuote[k + 1] == '\'') { k++; continue; }
+            return true;
+        }
+        return false;
+    }
+
+    private static bool EndsWithClosingQuote(string line, char quote)
+    {
+        if (line.Length == 0 || line[^1] != quote) return false;
+        if (quote == '"')
+        {
+            var backslashes = 0;
+            for (var k = line.Length - 2; k >= 0 && line[k] == '\\'; k--)
+                backslashes++;
+            return backslashes % 2 == 0;
+        }
+
+        var quotes = 0;
+        for (var k = line.Length - 1; k >= 0 && line[k] == '\''; k--)
+            quotes++;
+        return quotes % 2 == 1;
     }
 
     /// <summary>
@@ -883,17 +1036,34 @@ public class PlanReaderService(
         return latestFile != null ? FileHelper.ReadAllText(latestFile) : string.Empty;
     }
 
-    internal static void RemoveWorktrees(string planFolderPath, ILogger? logger = null)
+    internal static void RemoveWorktrees(string planFolderPath, ILogger? logger = null, IWorktreeLifecycleLogger? lifecycleLogger = null)
     {
         var worktreesDir = Path.Combine(planFolderPath, "worktrees");
         if (!Directory.Exists(worktreesDir)) return;
+
+        var planId = WorktreeLifecycleLogger.ExtractPlanId(planFolderPath);
 
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
         {
             var gitFile = Path.Combine(wtDir, ".git");
             if (!File.Exists(gitFile))
             {
-                logger?.LogWarning("Worktree directory has no .git file, skipping git removal: {Path}", wtDir);
+                var dirAge = DateTime.UtcNow - new DirectoryInfo(wtDir).CreationTimeUtc;
+                logger?.LogInformation(
+                    "Worktree directory has no .git file (created {Age} ago), force-deleting: {Path}",
+                    dirAge, Path.GetFileName(wtDir));
+                lifecycleLogger?.LogCleanupAttempt(planId, wtDir, "RemoveWorktrees(force)", gitFileExists: false);
+
+                try
+                {
+                    WorktreeCleanupService.ForceDeleteDirectory(wtDir, logger);
+                    lifecycleLogger?.LogCleanupSuccess(planId, wtDir);
+                }
+                catch (Exception ex)
+                {
+                    lifecycleLogger?.LogCleanupFailed(planId, wtDir, ex.Message);
+                    logger?.LogWarning(ex, "Failed to force-delete worktree directory {Dir}", Path.GetFileName(wtDir));
+                }
                 continue;
             }
 
@@ -909,6 +1079,8 @@ public class PlanReaderService(
             var repoRoot = Path.GetDirectoryName(repoGitDir);
             if (repoRoot == null || !Directory.Exists(repoRoot)) continue;
 
+            lifecycleLogger?.LogCleanupAttempt(planId, wtDir, "RemoveWorktrees", gitFileExists: true);
+
             try
             {
                 var psi = new ProcessStartInfo("git", $"worktree remove --force \"{wtDir}\"")
@@ -921,11 +1093,11 @@ public class PlanReaderService(
                 };
                 using var process = Process.Start(psi);
                 process.WaitForExitOrKill(10000);
+                lifecycleLogger?.LogCleanupSuccess(planId, wtDir);
             }
-            catch
+            catch (Exception ex)
             {
-                // Best-effort: if git worktree remove fails, the fallback
-                // ClearReadOnlyAttributes + Directory.Delete may still work.
+                lifecycleLogger?.LogCleanupFailed(planId, wtDir, ex.Message);
             }
         }
     }
@@ -960,6 +1132,13 @@ public class PlanReaderService(
         try
         {
             var planYamlPath = Path.Combine(folderPath, "plan.yaml");
+
+            if (!File.Exists(planYamlPath))
+            {
+                _logger.LogWarning("Plan folder is missing plan.yaml: {FolderPath}", folderPath);
+                return null;
+            }
+
             var yamlContent = FileHelper.ReadAllText(planYamlPath);
             PlanYaml? planYaml;
 
@@ -1100,9 +1279,12 @@ public class PlanReaderService(
                         item.DeclineReason
                     ));
             }
-            catch
+            catch (Exception ex)
             {
-                // Skip malformed YAML files
+                _logger.LogWarning(
+                    "Failed to load recommendations from {RecommendationsPath}: {Message}",
+                    recommendationsPath,
+                    ex.Message);
             }
         }
 
@@ -1194,9 +1376,9 @@ public class PlanReaderService(
     }
 
     /// <summary>
-    /// Waits for any pending background file writes to complete. For testing only.
+    /// Waits for any pending background file writes to complete.
     /// </summary>
-    internal Task FlushPendingWritesAsync() => _lastWriteTask;
+    public Task FlushPendingWritesAsync() => _lastWriteTask;
 
     private static DateTime? ExtractCompletedTimestamp(string logFilePath)
     {

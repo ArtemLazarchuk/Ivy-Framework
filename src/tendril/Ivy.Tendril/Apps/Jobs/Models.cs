@@ -36,11 +36,13 @@ public record JobItem
     public bool CancellationRequested { get; set; }
     public string? SessionId { get; set; }
     public string Provider { get; init; } = "claude";
+    public int Priority { get; init; }
     public decimal? Cost { get; set; }
     public int? Tokens { get; set; }
 
     // Process handle for non-interactive execution
     public Process? Process { get; set; }
+    public int? ProcessId { get; set; }
     public string? StatusMessage { get; set; }
     public ConcurrentQueue<string> OutputLines { get; set; } = new();
     public DateTime? LastOutputAt { get; set; }

@@ -65,6 +65,15 @@ export const IconInputWidget: React.FC<IconInputWidgetProps> = ({
   const eventHandler = useEventHandler();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoFocusedRef = useRef(false);
+
+  useEffect(() => {
+    if (autoFocus && !disabled && !hasAutoFocusedRef.current) {
+      hasAutoFocusedRef.current = true;
+      buttonRef.current?.focus();
+    }
+  }, [autoFocus, disabled]);
 
   const [localValue, setLocalValue] = useOptimisticValue(value, open);
 
@@ -77,7 +86,7 @@ export const IconInputWidget: React.FC<IconInputWidgetProps> = ({
   const handleSelect = useCallback(
     (iconName: string) => {
       setLocalValue(iconName);
-      eventHandler("OnChange", id, [iconName]);
+      if (events.includes("OnChange")) eventHandler("OnChange", id, [iconName]);
       setOpen(false);
       setSearch("");
     },
@@ -86,7 +95,7 @@ export const IconInputWidget: React.FC<IconInputWidgetProps> = ({
 
   const handleClear = useCallback(() => {
     setLocalValue(null);
-    eventHandler("OnChange", id, [null]);
+    if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
     if (events.includes("OnBlur")) eventHandler("OnBlur", id, [null]);
   }, [eventHandler, id, events, setLocalValue]);
 
@@ -165,10 +174,10 @@ export const IconInputWidget: React.FC<IconInputWidgetProps> = ({
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
+            ref={buttonRef}
             type="button"
             variant="outline"
             disabled={disabled}
-            autoFocus={autoFocus}
             className={cn(
               iconInputTriggerVariant({ density }),
               !hasValue && "text-muted-foreground",
@@ -256,7 +265,7 @@ export const IconInputWidget: React.FC<IconInputWidgetProps> = ({
                   iconInputTextVariant({ density }),
                 )}
                 onClick={() => {
-                  eventHandler("OnChange", id, [null]);
+                  if (events.includes("OnChange")) eventHandler("OnChange", id, [null]);
                   setOpen(false);
                 }}
               >

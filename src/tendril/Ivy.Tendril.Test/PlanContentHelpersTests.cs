@@ -1,5 +1,6 @@
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Services;
+using Ivy.Tendril.Test.TestHelpers;
 
 namespace Ivy.Tendril.Test;
 
@@ -160,37 +161,102 @@ public class PlanContentHelpersTests
         Assert.Null(result);
     }
 
-    private class StubGitService(string? commitTitle = null,
-        List<(string Status, string FilePath)>? commitFiles = null) : IGitService
+    [Fact]
+    public void GetAllChangesData_WithMultipleCommits_ReturnsCombinedData()
     {
-        public string? GetCommitTitle(string repoPath, string commitHash) => commitTitle;
-        public string? GetCommitDiff(string repoPath, string commitHash) => null;
-        public List<(string Status, string FilePath)>? GetCommitFiles(string repoPath, string commitHash) => commitFiles;
-        public int? GetCommitFileCount(string repoPath, string commitHash) => commitFiles?.Count;
+        var gitService = new StubGitService(
+            "Test commit",
+            [("A", "new.cs"), ("M", "existing.cs")],
+            combinedDiff: "diff --git a/new.cs b/new.cs\n+new content",
+            combinedFiles: [("A", "new.cs"), ("M", "existing.cs")]
+        );
+        var config = new StubConfigService();
+
+        var metadata = new PlanMetadata(
+            1, "Test", "Bug", "Test Plan", PlanStatus.Draft,
+            ["/fake/repo"], ["commit1", "commit2"], [], [], [], [], DateTime.UtcNow, DateTime.UtcNow, null, null);
+        var plan = new PlanFile(metadata, "", Path.GetTempPath(), "");
+
+        var result = PlanContentHelpers.GetAllChangesData(plan, config, gitService);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Files.Count);
+        Assert.Equal(1, result.AddedCount);
+        Assert.Equal(1, result.ModifiedCount);
+        Assert.Equal(0, result.DeletedCount);
+        Assert.Contains("new content", result.Diff!);
     }
 
-    private class StubConfigService : IConfigService
+    [Fact]
+    public void GetAllChangesData_WithSingleCommit_UsesCommitDiff()
     {
-        public TendrilSettings Settings => new();
-        public string TendrilHome => "";
-        public string ConfigPath => "";
-        public string PlanFolder => "";
-        public List<ProjectConfig> Projects => [];
-        public List<LevelConfig> Levels => [];
-        public string[] LevelNames => [];
-        public EditorConfig Editor => new() { Command = "code", Label = "VS Code" };
-        public bool NeedsOnboarding => false;
-        public ProjectConfig? GetProject(string name) => null;
-        public BadgeVariant GetBadgeVariant(string level) => BadgeVariant.Outline;
-        public Colors? GetProjectColor(string projectName) => null;
-        public void SaveSettings() { }
-        public void SetPendingTendrilHome(string path) { }
-        public string? GetPendingTendrilHome() => null;
-        public void SetPendingProject(ProjectConfig project) { }
-        public ProjectConfig? GetPendingProject() => null;
-        public void SetPendingVerificationDefinitions(List<VerificationConfig> definitions) { }
-        public List<VerificationConfig>? GetPendingVerificationDefinitions() => null;
-        public void CompleteOnboarding(string tendrilHome) { }
-        public void OpenInEditor(string path) { }
+        var gitService = new StubGitService(
+            "Single commit",
+            [("A", "file.cs")],
+            commitDiff: "diff --git a/file.cs b/file.cs\n+added"
+        );
+        var config = new StubConfigService();
+
+        var metadata = new PlanMetadata(
+            1, "Test", "Bug", "Test Plan", PlanStatus.Draft,
+            ["/fake/repo"], ["abc123"], [], [], [], [], DateTime.UtcNow, DateTime.UtcNow, null, null);
+        var plan = new PlanFile(metadata, "", Path.GetTempPath(), "");
+
+        var result = PlanContentHelpers.GetAllChangesData(plan, config, gitService);
+
+        Assert.NotNull(result);
+        Assert.Single(result.Files);
+        Assert.Equal(1, result.AddedCount);
+        Assert.Contains("added", result.Diff!);
     }
+
+    [Fact]
+    public void GetAllChangesData_WithEmptyCommits_ReturnsNull()
+    {
+        var gitService = new StubGitService("Test", []);
+        var config = new StubConfigService();
+
+        var metadata = new PlanMetadata(
+            1, "Test", "Bug", "Test Plan", PlanStatus.Draft,
+            ["/fake/repo"], [], [], [], [], [], DateTime.UtcNow, DateTime.UtcNow, null, null);
+        var plan = new PlanFile(metadata, "", Path.GetTempPath(), "");
+
+        var result = PlanContentHelpers.GetAllChangesData(plan, config, gitService);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetAllChangesData_WithCommitsNotInRepo_ReturnsNull()
+    {
+        var gitService = new StubGitService(null, null);
+        var config = new StubConfigService();
+
+        var metadata = new PlanMetadata(
+            1, "Test", "Bug", "Test Plan", PlanStatus.Draft,
+            ["/fake/repo"], ["unknown1", "unknown2"], [], [], [], [], DateTime.UtcNow, DateTime.UtcNow, null, null);
+        var plan = new PlanFile(metadata, "", Path.GetTempPath(), "");
+
+        var result = PlanContentHelpers.GetAllChangesData(plan, config, gitService);
+
+        Assert.Null(result);
+    }
+
+    private class StubGitService(
+        string? commitTitle = null,
+        List<(string Status, string FilePath)>? commitFiles = null,
+        string? commitDiff = null,
+        string? combinedDiff = null,
+        List<(string Status, string FilePath)>? combinedFiles = null) : IGitService
+    {
+        public string? GetCommitTitle(string repoPath, string commitHash) => commitTitle;
+        public string? GetCommitDiff(string repoPath, string commitHash) => commitDiff;
+        public List<(string Status, string FilePath)>? GetCommitFiles(string repoPath, string commitHash) => commitFiles;
+        public int? GetCommitFileCount(string repoPath, string commitHash) => commitFiles?.Count;
+        public string? GetCombinedDiff(string repoPath, string firstCommit, string lastCommit) => combinedDiff;
+
+        public List<(string Status, string FilePath)>? GetCombinedChangedFiles(string repoPath, string firstCommit,
+            string lastCommit) => combinedFiles;
+    }
+
 }

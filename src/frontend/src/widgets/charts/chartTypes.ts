@@ -1,3 +1,5 @@
+import { Densities } from "@/types/density";
+
 export type ColorScheme = "Default" | "Rainbow";
 
 export enum ChartType {
@@ -44,6 +46,7 @@ export interface PieChartWidgetProps {
   colorScheme: ColorScheme;
   total?: PieChartTotalProps;
   toolbox?: ToolboxProps;
+  density?: Densities;
 }
 
 export interface YAxisProps {
@@ -288,6 +291,7 @@ export interface LineChartWidgetProps {
   referenceDots?: ReferenceDot[];
   colorScheme: ColorScheme;
   layout?: "Horizontal" | "Vertical";
+  density?: Densities;
 }
 
 export interface ReferenceDot {
@@ -317,6 +321,8 @@ export type PieProps = {
 
 export interface ToolTipProps {
   animated?: boolean;
+  valueFormat?: string | null;
+  valueFormatType?: "Auto" | "Number" | "Date" | null;
 }
 
 export interface PieLegendProps {
@@ -375,6 +381,7 @@ export interface ScatterChartWidgetProps {
   referenceDots?: ReferenceDot[];
   colorScheme: ColorScheme;
   layout?: "Horizontal" | "Vertical";
+  density?: Densities;
 }
 
 export type PolarGridTypes = "Polygon" | "Circle";
@@ -437,6 +444,7 @@ export interface RadarChartWidgetProps {
   splitLine?: boolean;
   splitArea?: boolean;
   axisLine?: boolean;
+  density?: Densities;
 }
 
 export interface SankeyNode {
@@ -470,6 +478,7 @@ export interface SankeyChartWidgetProps {
   tooltip?: ToolTipProps;
   legend?: LegendProps;
   toolbox?: ToolboxProps;
+  density?: Densities;
 }
 
 export interface ChordNode {
@@ -499,6 +508,7 @@ export interface ChordChartWidgetProps {
   tooltip?: ToolTipProps;
   legend?: LegendProps;
   toolbox?: ToolboxProps;
+  density?: Densities;
 }
 
 export interface FunnelChartWidgetProps {
@@ -514,6 +524,7 @@ export interface FunnelChartWidgetProps {
   sort?: "Descending" | "Ascending" | "None";
   orientation?: "Vertical" | "Horizontal";
   gap?: number;
+  density?: Densities;
 }
 
 export type FunnelProps = {
@@ -555,4 +566,5 @@ export interface GaugeChartWidgetProps {
   colorScheme?: ColorScheme;
   width?: string;
   height?: string;
+  density?: Densities;
 }

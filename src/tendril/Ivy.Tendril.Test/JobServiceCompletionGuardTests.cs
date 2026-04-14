@@ -213,5 +213,6 @@ public class JobServiceCompletionGuardTests
         public PlanReaderService.PlanCountSnapshot ComputePlanCounts() => new(0, 0, 0, 0, 0);
         public void UpdateRecommendationState(string planFolderName, string recommendationTitle, string newState, string? declineReason = null) { }
         public void InvalidateCaches() { }
+        public Task FlushPendingWritesAsync() => Task.CompletedTask;
     }
 }

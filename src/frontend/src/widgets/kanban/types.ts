@@ -1,4 +1,5 @@
 import { Task } from "@/components/ui/shadcn-io/kanban";
+import { Densities } from "@/types/density";
 
 export interface Column {
   id: string;
@@ -30,11 +31,12 @@ export interface KanbanWidgetProps {
   id: string;
   columns?: Column[];
   tasks?: Task[];
-  events?: Record<string, unknown>;
+  events?: string[];
   width?: string;
   height?: string;
   columnWidth?: string;
   showCounts?: boolean;
+  density?: Densities;
   children?: React.ReactNode;
   slots?: {
     default?: React.ReactNode[];

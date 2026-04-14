@@ -148,7 +148,9 @@ public class ContentView(
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
+                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
+                        MarkdownHelper.AnnotateBrokenFileLinks(content),
+                        _planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
@@ -163,8 +165,7 @@ public class ContentView(
                 openFile.Value,
                 () => openFile.Set(null),
                 repoPaths,
-                config.Editor.Command,
-                config.Editor.Label);
+                config);
 
             if (fileLinkSheet is not null)
                 return new Fragment(

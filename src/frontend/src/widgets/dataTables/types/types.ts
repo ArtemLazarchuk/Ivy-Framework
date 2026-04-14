@@ -41,7 +41,6 @@ export interface DataColumn {
   footer?: string[] | null;
   iconSet?: "lucide" | "custom";
   color?: string | null;
-  customColor?: string | null;
   badgeColorMapping?: Record<string, string> | null;
 }
 
@@ -75,6 +74,12 @@ export interface DataTableConfig {
   idColumnName?: string | null;
 }
 
+export interface DataTableCellUpdate {
+  rowId: string | number;
+  columnName: string;
+  value: unknown;
+}
+
 export interface TableProps {
   id: string;
   columns: DataColumn[];
@@ -84,6 +89,7 @@ export interface TableProps {
   width?: string;
   height?: string;
   rowActions?: MenuItem[];
+  updateStream?: { id: string };
   onCellUpdate?: (row: number, col: number, value: unknown) => void;
   "data-testid"?: string;
 }

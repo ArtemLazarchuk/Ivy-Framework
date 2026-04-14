@@ -28,9 +28,5 @@
   <ItemGroup>
     <ProjectReference Include="../Ivy/Ivy.csproj" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="DataTables\" />
-  </ItemGroup>
 
 </Project>

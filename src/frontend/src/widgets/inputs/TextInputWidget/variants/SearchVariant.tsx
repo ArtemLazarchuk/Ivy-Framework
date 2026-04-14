@@ -85,6 +85,12 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
   const hasValue = props.value && props.value.trim() !== "";
   const showClear = props.nullable && !props.disabled && hasValue;
 
+  const prefixContent = props.slots?.Prefix;
+  const suffixContent = props.slots?.Suffix;
+  const hasPrefix = (prefixContent?.length ?? 0) > 0;
+  const hasSuffix = (suffixContent?.length ?? 0) > 0;
+  const hasAffixes = hasPrefix || hasSuffix;
+
   // Merge focusRef and inputRef
   const mergedRef = useCallback(
     (element: HTMLInputElement | null) => {
@@ -102,67 +108,90 @@ export const SearchVariant: React.FC<SearchVariantProps> = ({
 
   return (
     <div className="relative w-full select-none" style={styles}>
-      <Search className={searchIconVariant({ density })} />
       <div
         className={cn(
-          "rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10",
+          "relative flex items-stretch rounded-field border border-input bg-transparent shadow-sm dark:bg-white/5 dark:border-white/10",
+          props.invalid && "border-destructive",
+          props.disabled && "cursor-not-allowed opacity-50",
           props.ghost &&
             "border-transparent shadow-none bg-transparent dark:border-transparent dark:bg-transparent",
         )}
       >
-        <Input
-          ref={mergedRef}
-          id={props.id}
-          type="search"
-          placeholder={props.placeholder}
-          value={props.value}
-          disabled={props.disabled}
-          maxLength={props.maxLength}
-          minLength={props.minLength}
-          pattern={props.pattern}
-          autoFocus={props.autoFocus}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={onFocus}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          autoComplete="off"
-          className={cn(
-            textInputSizeVariant({ density }),
-            "pl-8 cursor-pointer border-0 shadow-none dark:bg-transparent",
-            props.invalid && inputStyles.invalidInput,
-            (props.invalid || showClear) && "pr-8",
-            props.shortcutKey && !isFocused && !hasValue && !showClear && !props.invalid && "pr-16",
-            showClear && props.invalid && "pr-16",
-            !hasValue && props.nullable && "placeholder:text-muted-foreground",
-            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden",
-          )}
-          data-testid={props["data-testid"]}
-        />
-      </div>
-      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10 h-6">
-        {hasValue && !props.disabled && (
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label="Clear search"
-            onClick={onClear}
-            className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer pointer-events-auto flex items-center h-6"
-            style={{ pointerEvents: "auto" }}
-          >
-            <X className={xIconVariant({ density })} />
-          </button>
-        )}
-        {props.shortcutKey && !isFocused && !hasValue && (
-          <div className="pointer-events-auto flex items-center h-4">
-            <kbd className="text-xs text-foreground bg-muted border border-border rounded-selector px-1 py-0.25">
-              {shortcutDisplay}
-            </kbd>
+        {hasPrefix && (
+          <div className="flex items-center px-3 bg-muted text-muted-foreground border-r border-input rounded-tl-[var(--radius-fields)] rounded-bl-[var(--radius-fields)]">
+            {prefixContent}
           </div>
         )}
-        {props.invalid && (
-          <div className="flex items-center h-6">
-            <InvalidIcon message={props.invalid} />
+
+        <div className="relative flex-1">
+          <Search className={searchIconVariant({ density })} />
+          <Input
+            ref={mergedRef}
+            id={props.id}
+            type="search"
+            placeholder={props.placeholder}
+            value={props.value}
+            disabled={props.disabled}
+            maxLength={props.maxLength}
+            minLength={props.minLength}
+            pattern={props.pattern}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={onFocus}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            autoComplete="off"
+            className={cn(
+              textInputSizeVariant({ density }),
+              "pl-8 cursor-pointer border-0 shadow-none dark:bg-transparent",
+              props.invalid && inputStyles.invalidInput,
+              (props.invalid || showClear) && "pr-8",
+              props.shortcutKey &&
+                !isFocused &&
+                !hasValue &&
+                !showClear &&
+                !props.invalid &&
+                "pr-16",
+              showClear && props.invalid && "pr-16",
+              !hasValue && props.nullable && "placeholder:text-muted-foreground",
+              "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden",
+              hasPrefix && "rounded-l-none",
+              hasSuffix && "rounded-r-none",
+              !hasAffixes && "rounded-field",
+            )}
+            data-testid={props["data-testid"]}
+          />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10 h-6">
+            {hasValue && !props.disabled && (
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label="Clear search"
+                onClick={onClear}
+                className="p-1 rounded hover:bg-accent focus:outline-none cursor-pointer pointer-events-auto flex items-center h-6"
+                style={{ pointerEvents: "auto" }}
+              >
+                <X className={xIconVariant({ density })} />
+              </button>
+            )}
+            {props.shortcutKey && !isFocused && !hasValue && (
+              <div className="pointer-events-auto flex items-center h-4">
+                <kbd className="text-xs text-foreground bg-muted border border-border rounded-selector px-1 py-0.25">
+                  {shortcutDisplay}
+                </kbd>
+              </div>
+            )}
+            {props.invalid && (
+              <div className="flex items-center h-6">
+                <InvalidIcon message={props.invalid} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {hasSuffix && (
+          <div className="flex items-center px-3 bg-muted text-muted-foreground border-l border-input rounded-tr-[var(--radius-fields)] rounded-br-[var(--radius-fields)]">
+            {suffixContent}
           </div>
         )}
       </div>

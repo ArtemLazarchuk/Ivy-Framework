@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
@@ -338,7 +339,10 @@ public class PlanDatabaseService : IPlanDatabaseService
                     """;
 
                 cmd.Parameters.AddWithValue("@cutoff", cutoff);
-                if (projectFilter != null) cmd.Parameters.AddWithValue("@project", projectFilter);
+                if (projectFilter != null)
+                {
+                    cmd.Parameters.AddWithValue("@project", projectFilter);
+                }
                 for (var i = 0; i < days.Count; i++)
                     cmd.Parameters.AddWithValue($"@day{i}", days[i]);
 
@@ -448,7 +452,9 @@ public class PlanDatabaseService : IPlanDatabaseService
                                """;
             cmd.Parameters.AddWithValue("@cutoff", cutoff.ToString("O", CultureInfo.InvariantCulture));
             if (projectFilter != null)
+            {
                 cmd.Parameters.AddWithValue("@project", projectFilter);
+            }
 
             var result = new List<HourlyTokenBurn>();
             using var reader = cmd.ExecuteReader();
@@ -873,8 +879,8 @@ public class PlanDatabaseService : IPlanDatabaseService
         {
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = """
-                              INSERT OR REPLACE INTO Jobs (Id, Type, PlanFile, Project, Status, Provider, SessionId, StartedAt, CompletedAt, DurationSeconds, Cost, Tokens, StatusMessage)
-                              VALUES (@id, @type, @planFile, @project, @status, @provider, @sessionId, @startedAt, @completedAt, @durationSeconds, @cost, @tokens, @statusMessage)
+                              INSERT OR REPLACE INTO Jobs (Id, Type, PlanFile, Project, Status, Provider, SessionId, StartedAt, CompletedAt, DurationSeconds, Cost, Tokens, StatusMessage, Args)
+                              VALUES (@id, @type, @planFile, @project, @status, @provider, @sessionId, @startedAt, @completedAt, @durationSeconds, @cost, @tokens, @statusMessage, @args)
                               """;
             cmd.Parameters.AddWithValue("@id", job.Id);
             cmd.Parameters.AddWithValue("@type", job.Type);
@@ -891,6 +897,7 @@ public class PlanDatabaseService : IPlanDatabaseService
             cmd.Parameters.AddWithValue("@cost", job.Cost.HasValue ? (double)job.Cost.Value : DBNull.Value);
             cmd.Parameters.AddWithValue("@tokens", (object?)job.Tokens ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@statusMessage", (object?)job.StatusMessage ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@args", job.Args.Length > 0 ? JsonSerializer.Serialize(job.Args) : (object)DBNull.Value);
             cmd.ExecuteNonQuery();
         }
         finally
@@ -941,7 +948,10 @@ public class PlanDatabaseService : IPlanDatabaseService
                         : reader.GetInt32(reader.GetOrdinal("Tokens")),
                     StatusMessage = reader.IsDBNull(reader.GetOrdinal("StatusMessage"))
                         ? null
-                        : reader.GetString(reader.GetOrdinal("StatusMessage"))
+                        : reader.GetString(reader.GetOrdinal("StatusMessage")),
+                    Args = reader.IsDBNull(reader.GetOrdinal("Args"))
+                        ? []
+                        : JsonSerializer.Deserialize<string[]>(reader.GetString(reader.GetOrdinal("Args"))) ?? []
                 });
             return jobs;
         }
@@ -1041,6 +1051,70 @@ public class PlanDatabaseService : IPlanDatabaseService
         finally
         {
             _lock.ExitWriteLock();
+        }
+    }
+
+    public Dictionary<string, string> GetAllPrStatuses()
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT PrUrl, Status FROM PrStatuses";
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+                result[reader.GetString(0)] = reader.GetString(1);
+            return result;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+    }
+
+    public void UpsertPrStatus(string prUrl, string owner, string repo, string status, DateTime lastChecked)
+    {
+        _lock.EnterWriteLock();
+        try
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = """
+                              INSERT INTO PrStatuses (PrUrl, Owner, Repo, Status, LastChecked)
+                              VALUES (@url, @owner, @repo, @status, @checked)
+                              ON CONFLICT(PrUrl) DO UPDATE SET
+                                  Status = excluded.Status,
+                                  LastChecked = excluded.LastChecked
+                              """;
+            cmd.Parameters.AddWithValue("@url", prUrl);
+            cmd.Parameters.AddWithValue("@owner", owner);
+            cmd.Parameters.AddWithValue("@repo", repo);
+            cmd.Parameters.AddWithValue("@status", status);
+            cmd.Parameters.AddWithValue("@checked", lastChecked.ToString("O", CultureInfo.InvariantCulture));
+            cmd.ExecuteNonQuery();
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+    }
+
+    public List<string> GetNonMergedPrUrls()
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT PrUrl FROM PrStatuses WHERE Status != 'Merged'";
+            var result = new List<string>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+                result.Add(reader.GetString(0));
+            return result;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
         }
     }
 
@@ -1394,6 +1468,7 @@ public class PlanDatabaseService : IPlanDatabaseService
 
         foreach (var value in values)
         {
+            if (value == null) continue;
             insertCmd.Parameters["@planId"].Value = planId;
             insertCmd.Parameters["@value"].Value = value;
             insertCmd.ExecuteNonQuery();

@@ -109,9 +109,21 @@ public class ContentView(
                 });
         else
             scrollableContent |=
-                new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent))
+                new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
+                        MarkdownHelper.AnnotateBrokenFileLinks(_selectedPlan.LatestRevisionContent),
+                        _planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
-                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
+                    .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile, planId =>
+                    {
+                        var planFolder = Directory.GetDirectories(_planService.PlansDirectory, $"{planId:D5}-*")
+                            .FirstOrDefault();
+                        if (planFolder != null)
+                        {
+                            var plan = _planService.GetPlanByFolder(planFolder);
+                            if (plan != null)
+                                _selectedPlanState.Set(plan);
+                        }
+                    }));
 
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
                         | new Button("Delete").Icon(Icons.Trash).Outline().OnClick(() => deleteDialogOpen.Set(true))
@@ -168,7 +180,7 @@ public class ContentView(
 
         var repoPaths = _selectedPlan.GetEffectiveRepoPaths(_config);
         var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
-            openFile.Value, () => openFile.Set(null), repoPaths, _config.Editor.Command, _config.Editor.Label);
+            openFile.Value, () => openFile.Set(null), repoPaths, _config);
         if (fileLinkSheet is not null)
             elements.Add(fileLinkSheet);
 

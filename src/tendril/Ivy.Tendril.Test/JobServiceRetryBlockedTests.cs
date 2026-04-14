@@ -349,5 +349,7 @@ public class JobServiceRetryBlockedTests
         public void InvalidateCaches()
         {
         }
+
+        public Task FlushPendingWritesAsync() => Task.CompletedTask;
     }
 }

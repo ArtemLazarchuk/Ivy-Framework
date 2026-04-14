@@ -408,5 +408,7 @@ public class JobServiceDependencyAutoRetryTests : IDisposable
         public void InvalidateCaches()
         {
         }
+
+        public Task FlushPendingWritesAsync() => Task.CompletedTask;
     }
 }

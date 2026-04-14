@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Plans;
 using Ivy.Tendril.Apps.PullRequest;
 using Ivy.Tendril.Services;
@@ -15,52 +16,13 @@ public class PullRequestApp : ViewBase
         var showPlan = UseState<string?>(null);
         var openFile = UseState<string?>(null);
         var config = UseService<IConfigService>();
-        var githubService = UseService<IGithubService>();
-        var statusQuery = UseQuery<Dictionary<string, string>, string>(
-            "pr-statuses",
-            async (_, ct) =>
-            {
-                var allPlans = planService.GetPlans()
-                    .Where(p => p.Prs.Count > 0)
-                    .ToList();
-
-                var keys = allPlans
-                    .SelectMany(p => p.Prs.Where(IsValidUrl))
-                    .Select(ExtractRepo)
-                    .Distinct()
-                    .ToList();
-
-                var tasks = keys.Select(async repoKey =>
-                {
-                    var parts = repoKey.Split('/');
-                    if (parts.Length != 2) return new Dictionary<string, string>();
-                    try
-                    {
-                        return await githubService.GetPrStatusesAsync(parts[0], parts[1]);
-                    }
-                    catch
-                    {
-                        return new Dictionary<string, string>();
-                    }
-                }).ToList();
-
-                var results = await Task.WhenAll(tasks);
-                var allStatuses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var statuses in results)
-                    foreach (var kvp in statuses)
-                        allStatuses[kvp.Key] = kvp.Value;
-
-                return allStatuses;
-            },
-            initialValue: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        );
+        var databaseService = UseService<IPlanDatabaseService>();
+        var prStatuses = databaseService.GetAllPrStatuses();
 
         var plans = planService.GetPlans()
             .Where(p => p.Prs.Count > 0)
             .OrderByDescending(p => p.Id)
             .ToList();
-
-        var prStatuses = statusQuery.Value ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         var rows = plans.SelectMany(plan =>
         {
@@ -68,7 +30,7 @@ public class PullRequestApp : ViewBase
             var cost = costValue > 0 ? $"${costValue:F2}" : "";
             var tokenValue = planService.GetPlanTotalTokens(plan.FolderPath);
             var tokens = tokenValue > 0 ? FormatHelper.FormatTokens(tokenValue) : "";
-            return plan.Prs.Where(IsValidUrl).Select((pr, i) => new PrRow
+            return plan.Prs.Where(IsValidUrl).Reverse().Select((pr, i) => new PrRow
             {
                 Id = $"{plan.Id}-{i}",
                 PlanId = $"{plan.Id:D5}",
@@ -87,6 +49,7 @@ public class PullRequestApp : ViewBase
             .RefreshToken(refreshToken)
             .Width(Size.Full())
             .Height(Size.Full())
+            .Order(e => e.Repository, e => e.Pr, e => e.Status, e => e.Plan, e => e.Tokens, e => e.Cost)
             .Header(t => t.Repository, "Repository")
             .Header(t => t.Status, "Status")
             .Header(t => t.Cost, "Cost")
@@ -171,13 +134,15 @@ public class PullRequestApp : ViewBase
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
+                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
+                        MarkdownHelper.AnnotateBrokenFileLinks(content),
+                        planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
             var repoPaths = plan?.GetEffectiveRepoPaths(config) ?? [];
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
-                openFile.Value, () => openFile.Set(null), repoPaths);
+                openFile.Value, () => openFile.Set(null), repoPaths, config);
 
             var planSheet = new Sheet(
                 () => showPlan.Set(null),
@@ -198,9 +163,11 @@ public class PullRequestApp : ViewBase
     ///     Extracts "owner/repo" from a GitHub PR URL.
     ///     E.g. "https://github.com/owner/repo/pull/123" -> "owner/repo"
     /// </summary>
-    internal static bool IsValidUrl(string value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    private static readonly Regex GitHubPrPattern = new(
+        @"^https?://github\.com/[^/]+/[^/]+/pull/\d+", RegexOptions.Compiled);
+
+    internal static bool IsValidUrl(string? value) =>
+        value is not null && GitHubPrPattern.IsMatch(value);
 
     internal static string ExtractRepo(string prUrl)
     {

@@ -20,13 +20,21 @@ public static class TendrilServer
 #endif
         server.SetMetaTitle("Ivy Tendril");
 
+        server.Services.AddHttpClient();
+
         var configService = new ConfigService();
         server.Services.AddSingleton<IConfigService>(configService);
         server.Services.AddSingleton<ConfigService>(configService);
 
-        var modelPricingService = new ModelPricingService();
-        server.Services.AddSingleton<IModelPricingService>(modelPricingService);
-        server.Services.AddSingleton(modelPricingService);
+        if (configService.Settings.Auth != null)
+        {
+            server.Services.AddHttpContextAccessor();
+            server.UseAuth<Auth.TendrilAuthProvider>();
+        }
+
+        server.Services.AddSingleton<ModelPricingService>(sp =>
+            new ModelPricingService(sp.GetRequiredService<ILogger<ModelPricingService>>()));
+        server.Services.AddSingleton<IModelPricingService>(sp => sp.GetRequiredService<ModelPricingService>());
 
         // Register IChatClient if LLM is configured
         if (configService.Settings.Llm is { } llmConfig && !string.IsNullOrEmpty(llmConfig.ApiKey))
@@ -41,18 +49,28 @@ public static class TendrilServer
                 return client.GetChatClient(llm.Model).AsIChatClient();
             });
 
+        server.Services.AddSingleton<VersionCheckService>();
+        server.Services.AddSingleton<IVersionCheckService>(sp => sp.GetRequiredService<VersionCheckService>());
+
         server.Services.AddSingleton<OnboardingSetupService>();
         server.Services.AddSingleton<IOnboardingSetupService>(sp => sp.GetRequiredService<OnboardingSetupService>());
         server.Services.AddSingleton<GithubService>();
         server.Services.AddSingleton<IGithubService>(sp => sp.GetRequiredService<GithubService>());
         server.Services.AddSingleton<GitService>();
         server.Services.AddSingleton<IGitService>(sp => sp.GetRequiredService<GitService>());
+        server.Services.AddSingleton<IWorktreeLifecycleLogger>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfigService>();
+            return new WorktreeLifecycleLogger(
+                string.IsNullOrEmpty(config.TendrilHome) ? "." : config.TendrilHome);
+        });
         server.Services.AddSingleton<PlanReaderService>(sp =>
         {
             var planService = new PlanReaderService(
                 sp.GetRequiredService<IConfigService>(),
                 sp.GetRequiredService<ILogger<PlanReaderService>>(),
-                sp.GetRequiredService<ITelemetryService>());
+                sp.GetRequiredService<ITelemetryService>(),
+                sp.GetRequiredService<IWorktreeLifecycleLogger>());
             planService.RepairPlans();
             planService.RecoverStuckPlans();
             return planService;
@@ -88,13 +106,16 @@ public static class TendrilServer
             (TelemetryService)sp.GetRequiredService<ITelemetryService>());
         server.Services.AddSingleton<JobService>(sp =>
         {
+            var cfg = sp.GetRequiredService<IConfigService>();
             return new JobService(
-                sp.GetRequiredService<IConfigService>(),
+                cfg,
+                sp.GetRequiredService<ILogger<JobService>>(),
                 sp.GetRequiredService<ModelPricingService>(),
                 sp.GetRequiredService<IPlanReaderService>(),
                 sp.GetRequiredService<ITelemetryService>(),
                 sp.GetRequiredService<IPlanWatcherService>(),
-                sp.GetRequiredService<IPlanDatabaseService>());
+                string.IsNullOrEmpty(cfg.TendrilHome) ? null : sp.GetRequiredService<IPlanDatabaseService>(),
+                sp.GetRequiredService<IWorktreeLifecycleLogger>());
         });
         server.Services.AddSingleton<IJobService>(sp => sp.GetRequiredService<JobService>());
         server.Services.AddSingleton<PlanWatcherService>(sp =>
@@ -122,9 +143,19 @@ public static class TendrilServer
         {
             var config = sp.GetRequiredService<IConfigService>();
             var logger = sp.GetRequiredService<ILogger<WorktreeCleanupService>>();
-            return new WorktreeCleanupService(config.PlanFolder, logger);
+            var lifecycleLogger = sp.GetRequiredService<IWorktreeLifecycleLogger>();
+            return new WorktreeCleanupService(config.PlanFolder, logger, lifecycleLogger);
         });
         server.Services.AddSingleton<IStartable>(sp => sp.GetRequiredService<WorktreeCleanupService>());
+        server.Services.AddSingleton<PrStatusSyncService>(sp =>
+        {
+            var database = sp.GetRequiredService<IPlanDatabaseService>();
+            var githubService = sp.GetRequiredService<IGithubService>();
+            var planReader = sp.GetRequiredService<IPlanReaderService>();
+            var logger = sp.GetRequiredService<ILogger<PrStatusSyncService>>();
+            return new PrStatusSyncService(database, githubService, planReader, logger);
+        });
+        server.Services.AddSingleton<IStartable>(sp => sp.GetRequiredService<PrStatusSyncService>());
 
         server.UseWebApplication(app =>
         {

@@ -74,11 +74,19 @@ public class PasswordEmailFlowView(IState<string?> errorMessage) : ViewBase
                 loading.Set(true);
                 errorMessage.Set((string?)null);
 
-                await auth.LoginAsync(model.User, model.Password);
+                var result = await auth.LoginAsync(model.User, model.Password);
 
-                if (auth.GetCurrentToken() == null)
+                switch (result.Status)
                 {
-                    errorMessage.Set("Login failed. Please check your credentials.");
+                    case LoginStatus.Success:
+                        break;
+                    case LoginStatus.InvalidCredentials:
+                        errorMessage.Set("Login failed. Please check your credentials.");
+                        break;
+                    case LoginStatus.RateLimited:
+                        var seconds = (int)Math.Ceiling(result.RetryAfter!.Value.TotalSeconds);
+                        errorMessage.Set($"Too many login attempts. Please try again in {seconds} second{(seconds == 1 ? "" : "s")}.");
+                        break;
                 }
             }
             catch (Exception ex)

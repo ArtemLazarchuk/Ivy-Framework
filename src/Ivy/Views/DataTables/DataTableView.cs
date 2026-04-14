@@ -9,6 +9,7 @@ public class DataTableView(
     Size? height,
     DataTableColumn[] columns,
     DataTableConfig config,
+    Density density = Density.Medium,
     Func<Event<DataTable, CellClickEventArgs>, ValueTask>? onCellClick = null,
     Func<Event<DataTable, CellClickEventArgs>, ValueTask>? onCellActivated = null,
     MenuItem[]? rowActions = null,
@@ -17,7 +18,8 @@ public class DataTableView(
     RefreshToken? refreshToken = null,
     FuncViewBuilder? emptyViewFactory = null,
     FuncViewBuilder? headerLeftFactory = null,
-    FuncViewBuilder? headerRightFactory = null) : ViewBase, IMemoized
+    FuncViewBuilder? headerRightFactory = null,
+    IWriteStream<DataTableCellUpdate>? updateStream = null) : ViewBase, IMemoized
 {
     public override object? Build()
     {
@@ -29,10 +31,12 @@ public class DataTableView(
 
         var table = new DataTable(connection, width, height, columns, config)
         {
+            Density = density,
             OnCellClick = onCellClick.ToEventHandler(),
             OnCellActivated = onCellActivated.ToEventHandler(),
             RowActions = rowActions,
-            OnRowAction = onRowAction.ToEventHandler()
+            OnRowAction = onRowAction.ToEventHandler(),
+            UpdateStream = updateStream
         };
 
         var slots = new List<Slot>();

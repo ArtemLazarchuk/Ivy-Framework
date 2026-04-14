@@ -20,6 +20,7 @@ public class TrashApp : ViewBase
     {
         var configService = UseService<IConfigService>();
         var jobService = UseService<IJobService>();
+        var planService = UseService<IPlanReaderService>();
         var client = UseService<IClientProvider>();
         var refreshToken = UseRefreshToken();
         var selectedFile = UseState<string?>(null);
@@ -84,15 +85,17 @@ public class TrashApp : ViewBase
                             {
                                 if (!string.IsNullOrEmpty(selected.OriginalRequest))
                                 {
-                                    var project = string.IsNullOrEmpty(selected.Project) ? "[Auto]" : selected.Project;
+                                    var project = string.IsNullOrEmpty(selected.Project) ? "Auto" : selected.Project;
                                     jobService.StartJob("MakePlan", "-Description",
                                         $"{selected.OriginalRequest} [FORCE]", "-Project", project);
                                     client.Toast("MakePlan job started", "Force Plan");
                                 }
                             });
 
+            var annotatedContent = MarkdownHelper.AnnotateBrokenFileLinks(selected.Content);
+            annotatedContent = MarkdownHelper.AnnotateBrokenPlanLinks(annotatedContent, planService.PlansDirectory);
             var scrollableContent = Layout.Vertical().Width(Size.Auto().Max(Size.Units(200)))
-                                    | new Markdown(selected.Content)
+                                    | new Markdown(annotatedContent)
                                         .DangerouslyAllowLocalFiles()
                                         .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
@@ -119,8 +122,7 @@ public class TrashApp : ViewBase
                 filePath,
                 () => openFile.Set(null),
                 [],
-                configService.Editor.Command,
-                configService.Editor.Label);
+                configService);
             if (fileLinkSheet is not null)
                 elements.Add(fileLinkSheet);
         }

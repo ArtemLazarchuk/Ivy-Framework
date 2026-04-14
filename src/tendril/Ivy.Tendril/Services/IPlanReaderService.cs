@@ -33,4 +33,5 @@ public interface IPlanReaderService
         string? declineReason = null);
 
     void InvalidateCaches();
+    Task FlushPendingWritesAsync();
 }

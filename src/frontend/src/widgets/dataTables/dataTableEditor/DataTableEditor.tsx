@@ -25,12 +25,13 @@ import { useFooterColumnLayout } from "../hooks/useFooterColumnLayout";
 import { GridContainer } from "../components/GridContainer";
 import { AggregateFooter } from "../DataTableFooter";
 import { MenuItem } from "@/types/widgets";
-import { ROW_HEIGHT, GROUP_HEADER_HEIGHT } from "./constants";
+import { DENSITY_CONFIG } from "./constants";
 import { useCellContent, useGridColumns, useHeaderMenu } from "./hooks";
 import { getOrderedVisibleDataColumns } from "../utils/columnHelpers";
 
 interface TableEditorProps {
   widgetId: string;
+  events: string[];
   hasOptions?: boolean;
   rowActions?: MenuItem[];
   footer?: React.ReactNode;
@@ -39,6 +40,7 @@ interface TableEditorProps {
 
 export const DataTableEditor: React.FC<TableEditorProps> = ({
   widgetId,
+  events,
   hasOptions = false,
   rowActions,
   footer,
@@ -53,6 +55,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     editable,
     config,
     columnOrder,
+    density,
     getRowData,
     arrowTableRef,
     loadMoreData,
@@ -60,6 +63,8 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     handleSort,
     handleColumnReorder,
   } = useTable();
+
+  const densityConfig = DENSITY_CONFIG[density];
 
   const {
     allowColumnReordering,
@@ -106,6 +111,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
   // Cell interactions
   const { handleCellClicked, handleCellActivated } = useCellInteractions({
     widgetId,
+    events,
     columns,
     visibleRows,
     enableCellClickEvents: enableCellClickEvents ?? false,
@@ -117,6 +123,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
   const { hoverRow, actionButtonsTop, actionButtonsHeight, onItemHovered, handleRowActionClick } =
     useRowHover({
       widgetId,
+      events,
       visibleRows,
       enableRowHover: enableRowHover ?? false,
       rowActions,
@@ -150,6 +157,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     enableRowHover: enableRowHover ?? false,
     visibleRows,
     hoverRow,
+    density,
   });
 
   const { onSearchResultsChanged, onSearchClose, highlightRegions } = useSearchNavigation(
@@ -166,7 +174,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     visibleRows,
     hasMore,
     showGroups: showGroups ?? false,
-    rowHeight: ROW_HEIGHT,
+    rowHeight: densityConfig.rowHeight,
   });
 
   // Data loading
@@ -176,7 +184,7 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     isLoading,
     hasMore,
     loadMoreData,
-    rowHeight: ROW_HEIGHT,
+    rowHeight: densityConfig.rowHeight,
   });
 
   // Generate header icons map for all column icons
@@ -202,7 +210,6 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
     columns,
     columnOrder,
     columnWidths,
-    containerWidth,
     showGroups: showGroups ?? false,
     showColumnTypeIcons: showColumnTypeIcons ?? true,
   });
@@ -288,8 +295,8 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
         onVisibleRegionChanged={handleVisibleRegionChanged}
         onHeaderClicked={allowSorting ? handleHeaderMenuClick : undefined}
         theme={tableTheme}
-        rowHeight={ROW_HEIGHT}
-        headerHeight={ROW_HEIGHT}
+        rowHeight={densityConfig.rowHeight}
+        headerHeight={densityConfig.rowHeight}
         freezeColumns={freezeColumns ?? 0}
         getCellsForSelection={(allowCopySelection ?? true) ? true : undefined}
         rowSelect={selectionProps.rowSelect}
@@ -297,13 +304,12 @@ export const DataTableEditor: React.FC<TableEditorProps> = ({
         rangeSelect={selectionProps.rangeSelect}
         gridSelection={gridSelection}
         onGridSelectionChange={handleGridSelectionChange}
-        width={containerWidth}
         height={
           containerHeight > 0 ? containerHeight : containerRef.current?.clientHeight || undefined
         }
         rowMarkers={showIndexColumn ? "number" : "none"}
         onColumnMoved={allowColumnReordering ? handleColumnReorder : undefined}
-        groupHeaderHeight={showGroups ? GROUP_HEADER_HEIGHT : undefined}
+        groupHeaderHeight={showGroups ? densityConfig.groupHeaderHeight : undefined}
         onCellClicked={handleCellClicked}
         onCellActivated={handleCellActivated}
         onGroupHeaderClicked={shouldUseColumnGroups ? onGroupHeaderClicked : undefined}

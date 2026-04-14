@@ -1,8 +1,11 @@
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using Ivy.Tendril.Apps.Jobs;
 using Ivy.Tendril.Apps.Plans;
+using Ivy.Tendril.Helpers;
 using Ivy.Tendril.Services;
+using Ivy.Widgets.ClaudeJsonRenderer;
 
 namespace Ivy.Tendril.Apps;
 
@@ -45,10 +48,26 @@ public class JobsApp : ViewBase
             return Disposable.Create(() => jobService.JobsChanged -= OnJobsChanged);
         });
 
-        UseInterval(() =>
-        {
-            if (jobService.GetJobs().Any(j => j.Status == JobStatus.Running)) refreshToken.Refresh();
-        }, TimeSpan.FromSeconds(5));
+        var updateStream = UseDataTableUpdates(
+            Observable.Interval(TimeSpan.FromSeconds(1))
+                .SelectMany(_ =>
+                {
+                    var currentJobs = jobService.GetJobs();
+                    return currentJobs
+                        .Where(j => j.Status == JobStatus.Running ||
+                                    ((j.Status is JobStatus.Stopped or JobStatus.Failed or JobStatus.Timeout or JobStatus.Completed)
+                                     && j.CompletedAt.HasValue
+                                     && DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(5)))
+                        .SelectMany(j => new[]
+                        {
+                            new DataTableCellUpdate(j.Id, "Timer", FormatTimer(j)),
+                            new DataTableCellUpdate(j.Id, "Cost", j.Cost.HasValue ? $"${j.Cost.Value:F2}" : ""),
+                            new DataTableCellUpdate(j.Id, "Tokens", j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : ""),
+                            new DataTableCellUpdate(j.Id, "LastOutput", FormatLastOutput(j)),
+                            new DataTableCellUpdate(j.Id, "Status", j.Status),
+                            new DataTableCellUpdate(j.Id, "StatusMessage", GetStatusMessage(j))
+                        });
+                }));
 
         var projectColors = config.Projects
             .Select(p => new { p.Name, Color = config.GetProjectColor(p.Name) })
@@ -68,7 +87,7 @@ public class JobsApp : ViewBase
                 PlanId = displayPlanId,
                 Plan = GetPromptDisplay(j, planService),
                 Type = j.Type,
-                Project = j.Project,
+                Project = string.Join(", ", ProjectHelper.ParseProjects(j.Project)),
                 Timer = FormatTimer(j),
                 Cost = j.Cost.HasValue ? $"${j.Cost.Value:F2}" : "",
                 Tokens = j.Tokens.HasValue ? FormatHelper.FormatTokens(j.Tokens.Value) : "",
@@ -99,6 +118,7 @@ public class JobsApp : ViewBase
         var dataTable = rows.AsQueryable()
             .ToDataTable(t => t.Id)
             .RefreshToken(refreshToken)
+            .UpdateStream(updateStream)
             .Width(Size.Full())
             .Height(Size.Full())
             .Header(t => t.Status, "Status")
@@ -114,13 +134,13 @@ public class JobsApp : ViewBase
             .Width(t => t.Status, Size.Px(100))
             .Width(t => t.PlanId, Size.Px(100))
             .Width(t => t.Type, Size.Px(100))
-            .Width(t => t.Plan, Size.Auto())
+            .Width(t => t.Plan, Size.Px(250))
             .Width(t => t.Project, Size.Px(100))
             .Width(t => t.Timer, Size.Px(100))
             .Width(t => t.LastOutput, Size.Px(100))
             .Width(t => t.Cost, Size.Px(100))
             .Width(t => t.Tokens, Size.Px(100))
-            .Width(t => t.StatusMessage, Size.Px(250))
+            .Width(t => t.StatusMessage, Size.Auto())
             .Renderer(t => t.Status, new LabelsDisplayRenderer
             {
                 BadgeColorMapping = StatusMappings.JobStatusColors.ToDictionary(
@@ -181,6 +201,8 @@ public class JobsApp : ViewBase
             })
             .RowActions(
                 new MenuItem("View Plan", Icon: Icons.FileText, Tag: "view-plan").Tooltip("Open the associated plan"),
+                new MenuItem("View Output", Icon: Icons.Terminal, Tag: "view-output").Tooltip(
+                    "View job output with Claude JSON rendering"),
                 new MenuItem("Show Prompt", Icon: Icons.MessageSquare, Tag: "show-prompt").Tooltip(
                     "Show the full prompt text"),
                 new MenuItem("Stop", Icon: Icons.Square, Tag: "stop-job").Tooltip("Stop this running job"),
@@ -204,6 +226,10 @@ public class JobsApp : ViewBase
                                 showPlan.Set(fullPath);
                         }
                     }
+                    else if (tag == "view-output")
+                    {
+                        showOutput.Set(job.Id);
+                    }
                     else if (tag == "show-prompt")
                     {
                         var fullPrompt = GetFullPrompt(job);
@@ -222,6 +248,12 @@ public class JobsApp : ViewBase
                     {
                         if (job.Status is JobStatus.Failed or JobStatus.Timeout or JobStatus.Stopped)
                         {
+                            if (job.Type == "MakePlan" && !job.Args.Contains("-Description"))
+                            {
+                                client.Toast("Cannot rerun MakePlan: original description was not preserved.", "Rerun Failed");
+                                return ValueTask.CompletedTask;
+                            }
+
                             if (job.Type is "ExecutePlan" or "ExpandPlan" && job.Args.Length > 0)
                             {
                                 var folderName = Path.GetFileName(job.Args[0]);
@@ -235,6 +267,7 @@ public class JobsApp : ViewBase
 
                             jobService.DeleteJob(job.Id);
                             jobService.StartJob(job.Type, job.Args);
+
                             refreshToken.Refresh();
                         }
                     }
@@ -278,13 +311,15 @@ public class JobsApp : ViewBase
 
             var sheetContent = string.IsNullOrEmpty(content)
                 ? Text.P("Plan not found or empty.")
-                : (object)new Markdown(MarkdownHelper.AnnotateBrokenFileLinks(content))
+                : (object)new Markdown(MarkdownHelper.AnnotateBrokenPlanLinks(
+                        MarkdownHelper.AnnotateBrokenFileLinks(content),
+                        planService.PlansDirectory))
                     .DangerouslyAllowLocalFiles()
                     .OnLinkClick(FileLinkHelper.CreateFileLinkClickHandler(openFile));
 
             var repoPaths = plan?.GetEffectiveRepoPaths(config) ?? [];
             var fileLinkSheet = FileLinkHelper.BuildFileLinkSheet(
-                openFile.Value, () => openFile.Set(null), repoPaths);
+                openFile.Value, () => openFile.Set(null), repoPaths, config);
 
             var planSheet = new Sheet(
                 () => showPlan.Set(null),
@@ -300,13 +335,26 @@ public class JobsApp : ViewBase
         if (showOutput.Value is { } jobId)
         {
             var job = jobService.GetJob(jobId);
-            var outputText = job is not null && job.OutputLines.Count > 0
-                ? string.Join("\n", job.OutputLines)
-                : "No output available.";
+            object outputContent;
+
+            if (job is not null && job.OutputLines.Count > 0)
+            {
+                var jsonStream = string.Join("\n", job.OutputLines);
+                outputContent = new ClaudeJsonRenderer()
+                    .JsonStream(jsonStream)
+                    .ShowThinking(true)
+                    .ShowSystemEvents(true)
+                    .AutoScroll(job.Status == JobStatus.Running)
+                    .Height(Size.Full());
+            }
+            else
+            {
+                outputContent = Text.P("No output available.");
+            }
 
             var outputSheet = new Sheet(
                 () => showOutput.Set(null),
-                new Markdown($"```\n{outputText}\n```"),
+                outputContent,
                 job is not null ? $"{job.Type} — {ExtractPlanId(job.PlanFile)}" : "Job Output"
             ).Width(Size.Half()).Resizable();
 
@@ -378,13 +426,24 @@ public class JobsApp : ViewBase
         return $"{span.Minutes}m {span.Seconds:D2}s";
     }
 
+    private const int PromptDisplayMaxLength = 150;
+
+    private static string CleanPromptText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+        var replaced = text.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+        var collapsed = Regex.Replace(replaced, @"\s+", " ");
+        return collapsed.Trim();
+    }
+
     private static string GetPromptDisplay(JobItem j, IPlanReaderService planService)
     {
         // MakePlan jobs: use the -Description arg for display (PlanFile may now hold the folder name)
         if (j.Type == "MakePlan")
         {
-            var desc = GetFullPrompt(j) ?? j.PlanFile;
-            return desc.Length > 50 ? desc[..50] + "..." : desc;
+            var desc = CleanPromptText(GetFullPrompt(j) ?? j.PlanFile);
+            return desc.Length > PromptDisplayMaxLength ? desc[..PromptDisplayMaxLength] + "..." : desc;
         }
 
         // For other jobs, try to read the plan title
@@ -394,14 +453,14 @@ public class JobsApp : ViewBase
             var plan = planService.GetPlanByFolder(fullPath);
             if (plan != null && !string.IsNullOrEmpty(plan.Title))
             {
-                var title = plan.Title;
-                return title.Length > 50 ? title[..50] + "..." : title;
+                var title = CleanPromptText(plan.Title);
+                return title.Length > PromptDisplayMaxLength ? title[..PromptDisplayMaxLength] + "..." : title;
             }
         }
 
         // Fallback to folder name
-        var pf = j.PlanFile;
-        return pf.Length > 50 ? pf[..50] + "..." : pf;
+        var pf = CleanPromptText(j.PlanFile);
+        return pf.Length > PromptDisplayMaxLength ? pf[..PromptDisplayMaxLength] + "..." : pf;
     }
 
     private static string GetStatusMessage(JobItem job)
@@ -415,6 +474,7 @@ public class JobsApp : ViewBase
             JobStatus.Failed => "Job encountered an error during execution",
             JobStatus.Timeout => "Job exceeded the configured timeout",
             JobStatus.Queued => "Waiting for a job slot to become available",
+            JobStatus.Stopped => "Job was manually stopped",
             _ => ""
         };
     }

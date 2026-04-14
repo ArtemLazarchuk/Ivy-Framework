@@ -1,6 +1,8 @@
 // ReSharper disable once CheckNamespace
 namespace Ivy;
 
+public record DataTableCellUpdate(object RowId, string ColumnName, object? Value);
+
 public class CellClickEventArgs
 {
     public int RowIndex { get; set; }
@@ -49,6 +51,8 @@ public record DataTable : WidgetBase<DataTable>
     [Prop] public DataTableConnection? Connection { get; set; }
 
     [Prop] public DataTableConfig? Config { get; set; }
+
+    [Prop] public IWriteStream<DataTableCellUpdate>? UpdateStream { get; set; }
 
     [Prop] public MenuItem[]? RowActions { get; set; }
 

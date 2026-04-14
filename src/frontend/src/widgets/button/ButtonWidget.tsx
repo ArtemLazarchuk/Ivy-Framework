@@ -50,6 +50,7 @@ interface ButtonWidgetProps {
   badge?: string;
   children?: React.ReactNode;
   borderRadius?: BorderRadius;
+  events?: string[];
   "data-testid"?: string;
 }
 
@@ -106,10 +107,20 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
   children,
   borderRadius = "Rounded",
   density = Densities.Medium,
+  events = [],
   "data-testid": dataTestId,
 }) => {
   const eventHandler = useEventHandler();
   const shortcutDisplay = formatShortcutForDisplay(shortcutKey);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoFocusedRef = useRef(false);
+
+  React.useEffect(() => {
+    if (autoFocus && !disabled && !hasAutoFocusedRef.current) {
+      hasAutoFocusedRef.current = true;
+      buttonRef.current?.focus();
+    }
+  }, [autoFocus, disabled]);
 
   // For 'Rounded' (default), rely on the 'rounded-field' class from buttonVariant.
   // Only add inline style to override the class for 'None'/'Full'.
@@ -159,10 +170,10 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
       }
       // Only call eventHandler for non-URL buttons
       if (!effectiveUrl) {
-        eventHandler("OnClick", id, []);
+        if (events.includes("OnClick")) eventHandler("OnClick", id, []);
       }
     },
-    [id, disabled, effectiveUrl, eventHandler],
+    [id, disabled, effectiveUrl, eventHandler, events],
   );
 
   const hasUrl = !!(effectiveUrl && !disabled);
@@ -178,8 +189,6 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
   // Check if URL is a mailto link (should not open in new tab)
   const isMailto = validatedHref ? isMailtoUrl(validatedHref) : false;
 
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
   const parsedShortcut = shortcutKey ? parseShortcut(shortcutKey) : null;
   const hasModifierChord = !!(
     parsedShortcut &&
@@ -191,7 +200,7 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
     shortcutKey,
     () => {
       if (!effectiveUrl) {
-        eventHandler("OnClick", id, []);
+        if (events.includes("OnClick")) eventHandler("OnClick", id, []);
       } else if (validatedHref) {
         if (isDownloadUrl || isMailto) {
           window.location.href = validatedHref;
@@ -338,7 +347,6 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
           )}
           style={borderRadiusClasses.buttonStyle}
           tooltipText={tooltip || undefined}
-          autoFocus={autoFocus}
           data-testid={dataTestId}
           data-shortcut-id={shortcutKey ? id : undefined}
         >
@@ -369,7 +377,6 @@ export const ButtonWidget: React.FC<ButtonWidgetProps> = ({
       style={styles}
       size={buttonSize}
       onClick={hasUrl ? undefined : handleClick}
-      autoFocus={autoFocus}
       variant={
         (variant === "Primary" ? "default" : camelCase(variant)) as
           | "default"

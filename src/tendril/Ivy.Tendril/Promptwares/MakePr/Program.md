@@ -1,5 +1,7 @@
 # MakePr
 
+**Note:** This promptware is stack-agnostic. Stack-specific operations (build, format, test) are defined in `config.yaml` under `verifications`. Examples in this document use multiple tech stacks for illustration.
+
 Create GitHub pull requests and apply PR rules.
 
 **!CRITICAL: ALL steps are mandatory. Do not skip PR rule application.**
@@ -11,7 +13,7 @@ The firmware header contains:
 - **CurrentTime** — current UTC timestamp
 
 Read the plan structure in `../.shared/Plans.md`.
-Read `config.yaml` from the `TENDRIL_CONFIG` environment variable (absolute path to config.yaml) for project repos and their `prRule` setting.
+Use the `Get-ConfigYaml` helper from Utils.ps1 to read project configuration (project repos and their `prRule` setting) with caching.
 
 ## PR Rules (from config.yaml per repo)
 
@@ -30,7 +32,7 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 - Read `plan.yaml` from the plan folder (project, commits, repos)
 - Read the latest revision for the plan title and description
-- Read config.yaml to find the `prRule` for each repo
+- Use `Get-ConfigYaml` to find the `prRule` for each repo
 - **Check for custom options:** If `<PlanFolder>/.custom-pr-options.yaml` exists, read it. The file contains:
   ```yaml
   merge: true/false
@@ -45,7 +47,7 @@ Before processing, read `plan.yaml` and check the `state` field:
 
 Check `<PlanFolder>/worktrees/` for each repo worktree.
 
-> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `plan-<planId>-<repo-folder-name>`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create or force-update the local branch: `git branch -f <branch-name> <sha>` (use `-f` because the branch may already exist from a WIP auto-commit) and push from the original repo path.
+> **Worktree already removed:** If the worktrees/ directory is empty (worktree was already cleaned up), fall back to `plan.yaml` to get the repo path and branch name (format: `tendril/<planId>-<SafeTitle>`, where SafeTitle is extracted from the plan folder name: e.g. `03158-ChangeBranchNaming` → `ChangeBranchNaming`). The commit objects may still exist in the original repo's object store. Use `git cat-file -t <sha>` to verify, then create or force-update the local branch: `git branch -f <branch-name> <sha>` (use `-f` because the branch may already exist from a WIP auto-commit) and push from the original repo path.
 >
 > **Commit lost (object GC'd):** If `git cat-file -t <sha>` fails, the commit was garbage-collected after worktree removal. In this case: (1) check if the change is already on main, (2) if not, recreate the change from the plan revision — create a new branch from main, apply the changes as described in the revision, commit with the standard `[<planId>] <title>` message, and push. Update `plan.yaml` commits list with the new commit hash.
 
@@ -57,6 +59,8 @@ For each worktree:
 4. `git push -u origin <branch>`
 
 > **Stale remote tracking refs warning:** A ref appearing in `git branch -a` as `remotes/origin/<branch>` does NOT guarantee the branch exists on GitHub. Always verify with `gh api repos/<owner>/<repo>/branches/<branch>` or `git ls-remote origin <branch>` before assuming the push succeeded.
+>
+> **Push rejected (non-fast-forward) with diverged history:** If `git push` fails with non-fast-forward and the remote branch contains commits from a different plan (plan ID reuse or prior aborted execution), **force-push** with `git push -f -u origin <branch>`. This is safe because the plan branch is private to this plan's execution and any diverged remote state is stale.
 
 ### 2.5. Upload Artifacts
 
@@ -150,9 +154,13 @@ When the PR status is `CONFLICTING`, resolve the conflict locally before retryin
    git commit -m "[<planId>] Resolve merge conflicts with <default-branch>"
    ```
 
-6. **Quick build check** (if C# files were involved in conflicts):
+6. **Quick build check** (if build-critical files were involved in conflicts):
    ```bash
-   dotnet build --warnaserror
+   # Run your project's build command from config.yaml verifications
+   # Examples:
+   # - .NET: dotnet build --warnaserror
+   # - JavaScript: npm run build
+   # - Go: go build ./...
    ```
    If the build fails, fix the issue and amend the merge commit.
 
@@ -185,8 +193,12 @@ For each repo where the PR was merged:
 
 ```bash
 cd <original-repo-path>
+PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
+PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
+SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
+BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
 git worktree remove "<PlanFolder>/worktrees/<repo-folder-name>" --force
-git branch -D "plan-<planId>-<repo-folder-name>" 2>/dev/null
+git branch -D "$BRANCH_NAME" 2>/dev/null
 ```
 
 If **all** worktrees were cleaned up, remove the now-empty `worktrees/` directory:
@@ -202,6 +214,10 @@ If cleanup fails (e.g. locked files on Windows), log a warning but do not fail t
 ### 6. Update plan.yaml
 
 Append each PR URL to the `prs` list in `plan.yaml`.
+
+**Update state to Completed:** If ALL repos in the plan used the `yolo` prRule (or custom options with `merge: true`) and ALL PRs were successfully merged, update the `state` field from `Building` to `Completed`. This marks the plan as fully processed.
+
+If ANY repo used the `default` prRule (or custom options with `merge: false`), do NOT update the state — the plan remains open for manual review and potential revisions.
 
 > If merge conflict resolution was performed (Step 4), the resolution commit hash should already be on the pushed branch. No additional plan.yaml update needed beyond the PR URL.
 

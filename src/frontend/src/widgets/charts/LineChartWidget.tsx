@@ -14,9 +14,11 @@ import {
   getColors,
   getTransformValueFn,
   generateEChartToolbox,
+  formatTooltipValue,
 } from "./sharedUtils";
 import { getChartThemeColors } from "./styles";
 import { LineChartWidgetProps, ChartType } from "./chartTypes";
+import { Densities } from "@/types/density";
 
 const EMPTY_ARRAY: never[] = [];
 
@@ -36,6 +38,7 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
   referenceDots = EMPTY_ARRAY,
   colorScheme = "Default",
   layout = "Vertical",
+  density: _density = Densities.Medium,
 }) => {
   // Use enhanced theme hook with automatic monitoring
   const { colors, isDark } = useThemeWithMonitoring({
@@ -98,21 +101,26 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
         },
         cartesianGrid,
       ),
-      tooltip: generateTooltip(
-        tooltip,
-        "shadow",
-        {
+      tooltip: {
+        ...generateTooltip(tooltip, "shadow", {
           foreground: themeColors.foreground,
           fontSans: themeColors.fontSans,
           background: themeColors.background,
           mutedForeground: themeColors.mutedForeground,
+        }),
+        formatter: (params: any) => {
+          if (Array.isArray(params)) {
+            return params
+              .map((p) => {
+                const value = formatTooltipValue(p.value[isVertical ? 0 : 1], tooltip);
+                return `${p.marker} ${p.seriesName}: <strong>${value}</strong>`;
+              })
+              .join("<br/>");
+          }
+          const value = formatTooltipValue(params.value[isVertical ? 0 : 1], tooltip);
+          return `${params.marker} ${params.seriesName}: <strong>${value}</strong>`;
         },
-        {
-          formatter: (isVertical ? xAxis?.[0] : yAxis?.[0])?.tickFormatter,
-          formatterType: (isVertical ? xAxis?.[0] : yAxis?.[0])?.tickFormatterType,
-          timeZone: (isVertical ? xAxis?.[0] : yAxis?.[0])?.timeZone,
-        },
-      ),
+      },
       toolbox: generateEChartToolbox(toolbox),
       legend: generateEChartLegend(legend, {
         foreground: themeColors.foreground,
@@ -128,6 +136,7 @@ const LineChartWidget: React.FC<LineChartWidgetProps> = ({
         referenceDots,
         referenceLines,
         referenceAreas,
+        themeColors,
       ),
     }),
     [

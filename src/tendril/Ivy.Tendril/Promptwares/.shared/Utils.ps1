@@ -25,6 +25,9 @@ if (-not $env:TENDRIL_CONFIG) {
 $script:ConfigPath = $env:TENDRIL_CONFIG
 $script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
 
+$script:CachedConfigContent = $null
+$script:CachedConfigYaml = $null
+
 # Bootstrap required PowerShell modules
 . (Join-Path $PSScriptRoot "Bootstrap-Modules.ps1")
 
@@ -225,7 +228,7 @@ Absolute path to the plan.yaml file to read
 .OUTPUTS
 Returns a hashtable with three keys:
 - Content: Raw YAML file content as string
-- Project: Project name from YAML, or "[Auto]" if not specified
+- Project: Project name from YAML, or "Auto" if not specified
 - Yaml: Parsed YAML as hashtable/ordered dictionary
 
 .EXAMPLE
@@ -238,7 +241,7 @@ function ReadPlanYaml {
 
     $content = Get-Content $PlanYamlPath -Raw
     $yaml = $content | ConvertFrom-Yaml
-    $project = if ($yaml.project) { $yaml.project } else { "[Auto]" }
+    $project = if ($yaml.project) { $yaml.project } else { "Auto" }
     return @{ Content = $content; Project = $project; Yaml = $yaml }
 }
 
@@ -353,18 +356,37 @@ $workDir = GetProjectWorkDir "NonExistent"
 function GetProjectWorkDir {
     param([string]$Project)
 
-    if (Test-Path $script:ConfigPath) {
-        try {
-            $config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Yaml
-            $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
-            if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
-                return ExtractRepoPathsFromYaml $projectEntry.repos -ReturnFirst
-            }
+    $config = Get-ConfigYaml
+    if ($config) {
+        $projectEntry = $config.projects | Where-Object { $_.name -eq $Project } | Select-Object -First 1
+        if ($projectEntry -and $projectEntry.repos -and $projectEntry.repos.Count -gt 0) {
+            return ExtractRepoPathsFromYaml $projectEntry.repos -ReturnFirst
         }
-        catch { }
     }
 
     return (Get-Location).Path
+}
+
+function Get-ConfigYaml {
+    if (-not (Test-Path $script:ConfigPath)) {
+        return $null
+    }
+
+    $currentContent = Get-Content $script:ConfigPath -Raw
+
+    if ($script:CachedConfigContent -eq $currentContent -and $script:CachedConfigYaml) {
+        return $script:CachedConfigYaml
+    }
+
+    try {
+        $script:CachedConfigYaml = $currentContent | ConvertFrom-Yaml
+        $script:CachedConfigContent = $currentContent
+        return $script:CachedConfigYaml
+    }
+    catch {
+        Write-Warning "Failed to parse config.yaml: $_"
+        return $null
+    }
 }
 
 <#
@@ -445,6 +467,7 @@ function InvokePromptwareAgent {
     $agentInfo = $codingAgent
     if ($agent.Model) { $agentInfo += ", model=$($agent.Model)" }
     if ($agent.Effort) { $agentInfo += ", effort=$($agent.Effort)" }
+    if ($agent.Arguments -and $agent.Arguments.Count -gt 0) { $agentInfo += ", args=$($agent.Arguments -join ' ')" }
     Write-Host "Starting Agent ($agentInfo)..."
     if ($Action) { SendStatusMessage "Running $Action" }
     Push-Location $WorkDir
@@ -461,11 +484,12 @@ function InvokePromptwareAgent {
                 default { "Claude" }
             }
 
-            Add-Content -Path $rawLogFile -Value "[tendril] Command: Invoke-CodingAgent.ps1 -Cli $cliName -Model $($agent.Model)" -Encoding UTF8
+            Add-Content -Path $rawLogFile -Value "[tendril] Command: Invoke-CodingAgent.ps1 -Cli $cliName -Model $($agent.Model) -Effort $($agent.Effort)" -Encoding UTF8
 
             $output = & $invokeCodingAgentScript `
                 -Cli $cliName `
                 -Model $agent.Model `
+                -Effort $agent.Effort `
                 -PromptFile $promptFile `
                 -AllowedTools $agent.AllowedTools `
                 -SessionId $sessionId `
@@ -585,29 +609,39 @@ function GetAgentCommand {
     $codingAgent = "claude"
     $model = ""
     $effort = ""
+    $extraArgs = @()
 
     if (Test-Path $configPath) {
         try {
-            $config = Get-Content $configPath -Raw | ConvertFrom-Yaml
+            $config = Get-ConfigYaml
 
             # Read codingAgent setting (claude|codex|gemini)
             if ($config.codingAgent) {
                 $codingAgent = $config.codingAgent.ToLower()
             }
 
+            # Start with _default as base, then overlay specific promptware entry
             $pwConfig = $null
-            if ($Promptware -and $config.promptwares.$Promptware) {
-                $pwConfig = $config.promptwares.$Promptware
-            } elseif ($config.promptwares._default) {
-                $pwConfig = $config.promptwares._default
+            $defaultConfig = $config.promptwares._default
+            $specificConfig = if ($Promptware) { $config.promptwares.$Promptware } else { $null }
+
+            if ($defaultConfig -or $specificConfig) {
+                $pwConfig = @{}
+
+                # Layer 1: _default values
+                if ($defaultConfig) {
+                    if ($defaultConfig.profile) { $pwConfig.profile = $defaultConfig.profile }
+                    if ($defaultConfig.allowedTools) { $pwConfig.allowedTools = $defaultConfig.allowedTools }
+                }
+
+                # Layer 2: specific promptware values override
+                if ($specificConfig) {
+                    if ($specificConfig.profile) { $pwConfig.profile = $specificConfig.profile }
+                    if ($specificConfig.allowedTools) { $pwConfig.allowedTools = $specificConfig.allowedTools }
+                }
             }
 
             if ($pwConfig) {
-                # Apply model override
-                if ($pwConfig.model) {
-                    $model = $pwConfig.model
-                }
-
                 # Apply allowedTools with environment variable expansion
                 if ($pwConfig.allowedTools) {
                     foreach ($tool in $pwConfig.allowedTools) {
@@ -617,17 +651,33 @@ function GetAgentCommand {
                         $allowedTools += $resolvedTool
                     }
                 }
+            }
 
-                # Apply effort override
-                if ($pwConfig.effort) {
-                    $effort = $pwConfig.effort
+            # Resolve model, effort, and arguments from agent profile if profile is specified
+            if ($pwConfig -and $pwConfig.profile -and $config.codingAgents) {
+                $agentEntry = $config.codingAgents | Where-Object {
+                    ($_.name -eq "ClaudeCode" -and $codingAgent -eq "claude") -or
+                    ($_.name -eq "Codex" -and $codingAgent -eq "codex") -or
+                    ($_.name -eq "Gemini" -and $codingAgent -eq "gemini") -or
+                    ($_.name.ToLower() -eq $codingAgent)
+                } | Select-Object -First 1
+                if ($agentEntry) {
+                    # Base args from agent entry (applied to all profiles)
+                    if ($agentEntry.arguments) {
+                        $extraArgs += ($agentEntry.arguments -split '\s+' | Where-Object { $_ })
+                    }
+                    $profile = $agentEntry.profiles | Where-Object { $_.name -eq $pwConfig.profile } | Select-Object -First 1
+                    if ($profile) {
+                        if ($profile.model) { $model = $profile.model }
+                        if ($profile.effort) { $effort = $profile.effort }
+                        # Per-profile args appended after base args (can override/extend)
+                        if ($profile.arguments) {
+                            $extraArgs += ($profile.arguments -split '\s+' | Where-Object { $_ })
+                        }
+                    }
                 }
             }
 
-            # Fall back to defaultEffort if no per-promptware effort set
-            if (-not $effort -and $config.defaultEffort) {
-                $effort = $config.defaultEffort
-            }
         }
         catch {
             Write-Host "Warning: Could not parse config.yaml" -ForegroundColor Yellow
@@ -637,8 +687,8 @@ function GetAgentCommand {
     # Build command from codingAgent
     $raw = switch ($codingAgent) {
         "claude"  { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
-        "codex"   { "codex --print --verbose" }
-        "gemini"  { "gemini --print --verbose" }
+        "codex"   { "codex --full-auto" }
+        "gemini"  { "gemini --sandbox" }
         default   { "claude --print --verbose --output-format stream-json --dangerously-skip-permissions" }
     }
 
@@ -648,9 +698,13 @@ function GetAgentCommand {
         $raw += " --model $model"
     }
 
-    # Apply effort level if set (claude only)
-    if ($effort -and $codingAgent -eq "claude") {
-        $raw += " --effort $effort"
+    # Apply effort level with agent-specific flag name
+    if ($effort) {
+        switch ($codingAgent) {
+            "claude" { $raw += " --effort $effort" }
+            "codex"  { $raw += " --reasoning-effort $effort" }
+            "gemini" { Write-Warning "Effort '$effort' is configured but the Gemini CLI does not support an effort flag — ignoring." }
+        }
     }
 
     # Build args with quote-aware parsing
@@ -670,10 +724,16 @@ function GetAgentCommand {
 
     # Append allowedTools as a single comma-separated argument
     # Note: avoid using $args as it's an automatic variable in PowerShell
+    # Only pass --allowedTools to Claude; Codex/Gemini handle tool permissions differently
     $cmdArgs = @($parts[1..($parts.Length - 1)])
-    if ($allowedTools.Count -gt 0) {
+    if ($allowedTools.Count -gt 0 -and $codingAgent -eq "claude") {
         $cmdArgs += "--allowedTools"
         $cmdArgs += ($allowedTools -join ",")
+    }
+
+    # Append extra arguments from agent/profile config (base args + per-profile args)
+    if ($extraArgs.Count -gt 0) {
+        $cmdArgs += $extraArgs
     }
 
     return @{
@@ -683,6 +743,7 @@ function GetAgentCommand {
         Model        = $model
         Effort       = $effort
         AllowedTools = $allowedTools
+        Arguments    = $extraArgs
     }
 }
 

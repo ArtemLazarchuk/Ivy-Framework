@@ -12,7 +12,6 @@ using Ivy.Core.Server.Middleware;
 using Ivy.Core.Server.Formatters;
 using MessagePack;
 using MessagePack.Resolvers;
-using MessagePack.Formatters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http; //do not remove - used in RELEASE
@@ -119,7 +118,7 @@ public class Server
 
         if (_args.BasePath == null && Environment.GetEnvironmentVariable("BASE_PATH") is { } basePath)
         {
-            _args = _args with { BasePath = basePath };
+            _args = _args with { BasePath = "/" + basePath.TrimStart('/') };
         }
 
         _args = _args with
@@ -179,11 +178,43 @@ public class Server
         assembly ??= Assembly.GetEntryAssembly();
 
         var connections = assembly!.GetLoadableTypes()
-            .Where(t => t.IsClass && typeof(IConnection).IsAssignableFrom(t));
+            .Where(t => t.IsClass && typeof(IConnection).IsAssignableFrom(t))
+            .Select(t => (IConnection)Activator.CreateInstance(t)!)
+            .ToList();
 
-        foreach (var type in connections)
+        var presets = new Dictionary<string, string?>();
+        foreach (var connection in connections)
         {
-            var connection = (IConnection)Activator.CreateInstance(type)!;
+            if (connection is IHaveSecrets secretProvider)
+            {
+                foreach (var secret in secretProvider.GetSecrets())
+                {
+                    if (secret.Preset != null && !presets.ContainsKey(secret.Key))
+                    {
+                        presets[secret.Key] = secret.Preset;
+                    }
+                }
+            }
+        }
+
+        if (presets.Count > 0)
+        {
+            var builder = new ConfigurationBuilder()
+                .AddInMemoryCollection(presets)
+                .AddEnvironmentVariables()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            if (Assembly.GetEntryAssembly() is { } entryAssembly)
+            {
+                builder.AddUserSecrets(entryAssembly);
+            }
+
+            Configuration = builder.Build();
+        }
+
+        foreach (var connection in connections)
+        {
             connection.RegisterServices(this);
         }
     }
@@ -565,8 +596,20 @@ public class Server
         var isContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
         var hasPortEnv = Environment.GetEnvironmentVariable("PORT") != null;
         var host = _args.Host ?? (isContainer || hasPortEnv ? "*" : "localhost");
-        var bindUrl = _args.IsCliCommand ? "http://localhost:0" : $"http://{host}:{_args.Port}";
-        builder.WebHost.UseUrls(bindUrl);
+
+        if (_args.IsCliCommand)
+        {
+            builder.WebHost.UseUrls("http://localhost:0");
+        }
+        else
+        {
+            var ivyTlsEnv = Environment.GetEnvironmentVariable("IVY_TLS");
+            var useTls = !string.IsNullOrEmpty(ivyTlsEnv)
+                ? ivyTlsEnv?.ToLowerInvariant() is "1" or "true" or "yes" or "on"
+                : !isContainer && !hasPortEnv && !_args.IsCliCommand; // default: TLS for local dev only
+            var scheme = useTls ? "https" : "http";
+            builder.WebHost.UseUrls($"{scheme}://{host}:{_args.Port}");
+        }
 
         builder.Services.AddSignalR(options =>
         {
@@ -581,16 +624,16 @@ public class Server
         {
             options.SerializerOptions = MessagePackSerializerOptions.Standard.WithResolver(
                 CompositeResolver.Create(
-                    new IMessagePackFormatter[] {
+                    [
                         new JsonNodeMessagePackFormatter(),
                         new JsonObjectMessagePackFormatter(),
                         new JsonArrayMessagePackFormatter(),
                         new JsonValueMessagePackFormatter()
-                    },
-                    new IFormatterResolver[] {
+                    ],
+                    [
                         JsonNodeResolver.Instance,
                         ContractlessStandardResolver.Instance
-                    }
+                    ]
                 )
             );
         });
@@ -715,6 +758,12 @@ public class Server
             app.UsePathBase(_args.BasePath);
         }
 
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Powered-By"] = "Ivy";
+            await next();
+        });
+
         app.UseRouting(); // First routing pass - match explicit routes (gRPC, controllers)
         app.UsePathToAppId(); // Rewrite path to appId if no endpoint matched
         app.UseRouting(); // Second routing pass - route the rewritten path
@@ -732,7 +781,7 @@ public class Server
         app.MapGrpcService<DataTableService>().EnableGrpcWeb();
 
         app.UseFrontend(_args, logger2);
-        app.UseAssets(_args, logger2, "Assets", "ivy-assets");
+        app.UseAssets(_args, logger2, "Assets", "ivy/assets");
 
         return app;
     }
@@ -870,8 +919,8 @@ public class Server
         app.Lifetime.ApplicationStarted.Register(() =>
         {
             var url = app.Urls.FirstOrDefault() ?? "unknown";
-            var port = new Uri(url).Port;
-            var localUrl = $"http://localhost:{port}";
+            var uri = new Uri(url);
+            var localUrl = $"{uri.Scheme}://localhost:{uri.Port}";
             if (!_args.Silent)
             {
                 Console.WriteLine($@"Ivy is running on {localUrl} [{Process.GetCurrentProcess().Id}]. Press Ctrl+C to stop.");
@@ -1154,11 +1203,12 @@ public static class WebApplicationExtensions
 
     private static async Task ServeIndexHtml(HttpContext context, WebApplication app, ServerArgs serverArgs, Assembly assembly, string resourceName)
     {
-        var version = assembly.GetName().Version?.ToString();
-        if (!string.IsNullOrEmpty(version))
-        {
-            context.Response.Headers["ivy-version"] = version;
-        }
+        //DO NOT ADD AS THIS CAN BE USED TO TARGET IN CASE OF A SECURITY HOLE
+        // var version = assembly.GetName().Version?.ToString();
+        // if (!string.IsNullOrEmpty(version))
+        // {
+        //     context.Response.Headers["ivy-version"] = version;
+        // }
 
         // Determine HTTP status code based on app routing
         var server = app.Services.GetRequiredService<Server>();

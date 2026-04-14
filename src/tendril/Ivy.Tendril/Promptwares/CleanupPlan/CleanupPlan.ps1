@@ -46,7 +46,8 @@ foreach ($wtDir in $worktreeDirs) {
         # Remove worktree via git
         try {
             Push-Location $originalRepo
-            $branchName = "plan-$planId-$repoName"
+            $safeTitle = if ($planFolderName -match '^\d+-(.+)') { $Matches[1] } else { "Unknown" }
+            $branchName = "tendril/$planId-$safeTitle"
             git worktree remove $wtDir.FullName --force 2>&1 | Write-Host
             git branch -D $branchName 2>&1 | Write-Host
             Pop-Location

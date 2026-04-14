@@ -1,6 +1,7 @@
 import React from "react";
 import { Kanban, type Task } from "@/components/ui/shadcn-io/kanban";
 import { getWidth, getHeight } from "@/lib/styles";
+import { Densities } from "@/types/density";
 import { useKanbanData } from "./useKanbanData";
 import { useKanbanHandlers } from "./useKanbanHandlers";
 import { KanbanEmptyState } from "./KanbanEmptyState";
@@ -8,6 +9,7 @@ import { KanbanCardRenderer } from "./KanbanCardRenderer";
 import type { KanbanWidgetProps } from "./types";
 
 const EMPTY_ARRAY: never[] = [];
+const EMPTY_EVENTS: string[] = [];
 
 export const KanbanWidget: React.FC<KanbanWidgetProps> = ({
   id,
@@ -17,11 +19,13 @@ export const KanbanWidget: React.FC<KanbanWidgetProps> = ({
   height,
   columnWidth,
   showCounts = true,
+  density: _density = Densities.Medium,
+  events = EMPTY_EVENTS,
   slots,
   widgetNodeChildren,
 }) => {
   const extractedData = useKanbanData(slots, tasks, columns, widgetNodeChildren);
-  const { handleCardMove } = useKanbanHandlers(id);
+  const { handleCardMove } = useKanbanHandlers(id, events);
 
   const sortedColumns = React.useMemo(() => {
     return [...extractedData.columns].sort((a, b) => {

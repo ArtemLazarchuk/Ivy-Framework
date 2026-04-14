@@ -9,6 +9,7 @@
     <UserSecretsId>a8f3c2e1-4b7d-4e9f-a1c3-8d6e2f5b9a7c</UserSecretsId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>tendril</ToolCommandName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Promptwares\**</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>Ivy.Tendril</PackageId>
@@ -45,14 +46,16 @@
     <ProjectReference Include="../../Ivy.Hooks.Pty/Ivy.Hooks.Pty.csproj" />
     <ProjectReference Include="../../widgets/Ivy.Widgets.Xterm/Ivy.Widgets.Xterm.csproj" />
     <ProjectReference Include="../../widgets/Ivy.Widgets.DiffView/Ivy.Widgets.DiffView.csproj" />
+    <ProjectReference Include="../../widgets/Ivy.Widgets.ClaudeJsonRenderer/Ivy.Widgets.ClaudeJsonRenderer.csproj" />
     <ProjectReference Include="../../Ivy.Desktop/Ivy.Desktop.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(IvySource)' != 'true'">
-    <PackageReference Include="Ivy" Version="1.2.37-pre-20260409163352" />
-    <PackageReference Include="Ivy.Hooks.Pty" Version="1.2.37-pre-20260409163352" />
-    <PackageReference Include="Ivy.Widgets.Xterm" Version="1.2.37-pre-20260409163352" />
-    <PackageReference Include="Ivy.Widgets.DiffView" Version="1.2.37-pre-20260409163352" />
-    <PackageReference Include="Ivy.Desktop" Version="1.2.37-pre-20260409163352" />
+    <PackageReference Include="Ivy" Version="1.2.37-pre-20260410110521" />
+    <PackageReference Include="Ivy.Hooks.Pty" Version="1.2.37-pre-20260410110521" />
+    <PackageReference Include="Ivy.Widgets.Xterm" Version="1.2.37-pre-20260410110521" />
+    <PackageReference Include="Ivy.Widgets.DiffView" Version="1.2.37-pre-20260410110521" />
+    <PackageReference Include="Ivy.Widgets.ClaudeJsonRenderer" Version="1.2.37-pre-20260410110521" />
+    <PackageReference Include="Ivy.Desktop" Version="1.2.37-pre-20260410110521" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../Ivy.Analyser/Ivy.Analyser.csproj">
@@ -61,9 +64,6 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Analyzer</OutputItemType>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Apps" />
   </ItemGroup>
 
   <ItemGroup>

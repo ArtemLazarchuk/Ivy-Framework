@@ -52,8 +52,29 @@ This will create a new Ivy project with the necessary structure and configuratio
 Ivy Framework strictly requires the following toolchains to develop applications:
 
 - **.NET 10.0 SDK**: All Ivy projects and packages are built against this target framework.
-- **Rust Toolchain**: Required for the underlying high-performance JSON-diffing engine. Ensure you have the latest stable compiler installed via [rustup](https://rustup.rs/).
 - **vp CLI (Vite+)**: Required for frontend orchestration. Install globally via `npm install -g vite-plus`.
+
+<Callout Type="info">
+Ivy uses Rust-compiled native libraries under the hood for high-performance JSON diffing and document processing. These ship as precompiled NuGet packages — no Rust installation required.
+</Callout>
+
+Ivy serves over HTTPS in local development. On macOS and Windows, run the following once to trust the development certificate:
+
+```terminal
+>dotnet dev-certs https --trust
+```
+
+On Linux, `--trust` is not supported directly. You must manually trust the certificate with your browser or OS certificate store. First, generate the certificate:
+
+```terminal
+>dotnet dev-certs https
+```
+
+Then follow the steps for your distribution to trust the generated certificate. See [Microsoft's documentation on HTTPS in Linux](https://learn.microsoft.com/en-us/aspnet/core/security/enforcing-ssl#linux-specific-considerations) for detailed instructions.
+
+<Callout Type="warning">
+If you skip this step, your browser will show a certificate warning and authentication cookies will not work. You must trust the dev certificate for auth to function in local development.
+</Callout>
 
 ## Manual Setup: Creating Your First Project
 
@@ -180,6 +201,7 @@ The server automatically optimizes its behavior based on the current environment
 | **Caching**         | Disabled for immediate changes  | Aggressive ETag & compression    |
 | **Logging**         | Debug & Information             | Warning & Error only             |
 | **Port Management** | Conflict detection & auto-shift | Strict port binding              |
+| **HTTPS** | Dev certificate (`dotnet dev-certs https --trust`) | Reverse proxy handles TLS |
 
 ### Troubleshooting "command not found"
 

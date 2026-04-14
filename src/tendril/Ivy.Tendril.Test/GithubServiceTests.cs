@@ -100,6 +100,197 @@ public class GithubServiceTests
         }
     }
 
+    [Fact]
+    public async Task SearchIssuesAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (issues, error) = await githubService.SearchIssuesAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000", null, null, null);
+
+        Assert.Empty(issues);
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public void ParseIssuesFromJson_Returns_Issues_For_Valid_Json()
+    {
+        var json = """
+                   [
+                     {
+                       "number": 42,
+                       "title": "Test issue",
+                       "body": "Issue body text",
+                       "labels": [{"name": "bug"}],
+                       "assignees": [{"login": "testuser"}]
+                     }
+                   ]
+                   """;
+
+        var issues = GithubService.ParseIssuesFromJson(json);
+
+        Assert.Single(issues);
+        Assert.Equal(42, issues[0].Number);
+        Assert.Equal("Test issue", issues[0].Title);
+        Assert.Equal("Issue body text", issues[0].Body);
+        Assert.Equal(["bug"], issues[0].Labels);
+        Assert.Equal(["testuser"], issues[0].Assignees);
+    }
+
+    [Fact]
+    public void ParseIssuesFromJson_Throws_JsonException_For_Invalid_Json()
+    {
+        Assert.ThrowsAny<System.Text.Json.JsonException>(() =>
+            GithubService.ParseIssuesFromJson("not valid json"));
+    }
+
+    [Fact]
+    public void ParseIssuesFromJson_Returns_Empty_List_For_Empty_Array()
+    {
+        var issues = GithubService.ParseIssuesFromJson("[]");
+        Assert.Empty(issues);
+    }
+
+    [Fact]
+    public async Task GetAssigneesAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (assignees, error) = await githubService.GetAssigneesAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000");
+
+        Assert.Empty(assignees);
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetPrStatusesAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (statuses, error) = await githubService.GetPrStatusesAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000");
+
+        Assert.Empty(statuses);
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetLabelsAsync_Returns_Error_When_Command_Fails()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var (labels, error) = await githubService.GetLabelsAsync(
+            "nonexistent-owner-xyz-000", "nonexistent-repo-xyz-000");
+
+        Assert.Empty(labels);
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetAssigneesAsync_Handles_Concurrent_Requests_For_Different_Repos()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var tasks = Enumerable.Range(0, 10)
+            .Select(i => githubService.GetAssigneesAsync($"owner-{i}", $"repo-{i}"))
+            .ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        Assert.All(results, r => Assert.NotNull(r.error));
+    }
+
+    [Fact]
+    public async Task GetLabelsAsync_Handles_Concurrent_Requests_For_Different_Repos()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var tasks = Enumerable.Range(0, 10)
+            .Select(i => githubService.GetLabelsAsync($"owner-{i}", $"repo-{i}"))
+            .ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        Assert.All(results, r => Assert.NotNull(r.error));
+    }
+
+    [Fact]
+    public async Task GetAssigneesAsync_Caches_Results_Per_Repo()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+        var testRepo = "nonexistent-xyz-999";
+
+        var (assignees1, error1) = await githubService.GetAssigneesAsync(testRepo, testRepo);
+        var (assignees2, error2) = await githubService.GetAssigneesAsync(testRepo, testRepo);
+
+        Assert.Equal(error1, error2);
+    }
+
+    [Fact]
+    public void GetRepoConfigFromPath_Returns_Null_For_NonExistent_Path()
+    {
+        var result = GithubService.GetRepoConfigFromPath(@"C:\nonexistent\path\xyz-999");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetRepoConfigFromPath_Returns_Config_For_Valid_Repo()
+    {
+        var tempDir = CreateTempGitRepo("https://github.com/Test-Owner/Test-Repo.git");
+        try
+        {
+            var result = GithubService.GetRepoConfigFromPath(tempDir);
+            Assert.NotNull(result);
+            Assert.Equal("Test-Owner", result.Owner);
+            Assert.Equal("Test-Repo", result.Name);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void GetRepoConfigFromPathCached_Returns_Same_Instance_On_Repeated_Calls()
+    {
+        var tempDir = CreateTempGitRepo("https://github.com/Cache-Owner/Cache-Repo.git");
+        try
+        {
+            var settings = new TendrilSettings
+            {
+                Projects = [new ProjectConfig { Name = "CacheTest", Repos = [new RepoRef { Path = tempDir }] }]
+            };
+            var configService = new ConfigService(settings);
+            var githubService = new GithubService(configService);
+
+            var result1 = githubService.GetRepoConfigFromPathCached(tempDir);
+            var result2 = githubService.GetRepoConfigFromPathCached(tempDir);
+
+            Assert.NotNull(result1);
+            Assert.Same(result1, result2);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void GetRepoConfigFromPathCached_Returns_Null_For_Invalid_Path()
+    {
+        var configService = new ConfigService(new TendrilSettings());
+        var githubService = new GithubService(configService);
+
+        var result = githubService.GetRepoConfigFromPathCached(@"C:\nonexistent\xyz-999");
+        Assert.Null(result);
+    }
+
     private static string CreateTempGitRepo(string remoteUrl)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"ivy-github-test-{Guid.NewGuid()}");

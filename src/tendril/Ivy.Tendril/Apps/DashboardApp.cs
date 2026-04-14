@@ -2,6 +2,20 @@ using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps;
 
+public class DashboardDayRow
+{
+    public string Date { get; set; } = "";
+    public DateTime SortDate { get; set; }
+    public int Created { get; set; }
+    public int Completed { get; set; }
+    public int PrsMerged { get; set; }
+    public int Failed { get; set; }
+    public string Cost { get; set; } = "";
+    public string CostPerPlan { get; set; } = "";
+    public string Tokens { get; set; } = "";
+}
+
+
 [App(title: "Dashboard", icon: Icons.ChartBar, group: ["Apps"], order: MenuOrder.Dashboard)]
 public class DashboardApp : ViewBase
 {
@@ -107,20 +121,12 @@ public class DashboardApp : ViewBase
                 .Selected(selectedProject.Value != null
                     ? projectData.FindIndex(p => p.Project == selectedProject.Value)
                     : null)
-            // .OnSelect(e =>
-            // {
-            //     try
-            //     {
-            //         var clickedProject = projectData[e.Value].Project;
-            //         selectedProject.Set(selectedProject.Value == clickedProject ? null : clickedProject);
-            //         return ValueTask.CompletedTask;
-            //     }
-            //     catch (Exception exception)
-            //     {
-            //         return ValueTask.FromException(exception);
-            //     }
-            // })
-            ;
+                .OnSelect(e =>
+                {
+                    var clickedProject = projectData[e.Value].Project;
+                    selectedProject.Set(selectedProject.Value == clickedProject ? null : clickedProject);
+                    return ValueTask.CompletedTask;
+                });
 
         // Hourly cost & tokens combined bar chart
         var hourlyBurn = planService.GetHourlyTokenBurn(projectFilter: selectedProject.Value);
@@ -188,17 +194,4 @@ public class DashboardApp : ViewBase
                | Text.Block(value).Bold()
                | Text.Muted(label);
     }
-}
-
-public class DashboardDayRow
-{
-    public string Date { get; set; } = "";
-    public DateTime SortDate { get; set; }
-    public int Created { get; set; }
-    public int Completed { get; set; }
-    public int PrsMerged { get; set; }
-    public int Failed { get; set; }
-    public string Cost { get; set; } = "";
-    public string CostPerPlan { get; set; } = "";
-    public string Tokens { get; set; } = "";
 }

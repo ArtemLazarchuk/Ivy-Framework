@@ -1,9 +1,16 @@
 import React, { useMemo, useRef, useState } from "react";
 import * as arrow from "apache-arrow";
 import { Filter } from "@/services/grpcTableService";
+import { Densities } from "@/types/density";
 import { TableContext } from "./tableContext";
 import { TableProviderProps, TableContextType } from "./types";
-import { useDataLoading, useColumnManagement, useSorting, useRowData } from "./hooks";
+import {
+  useDataLoading,
+  useColumnManagement,
+  useSorting,
+  useRowData,
+  useCellUpdates,
+} from "./hooks";
 
 export const TableProvider: React.FC<TableProviderProps> = ({
   children,
@@ -11,6 +18,8 @@ export const TableProvider: React.FC<TableProviderProps> = ({
   connection,
   config,
   editable = false,
+  density = Densities.Medium,
+  updateStream,
 }) => {
   const [visibleRows, setVisibleRows] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +66,15 @@ export const TableProvider: React.FC<TableProviderProps> = ({
   });
 
   // Row data accessor
-  const { getRowData } = useRowData(arrowTableRef);
+  const { getRowData: getBaseRowData } = useRowData(arrowTableRef);
+
+  // Cell update stream overrides
+  const { getRowData } = useCellUpdates({
+    streamId: updateStream?.id,
+    columns,
+    idColumnName: config.idColumnName,
+    getBaseRowData,
+  });
 
   const value: TableContextType = useMemo(() => {
     const contextValue: TableContextType = {
@@ -73,6 +90,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({
       activeFilter,
       activeSort,
       columnOrder,
+      density,
       getRowData,
       arrowTableRef,
       loadMoreData,
@@ -96,6 +114,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({
     activeFilter,
     activeSort,
     columnOrder,
+    density,
     getRowData,
     arrowTableRef,
     loadMoreData,
