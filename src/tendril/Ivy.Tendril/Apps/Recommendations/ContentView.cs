@@ -51,6 +51,10 @@ public class ContentView(
                      | Text.Rich()
                          .Bold($"{currentIndex + 1}/{_all.Count}", word: true)
                          .Muted("recommendations", word: true)
+                     | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
+                     {
+                         showDeclineDialog.Set(true);
+                     })
                      | new Button("Accept").Icon(Icons.Check).Primary().ShortcutKey("a").OnClick(() =>
                      {
                          _planService.UpdateRecommendationState(_selected.PlanFolderName, _selected.Title, "Accepted");
@@ -95,10 +99,6 @@ public class ContentView(
 
         // Action bar (secondary actions)
         var actionBar = Layout.Horizontal().AlignContent(Align.Center).Gap(2).Padding(1)
-                        | new Button("Decline").Icon(Icons.X).Outline().ShortcutKey("x").OnClick(() =>
-                        {
-                            showDeclineDialog.Set(true);
-                        })
                         | new Button("Accept with Notes").Icon(Icons.CircleCheck).Outline().ShortcutKey("w")
                             .OnClick(() => showNotesDialog.Set(true))
                         | new Button("View Plan").Icon(Icons.ExternalLink).Outline().ShortcutKey("d").OnClick(() =>
