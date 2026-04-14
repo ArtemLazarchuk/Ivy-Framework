@@ -86,6 +86,20 @@ public class ServerConfigurationTests
     }
 
     [Fact]
+    public void AddConnectionsFromAssembly_CalledMultipleTimes_DoesNotRegisterServicesTwice()
+    {
+        var server = new Server(new ServerArgs());
+
+        server.AddConnectionsFromAssembly(typeof(ServerConfigurationTests).Assembly);
+        var serviceCountAfterFirstCall = server.Services.Count;
+
+        server.AddConnectionsFromAssembly(typeof(ServerConfigurationTests).Assembly);
+        var serviceCountAfterSecondCall = server.Services.Count;
+
+        Assert.Equal(serviceCountAfterFirstCall, serviceCountAfterSecondCall);
+    }
+
+    [Fact]
     public void TestConnectionValidation_PresetSecrets_AvailableInConfigurationAfterLoading()
     {
         var server = new Server(new ServerArgs());

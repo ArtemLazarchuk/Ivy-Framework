@@ -176,6 +176,7 @@ public class Server
 
     public void AddConnectionsFromAssembly(Assembly? assembly = null)
     {
+        if (_presetsLoaded) return;
         _presetsLoaded = true;
         assembly ??= Assembly.GetEntryAssembly();
 
