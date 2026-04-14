@@ -5,10 +5,6 @@ namespace Ivy.Widgets.ClaudeJsonRenderer;
                 ExportName = "ClaudeJsonRenderer")]
 public record ClaudeJsonRenderer : WidgetBase<ClaudeJsonRenderer>
 {
-    public ClaudeJsonRenderer()
-    {
-        Width = Size.Full();
-    }
 
     /// <summary>Stream of newline-delimited JSON events from Claude Code</summary>
     [Prop] public string? JsonStream { get; init; }

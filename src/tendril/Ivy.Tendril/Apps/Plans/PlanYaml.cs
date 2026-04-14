@@ -26,4 +26,5 @@ public class PlanYaml
     public int Priority { get; set; }
     public string? InitialPrompt { get; set; }
     public string? SourceUrl { get; set; }
+    public string? ExecutionProfile { get; set; }
 }
