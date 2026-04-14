@@ -37,7 +37,7 @@ public class SidebarView(
             .ToArray<IAnyOption>();
 
         var searchInput = _textFilter.ToSearchInput()
-            .Placeholder("Search plans...")
+            .Placeholder("Search...")
             .Suffix(
                 new Button()
                     .Icon(filtersOpen.Value ? Icons.ChevronUp : Icons.ChevronDown)
