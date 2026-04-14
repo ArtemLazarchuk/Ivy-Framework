@@ -30,10 +30,50 @@ public class ResponsiveWidgetTests
 
         var result = WidgetSerializer.Serialize((StackLayout)widget);
         var props = result["props"]!.AsObject();
-        var ro = props["responsiveOrientation"]!.AsObject();
+        var ro = props["orientation"]!.AsObject();
 
         Assert.Equal("Vertical", ro["mobile"]!.GetValue<string>());
         Assert.Equal("Horizontal", ro["desktop"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void StackLayout_Orientation_ImplicitConversion_SerializesAsSimpleValue()
+    {
+        var layout = Layout.Horizontal();
+        var widget = (StackLayout)layout.Build()!;
+        widget.Id = Guid.NewGuid().ToString();
+
+        var result = WidgetSerializer.Serialize(widget);
+        var props = result["props"]!.AsObject();
+
+        Assert.Equal("Horizontal", props["orientation"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void StackLayout_RowGap_ImplicitConversion_SerializesAsSimpleValue()
+    {
+        var layout = Layout.Horizontal().Gap(8);
+        var widget = (StackLayout)layout.Build()!;
+        widget.Id = Guid.NewGuid().ToString();
+
+        var result = WidgetSerializer.Serialize(widget);
+        var props = result["props"]!.AsObject();
+
+        Assert.Equal(8, props["rowGap"]!.GetValue<int>());
+        Assert.Equal(8, props["columnGap"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void StackLayout_Padding_ImplicitConversion_SerializesAsSimpleValue()
+    {
+        var layout = Layout.Horizontal().Padding(4);
+        var widget = (StackLayout)layout.Build()!;
+        widget.Id = Guid.NewGuid().ToString();
+
+        var result = WidgetSerializer.Serialize(widget);
+        var props = result["props"]!.AsObject();
+
+        Assert.NotNull(props["padding"]);
     }
 
     [Fact]
