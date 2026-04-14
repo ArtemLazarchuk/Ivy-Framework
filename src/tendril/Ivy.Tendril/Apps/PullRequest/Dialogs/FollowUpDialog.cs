@@ -1,6 +1,5 @@
 using Ivy.Core.Hooks;
 using Ivy.Tendril.Apps.Plans.Dialogs;
-using Ivy.Tendril.Services;
 
 namespace Ivy.Tendril.Apps.PullRequest.Dialogs;
 

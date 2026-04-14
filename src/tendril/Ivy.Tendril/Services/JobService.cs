@@ -408,7 +408,7 @@ public class JobService : IJobService
 
     public List<JobItem> GetJobs()
     {
-        return _jobs.Values.OrderByDescending(j => j.StartedAt ?? DateTime.MinValue).ToList();
+        return _jobs.Values.ToArray().OrderByDescending(j => j.StartedAt ?? DateTime.MinValue).ToList();
     }
 
     public JobItem? GetJob(string id)
