@@ -37,6 +37,20 @@ if ($Note) {
     $firmwareValues["Note"] = $Note
 }
 
+$repoConfigsYaml = ""
+foreach ($repoPath in $planInfo.Yaml.repos) {
+    $cfg = GetRepoConfig -RepoPath $repoPath -Project $planInfo.Project
+    $repoName = Split-Path $repoPath -Leaf
+    $repoConfigsYaml += "${repoName}:`n"
+    if ($cfg.BaseBranch) {
+        $repoConfigsYaml += "  baseBranch: $($cfg.BaseBranch)`n"
+    }
+    $repoConfigsYaml += "  syncStrategy: $($cfg.SyncStrategy)`n"
+}
+if ($repoConfigsYaml) {
+    $firmwareValues["RepoConfigs"] = $repoConfigsYaml
+}
+
 $promptFile = PrepareFirmware $PSScriptRoot $logFile $programFolder $firmwareValues
 
 $executionProfile = $null

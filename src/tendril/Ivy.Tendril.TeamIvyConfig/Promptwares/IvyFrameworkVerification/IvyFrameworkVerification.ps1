@@ -60,7 +60,14 @@ $frontendDir = Join-Path $frameworkPath "src/frontend"
 # Check if worktree has frontend (.ts/.tsx) changes requiring a rebuild
 $needsFrontendRebuild = $false
 if (Test-Path $worktreePath) {
-    $tsChanges = git -C $worktreePath diff --name-only origin/main...HEAD -- "*.ts" "*.tsx" 2>$null
+    $repoConfig = GetRepoConfig -RepoPath $mainRepoPath
+    $baseBranch = if ($repoConfig.BaseBranch) {
+        $repoConfig.BaseBranch
+    } else {
+        $detected = git -C $mainRepoPath symbolic-ref refs/remotes/origin/HEAD 2>$null | ForEach-Object { $_ -replace 'refs/remotes/origin/', '' }
+        if ($detected) { $detected } else { "main" }
+    }
+    $tsChanges = git -C $worktreePath diff --name-only "origin/${baseBranch}...HEAD" -- "*.ts" "*.tsx" 2>$null
     $needsFrontendRebuild = ($tsChanges.Count -gt 0)
 }
 

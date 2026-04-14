@@ -1036,6 +1036,144 @@ jobTimeout: 30
     }
 
     [Fact]
+    public void RepoRef_BaseBranch_DefaultsToNull()
+    {
+        var repo = new RepoRef();
+        Assert.Null(repo.BaseBranch);
+    }
+
+    [Fact]
+    public void RepoRef_SyncStrategy_DefaultsToFetch()
+    {
+        var repo = new RepoRef();
+        Assert.Equal("fetch", repo.SyncStrategy);
+    }
+
+    [Fact]
+    public void Should_Deserialize_RepoRef_With_BaseBranch_And_SyncStrategy()
+    {
+        var yaml = @"
+projects:
+  - name: TestProject
+    repos:
+      - path: D:\Repos\Test
+        prRule: yolo
+        baseBranch: develop
+        syncStrategy: rebase
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            var repo = service.Settings.Projects[0].Repos[0];
+            Assert.Equal(@"D:\Repos\Test", repo.Path);
+            Assert.Equal("yolo", repo.PrRule);
+            Assert.Equal("develop", repo.BaseBranch);
+            Assert.Equal("rebase", repo.SyncStrategy);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Deserialize_RepoRef_Without_New_Fields_BackwardCompatible()
+    {
+        var yaml = @"
+projects:
+  - name: TestProject
+    repos:
+      - path: D:\Repos\Test
+        prRule: default
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            var repo = service.Settings.Projects[0].Repos[0];
+            Assert.Equal(@"D:\Repos\Test", repo.Path);
+            Assert.Equal("default", repo.PrRule);
+            Assert.Null(repo.BaseBranch);
+            Assert.Equal("fetch", repo.SyncStrategy);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Deserialize_RepoRef_With_Only_BaseBranch()
+    {
+        var yaml = @"
+projects:
+  - name: TestProject
+    repos:
+      - path: D:\Repos\Test
+        baseBranch: release/2.0
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+
+            var repo = service.Settings.Projects[0].Repos[0];
+            Assert.Equal("release/2.0", repo.BaseBranch);
+            Assert.Equal("fetch", repo.SyncStrategy);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Should_Roundtrip_RepoRef_With_New_Fields()
+    {
+        var yaml = @"
+projects:
+  - name: TestProject
+    repos:
+      - path: D:\Repos\Test
+        prRule: yolo
+        baseBranch: develop
+        syncStrategy: merge
+";
+
+        var tempDir = CreateTempConfigFile(yaml);
+        var service = new ConfigService(new TendrilSettings());
+
+        try
+        {
+            service.SetTendrilHome(tempDir);
+            service.SaveSettings();
+
+            var reloaded = new ConfigService(new TendrilSettings());
+            reloaded.SetTendrilHome(tempDir);
+
+            var repo = reloaded.Settings.Projects[0].Repos[0];
+            Assert.Equal("develop", repo.BaseBranch);
+            Assert.Equal("merge", repo.SyncStrategy);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
     public void ResetToDefaults_Clears_Error_And_Sets_Onboarding()
     {
         var tempDir = CreateTempConfigFile("broken: [yaml");

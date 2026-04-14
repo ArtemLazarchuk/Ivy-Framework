@@ -367,6 +367,51 @@ function GetProjectWorkDir {
     return (Get-Location).Path
 }
 
+function GetRepoConfig {
+    param(
+        [string]$RepoPath,
+        [string]$Project = ""
+    )
+
+    $config = Get-ConfigYaml
+    if (-not $config -or -not $config.projects) {
+        return @{ BaseBranch = $null; SyncStrategy = "fetch" }
+    }
+
+    $resolvedRepoPath = try { (Resolve-Path $RepoPath -ErrorAction Stop).Path } catch { $RepoPath }
+
+    $projectEntries = if ($Project) {
+        @($config.projects | Where-Object { $_.name -eq $Project })
+    } else {
+        @($config.projects)
+    }
+
+    foreach ($projectEntry in $projectEntries) {
+        if (-not $projectEntry.repos) { continue }
+        foreach ($repo in $projectEntry.repos) {
+            $repoPathValue = if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
+                [Environment]::ExpandEnvironmentVariables($repo.path)
+            } else {
+                [Environment]::ExpandEnvironmentVariables("$repo")
+            }
+
+            if (-not $repoPathValue) { continue }
+            $resolvedConfigPath = try { (Resolve-Path $repoPathValue -ErrorAction Stop).Path } catch { $repoPathValue }
+
+            if ($resolvedConfigPath -eq $resolvedRepoPath) {
+                if ($repo -is [hashtable] -or $repo -is [System.Collections.IDictionary]) {
+                    return @{
+                        BaseBranch   = $repo.baseBranch
+                        SyncStrategy = if ($repo.syncStrategy) { $repo.syncStrategy } else { "fetch" }
+                    }
+                }
+            }
+        }
+    }
+
+    return @{ BaseBranch = $null; SyncStrategy = "fetch" }
+}
+
 function Get-ConfigYaml {
     if (-not (Test-Path $script:ConfigPath)) {
         return $null

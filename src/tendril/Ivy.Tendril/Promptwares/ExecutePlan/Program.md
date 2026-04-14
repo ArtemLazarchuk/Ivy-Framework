@@ -219,7 +219,10 @@ fi
 For each repo listed in `plan.yaml` `repos` (or the project's repos from `config.yaml` if empty):
 
 1. Fetch latest from remote: `git fetch origin`
-2. Detect the default branch: `git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'` (usually `master` or `main`)
+2. Determine the base branch:
+   - Check the `RepoConfigs` firmware header for this repo's `baseBranch` value
+   - If configured, use that value as the base branch
+   - Otherwise, auto-detect via: `git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`
 3. If the worktree or branch already exists from a prior execution, remove it first. A prior run may have left a **stale directory** (the filesystem tree still exists but git no longer tracks it as a worktree — there's no `.git` file at the worktree root). In that case `git worktree remove` will fail with "is not a working tree"; you must also `rm -rf` the directory. **Do all three unconditionally** so the next `git worktree add` starts from a clean slate:
 
 ```bash
@@ -244,7 +247,7 @@ PLAN_FOLDER_NAME=$(basename "<PlanFolder>")
 PLAN_ID=$(echo "$PLAN_FOLDER_NAME" | grep -oP '^\d+')
 SAFE_TITLE=$(echo "$PLAN_FOLDER_NAME" | sed 's/^[0-9]\+-//')
 BRANCH_NAME="tendril/$PLAN_ID-$SAFE_TITLE"
-git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "$BRANCH_NAME" "origin/<default-branch>"
+git worktree add "<PlanFolder>/worktrees/<repo-folder-name>" -b "$BRANCH_NAME" "origin/<resolved-base-branch>"
 ```
 
 Example:
@@ -252,10 +255,19 @@ Example:
 ```bash
 cd <RepoPath>
 git fetch origin
-git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "tendril/<PlanId>-<SafeTitle>" origin/master
+git worktree add "<PlanFolder>/worktrees/<RepoName>" -b "tendril/<PlanId>-<SafeTitle>" origin/<resolved-base-branch>
 ```
 
-**Important:** Always branch from `origin/<default-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work.
+**Important:** Always branch from `origin/<resolved-base-branch>`, not local HEAD. This ensures the PR only contains the plan's commits, not any unpushed local work. The `<resolved-base-branch>` comes from either the `RepoConfigs` firmware header (if `baseBranch` is configured) or auto-detection.
+
+**Note on `RepoConfigs`:** The firmware header may include a `RepoConfigs` value injected by ExecutePlan.ps1. It contains per-repo configuration from `config.yaml`:
+```yaml
+RepoConfigs: |
+  Ivy-Framework:
+    baseBranch: develop
+    syncStrategy: rebase
+```
+If `baseBranch` is present for a repo, use it instead of auto-detecting. If absent, fall back to `git symbolic-ref refs/remotes/origin/HEAD`.
 
 4. After creating the worktree, **verify the `.git` file exists** and fail fast if it's missing:
 
@@ -280,6 +292,12 @@ pwsh -NoProfile -Command '& "$env:TENDRIL_HOME/Promptwares/ExecutePlan/Tools/Log
 ```
 
 This creates a structured log entry in `$TENDRIL_HOME/Logs/worktrees.log` recording the worktree creation with repo path and branch metadata. Logging only happens after successful `.git` file verification (Step 2.4), ensuring only successfully created worktrees are recorded.
+
+6. Apply sync strategy (if configured in `RepoConfigs`):
+   - If `syncStrategy` is `"fetch"` (or not specified), no additional action needed (already fetched in step 1)
+   - If `syncStrategy` is `"rebase"`, after worktree creation run: `cd <worktree-path> && git fetch origin && git rebase origin/<resolved-base-branch>`
+   - If `syncStrategy` is `"merge"`, after worktree creation run: `cd <worktree-path> && git fetch origin && git merge origin/<resolved-base-branch>`
+   - Note: These sync operations should also be run before each commit created during plan execution to keep the branch up-to-date
 
 ### 2.5. Setup Frontend Dependencies (JavaScript/TypeScript Projects Only)
 
