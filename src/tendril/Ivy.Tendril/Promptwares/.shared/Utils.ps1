@@ -23,7 +23,7 @@ if (-not $env:TENDRIL_CONFIG) {
 }
 
 $script:ConfigPath = $env:TENDRIL_CONFIG
-$script:PlansDir = Join-Path $env:TENDRIL_HOME "Plans"
+$script:PlansDir = if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { Join-Path $env:TENDRIL_HOME "Plans" }
 
 $script:CachedConfigContent = $null
 $script:CachedConfigYaml = $null

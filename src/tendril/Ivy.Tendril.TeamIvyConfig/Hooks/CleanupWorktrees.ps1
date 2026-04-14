@@ -19,7 +19,7 @@ if (-not $env:TENDRIL_CONFIG -and $env:TENDRIL_HOME) {
 $sharedPath = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "Ivy.Tendril/Promptwares/.shared"
 . (Join-Path $sharedPath "Utils.ps1")
 
-$plansDir = Join-Path $env:TENDRIL_HOME "Plans"
+$plansDir = if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { Join-Path $env:TENDRIL_HOME "Plans" }
 if (-not (Test-Path $plansDir)) {
     Write-Host "Plans directory not found: $plansDir" -ForegroundColor Yellow
     exit 0

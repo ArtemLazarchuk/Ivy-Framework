@@ -13,7 +13,7 @@
     This script is destructive and should only be run once as an operational cleanup.
 
 .PARAMETER PlansDirectory
-    Root Plans directory to scan. Defaults to $env:TENDRIL_PLANS_DIRECTORY.
+    Root Plans directory to scan. Defaults to $env:TENDRIL_PLANS or $env:TENDRIL_HOME/Plans.
 
 .PARAMETER WhatIf
     Show what would be deleted without actually deleting.
@@ -30,7 +30,7 @@
     Run cleanup and show detailed progress.
 #>
 param(
-    [string]$PlansDirectory = $env:TENDRIL_PLANS_DIRECTORY,
+    [string]$PlansDirectory = $(if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { Join-Path $env:TENDRIL_HOME "Plans" }),
     [switch]$WhatIf,
     [switch]$Verbose
 )

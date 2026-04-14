@@ -237,7 +237,7 @@ public class ConfigService : IConfigService
 
             Directory.CreateDirectory(TendrilHome);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Inbox"));
-            Directory.CreateDirectory(Path.Combine(TendrilHome, "Plans"));
+            Directory.CreateDirectory(PlanFolder);
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Trash"));
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Promptwares"));
             Directory.CreateDirectory(Path.Combine(TendrilHome, "Hooks"));
@@ -250,7 +250,10 @@ public class ConfigService : IConfigService
 
     public string ConfigPath { get; private set; }
 
-    public string PlanFolder => string.IsNullOrEmpty(TendrilHome) ? "" : Path.Combine(TendrilHome, "Plans");
+    public string PlanFolder =>
+        Environment.GetEnvironmentVariable("TENDRIL_PLANS")?.Trim() is { Length: > 0 } plans
+            ? plans
+            : string.IsNullOrEmpty(TendrilHome) ? "" : Path.Combine(TendrilHome, "Plans");
 
     public List<ProjectConfig> Projects => Settings.Projects;
 

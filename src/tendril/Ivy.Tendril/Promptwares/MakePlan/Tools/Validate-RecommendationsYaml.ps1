@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$false)]
-    [string]$PlansDirectory = "$env:TENDRIL_HOME/Plans",
+    [string]$PlansDirectory = $(if ($env:TENDRIL_PLANS) { $env:TENDRIL_PLANS } else { "$env:TENDRIL_HOME/Plans" }),
 
     [Parameter(Mandatory=$false)]
     [switch]$Fix,
