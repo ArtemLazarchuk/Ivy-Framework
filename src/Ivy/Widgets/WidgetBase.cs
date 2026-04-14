@@ -81,6 +81,13 @@ public static class WidgetBaseExtensions
     public static T Density<T>(this T widget, Responsive<Density?> density) where T : WidgetBase
         => widget with { Density = density };
 
+    internal static object[] WithSlot<T>(this T widget, string slotName, object? value) where T : WidgetBase
+    {
+        var others = widget.Children.Where(c => c is not Slot s || s.Name != slotName);
+        var result = value != null ? others.Append(new Slot(slotName, value)) : others;
+        return result.ToArray();
+    }
+
     internal static void SetDensityViaReflection(object input, Density? density)
     {
         var type = input.GetType();
