@@ -202,6 +202,7 @@ public class ContentView(
                     return new PlanContentData(recs, summaryMd, artifacts, commitRows, verReports, actionStates.ToList());
                 }, ct);
             },
+            options: QueryScope.View,
             initialValue: new PlanContentData(new List<RecommendationYaml>(), null,
                 new Dictionary<string, List<string>>(), new List<PlanContentHelpers.CommitRow>(), new Dictionary<string, bool>(),
                 new List<(string Name, bool ConditionMet)>())
@@ -284,8 +285,11 @@ public class ContentView(
         }
         else if (planData is null)
         {
+            var errorMsg = planContentQuery.Error is { } err
+                ? $"Failed to load plan data: {err.Message}"
+                : "Failed to load plan data. Please try refreshing.";
             content |= Layout.Vertical().AlignContent(Align.Center).Height(Size.Full())
-                       | Text.Muted("Failed to load plan data. Please try refreshing.");
+                       | Text.Muted(errorMsg);
         }
         else
         {

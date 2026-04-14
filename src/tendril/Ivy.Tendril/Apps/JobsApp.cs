@@ -54,7 +54,10 @@ public class JobsApp : ViewBase
                 {
                     var currentJobs = jobService.GetJobs();
                     return currentJobs
-                        .Where(j => j.Status == JobStatus.Running)
+                        .Where(j => j.Status == JobStatus.Running ||
+                                    ((j.Status is JobStatus.Stopped or JobStatus.Failed or JobStatus.Timeout or JobStatus.Completed)
+                                     && j.CompletedAt.HasValue
+                                     && DateTime.UtcNow - j.CompletedAt.Value < TimeSpan.FromSeconds(5)))
                         .SelectMany(j => new[]
                         {
                             new DataTableCellUpdate(j.Id, "Timer", FormatTimer(j)),
@@ -471,6 +474,7 @@ public class JobsApp : ViewBase
             JobStatus.Failed => "Job encountered an error during execution",
             JobStatus.Timeout => "Job exceeded the configured timeout",
             JobStatus.Queued => "Waiting for a job slot to become available",
+            JobStatus.Stopped => "Job was manually stopped",
             _ => ""
         };
     }
