@@ -484,7 +484,10 @@ public class ContentView(
             }
             else if (changesData is null)
             {
-                changesTabContent = Text.Muted("No commits yet.");
+                var errorMsg = allChangesQuery.Error is { } err
+                    ? $"Failed to load changes: {err.Message}"
+                    : "No commits yet.";
+                changesTabContent = Text.Muted(errorMsg);
             }
             else
             {
@@ -542,7 +545,9 @@ public class ContentView(
                 () => openVerification.Set(null),
                 verificationReportQuery.Loading
                     ? Text.Muted("Loading...")
-                    : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
+                    : verificationReportQuery.Error is { } err
+                        ? Text.Muted($"Failed to load verification report: {err.Message}")
+                        : new Markdown(verificationReportQuery.Value).DangerouslyAllowLocalFiles(),
                 verName
             ).Width(Size.Half()).Resizable();
 
@@ -552,7 +557,8 @@ public class ContentView(
                 commitQuery.Value,
                 commitQuery.Loading || commitQuery.Value is null && !string.IsNullOrEmpty(openCommit.Value),
                 commitHash,
-                () => openCommit.Set(null));
+                () => openCommit.Set(null),
+                commitQuery.Error);
         }
 
         if (openArtifact.Value is { } artifactPath)
@@ -562,7 +568,9 @@ public class ContentView(
                 () => openArtifact.Set(null),
                 artifactContentQuery.Loading
                     ? Text.Muted("Loading...")
-                    : new Markdown($"```{language.ToString().ToLowerInvariant()}\n{artifactContentQuery.Value}\n```"),
+                    : artifactContentQuery.Error is { } err
+                        ? Text.Muted($"Failed to load artifact: {err.Message}")
+                        : new Markdown($"```{language.ToString().ToLowerInvariant()}\n{artifactContentQuery.Value}\n```"),
                 Path.GetFileName(artifactPath)
             ).Width(Size.Half()).Resizable();
         }
