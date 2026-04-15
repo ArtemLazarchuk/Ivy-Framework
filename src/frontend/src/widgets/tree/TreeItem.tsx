@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MenuItem } from "@/types/widgets";
 import { ActionRenderer } from "@/widgets/rowAction";
 import { Densities } from "@/types/density";
+import { densityTreeGap } from "@/components/ui/density-scale";
 
 interface TreeItemWidgetProps {
   item: MenuItem;
@@ -28,8 +29,7 @@ export const TreeItem: React.FC<TreeItemWidgetProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(item.expanded ?? false);
   const hasChildren = item.children && item.children.length > 0;
-  const gapClass =
-    density === Densities.Small ? "gap-0.5" : density === Densities.Large ? "gap-1.5" : "gap-1";
+  const gapClass = densityTreeGap[density ?? Densities.Medium];
 
   React.useEffect(() => {
     setIsOpen(item.expanded ?? false);
