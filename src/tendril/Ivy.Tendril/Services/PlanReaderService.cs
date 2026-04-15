@@ -15,6 +15,7 @@ public class PlanReaderService(
     IPlanWatcherService? planWatcherService = null) : IPlanReaderService
 {
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
+    private static readonly Regex SafeTitleRegex = new(@"^\d{5}-(.+)", RegexOptions.Compiled);
     private readonly IConfigService _config = config;
 
     private readonly ILogger<PlanReaderService> _logger = logger;
@@ -1053,10 +1054,7 @@ public class PlanReaderService(
         var planId = WorktreeLifecycleLogger.ExtractPlanId(planFolderPath);
 
         // Extract safe title from plan folder name for branch deletion
-        var planFolderName = Path.GetFileName(planFolderPath);
-        var safeTitle = planFolderName.Length > 6 && planFolderName[5] == '-'
-            ? planFolderName.Substring(6)
-            : "Unknown";
+        var safeTitle = ExtractSafeTitle(planFolderPath);
         var branchName = $"tendril/{planId}-{safeTitle}";
 
         foreach (var wtDir in Directory.GetDirectories(worktreesDir))
@@ -1136,6 +1134,16 @@ public class PlanReaderService(
                 lifecycleLogger?.LogCleanupFailed(planId, wtDir, ex.Message);
             }
         }
+    }
+
+    /// <summary>
+    ///     Extracts the safe title from a plan folder path using regex pattern matching.
+    /// </summary>
+    internal static string ExtractSafeTitle(string planFolderPath)
+    {
+        var folderName = Path.GetFileName(planFolderPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var match = SafeTitleRegex.Match(folderName);
+        return match.Success ? match.Groups[1].Value : "Unknown";
     }
 
     internal static void ClearReadOnlyAttributes(string directoryPath)
