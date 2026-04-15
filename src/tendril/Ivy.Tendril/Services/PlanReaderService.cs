@@ -11,13 +11,15 @@ public class PlanReaderService(
     IConfigService config,
     ILogger<PlanReaderService> logger,
     ITelemetryService? telemetryService = null,
-    IWorktreeLifecycleLogger? worktreeLifecycleLogger = null) : IPlanReaderService
+    IWorktreeLifecycleLogger? worktreeLifecycleLogger = null,
+    IPlanWatcherService? planWatcherService = null) : IPlanReaderService
 {
     private static readonly Regex FolderNameRegex = new(@"^(\d{5})-(.+)$", RegexOptions.Compiled);
     private readonly IConfigService _config = config;
 
     private readonly ILogger<PlanReaderService> _logger = logger;
     private readonly IWorktreeLifecycleLogger? _worktreeLifecycleLogger = worktreeLifecycleLogger;
+    private readonly IPlanWatcherService? _planWatcherService = planWatcherService;
 
     private readonly TimeCache<Dictionary<string, DashboardStats>> _dashboardCache =
         new(TimeSpan.FromSeconds(10));
@@ -70,6 +72,7 @@ public class PlanReaderService(
                     updated = Regex.Replace(updated, @"(?m)^updated:\s*.*$",
                         $"updated: {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}");
                     FileHelper.WriteAllText(planYamlPath, updated);
+                    _planWatcherService?.NotifyChanged(Path.GetFileName(dir));
                     _planCountsCache.Invalidate();
                     _recommendationsCache.Invalidate();
                 }
@@ -178,6 +181,9 @@ public class PlanReaderService(
         _planCountsCache.Invalidate();
         _recommendationsCache.Invalidate();
 
+        // Notify watcher for instant UI feedback
+        _planWatcherService?.NotifyChanged(folderName);
+
         // Write to disk in background for durability.
         WriteFileInBackground(() =>
         {
@@ -209,6 +215,9 @@ public class PlanReaderService(
         }
 
         _planCountsCache.Invalidate();
+
+        // Notify watcher for instant UI feedback
+        _planWatcherService?.NotifyChanged(folderName);
 
         // Write to disk in background for durability.
         WriteFileInBackground(() =>
