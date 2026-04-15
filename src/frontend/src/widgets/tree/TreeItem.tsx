@@ -129,7 +129,7 @@ export const TreeItem: React.FC<TreeItemWidgetProps> = ({
         <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
           <div
             className={cn(
-              "ivy-tree-children flex flex-col pl-[1rem] ml-2 border-l border-border/50",
+              "ivy-tree-children flex flex-col pl-[1rem] ml-2 border-l border-border/50 mt-0.5",
               gapClass,
             )}
           >
