@@ -169,9 +169,14 @@ if (Test-Path $worktreesDir) {
                 $prBody = "## Problem`n`n$problem`n`n## Solution`n`n$solution"
             }
 
-            # Add commits list
-            $commits = $planYaml.commits -join ", "
-            $prBody += "`n`n## Commits`n`n- $commits"
+            # Add commits list (sanitize: only valid 7-40 char hex strings)
+            $validCommits = $planYaml.commits | Where-Object {
+                $_ -match '^[0-9a-fA-F]{7,40}$'
+            }
+            if ($validCommits) {
+                $commits = $validCommits -join ", "
+                $prBody += "`n`n## Commits`n`n- $commits"
+            }
 
             # Add issue reference to PR body
             if ($issueNumber -and $issueRepo) {
@@ -183,9 +188,24 @@ if (Test-Path $worktreesDir) {
                 $prBody += "`n`n## Artifacts`n`n$artifactMarkdown"
             }
 
-            # Create PR
-            $prUrl = gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body $prBody --label "tendril"
-            Write-Host "  PR created: $prUrl" -ForegroundColor Green
+            # Truncate body if too large (GitHub limit is 65536 characters)
+            if ($prBody.Length -gt 65000) {
+                Write-Host "  Warning: PR body too large ($($prBody.Length) chars), truncating..." -ForegroundColor Yellow
+                $prBody = $prBody.Substring(0, 65000) + "`n`n... (truncated)"
+            }
+
+            # Create PR - write body to temp file to avoid encoding issues
+            $tempBodyFile = [System.IO.Path]::GetTempFileName()
+            Set-Content -Path $tempBodyFile -Value $prBody -Encoding UTF8 -NoNewline
+            try {
+                $prUrl = & gh pr create --repo $ownerRepo --base $defaultBranch --head $branch --title $prTitle --body-file $tempBodyFile --label "tendril"
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Error "Failed to create PR"
+                }
+                Write-Host "  PR created: $prUrl" -ForegroundColor Green
+            } finally {
+                Remove-Item $tempBodyFile -Force -ErrorAction SilentlyContinue
+            }
             $prUrls += $prUrl
 
             # Extract PR number
