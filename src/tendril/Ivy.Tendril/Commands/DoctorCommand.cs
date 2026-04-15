@@ -458,7 +458,8 @@ public static class DoctorCommand
         string State,
         int Worktrees,
         string Health,
-        bool IsHealthy
+        bool IsHealthy,
+        string? FolderPath = null
     );
 
     private static string? GetArgValue(string[] args, string name)
@@ -473,6 +474,7 @@ public static class DoctorCommand
     {
         var showAll = args.Contains("--all");
         var fix = args.Contains("--fix");
+        var prune = args.Contains("--prune");
         var stateFilter = GetArgValue(args, "--state");
         var worktreesOnly = args.Contains("--worktrees");
 
@@ -510,10 +512,9 @@ public static class DoctorCommand
 
             foreach (var result in allResults.Where(r => !r.IsHealthy))
             {
-                var matchingDir = Directory.GetDirectories(plansDir, $"{result.Id}-*").FirstOrDefault();
-                if (matchingDir == null) continue;
+                if (result.FolderPath == null) continue;
 
-                var repairResult = RepairPlan(matchingDir, result);
+                var repairResult = RepairPlan(result.FolderPath, result);
                 if (repairResult.Success)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
@@ -535,6 +536,66 @@ public static class DoctorCommand
             Console.WriteLine();
 
             allResults = ScanPlans(plansDir);
+        }
+
+        if (prune)
+        {
+            var pruneCandidates = FindPruneCandidates(plansDir, allResults);
+            if (pruneCandidates.Count > 0)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Found {pruneCandidates.Count} plan(s) that appear to be test/junk data:");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                foreach (var (dir, result, reason) in pruneCandidates)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"  {result.Id}-{result.Title}  ({reason})");
+                    Console.ResetColor();
+                }
+
+                Console.WriteLine();
+                Console.Write("Remove these plans? [y/N] ");
+                var answer = Console.ReadLine()?.Trim();
+                if (answer?.Equals("y", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    var removed = 0;
+                    foreach (var (dir, result, _) in pruneCandidates)
+                    {
+                        try
+                        {
+                            Directory.Delete(dir, true);
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"  ✓ Removed {result.Id}-{result.Title}");
+                            Console.ResetColor();
+                            removed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"  ✗ Failed to remove {result.Id}-{result.Title}: {ex.Message}");
+                            Console.ResetColor();
+                        }
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine($"Pruned {removed} plan(s).");
+                }
+                else
+                {
+                    Console.WriteLine("Prune cancelled.");
+                }
+
+                Console.WriteLine();
+                allResults = ScanPlans(plansDir);
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("No prune candidates found.");
+            }
         }
 
         IEnumerable<PlanHealthResult> results;
@@ -589,7 +650,7 @@ public static class DoctorCommand
 
             var health = healthIssues.Count == 0 ? "OK" : string.Join(",", healthIssues);
 
-            results.Add(new PlanHealthResult(id, title, state, worktreeCount, health, healthIssues.Count == 0));
+            results.Add(new PlanHealthResult(id, title, state, worktreeCount, health, healthIssues.Count == 0, dir));
         }
 
         return results;
@@ -623,7 +684,13 @@ public static class DoctorCommand
                     return (false, "Missing title", plan.State);
 
                 if (plan.Repos == null || plan.Repos.Count == 0)
+                {
+                    var isCompleted = plan.State.Equals("Completed", StringComparison.OrdinalIgnoreCase);
+                    var hasPrsOrCommits = (plan.Prs?.Count > 0) || (plan.Commits?.Count > 0);
+                    if (isCompleted && hasPrsOrCommits)
+                        return (true, null, plan.State);
                     return (false, "No repos", plan.State);
+                }
 
                 return (true, null, plan.State);
             }
@@ -788,11 +855,26 @@ public static class DoctorCommand
             if (healthResult.Health.Contains("YAML:"))
             {
                 var yamlPath = Path.Combine(planPath, "plan.yaml");
-                if (File.Exists(yamlPath))
+
+                if (!File.Exists(yamlPath))
+                {
+                    var folderTitle = TitleFromFolderName(Path.GetFileName(planPath));
+                    var scaffold = $"state: Draft\nproject: Auto\ntitle: {EscapeYamlString(folderTitle)}\nlevel: NiceToHave\nrepos: []\ncommits: []\nprs: []\ncreated: {DateTime.UtcNow:O}\nupdated: {DateTime.UtcNow:O}\nverifications: []\nrelatedPlans: []\ndependsOn: []\n";
+                    File.WriteAllText(yamlPath, scaffold);
+                    repairs.Add("created missing plan.yaml");
+                }
+                else
                 {
                     var content = File.ReadAllText(yamlPath);
                     var repaired = PlanReaderService.RepairPlanYaml(content);
-                    if (repaired != content)
+                    var changed = repaired != content;
+
+                    var folderTitle = TitleFromFolderName(Path.GetFileName(planPath));
+
+                    repaired = RepairYamlFields(repaired, folderTitle);
+                    changed = repaired != content;
+
+                    if (changed)
                     {
                         File.WriteAllText(yamlPath, repaired);
                         repairs.Add("repaired plan.yaml");
@@ -806,7 +888,7 @@ public static class DoctorCommand
                 if (File.Exists(recsPath))
                 {
                     var content = File.ReadAllText(recsPath);
-                    var repaired = PlanReaderService.RepairPlanYaml(content);
+                    var repaired = RepairRecommendationsYaml(content);
                     if (repaired != content)
                     {
                         File.WriteAllText(recsPath, repaired);
@@ -853,6 +935,124 @@ public static class DoctorCommand
         {
             return new RepairResult(false, $"repair failed: {ex.Message}");
         }
+    }
+
+    internal static string TitleFromFolderName(string folderName)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(folderName, @"^\d{5}-(.+)$");
+        if (!match.Success) return folderName;
+        var raw = match.Groups[1].Value;
+        var spaced = System.Text.RegularExpressions.Regex.Replace(raw, @"(?<=[a-z])(?=[A-Z])", " ");
+        return spaced.Replace('-', ' ');
+    }
+
+    internal static string RepairYamlFields(string content, string folderTitle)
+    {
+        var lines = content.Split('\n').ToList();
+
+        EnsureYamlField(lines, "state", "Draft");
+        EnsureYamlField(lines, "project", "Auto");
+        EnsureYamlField(lines, "title", EscapeYamlString(folderTitle));
+        foreach (var field in new[] { "repos", "commits", "prs", "verifications", "relatedPlans", "dependsOn" })
+            EnsureYamlListNotNull(lines, field);
+
+        return string.Join('\n', lines);
+    }
+
+    private static void EnsureYamlField(List<string> lines, string field, string defaultValue)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(lines[i], $@"^{field}:\s*(.*)$");
+            if (!match.Success) continue;
+            var value = match.Groups[1].Value.Trim().Trim('\'', '"');
+            if (string.IsNullOrWhiteSpace(value))
+                lines[i] = $"{field}: {defaultValue}";
+            return;
+        }
+        lines.Insert(0, $"{field}: {defaultValue}");
+    }
+
+    private static void EnsureYamlListNotNull(List<string> lines, string field)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(lines[i], $@"^{field}:\s*$");
+            if (!match.Success) continue;
+            var nextIndex = i + 1;
+            var hasListItems = nextIndex < lines.Count &&
+                               lines[nextIndex].TrimStart().StartsWith("- ");
+            if (!hasListItems)
+                lines[i] = $"{field}: []";
+            return;
+        }
+    }
+
+    internal static string RepairRecommendationsYaml(string content)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"(?<=^- title: )(`[^`]*`)(.*)$",
+            m => "'" + m.Groups[1].Value.Replace("'", "''") + m.Groups[2].Value.Replace("'", "''") + "'",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+    }
+
+    private static string EscapeYamlString(string value)
+    {
+        if (value.Contains(':') || value.Contains('#') || value.Contains('\''))
+            return "'" + value.Replace("'", "''") + "'";
+        return value;
+    }
+
+    internal static List<(string Dir, PlanHealthResult Result, string Reason)> FindPruneCandidates(
+        string plansDir, List<PlanHealthResult> allResults)
+    {
+        var candidates = new List<(string Dir, PlanHealthResult Result, string Reason)>();
+
+        foreach (var result in allResults.Where(r => !r.IsHealthy))
+        {
+            if (result.FolderPath == null) continue;
+
+            var reason = GetPruneReason(result.FolderPath, result);
+            if (reason != null)
+                candidates.Add((result.FolderPath, result, reason));
+        }
+
+        return candidates;
+    }
+
+    internal static string? GetPruneReason(string planPath, PlanHealthResult healthResult)
+    {
+        var hasPrs = false;
+        var hasCommits = false;
+        var hasRevisions = false;
+
+        var yamlPath = Path.Combine(planPath, "plan.yaml");
+        if (File.Exists(yamlPath))
+        {
+            var content = File.ReadAllText(yamlPath);
+            hasPrs = System.Text.RegularExpressions.Regex.IsMatch(content,
+                @"^prs:\s*\n\s*-\s+\S", System.Text.RegularExpressions.RegexOptions.Multiline);
+            hasCommits = System.Text.RegularExpressions.Regex.IsMatch(content,
+                @"^commits:\s*\n\s*-\s+\S", System.Text.RegularExpressions.RegexOptions.Multiline);
+        }
+
+        var revisionsDir = Path.Combine(planPath, "revisions");
+        if (Directory.Exists(revisionsDir))
+            hasRevisions = Directory.GetFiles(revisionsDir, "*.md").Length > 0;
+
+        if (hasPrs || hasCommits || hasRevisions)
+            return null;
+
+        var reasons = new List<string>();
+
+        if (healthResult.Health.Contains("YAML:Missing"))
+            reasons.Add("no plan.yaml");
+
+        if (!hasPrs && !hasCommits && !hasRevisions)
+            reasons.Add("no PRs/commits/revisions");
+
+        return reasons.Count > 0 ? string.Join(", ", reasons) : null;
     }
 
 }
