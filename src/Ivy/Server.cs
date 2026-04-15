@@ -90,6 +90,7 @@ public class Server
     public Type? AuthProviderType { get; private set; } = null;
     public ServerArgs Args => _args;
     public static Action<CookieOptions>? ConfigureAuthCookieOptions { get; set; }
+    public static string? AuthCookiePrefix { get; set; }
     private IContentBuilder? _contentBuilder;
     private bool _useHotReload;
     private bool _useHttpRedirection;

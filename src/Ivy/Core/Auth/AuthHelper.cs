@@ -141,10 +141,12 @@ public static class AuthHelper
     private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions) GetAuthCookies(HttpContext context)
     {
         var cookies = context.Request.Cookies;
-        var accessToken = cookies["access_token"].NullIfEmpty();
-        var refreshToken = cookies["refresh_token"].NullIfEmpty();
-        var tag = cookies["auth_tag"].NullIfEmpty();
-        var authSessionDataValue = cookies["auth_session_data"].NullIfEmpty();
+        var prefix = global::Ivy.Server.AuthCookiePrefix;
+        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
+        var accessToken = cookies[$"{pfx}access_token"].NullIfEmpty();
+        var refreshToken = cookies[$"{pfx}refresh_token"].NullIfEmpty();
+        var tag = cookies[$"{pfx}auth_tag"].NullIfEmpty();
+        var authSessionDataValue = cookies[$"{pfx}auth_session_data"].NullIfEmpty();
 
         var brokeredSessions = ExtractBrokeredSessionsFromCookies(cookies);
 
@@ -161,10 +163,14 @@ public static class AuthHelper
 
         var cookieHeader = CookieHeaderValue.ParseList([cookies]).ToList();
 
+        var prefix = global::Ivy.Server.AuthCookiePrefix;
+        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
+
         string? GetCookie(string name)
         {
+            var prefixedName = $"{pfx}{name}";
             var rawValue = cookieHeader
-                .FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))?.Value.Value;
+                .FirstOrDefault(c => c.Name.Equals(prefixedName, StringComparison.OrdinalIgnoreCase))?.Value.Value;
             return !string.IsNullOrEmpty(rawValue)
                 ? WebUtility.UrlDecode(rawValue)
                 : null;
@@ -202,16 +208,21 @@ public static class AuthHelper
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
-        // Discover OAuth provider cookies by scanning for the pattern: {provider}_access_token
+        var prefix = global::Ivy.Server.AuthCookiePrefix;
+        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
+        var suffix = "_access_token";
+        var fullPrimaryName = $"{pfx}access_token";
+
         var accessTokenCookies = cookies.Keys
-            .Where(key => key.EndsWith("_access_token") && key != "access_token")
+            .Where(key => key.StartsWith(pfx) && key.EndsWith(suffix) && key != fullPrimaryName)
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
-            var provider = accessTokenName[..^"_access_token".Length];
-            var refreshTokenName = $"{provider}_refresh_token";
-            var tagName = $"{provider}_auth_tag";
+            var unprefixed = accessTokenName[pfx.Length..];
+            var provider = unprefixed[..^suffix.Length];
+            var refreshTokenName = $"{pfx}{provider}_refresh_token";
+            var tagName = $"{pfx}{provider}_auth_tag";
 
             var accessToken = cookies[accessTokenName].NullIfEmpty();
             if (accessToken == null)
@@ -234,6 +245,11 @@ public static class AuthHelper
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
+        var prefix = global::Ivy.Server.AuthCookiePrefix;
+        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
+        var suffix = "_access_token";
+        var fullPrimaryName = $"{pfx}access_token";
+
         string? GetCookie(string name)
         {
             var rawValue = cookieHeader
@@ -243,17 +259,17 @@ public static class AuthHelper
                 : null;
         }
 
-        // Discover OAuth provider cookies by scanning for the pattern: {provider}_access_token
         var accessTokenCookies = cookieHeader
-            .Where(c => c.Name.Value != null && c.Name.Value.EndsWith("_access_token") && c.Name.Value != "access_token")
+            .Where(c => c.Name.Value != null && c.Name.Value.StartsWith(pfx) && c.Name.Value.EndsWith(suffix) && c.Name.Value != fullPrimaryName)
             .Select(c => c.Name.Value!)
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
-            var provider = accessTokenName[..^"_access_token".Length];
-            var refreshTokenName = $"{provider}_refresh_token";
-            var tagName = $"{provider}_auth_tag";
+            var unprefixed = accessTokenName[pfx.Length..];
+            var provider = unprefixed[..^suffix.Length];
+            var refreshTokenName = $"{pfx}{provider}_refresh_token";
+            var tagName = $"{pfx}{provider}_auth_tag";
 
             var accessToken = GetCookie(accessTokenName);
             if (accessToken == null)
