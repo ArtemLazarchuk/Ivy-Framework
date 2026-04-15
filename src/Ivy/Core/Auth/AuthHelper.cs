@@ -141,12 +141,10 @@ public static class AuthHelper
     private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions) GetAuthCookies(HttpContext context)
     {
         var cookies = context.Request.Cookies;
-        var prefix = global::Ivy.Server.AuthCookiePrefix;
-        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
-        var accessToken = cookies[$"{pfx}access_token"].NullIfEmpty();
-        var refreshToken = cookies[$"{pfx}refresh_token"].NullIfEmpty();
-        var tag = cookies[$"{pfx}auth_tag"].NullIfEmpty();
-        var authSessionDataValue = cookies[$"{pfx}auth_session_data"].NullIfEmpty();
+        var accessToken = cookies[CookieRegistryExtensions.PrefixCookieName("access_token")].NullIfEmpty();
+        var refreshToken = cookies[CookieRegistryExtensions.PrefixCookieName("refresh_token")].NullIfEmpty();
+        var tag = cookies[CookieRegistryExtensions.PrefixCookieName("auth_tag")].NullIfEmpty();
+        var authSessionDataValue = cookies[CookieRegistryExtensions.PrefixCookieName("auth_session_data")].NullIfEmpty();
 
         var brokeredSessions = ExtractBrokeredSessionsFromCookies(cookies);
 
@@ -163,12 +161,9 @@ public static class AuthHelper
 
         var cookieHeader = CookieHeaderValue.ParseList([cookies]).ToList();
 
-        var prefix = global::Ivy.Server.AuthCookiePrefix;
-        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
-
         string? GetCookie(string name)
         {
-            var prefixedName = $"{pfx}{name}";
+            var prefixedName = CookieRegistryExtensions.PrefixCookieName(name);
             var rawValue = cookieHeader
                 .FirstOrDefault(c => c.Name.Equals(prefixedName, StringComparison.OrdinalIgnoreCase))?.Value.Value;
             return !string.IsNullOrEmpty(rawValue)
@@ -208,21 +203,26 @@ public static class AuthHelper
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
-        var prefix = global::Ivy.Server.AuthCookiePrefix;
-        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
+        var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
         var suffix = "_access_token";
-        var fullPrimaryName = $"{pfx}access_token";
 
         var accessTokenCookies = cookies.Keys
-            .Where(key => key.StartsWith(pfx) && key.EndsWith(suffix) && key != fullPrimaryName)
+            .Where(key => key.EndsWith(suffix) && key != primaryAccessToken)
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
-            var unprefixed = accessTokenName[pfx.Length..];
-            var provider = unprefixed[..^suffix.Length];
-            var refreshTokenName = $"{pfx}{provider}_refresh_token";
-            var tagName = $"{pfx}{provider}_auth_tag";
+            // Extract provider by removing prefix and suffix
+            var cookieName = accessTokenName;
+
+            // Strip prefix if present
+            var prefixLength = primaryAccessToken.Length - "access_token".Length;
+            if (prefixLength > 0 && cookieName.StartsWith(primaryAccessToken[..prefixLength]))
+            {
+                cookieName = cookieName[prefixLength..];
+            }
+
+            var provider = cookieName[..^suffix.Length];
 
             var accessToken = cookies[accessTokenName].NullIfEmpty();
             if (accessToken == null)
@@ -230,8 +230,8 @@ public static class AuthHelper
                 continue;
             }
 
-            var refreshToken = cookies[refreshTokenName].NullIfEmpty();
-            var tag = cookies[tagName].NullIfEmpty();
+            var refreshToken = cookies[CookieRegistryExtensions.PrefixCookieName($"{provider}_refresh_token")].NullIfEmpty();
+            var tag = cookies[CookieRegistryExtensions.PrefixCookieName($"{provider}_auth_tag")].NullIfEmpty();
 
             var authToken = new AuthToken(accessToken, refreshToken, tag);
             var session = new AuthTokenHandlerSession(authToken: authToken);
@@ -245,11 +245,6 @@ public static class AuthHelper
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
-        var prefix = global::Ivy.Server.AuthCookiePrefix;
-        var pfx = string.IsNullOrEmpty(prefix) ? "" : $"{prefix}__";
-        var suffix = "_access_token";
-        var fullPrimaryName = $"{pfx}access_token";
-
         string? GetCookie(string name)
         {
             var rawValue = cookieHeader
@@ -259,17 +254,27 @@ public static class AuthHelper
                 : null;
         }
 
+        var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
+        var suffix = "_access_token";
+
         var accessTokenCookies = cookieHeader
-            .Where(c => c.Name.Value != null && c.Name.Value.StartsWith(pfx) && c.Name.Value.EndsWith(suffix) && c.Name.Value != fullPrimaryName)
+            .Where(c => c.Name.Value != null && c.Name.Value.EndsWith(suffix) && c.Name.Value != primaryAccessToken)
             .Select(c => c.Name.Value!)
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
-            var unprefixed = accessTokenName[pfx.Length..];
-            var provider = unprefixed[..^suffix.Length];
-            var refreshTokenName = $"{pfx}{provider}_refresh_token";
-            var tagName = $"{pfx}{provider}_auth_tag";
+            // Extract provider by removing prefix and suffix
+            var cookieName = accessTokenName;
+
+            // Strip prefix if present
+            var prefixLength = primaryAccessToken.Length - "access_token".Length;
+            if (prefixLength > 0 && cookieName.StartsWith(primaryAccessToken[..prefixLength]))
+            {
+                cookieName = cookieName[prefixLength..];
+            }
+
+            var provider = cookieName[..^suffix.Length];
 
             var accessToken = GetCookie(accessTokenName);
             if (accessToken == null)
@@ -277,8 +282,8 @@ public static class AuthHelper
                 continue;
             }
 
-            var refreshToken = GetCookie(refreshTokenName);
-            var tag = GetCookie(tagName);
+            var refreshToken = GetCookie(CookieRegistryExtensions.PrefixCookieName($"{provider}_refresh_token"));
+            var tag = GetCookie(CookieRegistryExtensions.PrefixCookieName($"{provider}_auth_tag"));
 
             var authToken = new AuthToken(accessToken, refreshToken, tag);
             var session = new AuthTokenHandlerSession(authToken: authToken);
