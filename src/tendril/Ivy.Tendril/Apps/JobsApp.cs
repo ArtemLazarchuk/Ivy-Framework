@@ -503,14 +503,7 @@ public class JobsApp : ViewBase
 
     private static string GetPromptDisplay(JobItem j, IPlanReaderService planService)
     {
-        // MakePlan jobs: use the -Description arg for display (PlanFile may now hold the folder name)
-        if (j.Type == "MakePlan")
-        {
-            var desc = CleanPromptText(GetFullPrompt(j) ?? j.PlanFile);
-            return desc.Length > PromptDisplayMaxLength ? desc[..PromptDisplayMaxLength] + "..." : desc;
-        }
-
-        // For other jobs, try to read the plan title
+        // Try to read the plan title first (for ALL job types)
         if (!string.IsNullOrEmpty(j.PlanFile))
         {
             var fullPath = Path.Combine(planService.PlansDirectory, j.PlanFile);
@@ -520,6 +513,13 @@ public class JobsApp : ViewBase
                 var title = CleanPromptText(plan.Title);
                 return title.Length > PromptDisplayMaxLength ? title[..PromptDisplayMaxLength] + "..." : title;
             }
+        }
+
+        // MakePlan jobs: use the -Description arg for display when no title is available yet
+        if (j.Type == "MakePlan")
+        {
+            var desc = CleanPromptText(GetFullPrompt(j) ?? j.PlanFile);
+            return desc.Length > PromptDisplayMaxLength ? desc[..PromptDisplayMaxLength] + "..." : desc;
         }
 
         // Fallback to folder name
