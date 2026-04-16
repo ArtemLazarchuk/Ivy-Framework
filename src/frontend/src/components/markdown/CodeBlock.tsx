@@ -83,7 +83,7 @@ export const CodeBlock = memo(
 
         return (
           <div className="relative">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-30">
               <CopyToClipboardButton textToCopy={cleanContent} />
             </div>
             <ScrollArea className="w-full">
@@ -115,7 +115,7 @@ export const CodeBlock = memo(
       if (!useHighlighter) {
         return (
           <div className="relative">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-30">
               <CopyToClipboardButton textToCopy={content} />
             </div>
             <ScrollArea className="w-full border border-border rounded-md">
@@ -146,7 +146,7 @@ export const CodeBlock = memo(
           }
         >
           <div className="relative">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-30">
               <CopyToClipboardButton textToCopy={content} />
             </div>
             <ScrollArea className="w-full border border-border rounded-md">
