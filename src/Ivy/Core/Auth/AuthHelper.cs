@@ -199,29 +199,24 @@ public static class AuthHelper
         }
     }
 
-    private static Dictionary<string, IAuthTokenHandlerSession> ExtractBrokeredSessionsFromCookies(IRequestCookieCollection cookies)
+    internal static Dictionary<string, IAuthTokenHandlerSession> ExtractBrokeredSessionsFromCookies(IRequestCookieCollection cookies)
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
         var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
         var suffix = "_access_token";
+        var prefix = primaryAccessToken[..^"access_token".Length];
 
         var accessTokenCookies = cookies.Keys
-            .Where(key => key.EndsWith(suffix) && key != primaryAccessToken)
+            .Where(key => key.EndsWith(suffix)
+                && key != primaryAccessToken
+                && (prefix.Length == 0 || key.StartsWith(prefix)))
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
             // Extract provider by removing prefix and suffix
-            var cookieName = accessTokenName;
-
-            // Strip prefix if present
-            var prefixLength = primaryAccessToken.Length - "access_token".Length;
-            if (prefixLength > 0 && cookieName.StartsWith(primaryAccessToken[..prefixLength]))
-            {
-                cookieName = cookieName[prefixLength..];
-            }
-
+            var cookieName = prefix.Length > 0 ? accessTokenName[prefix.Length..] : accessTokenName;
             var provider = cookieName[..^suffix.Length];
 
             var accessToken = cookies[accessTokenName].NullIfEmpty();
@@ -241,7 +236,7 @@ public static class AuthHelper
         return brokeredSessions;
     }
 
-    private static Dictionary<string, IAuthTokenHandlerSession> ExtractBrokeredSessionsFromCookieHeader(List<CookieHeaderValue> cookieHeader)
+    internal static Dictionary<string, IAuthTokenHandlerSession> ExtractBrokeredSessionsFromCookieHeader(List<CookieHeaderValue> cookieHeader)
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
 
@@ -256,24 +251,20 @@ public static class AuthHelper
 
         var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
         var suffix = "_access_token";
+        var prefix = primaryAccessToken[..^"access_token".Length];
 
         var accessTokenCookies = cookieHeader
-            .Where(c => c.Name.Value != null && c.Name.Value.EndsWith(suffix) && c.Name.Value != primaryAccessToken)
+            .Where(c => c.Name.Value != null
+                && c.Name.Value.EndsWith(suffix)
+                && c.Name.Value != primaryAccessToken
+                && (prefix.Length == 0 || c.Name.Value.StartsWith(prefix)))
             .Select(c => c.Name.Value!)
             .ToList();
 
         foreach (var accessTokenName in accessTokenCookies)
         {
             // Extract provider by removing prefix and suffix
-            var cookieName = accessTokenName;
-
-            // Strip prefix if present
-            var prefixLength = primaryAccessToken.Length - "access_token".Length;
-            if (prefixLength > 0 && cookieName.StartsWith(primaryAccessToken[..prefixLength]))
-            {
-                cookieName = cookieName[prefixLength..];
-            }
-
+            var cookieName = prefix.Length > 0 ? accessTokenName[prefix.Length..] : accessTokenName;
             var provider = cookieName[..^suffix.Length];
 
             var accessToken = GetCookie(accessTokenName);

@@ -2,6 +2,7 @@ using Ivy.Core.Auth;
 
 namespace Ivy.Tests.Auth;
 
+[Collection("AuthCookiePrefix")]
 public class AuthCookiePrefixTests : IDisposable
 {
     public AuthCookiePrefixTests()

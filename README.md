@@ -15,6 +15,12 @@ No frontend/backend split, no HTML/CSS/JS - just write type-safe C# code and shi
 
 [Quick Start](https://docs.ivy.app/onboarding/getting-started/introduction) &nbsp;&nbsp;•&nbsp;&nbsp; [Docs](https://docs.ivy.app) &nbsp;&nbsp;•&nbsp;&nbsp; [Samples](https://samples.ivy.app) &nbsp;&nbsp;•&nbsp;&nbsp; [Examples](https://github.com/Ivy-Interactive/Ivy-Examples) &nbsp;&nbsp;•&nbsp;&nbsp; [Current Sprint](https://github.com/orgs/Ivy-Interactive/projects/8) &nbsp;&nbsp;•&nbsp;&nbsp; [Roadmap](https://github.com/orgs/Ivy-Interactive/projects/7)
 
+## Products
+
+We use Ivy internally to build our products:
+
+* [Ivy Tendril - AI Coding Orchestration for Happy Developers](https://tendril.ivy.app)
+
 ## Simple Example
 
 Ivy takes a lot of inspiration from frameworks like React. If you know React, you'll feel right at home. Here's a simple counter app built with Ivy:
