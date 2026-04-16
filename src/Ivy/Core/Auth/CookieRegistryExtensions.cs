@@ -18,7 +18,7 @@ public static class CookieRegistryExtensions
         return null;
     }
 
-    public static CookieJarId RegisterAuthSessionCookies(this AppSessionStore sessionStore, IAuthSession authSession, IEnumerable<string>? providersToDelete = null)
+    public static CookieJarId RegisterAuthSessionCookies(this AppSessionStore sessionStore, IAuthSession authSession, IEnumerable<string>? providersToDelete = null, IEnumerable<string>? connectedAccountsToDelete = null)
     {
         var cookies = new CookieJar();
         cookies.AddCookiesForAuthToken(authSession.AuthToken, providersToDelete);
@@ -39,6 +39,21 @@ public static class CookieRegistryExtensions
 
         cookies.AddCookiesForBrokeredSessions(sessionsToWrite);
 
+        // Filter out connected accounts that have been removed
+        IReadOnlyDictionary<string, IAuthSession> connectedAccountsToWrite = authSession.ConnectedAccounts;
+        HashSet<string>? removedConnectedAccounts = connectedAccountsToDelete != null
+            ? new(connectedAccountsToDelete)
+            : null;
+
+        if (removedConnectedAccounts != null && removedConnectedAccounts.Count > 0)
+        {
+            connectedAccountsToWrite = authSession.ConnectedAccounts
+                .Where(kvp => !removedConnectedAccounts.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        cookies.AddCookiesForConnectedAccounts(connectedAccountsToWrite);
+
         // Also delete cookies for removed providers
         if (removedProviders != null && removedProviders.Count > 0)
         {
@@ -48,6 +63,19 @@ public static class CookieRegistryExtensions
                 cookies.Delete(PrefixCookieName($"{provider}_access_token"), cookieOptions);
                 cookies.Delete(PrefixCookieName($"{provider}_refresh_token"), cookieOptions);
                 cookies.Delete(PrefixCookieName($"{provider}_auth_tag"), cookieOptions);
+            }
+        }
+
+        // Also delete cookies for removed connected accounts
+        if (removedConnectedAccounts != null && removedConnectedAccounts.Count > 0)
+        {
+            var cookieOptions = CreateAuthCookieOptions();
+            foreach (var provider in removedConnectedAccounts)
+            {
+                cookies.Delete(PrefixCookieName($"conn_{provider}_access_token"), cookieOptions);
+                cookies.Delete(PrefixCookieName($"conn_{provider}_refresh_token"), cookieOptions);
+                cookies.Delete(PrefixCookieName($"conn_{provider}_auth_tag"), cookieOptions);
+                cookies.Delete(PrefixCookieName($"conn_{provider}_auth_session_data"), cookieOptions);
             }
         }
 
@@ -171,6 +199,59 @@ public static class CookieRegistryExtensions
             else
             {
                 cookies.Delete(tagName, CreateAuthCookieOptions());
+            }
+        }
+    }
+
+    public static void AddCookiesForConnectedAccounts(this CookieJar cookies, IReadOnlyDictionary<string, IAuthSession> connectedAccounts)
+    {
+        var cookieOptions = CreateAuthCookieOptions();
+
+        foreach (var (provider, session) in connectedAccounts)
+        {
+            var accessTokenName = PrefixCookieName($"conn_{provider}_access_token");
+            var refreshTokenName = PrefixCookieName($"conn_{provider}_refresh_token");
+            var tagName = PrefixCookieName($"conn_{provider}_auth_tag");
+            var authSessionDataName = PrefixCookieName($"conn_{provider}_auth_session_data");
+
+            // Store access token
+            if (!string.IsNullOrEmpty(session.AuthToken?.AccessToken))
+            {
+                cookies.Append(accessTokenName, session.AuthToken.AccessToken, cookieOptions);
+            }
+            else
+            {
+                cookies.Delete(accessTokenName, CreateAuthCookieOptions());
+            }
+
+            // Store refresh token if present
+            if (!string.IsNullOrEmpty(session.AuthToken?.RefreshToken))
+            {
+                cookies.Append(refreshTokenName, session.AuthToken.RefreshToken, cookieOptions);
+            }
+            else
+            {
+                cookies.Delete(refreshTokenName, CreateAuthCookieOptions());
+            }
+
+            // Store tag if present
+            if (session.AuthToken?.Tag != null)
+            {
+                cookies.Append(tagName, session.AuthToken.Tag, cookieOptions);
+            }
+            else
+            {
+                cookies.Delete(tagName, CreateAuthCookieOptions());
+            }
+
+            // Store auth session data if present
+            if (!string.IsNullOrEmpty(session.AuthSessionData))
+            {
+                cookies.Append(authSessionDataName, session.AuthSessionData, cookieOptions);
+            }
+            else
+            {
+                cookies.Delete(authSessionDataName, CreateAuthCookieOptions());
             }
         }
     }

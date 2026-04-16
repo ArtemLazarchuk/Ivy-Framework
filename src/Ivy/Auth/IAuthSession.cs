@@ -14,15 +14,26 @@ public interface IAuthSession : IAuthTokenHandlerSession
 
     public event Action<string>? BrokeredSessionAdded;
     public event Action<string>? BrokeredSessionRemoved;
+
+    public IReadOnlyDictionary<string, IAuthSession> ConnectedAccounts { get; }
+
+    public void AddConnectedAccount(string provider, IAuthSession session);
+    public void RemoveConnectedAccount(string provider);
+    public void ClearConnectedAccounts();
+
+    public event Action<string>? ConnectedAccountAdded;
+    public event Action<string>? ConnectedAccountRemoved;
 }
 
 public class AuthSession(
     AuthToken? authToken = null,
     string? authSessionData = null,
     TunneledHttpMessageHandler? httpMessageHandler = null,
-    Dictionary<string, IAuthTokenHandlerSession>? brokeredSessions = null) : AuthTokenHandlerSession(authToken, authSessionData, httpMessageHandler), IAuthSession
+    Dictionary<string, IAuthTokenHandlerSession>? brokeredSessions = null,
+    Dictionary<string, IAuthSession>? connectedAccounts = null) : AuthTokenHandlerSession(authToken, authSessionData, httpMessageHandler), IAuthSession
 {
     private readonly Dictionary<string, IAuthTokenHandlerSession> _brokeredSessions = brokeredSessions ?? [];
+    private readonly Dictionary<string, IAuthSession> _connectedAccounts = connectedAccounts ?? [];
 
     [ActivatorUtilitiesConstructor]
     public AuthSession(TunneledHttpMessageHandler? httpMessageHandler = null) : this(null, null, httpMessageHandler)
@@ -61,11 +72,45 @@ public class AuthSession(
             BrokeredSessionRemoved?.Invoke(provider);
         }
     }
+
+    public IReadOnlyDictionary<string, IAuthSession> ConnectedAccounts => _connectedAccounts;
+
+    public event Action<string>? ConnectedAccountAdded;
+    public event Action<string>? ConnectedAccountRemoved;
+
+    public void AddConnectedAccount(string provider, IAuthSession session)
+    {
+        var isNew = !_connectedAccounts.ContainsKey(provider);
+        _connectedAccounts[provider] = session;
+        if (isNew)
+        {
+            ConnectedAccountAdded?.Invoke(provider);
+        }
+    }
+
+    public void RemoveConnectedAccount(string provider)
+    {
+        if (_connectedAccounts.Remove(provider))
+        {
+            ConnectedAccountRemoved?.Invoke(provider);
+        }
+    }
+
+    public void ClearConnectedAccounts()
+    {
+        var providers = _connectedAccounts.Keys.ToList();
+        _connectedAccounts.Clear();
+        foreach (var provider in providers)
+        {
+            ConnectedAccountRemoved?.Invoke(provider);
+        }
+    }
 }
 
 public readonly struct AuthSessionSnapshot
 {
     public readonly AuthToken? AuthToken { get; init; }
     public readonly IReadOnlyDictionary<string, IAuthTokenHandlerSession> BrokeredSessions { get; init; }
+    public readonly IReadOnlyDictionary<string, IAuthSession> ConnectedAccounts { get; init; }
     public readonly string? AuthSessionData { get; init; }
 }

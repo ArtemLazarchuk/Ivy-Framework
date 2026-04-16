@@ -654,6 +654,7 @@ public class Server
         builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
         builder.Services.AddHealthChecks();
         builder.Services.AddQueryManager();
+        builder.Services.AddScoped<IConnectedAccountsService, ConnectedAccountsService>();
 
         // Register theme service if not already registered
         if (Services.All(s => s.ServiceType != typeof(IThemeService)))
