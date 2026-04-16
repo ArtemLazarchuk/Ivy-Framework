@@ -5,9 +5,11 @@ EXPOSE 5010
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS toolchain
 WORKDIR /src
-RUN apt-get update && apt-get install -y curl gnupg && \
+RUN for i in 1 2 3; do apt-get update && break || sleep 10; done && \
+    apt-get install -y --fix-missing curl gnupg && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
+    for i in 1 2 3; do apt-get update && break || sleep 10; done && \
+    apt-get install -y --fix-missing nodejs && \
     npm install -g pnpm@10.33.0 vite-plus@0.1.14 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -35,12 +37,11 @@ FROM base AS final
 WORKDIR /app
 ENV PORT=5010
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN for i in 1 2 3; do apt-get update && break || sleep 10; done && \
+    apt-get install -y --no-install-recommends --fix-missing \
     libc6 \
     libgcc-s1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Ivy.Samples.dll"]
-
-
