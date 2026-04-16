@@ -12,13 +12,13 @@ namespace Ivy.Core.Auth;
 public static class AuthHelper
 {
     public static AuthSession GetAuthSession(HttpContext context, TunneledHttpMessageHandler? httpMessageHandler)
-    => GetAuthCookies(context) is (var accessToken, var refreshToken, var tag, var authSessionData, var brokeredSessions, var connectedAccounts)
-        ? GetAuthSession(accessToken, refreshToken, tag, authSessionData, brokeredSessions, connectedAccounts, httpMessageHandler)
+    => GetAuthCookies(context) is (var accessToken, var refreshToken, var tag, var authSessionData, var brokeredSessions)
+        ? GetAuthSession(accessToken, refreshToken, tag, authSessionData, brokeredSessions, httpMessageHandler)
         : new AuthSession(httpMessageHandler: httpMessageHandler);
 
     public static AuthSession GetAuthSession(ServerCallContext context, TunneledHttpMessageHandler? httpMessageHandler)
-    => GetAuthCookies(context) is (var accessToken, var refreshToken, var tag, var authSessionData, var brokeredSessions, var connectedAccounts)
-        ? GetAuthSession(accessToken, refreshToken, tag, authSessionData, brokeredSessions, connectedAccounts, httpMessageHandler)
+    => GetAuthCookies(context) is (var accessToken, var refreshToken, var tag, var authSessionData, var brokeredSessions)
+        ? GetAuthSession(accessToken, refreshToken, tag, authSessionData, brokeredSessions, httpMessageHandler)
         : new AuthSession(httpMessageHandler: httpMessageHandler);
 
     public static async Task ValidateAuthIfRequired(global::Ivy.Server server, AppSessionStore sessionStore, string connectionId, ServerCallContext context)
@@ -138,7 +138,7 @@ public static class AuthHelper
         }
     }
 
-    private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions, Dictionary<string, IAuthSession> ConnectedAccounts) GetAuthCookies(HttpContext context)
+    private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions) GetAuthCookies(HttpContext context)
     {
         var cookies = context.Request.Cookies;
         var accessToken = cookies[CookieRegistryExtensions.PrefixCookieName("access_token")].NullIfEmpty();
@@ -147,17 +147,16 @@ public static class AuthHelper
         var authSessionDataValue = cookies[CookieRegistryExtensions.PrefixCookieName("auth_session_data")].NullIfEmpty();
 
         var brokeredSessions = ExtractBrokeredSessionsFromCookies(cookies);
-        var connectedAccounts = ExtractConnectedAccountsFromCookies(cookies);
 
-        return (accessToken, refreshToken, tag, authSessionDataValue, brokeredSessions, connectedAccounts);
+        return (accessToken, refreshToken, tag, authSessionDataValue, brokeredSessions);
     }
 
-    private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions, Dictionary<string, IAuthSession> ConnectedAccounts) GetAuthCookies(ServerCallContext context)
+    private static (string? AccessToken, string? RefreshToken, string? Tag, string? AuthSessionData, Dictionary<string, IAuthTokenHandlerSession> BrokeredSessions) GetAuthCookies(ServerCallContext context)
     {
         var cookies = context.RequestHeaders.GetValue("cookie") ?? string.Empty;
         if (string.IsNullOrEmpty(cookies))
         {
-            return (null, null, null, null, new Dictionary<string, IAuthTokenHandlerSession>(), new Dictionary<string, IAuthSession>());
+            return (null, null, null, null, new Dictionary<string, IAuthTokenHandlerSession>());
         }
 
         var cookieHeader = CookieHeaderValue.ParseList([cookies]).ToList();
@@ -178,26 +177,25 @@ public static class AuthHelper
         var authSessionDataValue = GetCookie("auth_session_data");
 
         var brokeredSessions = ExtractBrokeredSessionsFromCookieHeader(cookieHeader);
-        var connectedAccounts = ExtractConnectedAccountsFromCookieHeader(cookieHeader);
 
-        return (accessToken, refreshToken, tag, authSessionDataValue, brokeredSessions, connectedAccounts);
+        return (accessToken, refreshToken, tag, authSessionDataValue, brokeredSessions);
     }
 
-    private static AuthSession GetAuthSession(string? accessToken, string? refreshToken, string? tag, string? authSessionDataValue, Dictionary<string, IAuthTokenHandlerSession> brokeredSessions, Dictionary<string, IAuthSession> connectedAccounts, TunneledHttpMessageHandler? httpMessageHandler)
+    private static AuthSession GetAuthSession(string? accessToken, string? refreshToken, string? tag, string? authSessionDataValue, Dictionary<string, IAuthTokenHandlerSession> brokeredSessions, TunneledHttpMessageHandler? httpMessageHandler)
     {
         if (accessToken == null)
         {
-            return new(null, authSessionDataValue, httpMessageHandler, brokeredSessions, connectedAccounts);
+            return new(null, authSessionDataValue, httpMessageHandler, brokeredSessions);
         }
 
         try
         {
             var token = new AuthToken(accessToken, refreshToken, tag);
-            return new(token, authSessionDataValue, httpMessageHandler, brokeredSessions, connectedAccounts);
+            return new(token, authSessionDataValue, httpMessageHandler, brokeredSessions);
         }
         catch (Exception)
         {
-            return new(null, authSessionDataValue, httpMessageHandler, brokeredSessions, connectedAccounts);
+            return new(null, authSessionDataValue, httpMessageHandler, brokeredSessions);
         }
     }
 
@@ -212,7 +210,6 @@ public static class AuthHelper
         var accessTokenCookies = cookies.Keys
             .Where(key => key.EndsWith(suffix)
                 && key != primaryAccessToken
-                && !key.Contains("__conn_") // Exclude connected accounts
                 && (prefix.Length == 0 || key.StartsWith(prefix)))
             .ToList();
 
@@ -239,48 +236,6 @@ public static class AuthHelper
         return brokeredSessions;
     }
 
-    internal static Dictionary<string, IAuthSession> ExtractConnectedAccountsFromCookies(IRequestCookieCollection cookies)
-    {
-        var connectedAccounts = new Dictionary<string, IAuthSession>();
-
-        var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
-        var prefix = primaryAccessToken[..^"access_token".Length];
-        var connPrefix = "conn_";
-        var suffix = "_access_token";
-
-        var accessTokenCookies = cookies.Keys
-            .Where(key => key.Contains($"__{connPrefix}") && key.EndsWith(suffix))
-            .ToList();
-
-        foreach (var accessTokenName in accessTokenCookies)
-        {
-            // Extract provider from pattern: {prefix}__conn_{provider}_access_token
-            var afterPrefix = prefix.Length > 0 ? accessTokenName[prefix.Length..] : accessTokenName;
-            if (!afterPrefix.StartsWith(connPrefix))
-            {
-                continue;
-            }
-
-            var providerPart = afterPrefix[connPrefix.Length..^suffix.Length];
-
-            var accessToken = cookies[accessTokenName].NullIfEmpty();
-            if (accessToken == null)
-            {
-                continue;
-            }
-
-            var refreshToken = cookies[CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_refresh_token")].NullIfEmpty();
-            var tag = cookies[CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_auth_tag")].NullIfEmpty();
-            var authSessionData = cookies[CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_auth_session_data")].NullIfEmpty();
-
-            var authToken = new AuthToken(accessToken, refreshToken, tag);
-            var session = new AuthSession(authToken: authToken, authSessionData: authSessionData);
-            connectedAccounts[providerPart] = session;
-        }
-
-        return connectedAccounts;
-    }
-
     internal static Dictionary<string, IAuthTokenHandlerSession> ExtractBrokeredSessionsFromCookieHeader(List<CookieHeaderValue> cookieHeader)
     {
         var brokeredSessions = new Dictionary<string, IAuthTokenHandlerSession>();
@@ -302,7 +257,6 @@ public static class AuthHelper
             .Where(c => c.Name.Value != null
                 && c.Name.Value.EndsWith(suffix)
                 && c.Name.Value != primaryAccessToken
-                && !c.Name.Value.Contains("__conn_") // Exclude connected accounts
                 && (prefix.Length == 0 || c.Name.Value.StartsWith(prefix)))
             .Select(c => c.Name.Value!)
             .ToList();
@@ -328,59 +282,5 @@ public static class AuthHelper
         }
 
         return brokeredSessions;
-    }
-
-    internal static Dictionary<string, IAuthSession> ExtractConnectedAccountsFromCookieHeader(List<CookieHeaderValue> cookieHeader)
-    {
-        var connectedAccounts = new Dictionary<string, IAuthSession>();
-
-        string? GetCookie(string name)
-        {
-            var rawValue = cookieHeader
-                .FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))?.Value.Value;
-            return !string.IsNullOrEmpty(rawValue)
-                ? WebUtility.UrlDecode(rawValue)
-                : null;
-        }
-
-        var primaryAccessToken = CookieRegistryExtensions.PrefixCookieName("access_token");
-        var prefix = primaryAccessToken[..^"access_token".Length];
-        var connPrefix = "conn_";
-        var suffix = "_access_token";
-
-        var accessTokenCookies = cookieHeader
-            .Where(c => c.Name.Value != null
-                && c.Name.Value.Contains($"__{connPrefix}")
-                && c.Name.Value.EndsWith(suffix))
-            .Select(c => c.Name.Value!)
-            .ToList();
-
-        foreach (var accessTokenName in accessTokenCookies)
-        {
-            // Extract provider from pattern: {prefix}__conn_{provider}_access_token
-            var afterPrefix = prefix.Length > 0 ? accessTokenName[prefix.Length..] : accessTokenName;
-            if (!afterPrefix.StartsWith(connPrefix))
-            {
-                continue;
-            }
-
-            var providerPart = afterPrefix[connPrefix.Length..^suffix.Length];
-
-            var accessToken = GetCookie(accessTokenName);
-            if (accessToken == null)
-            {
-                continue;
-            }
-
-            var refreshToken = GetCookie(CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_refresh_token"));
-            var tag = GetCookie(CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_auth_tag"));
-            var authSessionData = GetCookie(CookieRegistryExtensions.PrefixCookieName($"{connPrefix}{providerPart}_auth_session_data"));
-
-            var authToken = new AuthToken(accessToken, refreshToken, tag);
-            var session = new AuthSession(authToken: authToken, authSessionData: authSessionData);
-            connectedAccounts[providerPart] = session;
-        }
-
-        return connectedAccounts;
     }
 }
