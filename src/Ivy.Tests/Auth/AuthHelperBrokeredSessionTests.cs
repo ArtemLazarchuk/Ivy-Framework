@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Ivy.Core.Auth;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace Ivy.Tests.Auth;
